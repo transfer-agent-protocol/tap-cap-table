@@ -1,0 +1,11 @@
+{
+	// Extensions recommended for this workspace.
+	"recommendations": [
+		"dbaeumer.vscode-eslint",
+		"mikestead.dotenv",
+		"christian-kohler.npm-intellisense",
+		"esbenp.prettier-vscode",
+		"prisma.prisma",
+		"redhat.vscode-yaml",
+	],
+}

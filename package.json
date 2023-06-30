@@ -1,0 +1,45 @@
+{
+  "name": "tap-cap-table",
+  "version": "1.0.0-alpha.0",
+  "private": true,
+  "author": "Alex Palmer <alex@poet.network>, Victor Mimo <victor@poet.network>",
+  "license": "MIT",
+  "description": "Transfer Agent Protocol compliant cap table",
+  "scripts": {
+    "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
+    "lint": "yarn run eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier '**/*' --ignore-unknown --write",
+    "generate": "yarn run generate:prisma",
+    "generate:prisma": "prisma generate",
+    "prisma:migrate": "yarn prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "typecheck": "concurrently --raw yarn:typecheck:*",
+    "typecheck:app": "tsc --noEmit",
+    "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.12.0",
+    "date-fns": "^2.28.0"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11",
+    "maintained node versions"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.3.2",
+    "eslint": "^8.21.0",
+    "eslint-config-next": "^13.1.6",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "prisma": "^4.12.0",
+    "typescript": "^4.8.4"
+  },
+  "prisma": {
+    "schema": "schema/schema.prisma"
+  }
+}
