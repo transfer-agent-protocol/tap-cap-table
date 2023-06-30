@@ -8,7 +8,8 @@ datasource db {
 }
 
 model Issuer {
-    id                               String   @id @default(uuid())
+    id                   String       @id @default(uuid())
+  	stakeholders        Stakeholder[]
     object_type                      String   @default("ISSUER")
     legal_name                       String
     dba                              String?
@@ -50,7 +51,8 @@ model TaxID {
 }
 
 model StockClass {
-    id                              String                      @id @default(uuid())
+    id           String        @id @default(uuid())
+  stakeholders Stakeholder[]
     name                            String
     class_type                      StockClassType
     default_id_prefix               String
@@ -104,7 +106,11 @@ model Valuation {
 }
 
 model Stakeholder {
-    id                       String                       @id @default(uuid())
+    id           String       @id @default(uuid())
+  	stockClass   StockClass   @relation(fields: [stockClassId], references: [id])
+  	stockClassId String
+  	issuerId            String
+  	issuer              Issuer       @relation(fields: [issuerId], references: [id])
     name                     Name                         @relation(fields: [nameId], references: [id])
     stakeholder_type         StakeholderType
     issuer_assigned_id       String?
