@@ -52,10 +52,15 @@ async function main() {
             id: uuidv4(),
             name: "Common Stock",
             class_type: "COMMON",
-            default_id_prefix: "C",
-            initial_shares_authorized: 1000000,
+            default_id_prefix: "CS",
+            initial_shares_authorized: 4000000,
+            board_approval_date: "2022-08-23",
+            stockholder_approval_date: "2022-08-23",
             seniority: 1,
             votes_per_share: 1.0,
+            par_value: 0.0001,
+            liquidation_preference_multiple: 1,
+            participation_cap_multiple: 1,
             issuerId: issuer.id,
         },
     });
@@ -65,10 +70,13 @@ async function main() {
             id: uuidv4(),
             name: "Preferred Stock",
             class_type: "PREFERRED",
-            default_id_prefix: "P",
-            initial_shares_authorized: 500000,
-            seniority: 2,
-            votes_per_share: 0.5,
+            default_id_prefix: "PS",
+            initial_shares_authorized: 4000000,
+            seniority: 1,
+            votes_per_share: 1.0,
+            par_value: 0.0001,
+            liquidation_preference_multiple: 1,
+            participation_cap_multiple: 1,
             issuerId: issuer.id,
         },
     });
@@ -76,15 +84,21 @@ async function main() {
     const stockPlan = await prisma.stockPlan.create({
         data: {
             id: uuidv4(),
-            plan_name: "Stock Plan Name",
-            initial_shares_reserved: 500,
+            plan_name: "2023 Restated Stock Plan",
+            initial_shares_reserved: 1000000,
+            board_approval_date: "2022-08-23",
+            stockholder_approval_date: "2022-08-23",
+            default_cancellation_behavior: "NONE",
             stock_class: {
                 connect: {
                     id: stockClassCommon.id,
                 },
             },
+            comments: "Restated option plan for 2023",
         },
     });
+
+    console.log(stockClassCommon, stockClassPreferred, stockPlan);
 
     const address1 = await prisma.address.create({
         data: {
