@@ -37,3 +37,9 @@ yarn prisma:migrate
 ```sh
 yarn prisma:studio
 ```
+
+6. **Run `yarn seed` to seed the database with some initial data**:
+
+```sh
+yarn seed
+```

@@ -19,12 +19,13 @@ async function main() {
     const issuerAddress = await prisma.address.create({
         data: {
             id: uuidv4(),
-            street: "447 Broadway, 2nd Floor,\n#713",
+            street_suite: "447 Broadway, 2nd Floor,\n#713",
             city: "New York",
-            state: "NY",
-            zip: "10013",
-            type: "LEGAL",
-            Issuer: {
+            country_subdivision: "NY",
+            postal_code: "10013",
+            address_type: "LEGAL",
+            country: "US",
+            issuers: {
                 connect: {
                     id: issuer.id,
                 },
@@ -81,22 +82,24 @@ async function main() {
     const address1 = await prisma.address.create({
         data: {
             id: uuidv4(),
-            street: "123 Main Street",
+            street_suite: "123 Main Street",
             city: "New York",
-            state: "NY",
-            zip: "10001",
-            type: "CONTACT",
+            country_subdivision: "NY",
+            country: "US",
+            postal_code: "10001",
+            address_type: "CONTACT",
         },
     });
 
     const address2 = await prisma.address.create({
         data: {
             id: uuidv4(),
-            street: "456 Elm Street",
+            street_suite: "456 Elm Street",
             city: "San Francisco",
-            state: "CA",
-            zip: "94101",
-            type: "CONTACT",
+            country_subdivision: "CA",
+            country: "US",
+            postal_code: "94101",
+            address_type: "CONTACT",
         },
     });
 

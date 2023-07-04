@@ -13,8 +13,8 @@ model Issuer {
     object_type                      String        @default("ISSUER")
     legal_name                       String
     dba                              String?
-    formation_date                   DateTime
-    country_of_formation             String        @unique @db.Char(2)
+    formation_date                   String
+    country_of_formation             String        @db.Char(2)
     country_subdivision_of_formation String?
     email                            String?
     phone                            String?
@@ -30,7 +30,7 @@ model Address {
     address_type        String
     street_suite        String
     city                String
-    country_subdivision String        @unique @db.VarChar(3)
+    country_subdivision String        @db.VarChar(3)
     country             CountryCode
     postal_code         String
     issuers             Issuer[] // Relationship to the issuer
