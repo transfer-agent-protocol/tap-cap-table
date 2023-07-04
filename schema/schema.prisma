@@ -22,6 +22,7 @@ model Issuer {
     addressId                        String?
     initial_shares_authorized        Int?
     stakeholders                     Stakeholder[]
+	stockClasses                     StockClass[]
     comments                         String?
 }
 
@@ -40,7 +41,7 @@ model Address {
 model TaxID {
     id            String       @id @default(uuid())
     tax_id        String
-    country       CountryCode
+    country       String	   @db.VarChar(2)
     Issuer        Issuer?      @relation(fields: [issuerId], references: [id])
     issuerId      String?
     Stakeholder   Stakeholder? @relation(fields: [stakeholderId], references: [id])
@@ -53,9 +54,9 @@ model StockClass {
     name                            String
     class_type                      StockClassType
     default_id_prefix               String
-    initial_shares_authorized       Float
-    board_approval_date             DateTime?
-    stockholder_approval_date       DateTime?
+    initial_shares_authorized       Decimal  @db.Decimal(20, 10)
+    board_approval_date             String?
+    stockholder_approval_date       String?
     votes_per_share                 Float
     par_value                       Float?
     price_per_share                 Float?
@@ -65,6 +66,8 @@ model StockClass {
     conversion_rights_from          StockClassConversionRight[] @relation("FromStockClass")
     conversion_rights_to            StockClassConversionRight[] @relation("ToStockClass")
     StockPlan                       StockPlan[]
+	issuer                          Issuer?                     @relation(fields: [issuerId], references: [id])
+	issuerId                        String?
 }
 
 model StockClassConversionRight {
