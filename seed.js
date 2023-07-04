@@ -8,20 +8,21 @@ async function main() {
     const issuer = await prisma.issuer.create({
         data: {
             id: uuidv4(),
-            legal_name: "XYZ Corp",
-            formation_date: new Date(),
+            legal_name: "Poet Network Inc.",
+            formation_date: "2022-08-23",
             country_of_formation: "US",
-            initial_shares_authorized: 6000000,
+            country_subdivision_of_formation: "DE",
+            initial_shares_authorized: 10000000,
         },
     });
 
-    const address = await prisma.address.create({
+    const issuerAddress = await prisma.address.create({
         data: {
             id: uuidv4(),
-            street: "123 Main Street",
+            street: "447 Broadway, 2nd Floor,\n#713",
             city: "New York",
-            state: "New York",
-            zip: "12345",
+            state: "NY",
+            zip: "10013",
             type: "LEGAL",
             Issuer: {
                 connect: {
@@ -39,6 +40,8 @@ async function main() {
             issuerId: issuer.id,
         },
     });
+
+    console.log(issuer, issuerAddress, taxID);
 
     // Create Stock Classes
     const stockClassCommon = await prisma.stockClass.create({
@@ -64,8 +67,6 @@ async function main() {
             votes_per_share: 0.5,
         },
     });
-
-    console.log({ stockClassCommon, stockClassPreferred });
 
     const stockPlan = await prisma.stockPlan.create({
         data: {
@@ -121,8 +122,8 @@ async function main() {
         data: {
             id: uuidv4(),
             stakeholder_type: "INDIVIDUAL",
-            current_relationship: "EMPLOYEE",
-            issuer_assigned_id: "issuer_1",
+            current_relationship: "FOUNDER",
+            issuer_assigned_id: "POET_1",
             comments: "First Stakeholder",
             stockClass: {
                 connect: {
@@ -137,9 +138,9 @@ async function main() {
             name: {
                 create: {
                     id: uuidv4(),
-                    legal_name: "John Doe",
-                    first_name: "John",
-                    last_name: "Doe",
+                    legal_name: "Alex Palmer",
+                    first_name: "Alex",
+                    last_name: "Palmer",
                 },
             },
             addresses: {
@@ -158,9 +159,9 @@ async function main() {
     const stakeholder2 = await prisma.stakeholder.create({
         data: {
             id: uuidv4(),
-            stakeholder_type: "INSTITUTION",
-            current_relationship: "INVESTOR",
-            issuer_assigned_id: "issuer_2",
+            stakeholder_type: "INDIVIDUAL",
+            current_relationship: "FOUNDER",
+            issuer_assigned_id: "POET_2",
             comments: "Second Stakeholder",
             stockClass: {
                 connect: {
@@ -175,7 +176,9 @@ async function main() {
             name: {
                 create: {
                     id: uuidv4(),
-                    legal_name: "XYZ Corp",
+                    legal_name: "Victor Augusto Cardenas Mimo",
+                    first_name: "Victor",
+                    last_name: "Mimo",
                 },
             },
             addresses: {
@@ -190,8 +193,6 @@ async function main() {
             },
         },
     });
-
-    console.log({ stakeholder1, stakeholder2 });
 }
 
 main()

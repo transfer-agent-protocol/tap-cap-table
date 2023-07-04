@@ -8,36 +8,33 @@ datasource db {
 }
 
 model Issuer {
-    id                   String       @id @default(uuid())
-  	stakeholders        Stakeholder[]
-    object_type                      String   @default("ISSUER")
+    id                               String        @id @default(uuid())
+    stakeholders                     Stakeholder[]
+    object_type                      String        @default("ISSUER")
     legal_name                       String
     dba                              String?
     formation_date                   DateTime
-    country_of_formation             String
+    country_of_formation             String        @unique @db.Char(2)
     country_subdivision_of_formation String?
     email                            String?
     phone                            String?
-    address                          String?
+    address                          Address?      @relation(fields: [addressId], references: [id])
+    addressId                        String?
     initial_shares_authorized        Int?
     comments                         String?
-    Address                          Address? @relation(fields: [addressId], references: [id])
-    addressId                        String?
     TaxID                            TaxID[]
 }
 
 model Address {
-    id            String       @id @default(uuid())
-    street        String?
-    city          String?
-    state         String?
-    zip           String?
-    type          AddressType
-    createdAt     DateTime     @default(now())
-    updatedAt     DateTime     @updatedAt
-    Issuer        Issuer[]
-    Stakeholder   Stakeholder? @relation(fields: [stakeholderId], references: [id])
-    stakeholderId String?
+    id                  String        @id @default(uuid())
+    address_type        String
+    street_suite        String
+    city                String
+    country_subdivision String        @unique @db.VarChar(3)
+    country             CountryCode
+    postal_code         String
+    issuers             Issuer[] // Relationship to the issuer
+    stakeholders        Stakeholder[] // Relationship to the stakeholder
 }
 
 model TaxID {
@@ -51,8 +48,8 @@ model TaxID {
 }
 
 model StockClass {
-    id           String        @id @default(uuid())
-  stakeholders Stakeholder[]
+    id                              String                      @id @default(uuid())
+    stakeholders                    Stakeholder[]
     name                            String
     class_type                      StockClassType
     default_id_prefix               String
@@ -106,11 +103,11 @@ model Valuation {
 }
 
 model Stakeholder {
-    id           String       @id @default(uuid())
-  	stockClass   StockClass   @relation(fields: [stockClassId], references: [id])
-  	stockClassId String
-  	issuerId            String
-  	issuer              Issuer       @relation(fields: [issuerId], references: [id])
+    id                       String                       @id @default(uuid())
+    stockClass               StockClass                   @relation(fields: [stockClassId], references: [id])
+    stockClassId             String
+    issuerId                 String
+    issuer                   Issuer                       @relation(fields: [issuerId], references: [id])
     name                     Name                         @relation(fields: [nameId], references: [id])
     stakeholder_type         StakeholderType
     issuer_assigned_id       String?
