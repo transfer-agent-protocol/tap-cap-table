@@ -1,10 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
-
 const { v4: uuidv4 } = require("uuid");
 
+const prisma = new PrismaClient();
+
 async function main() {
-    // Generate some example data
     const issuer = await prisma.issuer.create({
         data: {
             id: uuidv4(),
@@ -19,12 +18,12 @@ async function main() {
     const issuerAddress = await prisma.address.create({
         data: {
             id: uuidv4(),
+            address_type: "LEGAL",
             street_suite: "447 Broadway, 2nd Floor,\n#713",
             city: "New York",
             country_subdivision: "NY",
-            postal_code: "10013",
-            address_type: "LEGAL",
             country: "US",
+            postal_code: "10013",
             issuers: {
                 connect: {
                     id: issuer.id,
@@ -38,13 +37,16 @@ async function main() {
             id: uuidv4(),
             tax_id: "123-45-6789",
             country: "US",
-            issuerId: issuer.id,
+            Issuer: {
+                connect: {
+                    id: issuer.id,
+                },
+            },
         },
     });
 
     console.log(issuer, issuerAddress, taxID);
 
-    // Create Stock Classes
     const stockClassCommon = await prisma.stockClass.create({
         data: {
             id: uuidv4(),
@@ -54,6 +56,7 @@ async function main() {
             initial_shares_authorized: 1000000,
             seniority: 1,
             votes_per_share: 1.0,
+            issuerId: issuer.id,
         },
     });
 
@@ -66,6 +69,7 @@ async function main() {
             initial_shares_authorized: 500000,
             seniority: 2,
             votes_per_share: 0.5,
+            issuerId: issuer.id,
         },
     });
 
@@ -74,11 +78,14 @@ async function main() {
             id: uuidv4(),
             plan_name: "Stock Plan Name",
             initial_shares_reserved: 500,
-            stock_class_id: stockClassCommon.id,
+            stock_class: {
+                connect: {
+                    id: stockClassCommon.id,
+                },
+            },
         },
     });
 
-    // Create Address for each stakeholder
     const address1 = await prisma.address.create({
         data: {
             id: uuidv4(),
@@ -103,7 +110,6 @@ async function main() {
         },
     });
 
-    // Create TaxID for each stakeholder
     const taxId1 = await prisma.taxID.create({
         data: {
             id: uuidv4(),
@@ -120,7 +126,24 @@ async function main() {
         },
     });
 
-    // Create Stakeholders along with their names and linked data
+    const name1 = await prisma.name.create({
+        data: {
+            id: uuidv4(),
+            legal_name: "Alex Palmer",
+            first_name: "Alex",
+            last_name: "Palmer",
+        },
+    });
+
+    const name2 = await prisma.name.create({
+        data: {
+            id: uuidv4(),
+            legal_name: "Victor Augusto Cardenas Mimo",
+            first_name: "Victor",
+            last_name: "Mimo",
+        },
+    });
+
     const stakeholder1 = await prisma.stakeholder.create({
         data: {
             id: uuidv4(),
@@ -128,24 +151,9 @@ async function main() {
             current_relationship: "FOUNDER",
             issuer_assigned_id: "POET_1",
             comments: "First Stakeholder",
-            stockClass: {
-                connect: {
-                    id: stockClassCommon.id,
-                },
-            },
-            issuer: {
-                connect: {
-                    id: issuer.id,
-                },
-            },
-            name: {
-                create: {
-                    id: uuidv4(),
-                    legal_name: "Alex Palmer",
-                    first_name: "Alex",
-                    last_name: "Palmer",
-                },
-            },
+            stockClassId: stockClassCommon.id,
+            issuerId: issuer.id,
+            nameId: name1.id, // Use the retrieved name1.id here
             addresses: {
                 connect: {
                     id: address1.id,
@@ -166,24 +174,9 @@ async function main() {
             current_relationship: "FOUNDER",
             issuer_assigned_id: "POET_2",
             comments: "Second Stakeholder",
-            stockClass: {
-                connect: {
-                    id: stockClassPreferred.id,
-                },
-            },
-            issuer: {
-                connect: {
-                    id: issuer.id,
-                },
-            },
-            name: {
-                create: {
-                    id: uuidv4(),
-                    legal_name: "Victor Augusto Cardenas Mimo",
-                    first_name: "Victor",
-                    last_name: "Mimo",
-                },
-            },
+            stockClassId: stockClassPreferred.id,
+            issuerId: issuer.id,
+            nameId: name2.id, // Use the retrieved name2.id here
             addresses: {
                 connect: {
                     id: address2.id,
@@ -196,11 +189,14 @@ async function main() {
             },
         },
     });
+
+    console.log(stakeholder1, stakeholder2);
 }
 
 main()
     .catch((e) => {
-        throw e;
+        console.error(e);
+        process.exit(1);
     })
     .finally(async () => {
         await prisma.$disconnect();
