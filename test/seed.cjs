@@ -88,7 +88,6 @@ async function main() {
             initial_shares_reserved: 1000000,
             board_approval_date: "2022-08-23",
             stockholder_approval_date: "2022-08-23",
-            default_cancellation_behavior: "NONE",
             stock_class: {
                 connect: {
                     id: stockClassCommon.id,

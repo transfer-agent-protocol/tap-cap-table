@@ -84,8 +84,8 @@ model StockClassConversionRight {
 model StockPlan {
     id                            String                             @id @default(uuid())
     plan_name                     String
-    board_approval_date           DateTime?
-    stockholder_approval_date     DateTime?
+    board_approval_date           String?
+    stockholder_approval_date     String?
     initial_shares_reserved       Float
     default_cancellation_behavior StockPlanCancellationBehaviorType?
     stock_class                   StockClass                         @relation(fields: [stock_class_id], references: [id])
@@ -96,10 +96,10 @@ model StockPlan {
 model Valuation {
     id                        String        @id @default(uuid())
     provider                  String?
-    board_approval_date       DateTime?
-    stockholder_approval_date DateTime?
+    board_approval_date       String?
+    stockholder_approval_date String?
     price_per_share           Decimal
-    effective_date            DateTime
+    effective_date            String
     stock_class_id            String
     valuation_type            ValuationType
     comments                  String?
@@ -161,7 +161,7 @@ model VestingEvent {
     id               String             @id @default(uuid())
     event_type       VestingEventType   @relation(fields: [event_type_id], references: [id])
     event_type_id    String
-    date             DateTime
+    date             String
     VestingCondition VestingCondition[]
 }
 
