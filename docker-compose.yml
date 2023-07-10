@@ -1,14 +1,13 @@
-version: "3"
+version: '3.7'
 services:
-  # Postgres
-  postgres:
-    image: postgres:latest
-    ports:
-      # Accessible from the host at port :35432
-      - "35432:5432"
+  mongodb_container:
+    # This image automatically creates a replica set required for transactions
+    image: prismagraphql/mongo-single-replica:4.4.3-bionic
     environment:
-      POSTGRES_USER: tap 
-      POSTGRES_PASSWORD: tap 
-      POSTGRES_DB: tap
+      MONGO_INITDB_ROOT_USERNAME: tap
+      MONGO_INITDB_ROOT_PASSWORD: tap
+      INIT_WAIT_SEC: 3
+    ports:
+      - 27017:27017
     # Make sure log colors show up correctly
     tty: true
