@@ -26,10 +26,10 @@ yarn
 docker compose up
 ```
 
-4. **Migrate the local development database** to the base schema:
+4. **Push the local schema** to the Mongo instance running inside of Docker:
 
 ```sh
-yarn prisma:migrate
+yarn prisma db push
 ```
 
 5. **Run either your preferred table tool - like [Postico](https://eggerapps.at/postico2/), [TablePlus](https://tableplus.com/) - or the natively provided Prisma Studio** to inspect your local development database.
