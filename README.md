@@ -32,7 +32,7 @@ docker compose up
 yarn prisma db push
 ```
 
-5. **Run either your preferred table tool - like [Postico](https://eggerapps.at/postico2/), [TablePlus](https://tableplus.com/) - or the natively provided Prisma Studio** to inspect your local development database.
+5. **Run either your preferred table tool - like [TablePlus](https://tableplus.com/) - or the natively provided Prisma Studio** to inspect your local development database.
 
 ```sh
 yarn prisma:studio
