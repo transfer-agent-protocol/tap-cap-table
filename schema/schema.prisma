@@ -7,59 +7,105 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+// * Primary objects: Schemas live under ocf repo schema/objects
+
 model Issuer {
-    id                               String        @id @default(auto()) @map("_id") @db.ObjectId
-    object_type                      String        @default("ISSUER")
+    id                               String   @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                      String   @default("ISSUER")
     legal_name                       String
     dba                              String?
-    formation_date                   String
+    formation_date                   String // OCF Date type is a string
     country_of_formation             String
     country_subdivision_of_formation String
-    taxID                            String?
+    tax_ids                          String[]
     email                            String?
     phone                            String?
     address                          String?
-    initial_shares_authorized        Int?
-    stakeholders                     Stakeholder[]
+    initial_shares_authorized        String?
     comments                         String?
 }
+
 model Stakeholder {
-  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
-  issuerId             String             @db.ObjectId
-  stakeholder_type     StakeholderType
-  issuer_assigned_id   String?
-  current_relationship StakeholderRelationshipType?
-  primary_contact      ContactInfo?       @relation(fields: [contactInfoId], references: [id])
-  comments             String?
-  Issuer               Issuer             @relation(fields: [issuerId], references: [id])
-  contactInfoId        String?            @db.ObjectId
-  Name                 Name?              @relation(fields: [nameId], references: [id])
-  nameId               String?            @db.ObjectId
+    id                   String                       @id @default(auto()) @map("_id") @db.ObjectId
+    name                 Json
+    stakeholder_type     StakeholderType
+    issuer_assigned_id   String?
+    current_relationship StakeholderRelationshipType?
+    primary_contact      Json?
+    contact_info         Json?
+    comments             String?
 }
 
-model ContactInfo {
-    id            String        @id @default(auto()) @map("_id") @db.ObjectId
-    name          Name?         @relation(fields: [nameId], references: [id])
-    phone_numbers String[]
-    emails        String[]
-    Stakeholder   Stakeholder[]
-    nameId        String?       @db.ObjectId
+model StockClass {
+    id                              String         @id @default(auto()) @map("_id") @db.ObjectId
+    name                            String
+    class_type                      StockClassType
+    default_id_prefix               String
+    initial_shares_authorized       String // either AuthorizedSharesTypes or Numeric
+    board_approval_date             String?
+    votes_per_share                 String // Numeric
+    par_value                       String? // Monetary
+    price_per_share                 String? //  Monetary
+    seniority                       String // Numeric;
+    conversion_rights               String[] // TODO: later
+    liquidation_preference_multiple String? // Numeric
+    participation_cap_multiple      String? // Numeric
+    comments                        String?
 }
 
-model Name {
-    id          String        @id @default(auto()) @map("_id") @db.ObjectId
-    legal_name  String
-    first_name  String?
-    last_name   String?
-    Stakeholder Stakeholder[]
-    ContactInfo ContactInfo[]
+model StockLegendTemplate {
+    id       String  @id @default(auto()) @map("_id") @db.ObjectId
+    name     String
+    text     String
+    comments String?
+}
+
+model StockPlan {
+    id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    plan_name                      String
+    board_approval_date            String?
+    stockholder_approval_date      String?
+    initial_shares_reserved        String // TODO this will be either AuthorizedSharesTypes or Numeric
+    default_cancellation_behaviour String?
+    stock_class_id                 String  @db.ObjectId
+    comments                       String?
+}
+
+model Valuations {
+    id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+    provider            String?
+    board_approval_date String?
+    price_per_share     String // TODO: Monetary
+    effective_date      String
+    stock_class_id      String        @db.ObjectId
+    valuation_type      ValuationType
+    comments            String?
+}
+
+model VestingTerms {
+    id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+    name               String
+    description        String
+    allocation_type    AllocationType
+    vesting_conditions String[] // TODO: VestingConditions array for a later date.
+    comments           String?
 }
 
 // * ENUMS
-
 enum StockClassType {
     PREFERRED
     COMMON
+}
+
+// Should be 409A, but prisma doesn't supoort enum staring with number values
+// OCF will be supporting different types of valuations in future versions
+enum ValuationType {
+    CODE_409A
+}
+
+enum AuthorizedSharesTypes {
+    NOT_APPLICABLE
+    UNLIMITED
 }
 
 enum StockPlanCancellationBehaviorType {
@@ -67,14 +113,14 @@ enum StockPlanCancellationBehaviorType {
     CANCEL
 }
 
-enum ValuationType {
-    PREMONEY
-    POSTMONEY
-}
-
-enum AllocationTypeEnum {
-    ROUND_DOWN
-    ROUND_UP
+enum AllocationType {
+    CUMULATIVE_ROUNDING
+    CUMULATIVE_ROUND_DOWN
+    FRONT_LOADED
+    BACK_LOADED
+    FRONT_LOADED_TO_SINGLE_TRANCHE
+    BACK_LOADED_TO_SINGLE_TRANCHE
+    FRACTIONAL
 }
 
 enum AddressType {
