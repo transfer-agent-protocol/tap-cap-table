@@ -12,7 +12,7 @@
         "format": "prettier '**/*' --ignore-unknown --write",
         "generate": "yarn run generate:prisma",
         "generate:prisma": "prisma generate",
-        "prisma:migrate": "yarn prisma migrate dev",
+        "prisma:push": "yarn prisma db push",
         "prisma:studio": "prisma studio",
         "typecheck": "concurrently --raw yarn:typecheck:*",
         "typecheck:app": "tsc --noEmit",
