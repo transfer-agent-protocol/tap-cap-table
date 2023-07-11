@@ -10,7 +10,7 @@ async function main() {
             formation_date: "2022-08-23",
             country_of_formation: "US",
             country_subdivision_of_formation: "DE",
-            tax_ids: "12-315-69",
+            tax_ids: ["12-315-69"],
             email: "concierge@poet.network",
             phone: "212-111-111",
             initial_shares_authorized: "10000000",
@@ -22,13 +22,13 @@ async function main() {
             name: {
                 legal_name: "Alex Palmer",
                 first_name: "Alex",
-                last_name: "Palmer"
-            }, 
+                last_name: "Palmer",
+            },
             stakeholder_type: "INDIVIDUAL",
             current_relationship: "FOUNDER",
             issuer_assigned_id: "POET_1",
             comments: "First Stakeholder",
-      },
+        },
     });
 
     const stakeholder2 = await prisma.stakeholder.create({
@@ -36,7 +36,7 @@ async function main() {
             name: {
                 legal_name: "Victor Augusto Cardenas Mimo",
                 first_name: "Victor Augusto",
-                last_name: "Cardenas Mimo"
+                last_name: "Cardenas Mimo",
             },
             stakeholder_type: "INDIVIDUAL",
             current_relationship: "FOUNDER",
@@ -45,7 +45,7 @@ async function main() {
         },
     });
 
-    console.log(stakeholder1, stakeholder2);
+    console.log(issuer, stakeholder1, stakeholder2);
 }
 
 main()
