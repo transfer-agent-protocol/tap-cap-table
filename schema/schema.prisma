@@ -7,8 +7,7 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-// * Primary objects: Schemas live under ocf repo schema/objects
-
+// * PRIMARY OBJECTS: Links to validation schemas live under ocf repo schema/objects
 model Issuer {
     id                               String   @id @default(auto()) @map("_id") @db.ObjectId
     object_type                      String   @default("ISSUER")
@@ -27,6 +26,7 @@ model Issuer {
 
 model Stakeholder {
     id                   String                       @id @default(auto()) @map("_id") @db.ObjectId
+    object_type          String                       @default("STAKEHOLDER")
     name                 Json
     stakeholder_type     StakeholderType
     issuer_assigned_id   String?
@@ -38,6 +38,7 @@ model Stakeholder {
 
 model StockClass {
     id                              String         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                     String         @default("STOCK_CLASS")
     name                            String
     class_type                      StockClassType
     default_id_prefix               String
@@ -54,14 +55,16 @@ model StockClass {
 }
 
 model StockLegendTemplate {
-    id       String  @id @default(auto()) @map("_id") @db.ObjectId
-    name     String
-    text     String
-    comments String?
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("STOCK_LEGEND_TEMPLATE")
+    name        String
+    text        String
+    comments    String?
 }
 
 model StockPlan {
     id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                    String  @default("STOCK_PLAN")
     plan_name                      String
     board_approval_date            String?
     stockholder_approval_date      String?
@@ -73,6 +76,7 @@ model StockPlan {
 
 model Valuations {
     id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String        @default("VALUATION")
     provider            String?
     board_approval_date String?
     price_per_share     String // TODO: Monetary
@@ -84,11 +88,35 @@ model Valuations {
 
 model VestingTerms {
     id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type        String         @default("VESTING_TERMS")
     name               String
     description        String
     allocation_type    AllocationType
     vesting_conditions String[] // TODO: VestingConditions array for a later date.
     comments           String?
+}
+
+// * TRANSACTIONS 
+model StockIssuance {
+    id                      String             @id @default(auto()) @map("_id") @db.ObjectId
+    object_type             String             @default("TX_STOCK_ISSUANCE")
+    stock_class_id          String             @db.ObjectId
+    stock_plan_id           String?            @db.ObjectId
+    share_numbers_issued    String[] // TODO: ShareNumberRange, also look up prisma optional arrays
+    share_price             String // TODO: Monetary
+    quantity                String // TODO: Numeric 
+    vesting_terms_id        String?            @db.ObjectId
+    cost_basis              String? // TODO: Monetary
+    stock_legend_ids        String[]           @db.ObjectId
+    issuance_type           StockIssuanceType?
+    comments                String?
+    security_id             String?
+    date                    String?
+    custom_id               String?
+    stakeholder_id          String?            @db.ObjectId
+    board_approval_date     String?
+    consideration_text      String?
+    security_law_exemptions String?
 }
 
 // * ENUMS
@@ -160,4 +188,9 @@ enum StakeholderRelationshipType {
     NON_US_EMPLOYEE
     OFFICER
     OTHER
+}
+
+enum StockIssuanceType {
+    RSA
+    FOUNDER_STOCK
 }
