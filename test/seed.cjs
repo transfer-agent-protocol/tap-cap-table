@@ -6,48 +6,42 @@ async function main() {
     const issuer = await prisma.issuer.create({
         data: {
             legal_name: "Poet Network Inc.",
+            dba: "Poet",
             formation_date: "2022-08-23",
             country_of_formation: "US",
             country_subdivision_of_formation: "DE",
-            initial_shares_authorized: 10000000,
-        },
-    });
-
-    const name1 = await prisma.name.create({
-        data: {
-            legal_name: "Alex Palmer",
-            first_name: "Alex",
-            last_name: "Palmer",
-        },
-    });
-
-    const name2 = await prisma.name.create({
-        data: {
-            legal_name: "Victor Augusto Cardenas Mimo",
-            first_name: "Victor",
-            last_name: "Mimo",
+            tax_ids: "12-315-69",
+            email: "concierge@poet.network",
+            phone: "212-111-111",
+            initial_shares_authorized: "10000000",
         },
     });
 
     const stakeholder1 = await prisma.stakeholder.create({
         data: {
+            name: {
+                legal_name: "Alex Palmer",
+                first_name: "Alex",
+                last_name: "Palmer"
+            }, 
             stakeholder_type: "INDIVIDUAL",
             current_relationship: "FOUNDER",
             issuer_assigned_id: "POET_1",
             comments: "First Stakeholder",
-            issuerId: issuer.id,
-            nameId: name1.id, // Use the retrieved name1.id here
-        },
+      },
     });
 
     const stakeholder2 = await prisma.stakeholder.create({
         data: {
+            name: {
+                legal_name: "Victor Augusto Cardenas Mimo",
+                first_name: "Victor Augusto",
+                last_name: "Cardenas Mimo"
+            },
             stakeholder_type: "INDIVIDUAL",
             current_relationship: "FOUNDER",
             issuer_assigned_id: "POET_2",
             comments: "Second Stakeholder",
-            issuerId: issuer.id,
-            nameId: name2.id, // Use the retrieved name2.id here
         },
     });
 
