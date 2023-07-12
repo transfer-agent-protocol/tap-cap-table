@@ -404,6 +404,34 @@ model PlanSecurityRelease {
     object_type String @default("TX_PLAN_SECURITY_RELEASE")
 }
 
+// EXERCISE 
+model EquityCompensationExercise {
+    id                     String                         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            EquityCompensationExerciseType
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String?
+}
+
+model PlanSecurityExercise {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_EXERCISE")
+}
+
+model WarrantExercise {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_PLAN_SECURITY_EXERCISE")
+    trigger_id             String
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String?
+}
+
 // *** ENUMS ***
 enum StockClassType {
     PREFERRED
@@ -526,4 +554,9 @@ enum EquityCompensationTransferType {
 enum EquityCompensationReleaseType {
     TX_PLAN_SECURITY_RELEASE
     TX_EQUITY_COMPENSATION_RELEASE
+}
+
+enum EquityCompensationExerciseType {
+    TX_PLAN_SECURITY_EXERCISE
+    TX_EQUITY_COMPENSATION_EXERCISE
 }
