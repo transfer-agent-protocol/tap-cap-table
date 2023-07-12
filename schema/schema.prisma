@@ -332,7 +332,77 @@ model WarrantCancellation {
     reason_text         String?
 }
 
-// CONVERSION
+// TRANSFER 
+model ConvertibleTransfer {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_CONVERTIBLE_TRANSFER")
+    amount                 String // TODO: Monetary
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String?
+}
+
+model EquityCompensationTransfer {
+    id                     String                         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            EquityCompensationTransferType
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String?
+}
+
+model PlanSecurityTransfer {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_TRANSFER")
+}
+
+model StockTransfer {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_STOCK_TRANSFER")
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String?
+}
+
+model WarrantTransfer {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_WARRANT_TRANSFER")
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String?
+}
+
+// RELEASE
+model EauityCompensationRelease {
+    id                     String                        @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            EquityCompensationReleaseType
+    comments               String?
+    security_id            String?
+    date                   String?
+    settlement_price       String?
+    release_price          String?
+    quantity               String?
+    consideration_text     String?
+    resulting_security_ids String
+}
+
+model PlanSecurityRelease {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_RELEASE")
+}
 
 // *** ENUMS ***
 enum StockClassType {
@@ -444,4 +514,16 @@ enum CancellationTransactionTypes {
 enum EquityCompensationType {
     TX_PLAN_SECURITY_ISSUANCE
     TX_EQUITY_COMPENSATION_ISSUANCE
+}
+
+// Transfer
+enum EquityCompensationTransferType {
+    TX_PLAN_SECURITY_TRANSFER
+    TX_EQUITY_COMPENSATION_TRANSFER
+}
+
+// Release
+enum EquityCompensationReleaseType {
+    TX_PLAN_SECURITY_RELEASE
+    TX_EQUITY_COMPENSATION_RELEASE
 }
