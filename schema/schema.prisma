@@ -452,11 +452,13 @@ model StockRepurchase {
     security_id String?
 }
 
+// RETURN TO POOL
 model StockPlanReturnToPool {
     id          String @id @default(auto()) @map("_id") @db.ObjectId
     object_type String @default("TX_STOCK_PLAN_RETURN_TO_POOL")
 }
 
+// SPLIT
 model StockClassSplit {
     id             String  @id @default(auto()) @map("_id") @db.ObjectId
     object_type    String  @default("TX_STOCK_CLASS_SPLIT")
