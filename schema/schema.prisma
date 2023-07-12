@@ -465,8 +465,53 @@ model StockClassSplit {
     comments       String?
     date           String?
     stock_class_id String?
-    split_ratio    String // TODO: Ratio schema.
+    split_ratio    String // TODO: Ratio schema. https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Ratio.schema.json
 }
+
+// RETRACTION
+model ConvertibleRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_CONVERTIBLE_RETRACTION")
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+model EquityCompensationRetraction {
+    id          String                           @id @default(auto()) @map("_id") @db.ObjectId
+    object_type EquityCompensationRetractionType
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+model PlanSecurityRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_PLAN_SECURITY_RETRACTION")
+    comments    String?
+}
+
+model StockRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_STOCK_RETRACTION")
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+model WarrantRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_WARRANT_RETRACTION")
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+// ADJUSTMENT
 
 // *** ENUMS ***
 enum StockClassType {
@@ -592,7 +637,14 @@ enum EquityCompensationReleaseType {
     TX_EQUITY_COMPENSATION_RELEASE
 }
 
+// Exercise
 enum EquityCompensationExerciseType {
     TX_PLAN_SECURITY_EXERCISE
     TX_EQUITY_COMPENSATION_EXERCISE
+}
+
+// Retraction
+enum EquityCompensationRetractionType {
+    TX_PLAN_SECURITY_RETRACTION
+    TX_EQUITY_COMPENSATION_RETRACTION
 }
