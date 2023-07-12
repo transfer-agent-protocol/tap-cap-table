@@ -96,7 +96,7 @@ model VestingTerms {
     comments           String?
 }
 
-// * TRANSACTIONS 
+// *** TRANSACTIONS *** // 
 model StockIssuance {
     id                      String             @id @default(auto()) @map("_id") @db.ObjectId
     object_type             String             @default("TX_STOCK_ISSUANCE")
@@ -119,10 +119,83 @@ model StockIssuance {
     security_law_exemptions String?
 }
 
+// ACCEPTANCE
+model StockAcceptance {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_STOCK_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model ConvertibleAcceptance {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_CONVERTIBLE_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model PlanSecurityAcceptance {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_ACCEPTANCE")
+}
+
+model EquityCompensationAcceptance {
+    id          String                     @id @default(auto()) @map("_id") @db.ObjectId
+    object_type AcceptanceTransactionTypes
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model WarrantyAcceptance {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_WARRANT_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+// VESTING
+model VestingStart {
+    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type          String  @default("TX_VESTING_START")
+    vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
+    comments             String?
+    date                 String?
+    security_id          String?
+}
+
+model VestingEvent {
+    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type          String  @default("TX_VESTING_EVENT")
+    vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
+    comments             String?
+    date                 String?
+    security_id          String?
+}
+
+model VestingAcceleration {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_VESTING_ACCELERATION")
+    quantity    String // TODO: Numeric
+    reason_text String
+    comments    String?
+    date        String?
+    security_id String?
+}
+
 // * ENUMS
 enum StockClassType {
     PREFERRED
     COMMON
+}
+
+// Used in EquityCompensationAcceptance, may be extended
+enum AcceptanceTransactionTypes {
+    TX_PLAN_SECURITY_ACCEPTANCE
+    TX_EQUITY_COMPENSATION_ACCEPTANCE
 }
 
 // Should be 409A, but prisma doesn't supoort enum staring with number values
