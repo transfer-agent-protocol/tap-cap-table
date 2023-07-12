@@ -97,6 +97,8 @@ model VestingTerms {
 }
 
 // *** TRANSACTIONS *** // 
+
+// ISSUANCE
 model StockIssuance {
     id                      String             @id @default(auto()) @map("_id") @db.ObjectId
     object_type             String             @default("TX_STOCK_ISSUANCE")
@@ -117,6 +119,75 @@ model StockIssuance {
     board_approval_date     String?
     consideration_text      String?
     security_law_exemptions String?
+}
+
+model ConvertibleIssuance {
+    id                      String          @id @default(auto()) @map("_id") @db.ObjectId
+    object_type             String          @default("TX_CONVERTIBLE_ISSUANCE")
+    investment_amount       String // TODO: Monetary
+    convertible_type        ConvertibleType
+    conversion_triggers     String[] // TODO: Conversion triggers array
+    pro_rata                String? // TODO: Numeric
+    seniority               Int
+    comments                String?
+    security_id             String?
+    date                    String?
+    custom_id               String?
+    stakeholder_id          String?
+    board_approval_date     String?
+    consideration_text      String?
+    security_law_exemptions String?
+}
+
+model EquityCompensationIssuance {
+    id                           String                 @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                  EquityCompensationType
+    stock_plan_id                String?                @db.ObjectId
+    stock_class_id               String?                @db.ObjectId
+    compensation_type            String // TODO: CompensationType schema
+    option_grant_type            String? // TODO: OptionGrant schema
+    quantity                     String // TODO: Numeric
+    exercise_price               String? // TODO: Monetary
+    base_price                   String? // TODO: Monetary
+    early_exercisable            Boolean?
+    vesting_terms_id             String?                @db.ObjectId
+    expiration_date              String // TODO: Nullable Date Custom Type
+    termination_exercise_windows String // TODO: TerminationWindow schema
+    comments                     String?
+    security_id                  String?
+    date                         String?
+    custom_id                    String?
+    stakeholder_id               String?
+    board_approval_date          String?
+    stockholder_approval_date    String?
+    consideration_text           String?
+    security_law_exemptions      String?
+}
+
+model PlanSecurityIssuance {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_ISSUANCE")
+}
+
+model WarrantIssuance {
+    id                        String             @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String             @default("TX_WARRANT_ISSUANCE")
+    quantity                  String? // TODO: Numeric
+    exercise_price            String? // TODO: Monetary
+    purchase_price            String // TODO: Monetary
+    exercise_triggers         String[] // TODO: Exercise triggers array
+    warrant_expiration_date   String? // TODO: Date schema
+    vesting_terms_id          String?
+    quantity_source           QuantitySourceType
+    comments                  String?
+    security_id               String?
+    date                      String?
+    custom_id                 String?
+    stakeholder_id            String?
+    board_approval_date       String?
+    stockholder_approval_date String?
+    consideration_text        String?
+    security_law_exemptions   String?
 }
 
 // ACCEPTANCE
@@ -235,6 +306,8 @@ model WarrantCancellation {
     reason_text         String?
 }
 
+// CONVERSION
+
 // *** ENUMS ***
 enum StockClassType {
     PREFERRED
@@ -245,6 +318,21 @@ enum StockClassType {
 // OCF will be supporting different types of valuations in future versions
 enum ValuationType {
     CODE_409A
+}
+
+enum ConvertibleType {
+    NOTE
+    SAFE
+    CONVERTIBLE_SECURITY
+}
+
+enum QuantitySourceType {
+    HUMAN_ESTIMATED
+    MACHINE_ESTIMATED
+    UNSPECIFIED
+    INSTRUMENT_FIXED
+    INSTRUMENT_MAX
+    INSTRUMENT_MIN
 }
 
 enum AuthorizedSharesTypes {
@@ -312,13 +400,22 @@ enum StockIssuanceType {
 }
 
 // Transaction Types
+
+// Acceptance
 // Used in EquityCompensationAcceptance, may be extended
 enum AcceptanceTransactionTypes {
     TX_PLAN_SECURITY_ACCEPTANCE
     TX_EQUITY_COMPENSATION_ACCEPTANCE
 }
 
+// Cancellation
 enum CancellationTransactionTypes {
     TX_PLAN_SECURITY_CANCELLATION
     TX_EQUITY_COMPENSATION_CANCELLATION
+}
+
+// Issuance 
+enum EquityCompensationType {
+    TX_PLAN_SECURITY_ISSUANCE
+    TX_EQUITY_COMPENSATION_ISSUANCE
 }
