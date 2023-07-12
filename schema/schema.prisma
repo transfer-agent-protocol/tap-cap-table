@@ -190,6 +190,32 @@ model WarrantIssuance {
     security_law_exemptions   String?
 }
 
+// CONVERSION
+model ConvertibleConversion {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_CONVERTIBLE_CONVERSION")
+    reason_text               String
+    quantity_converted        String? // TODO: Numeric
+    balance_security_id       String? // Link
+    trigger_id                String
+    capitalization_definition Json? // TODO: CapitalizationDefinition Schema
+    comments                  String?
+    security_id               String?
+    date                      String?
+    resulting_security_ids    String?
+}
+
+model StockConversion {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_STOCK_CONVERSION")
+    balance_security_id    String?
+    quantity_converted     String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    resulting_security_ids String?
+}
+
 // ACCEPTANCE
 model StockAcceptance {
     id          String  @id @default(auto()) @map("_id") @db.ObjectId
