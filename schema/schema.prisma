@@ -512,6 +512,47 @@ model WarrantRetraction {
 }
 
 // ADJUSTMENT
+model IssuerAuthorizedSharesAdjustment {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_WARRANT_RETRACTION")
+    comments                  String?
+    date                      String?
+    issuer_id                 String?
+    new_shares_authorized     String // TODO: NUMERIC
+    board_approval_date       String? // TODO: Date
+    stockholder_approval_date String? // TODO: Date
+}
+
+model StockClassAuthorizedSharesAdjustment {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT")
+    comments                  String?
+    date                      String? // TODO: Date
+    stock_class_id            String?
+    new_shares_authorized     String // TODO: NUMERIC
+    board_approval_date       String? // TODO: Date
+    stockholder_approval_date String? // TODO: Date
+}
+
+model StockClassConversionRatioAdjustment {
+    id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                    String  @default("TX_STOCK_CLASS_CONVERSION_RATIO_ADJUSTMENT")
+    comments                       String?
+    date                           String?
+    stock_class_id                 String?
+    new_ratio_conversion_mechanism String // TODO: Ratio Conversion Mechanism "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/RatioConversionMechanism.schema.json"
+}
+
+model StockPlanPoolAdjustment {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_STOCK_PLAN_POOL_ADJUSTMENT")
+    comments                  String?
+    date                      String?
+    stock_plan_id             String?
+    board_approval_date       String? // TODO: Date
+    stockholder_approval_date String? // TODO: Date
+    shares_reserved           String // TODO: NUMERIC
+}
 
 // *** ENUMS ***
 enum StockClassType {
