@@ -186,16 +186,59 @@ model VestingAcceleration {
     security_id String?
 }
 
-// * ENUMS
+// CANCELLATION
+model ConvertibleCancellation {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String  @default("TX_CONVERTIBLE_CANCELLATION")
+    amount              String // TODO: Monetary
+    comments            String?
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
+}
+
+model EquityCompensationCancellation {
+    id                  String                       @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         CancellationTransactionTypes
+    quantity            String // TODO: Numeric
+    comments            String?
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
+}
+
+model PlanSecurityCancellation {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_CANCELLATION")
+}
+
+model StockCancellation {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String  @default("TX_STOCK_CANCELLATION")
+    quantity            String // TODO: Numeric
+    comments            String?
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
+}
+
+model WarrantCancellation {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String  @default("TX_WARRANT_CANCELLATION")
+    quantity            String // TODO: Numeric
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
+}
+
+// *** ENUMS ***
 enum StockClassType {
     PREFERRED
     COMMON
-}
-
-// Used in EquityCompensationAcceptance, may be extended
-enum AcceptanceTransactionTypes {
-    TX_PLAN_SECURITY_ACCEPTANCE
-    TX_EQUITY_COMPENSATION_ACCEPTANCE
 }
 
 // Should be 409A, but prisma doesn't supoort enum staring with number values
@@ -266,4 +309,16 @@ enum StakeholderRelationshipType {
 enum StockIssuanceType {
     RSA
     FOUNDER_STOCK
+}
+
+// Transaction Types
+// Used in EquityCompensationAcceptance, may be extended
+enum AcceptanceTransactionTypes {
+    TX_PLAN_SECURITY_ACCEPTANCE
+    TX_EQUITY_COMPENSATION_ACCEPTANCE
+}
+
+enum CancellationTransactionTypes {
+    TX_PLAN_SECURITY_CANCELLATION
+    TX_EQUITY_COMPENSATION_CANCELLATION
 }
