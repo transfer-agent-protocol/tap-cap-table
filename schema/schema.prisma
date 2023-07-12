@@ -432,6 +432,40 @@ model WarrantExercise {
     resulting_security_ids String?
 }
 
+// REISSUANCE
+model StockReissuance {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_STOCK_REISSUANCE")
+    comments               String?
+    security_id            String?
+    date                   String?
+    resulting_security_ids String?
+    split_transaction_id   String?
+    reason_text            String?
+}
+
+// REPURCHASE
+model StockRepurchase {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_STOCK_REPURCHASE")
+    comments    String?
+    security_id String?
+}
+
+model StockPlanReturnToPool {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_STOCK_PLAN_RETURN_TO_POOL")
+}
+
+model StockClassSplit {
+    id             String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type    String  @default("TX_STOCK_CLASS_SPLIT")
+    comments       String?
+    date           String?
+    stock_class_id String?
+    split_ratio    String // TODO: Ratio schema.
+}
+
 // *** ENUMS ***
 enum StockClassType {
     PREFERRED
