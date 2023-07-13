@@ -7,5 +7,6 @@
 		"esbenp.prettier-vscode",
 		"prisma.prisma",
 		"redhat.vscode-yaml",
+		"mongodb.mongodb-vscode",
 	],
 }

@@ -3,224 +3,587 @@ generator client {
 }
 
 datasource db {
-    provider = "postgresql"
+    provider = "mongodb"
     url      = env("DATABASE_URL")
 }
 
+// * PRIMARY OBJECTS: Links to validation schemas live under ocf repo schema/objects
 model Issuer {
-    id                               String        @id @default(uuid())
-    object_type                      String        @default("ISSUER")
+    id                               String   @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                      String   @default("ISSUER")
     legal_name                       String
     dba                              String?
-    formation_date                   String
-    country_of_formation             String        @db.VarChar(2)
-    country_subdivision_of_formation String        @db.VarChar(3)
-    TaxID                            TaxID[]
+    formation_date                   String // OCF Date type is a string
+    country_of_formation             String
+    country_subdivision_of_formation String
+    tax_ids                          String[]
     email                            String?
     phone                            String?
-    address                          Address?      @relation(fields: [addressId], references: [id])
-    addressId                        String?
-    initial_shares_authorized        Int?
-    stakeholders                     Stakeholder[]
-	stockClasses                     StockClass[]
+    address                          String?
+    initial_shares_authorized        String?
     comments                         String?
 }
 
-model Address {
-    id                  String        @id @default(uuid())
-    address_type        AddressType
-    street_suite        String
-    city                String
-    country_subdivision String        @db.VarChar(3)
-    country             String        @db.VarChar(2)
-    postal_code         String
-    issuers             Issuer[] // Relationship to the issuer
-    stakeholders        Stakeholder[] // Relationship to the stakeholder
-}
-
-model TaxID {
-    id            String       @id @default(uuid())
-    tax_id        String
-    country       String	   @db.VarChar(2)
-    Issuer        Issuer?      @relation(fields: [issuerId], references: [id])
-    issuerId      String?
-    Stakeholder   Stakeholder? @relation(fields: [stakeholderId], references: [id])
-    stakeholderId String?
+model Stakeholder {
+    id                   String                       @id @default(auto()) @map("_id") @db.ObjectId
+    object_type          String                       @default("STAKEHOLDER")
+    name                 Json
+    stakeholder_type     StakeholderType
+    issuer_assigned_id   String?
+    current_relationship StakeholderRelationshipType?
+    primary_contact      Json?
+    contact_info         Json?
+    comments             String?
 }
 
 model StockClass {
-    id                              String                      @id @default(uuid())
-    stakeholders                    Stakeholder[]
+    id                              String         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                     String         @default("STOCK_CLASS")
     name                            String
     class_type                      StockClassType
     default_id_prefix               String
-    initial_shares_authorized       Decimal  @db.Decimal(20, 10)
+    initial_shares_authorized       String // either AuthorizedSharesTypes or Numeric
     board_approval_date             String?
-    stockholder_approval_date       String?
-    votes_per_share                 Float
-    par_value                       Float?
-    price_per_share                 Float?
-    seniority                       Float
-    liquidation_preference_multiple Float?
-    participation_cap_multiple      Float?
-    conversion_rights_from          StockClassConversionRight[] @relation("FromStockClass")
-    conversion_rights_to            StockClassConversionRight[] @relation("ToStockClass")
-    StockPlan                       StockPlan[]
-	issuer                          Issuer?                     @relation(fields: [issuerId], references: [id])
-	issuerId                        String?
+    votes_per_share                 String // Numeric
+    par_value                       String? // Monetary
+    price_per_share                 String? //  Monetary
+    seniority                       String // Numeric;
+    conversion_rights               String[] // TODO: later
+    liquidation_preference_multiple String? // Numeric
+    participation_cap_multiple      String? // Numeric
+    comments                        String?
 }
 
-model StockClassConversionRight {
-    id                 String     @id @default(uuid())
-    from_class_id      String
-    from_class         StockClass @relation("FromStockClass", fields: [from_class_id], references: [id])
-    to_class_id        String
-    to_class           StockClass @relation("ToStockClass", fields: [to_class_id], references: [id])
-    conversion_ratio   Float
-    conversion_trigger Float?
-    conversion_price   Float?
+model StockLegendTemplate {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("STOCK_LEGEND_TEMPLATE")
+    name        String
+    text        String
+    comments    String?
 }
 
 model StockPlan {
-    id                            String                             @id @default(uuid())
-    plan_name                     String
-    board_approval_date           String?
-    stockholder_approval_date     String?
-    initial_shares_reserved       Float
-    default_cancellation_behavior StockPlanCancellationBehaviorType?
-    stock_class                   StockClass                         @relation(fields: [stock_class_id], references: [id])
-    stock_class_id                String
-    comments                      String?
+    id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                    String  @default("STOCK_PLAN")
+    plan_name                      String
+    board_approval_date            String?
+    stockholder_approval_date      String?
+    initial_shares_reserved        String // TODO this will be either AuthorizedSharesTypes or Numeric
+    default_cancellation_behaviour String?
+    stock_class_id                 String  @db.ObjectId
+    comments                       String?
 }
 
-model Valuation {
-    id                        String        @id @default(uuid())
-    provider                  String?
-    board_approval_date       String?
-    stockholder_approval_date String?
-    price_per_share           Decimal
-    effective_date            String
-    stock_class_id            String
-    valuation_type            ValuationType
-    comments                  String?
-}
-
-model Stakeholder {
-    id                       String                       @id @default(uuid())
-    stockClass               StockClass                   @relation(fields: [stockClassId], references: [id])
-    stockClassId             String
-    issuerId                 String
-    issuer                   Issuer                       @relation(fields: [issuerId], references: [id])
-    name                     Name                         @relation(fields: [nameId], references: [id])
-    stakeholder_type         StakeholderType
-    issuer_assigned_id       String?
-    current_relationship     StakeholderRelationshipType?
-    primary_contact          ContactInfo?                 @relation(fields: [contactInfoId], references: [id])
-    contact_info             ContactInfoWithoutName?      @relation(fields: [contactInfoWithoutNameId], references: [id])
-    addresses                Address[]
-    tax_ids                  TaxID[]
-    comments                 String?
-    nameId                   String
-    contactInfoId            String?
-    contactInfoWithoutNameId String?
+model Valuations {
+    id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String        @default("VALUATION")
+    provider            String?
+    board_approval_date String?
+    price_per_share     String // TODO: Monetary
+    effective_date      String
+    stock_class_id      String        @db.ObjectId
+    valuation_type      ValuationType
+    comments            String?
 }
 
 model VestingTerms {
-    id                 String             @id @default(uuid())
+    id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type        String         @default("VESTING_TERMS")
     name               String
     description        String
-    allocation_type    AllocationType     @relation(fields: [allocation_type_id], references: [id])
-    allocation_type_id String
-    vesting_conditions VestingCondition[]
+    allocation_type    AllocationType
+    vesting_conditions String[] // TODO: VestingConditions array for a later date.
     comments           String?
 }
 
-model AllocationType {
-    id              String             @id @default(uuid())
-    allocation_type AllocationTypeEnum
-    VestingTerms    VestingTerms[]
+// *** TRANSACTIONS *** // 
+
+// ISSUANCE
+model StockIssuance {
+    id                      String             @id @default(auto()) @map("_id") @db.ObjectId
+    object_type             String             @default("TX_STOCK_ISSUANCE")
+    stock_class_id          String             @db.ObjectId
+    stock_plan_id           String?            @db.ObjectId
+    share_numbers_issued    String[] // TODO: ShareNumberRange, also look up prisma optional arrays
+    share_price             String // TODO: Monetary
+    quantity                String // TODO: Numeric 
+    vesting_terms_id        String?            @db.ObjectId
+    cost_basis              String? // TODO: Monetary
+    stock_legend_ids        String[]           @db.ObjectId
+    issuance_type           StockIssuanceType?
+    comments                String?
+    security_id             String?
+    date                    String?
+    custom_id               String?
+    stakeholder_id          String?            @db.ObjectId
+    board_approval_date     String?
+    consideration_text      String?
+    security_law_exemptions String?
 }
 
-model VestingCondition {
-    id                  String          @id @default(uuid())
-    vesting_schedule    VestingSchedule @relation(fields: [vesting_schedule_id], references: [id])
-    vesting_schedule_id String
-    event               VestingEvent    @relation(fields: [event_id], references: [id])
-    event_id            String
-    VestingTerms        VestingTerms?   @relation(fields: [vestingTermsId], references: [id])
-    vestingTermsId      String?
+model ConvertibleIssuance {
+    id                      String          @id @default(auto()) @map("_id") @db.ObjectId
+    object_type             String          @default("TX_CONVERTIBLE_ISSUANCE")
+    investment_amount       String // TODO: Monetary
+    convertible_type        ConvertibleType
+    conversion_triggers     String[] // TODO: Conversion triggers array
+    pro_rata                String? // TODO: Numeric
+    seniority               Int
+    comments                String?
+    security_id             String?
+    date                    String?
+    custom_id               String?
+    stakeholder_id          String?
+    board_approval_date     String?
+    consideration_text      String?
+    security_law_exemptions String?
 }
 
-model VestingSchedule {
-    id               String             @id @default(uuid())
-    vesting_schedule String
-    VestingCondition VestingCondition[]
+model EquityCompensationIssuance {
+    id                           String                 @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                  EquityCompensationType
+    stock_plan_id                String?                @db.ObjectId
+    stock_class_id               String?                @db.ObjectId
+    compensation_type            String // TODO: CompensationType schema
+    option_grant_type            String? // TODO: OptionGrant schema
+    quantity                     String // TODO: Numeric
+    exercise_price               String? // TODO: Monetary
+    base_price                   String? // TODO: Monetary
+    early_exercisable            Boolean?
+    vesting_terms_id             String?                @db.ObjectId
+    expiration_date              String // TODO: Nullable Date Custom Type
+    termination_exercise_windows String // TODO: TerminationWindow schema
+    comments                     String?
+    security_id                  String?
+    date                         String?
+    custom_id                    String?
+    stakeholder_id               String?
+    board_approval_date          String?
+    stockholder_approval_date    String?
+    consideration_text           String?
+    security_law_exemptions      String?
+}
+
+model PlanSecurityIssuance {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_ISSUANCE")
+}
+
+model WarrantIssuance {
+    id                        String             @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String             @default("TX_WARRANT_ISSUANCE")
+    quantity                  String? // TODO: Numeric
+    exercise_price            String? // TODO: Monetary
+    purchase_price            String // TODO: Monetary
+    exercise_triggers         String[] // TODO: Exercise triggers array
+    warrant_expiration_date   String? // TODO: Date schema
+    vesting_terms_id          String?
+    quantity_source           QuantitySourceType
+    comments                  String?
+    security_id               String?
+    date                      String?
+    custom_id                 String?
+    stakeholder_id            String?
+    board_approval_date       String?
+    stockholder_approval_date String?
+    consideration_text        String?
+    security_law_exemptions   String?
+}
+
+// CONVERSION
+model ConvertibleConversion {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_CONVERTIBLE_CONVERSION")
+    reason_text               String
+    quantity_converted        String? // TODO: Numeric
+    balance_security_id       String? // Link
+    trigger_id                String
+    capitalization_definition Json? // TODO: CapitalizationDefinition Schema
+    comments                  String?
+    security_id               String?
+    date                      String?
+    resulting_security_ids    String?
+}
+
+model StockConversion {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_STOCK_CONVERSION")
+    balance_security_id    String?
+    quantity_converted     String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    resulting_security_ids String?
+}
+
+// ACCEPTANCE
+model StockAcceptance {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_STOCK_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model ConvertibleAcceptance {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_CONVERTIBLE_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model PlanSecurityAcceptance {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_ACCEPTANCE")
+}
+
+model EquityCompensationAcceptance {
+    id          String                     @id @default(auto()) @map("_id") @db.ObjectId
+    object_type AcceptanceTransactionTypes
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model WarrantyAcceptance {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_WARRANT_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+// VESTING
+model VestingStart {
+    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type          String  @default("TX_VESTING_START")
+    vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
+    comments             String?
+    date                 String?
+    security_id          String?
 }
 
 model VestingEvent {
-    id               String             @id @default(uuid())
-    event_type       VestingEventType   @relation(fields: [event_type_id], references: [id])
-    event_type_id    String
-    date             String
-    VestingCondition VestingCondition[]
+    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type          String  @default("TX_VESTING_EVENT")
+    vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
+    comments             String?
+    date                 String?
+    security_id          String?
 }
 
-model VestingEventType {
-    id           String         @id @default(uuid())
-    event_type   String
-    VestingEvent VestingEvent[]
+model VestingAcceleration {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_VESTING_ACCELERATION")
+    quantity    String // TODO: Numeric
+    reason_text String
+    comments    String?
+    date        String?
+    security_id String?
 }
 
-model Name {
-    id          String        @id @default(uuid())
-    legal_name  String
-    first_name  String?
-    last_name   String?
-    Stakeholder Stakeholder[]
-    ContactInfo ContactInfo[]
+// CANCELLATION
+model ConvertibleCancellation {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String  @default("TX_CONVERTIBLE_CANCELLATION")
+    amount              String // TODO: Monetary
+    comments            String?
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
 }
 
-model ContactInfo {
-    id            String        @id @default(uuid())
-    name          Name          @relation(fields: [nameId], references: [id])
-    phone_numbers Phone[]
-    emails        Email[]
-    Stakeholder   Stakeholder[]
-    nameId        String
+model EquityCompensationCancellation {
+    id                  String                       @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         CancellationTransactionTypes
+    quantity            String // TODO: Numeric
+    comments            String?
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
 }
 
-model ContactInfoWithoutName {
-    id            String        @id @default(uuid())
-    phone_numbers Phone[]
-    emails        Email[]
-    Stakeholder   Stakeholder[]
+model PlanSecurityCancellation {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_CANCELLATION")
 }
 
-model Email {
-    id                       String                  @id @default(uuid())
-    email_type               EmailType
-    email_address            String
-    ContactInfo              ContactInfo?            @relation(fields: [contactInfoId], references: [id])
-    contactInfoId            String?
-    ContactInfoWithoutName   ContactInfoWithoutName? @relation(fields: [contactInfoWithoutNameId], references: [id])
-    contactInfoWithoutNameId String?
+model StockCancellation {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String  @default("TX_STOCK_CANCELLATION")
+    quantity            String // TODO: Numeric
+    comments            String?
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
 }
 
-model Phone {
-    id                       String                  @id @default(uuid())
-    phone_type               PhoneType
-    phone_number             String
-    ContactInfo              ContactInfo?            @relation(fields: [contactInfoId], references: [id])
-    contactInfoId            String?
-    ContactInfoWithoutName   ContactInfoWithoutName? @relation(fields: [contactInfoWithoutNameId], references: [id])
-    contactInfoWithoutNameId String?
+model WarrantCancellation {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type         String  @default("TX_WARRANT_CANCELLATION")
+    quantity            String // TODO: Numeric
+    security_id         String?
+    date                String?
+    balance_security_id String?
+    reason_text         String?
 }
 
-// * ENUMS
+// TRANSFER 
+model ConvertibleTransfer {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_CONVERTIBLE_TRANSFER")
+    amount                 String // TODO: Monetary
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String?
+}
 
+model EquityCompensationTransfer {
+    id                     String                         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            EquityCompensationTransferType
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String?
+}
+
+model PlanSecurityTransfer {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_TRANSFER")
+}
+
+model StockTransfer {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_STOCK_TRANSFER")
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String?
+}
+
+model WarrantTransfer {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_WARRANT_TRANSFER")
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String?
+}
+
+// RELEASE
+model EauityCompensationRelease {
+    id                     String                        @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            EquityCompensationReleaseType
+    comments               String?
+    security_id            String?
+    date                   String?
+    settlement_price       String?
+    release_price          String?
+    quantity               String?
+    consideration_text     String?
+    resulting_security_ids String
+}
+
+model PlanSecurityRelease {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_RELEASE")
+}
+
+// EXERCISE 
+model EquityCompensationExercise {
+    id                     String                         @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            EquityCompensationExerciseType
+    quantity               String // TODO: Numeric
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String?
+}
+
+model PlanSecurityExercise {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_PLAN_SECURITY_EXERCISE")
+}
+
+model WarrantExercise {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_PLAN_SECURITY_EXERCISE")
+    trigger_id             String
+    comments               String?
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String?
+}
+
+// REISSUANCE
+model StockReissuance {
+    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type            String  @default("TX_STOCK_REISSUANCE")
+    comments               String?
+    security_id            String?
+    date                   String?
+    resulting_security_ids String?
+    split_transaction_id   String?
+    reason_text            String?
+}
+
+// REPURCHASE
+model StockRepurchase {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_STOCK_REPURCHASE")
+    comments    String?
+    security_id String?
+}
+
+// RETURN TO POOL
+model StockPlanReturnToPool {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String @default("TX_STOCK_PLAN_RETURN_TO_POOL")
+}
+
+// SPLIT
+model StockClassSplit {
+    id             String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type    String  @default("TX_STOCK_CLASS_SPLIT")
+    comments       String?
+    date           String?
+    stock_class_id String?
+    split_ratio    String // TODO: Ratio schema. https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Ratio.schema.json
+}
+
+// RETRACTION
+model ConvertibleRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_CONVERTIBLE_RETRACTION")
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+model EquityCompensationRetraction {
+    id          String                           @id @default(auto()) @map("_id") @db.ObjectId
+    object_type EquityCompensationRetractionType
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+model PlanSecurityRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_PLAN_SECURITY_RETRACTION")
+    comments    String?
+}
+
+model StockRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_STOCK_RETRACTION")
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+model WarrantRetraction {
+    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type String  @default("TX_WARRANT_RETRACTION")
+    comments    String?
+    security_id String?
+    date        String?
+    reason_text String?
+}
+
+// ADJUSTMENT
+model IssuerAuthorizedSharesAdjustment {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_WARRANT_RETRACTION")
+    comments                  String?
+    date                      String?
+    issuer_id                 String?
+    new_shares_authorized     String // TODO: NUMERIC
+    board_approval_date       String? // TODO: Date
+    stockholder_approval_date String? // TODO: Date
+}
+
+model StockClassAuthorizedSharesAdjustment {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT")
+    comments                  String?
+    date                      String? // TODO: Date
+    stock_class_id            String?
+    new_shares_authorized     String // TODO: NUMERIC
+    board_approval_date       String? // TODO: Date
+    stockholder_approval_date String? // TODO: Date
+}
+
+model StockClassConversionRatioAdjustment {
+    id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type                    String  @default("TX_STOCK_CLASS_CONVERSION_RATIO_ADJUSTMENT")
+    comments                       String?
+    date                           String?
+    stock_class_id                 String?
+    new_ratio_conversion_mechanism String // TODO: Ratio Conversion Mechanism "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/RatioConversionMechanism.schema.json"
+}
+
+model StockPlanPoolAdjustment {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    object_type               String  @default("TX_STOCK_PLAN_POOL_ADJUSTMENT")
+    comments                  String?
+    date                      String?
+    stock_plan_id             String?
+    board_approval_date       String? // TODO: Date
+    stockholder_approval_date String? // TODO: Date
+    shares_reserved           String // TODO: NUMERIC
+}
+
+// *** ENUMS ***
 enum StockClassType {
     PREFERRED
     COMMON
+}
+
+// Should be 409A, but prisma doesn't supoort enum staring with number values
+// OCF will be supporting different types of valuations in future versions
+enum ValuationType {
+    CODE_409A
+}
+
+enum ConvertibleType {
+    NOTE
+    SAFE
+    CONVERTIBLE_SECURITY
+}
+
+enum QuantitySourceType {
+    HUMAN_ESTIMATED
+    MACHINE_ESTIMATED
+    UNSPECIFIED
+    INSTRUMENT_FIXED
+    INSTRUMENT_MAX
+    INSTRUMENT_MIN
+}
+
+enum AuthorizedSharesTypes {
+    NOT_APPLICABLE
+    UNLIMITED
 }
 
 enum StockPlanCancellationBehaviorType {
@@ -228,14 +591,14 @@ enum StockPlanCancellationBehaviorType {
     CANCEL
 }
 
-enum ValuationType {
-    PREMONEY
-    POSTMONEY
-}
-
-enum AllocationTypeEnum {
-    ROUND_DOWN
-    ROUND_UP
+enum AllocationType {
+    CUMULATIVE_ROUNDING
+    CUMULATIVE_ROUND_DOWN
+    FRONT_LOADED
+    BACK_LOADED
+    FRONT_LOADED_TO_SINGLE_TRANCHE
+    BACK_LOADED_TO_SINGLE_TRANCHE
+    FRACTIONAL
 }
 
 enum AddressType {
@@ -275,4 +638,54 @@ enum StakeholderRelationshipType {
     NON_US_EMPLOYEE
     OFFICER
     OTHER
+}
+
+enum StockIssuanceType {
+    RSA
+    FOUNDER_STOCK
+}
+
+// Transaction Types
+
+// Acceptance
+// Used in EquityCompensationAcceptance, may be extended
+enum AcceptanceTransactionTypes {
+    TX_PLAN_SECURITY_ACCEPTANCE
+    TX_EQUITY_COMPENSATION_ACCEPTANCE
+}
+
+// Cancellation
+enum CancellationTransactionTypes {
+    TX_PLAN_SECURITY_CANCELLATION
+    TX_EQUITY_COMPENSATION_CANCELLATION
+}
+
+// Issuance 
+enum EquityCompensationType {
+    TX_PLAN_SECURITY_ISSUANCE
+    TX_EQUITY_COMPENSATION_ISSUANCE
+}
+
+// Transfer
+enum EquityCompensationTransferType {
+    TX_PLAN_SECURITY_TRANSFER
+    TX_EQUITY_COMPENSATION_TRANSFER
+}
+
+// Release
+enum EquityCompensationReleaseType {
+    TX_PLAN_SECURITY_RELEASE
+    TX_EQUITY_COMPENSATION_RELEASE
+}
+
+// Exercise
+enum EquityCompensationExerciseType {
+    TX_PLAN_SECURITY_EXERCISE
+    TX_EQUITY_COMPENSATION_EXERCISE
+}
+
+// Retraction
+enum EquityCompensationRetractionType {
+    TX_PLAN_SECURITY_RETRACTION
+    TX_EQUITY_COMPENSATION_RETRACTION
 }
