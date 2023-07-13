@@ -1,14 +1,15 @@
 const { PrismaClient } = require("@prisma/client");
-const inputStakeholders = require('./stakeholders.json')
+const inputStakeholders = require('../ocf/samples/Stakeholders.ocf.json') 
+const inputStockClasses = require('../ocf/samples/StockClasses.ocf.json')
 
+// manifest wraps all of these.
 
 const prisma = new PrismaClient();
 
 async function main() {
 
-    if(inputStakeholders.file_type === "OCF_STAKEHOLDERS_FILE") {
-        console.log('Adding stakeholder to DB')
-
+        // STAKEHOLDER
+        console.log('Adding Stakeholder to DB')
         for (const inputStakeholder of inputStakeholders.items) {
             const stakeholder = await prisma.stakeholder.create({
                 data: inputStakeholder
@@ -16,10 +17,17 @@ async function main() {
 
             console.log('Stakeholder added ', stakeholder)
         }
+    
+        // STOCK CLASS
+        console.log('Adding Stock Class to DB')
+        for (const inputStockClass of inputStockClasses.items) {
+            const stockClass = await prisma.stockClass.create({
+                data: inputStockClass
+            })
 
-    } else {
-        console.log('Data does not match a known object')
-    }
+            console.log('Stockclass added ', stockClass)
+        }
+
 
     // const issuer = await prisma.issuer.create({
     //     data: {
