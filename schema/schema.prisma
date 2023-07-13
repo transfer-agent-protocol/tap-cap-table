@@ -55,23 +55,23 @@ model StockClass {
 }
 
 model StockLegendTemplate {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("STOCK_LEGEND_TEMPLATE")
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("STOCK_LEGEND_TEMPLATE")
     name        String
     text        String
-    comments    String?
+    comments    String[]
 }
 
 model StockPlan {
-    id                             String  @id @default(uuid()) @map("_id")
-    object_type                    String  @default("STOCK_PLAN")
-    plan_name                      String
-    board_approval_date            String?
-    stockholder_approval_date      String?
-    initial_shares_reserved        String // TODO this will be either AuthorizedSharesTypes or Numeric
-    default_cancellation_behaviour String?
-    stock_class_id                 String  @db.ObjectId
-    comments                       String?
+    id                            String   @id @default(uuid()) @map("_id")
+    object_type                   String   @default("STOCK_PLAN")
+    plan_name                     String
+    board_approval_date           String?
+    stockholder_approval_date     String?
+    initial_shares_reserved       String
+    default_cancellation_behavior String?
+    stock_class_id                String   @db.ObjectId
+    comments                      String[]
 }
 
 model Valuations {
@@ -83,7 +83,7 @@ model Valuations {
     effective_date      String
     stock_class_id      String        @db.ObjectId
     valuation_type      ValuationType
-    comments            String?
+    comments            String[]
 }
 
 model VestingTerms {
@@ -93,7 +93,7 @@ model VestingTerms {
     description        String
     allocation_type    AllocationType
     vesting_conditions String[] // TODO: VestingConditions array for a later date.
-    comments           String?
+    comments           String[]
 }
 
 // *** TRANSACTIONS *** // 
