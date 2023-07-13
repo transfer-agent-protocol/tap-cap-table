@@ -9,7 +9,7 @@ datasource db {
 
 // * PRIMARY OBJECTS: Links to validation schemas live under ocf repo schema/objects
 model Issuer {
-    id                               String   @id @default(auto()) @map("_id") @db.ObjectId
+    id                               String   @id @default(uuid()) @map("_id")
     object_type                      String   @default("ISSUER")
     legal_name                       String
     dba                              String?
@@ -25,7 +25,7 @@ model Issuer {
 }
 
 model Stakeholder {
-    id                   String                       @id @default(auto()) @map("_id") @db.ObjectId
+    id                   String                       @id @default(uuid()) @map("_id")
     object_type          String                       @default("STAKEHOLDER")
     name                 Json
     stakeholder_type     StakeholderType
@@ -33,11 +33,11 @@ model Stakeholder {
     current_relationship StakeholderRelationshipType?
     primary_contact      Json?
     contact_info         Json?
-    comments             String?
+    comments             String[]
 }
 
 model StockClass {
-    id                              String         @id @default(auto()) @map("_id") @db.ObjectId
+    id                              String         @id @default(uuid()) @map("_id")
     object_type                     String         @default("STOCK_CLASS")
     name                            String
     class_type                      StockClassType
@@ -55,7 +55,7 @@ model StockClass {
 }
 
 model StockLegendTemplate {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("STOCK_LEGEND_TEMPLATE")
     name        String
     text        String
@@ -63,7 +63,7 @@ model StockLegendTemplate {
 }
 
 model StockPlan {
-    id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                             String  @id @default(uuid()) @map("_id")
     object_type                    String  @default("STOCK_PLAN")
     plan_name                      String
     board_approval_date            String?
@@ -75,7 +75,7 @@ model StockPlan {
 }
 
 model Valuations {
-    id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+    id                  String        @id @default(uuid()) @map("_id")
     object_type         String        @default("VALUATION")
     provider            String?
     board_approval_date String?
@@ -87,7 +87,7 @@ model Valuations {
 }
 
 model VestingTerms {
-    id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+    id                 String         @id @default(uuid()) @map("_id")
     object_type        String         @default("VESTING_TERMS")
     name               String
     description        String
@@ -100,7 +100,7 @@ model VestingTerms {
 
 // ISSUANCE
 model StockIssuance {
-    id                      String             @id @default(auto()) @map("_id") @db.ObjectId
+    id                      String             @id @default(uuid()) @map("_id")
     object_type             String             @default("TX_STOCK_ISSUANCE")
     stock_class_id          String             @db.ObjectId
     stock_plan_id           String?            @db.ObjectId
@@ -122,7 +122,7 @@ model StockIssuance {
 }
 
 model ConvertibleIssuance {
-    id                      String          @id @default(auto()) @map("_id") @db.ObjectId
+    id                      String          @id @default(uuid()) @map("_id")
     object_type             String          @default("TX_CONVERTIBLE_ISSUANCE")
     investment_amount       String // TODO: Monetary
     convertible_type        ConvertibleType
@@ -140,7 +140,7 @@ model ConvertibleIssuance {
 }
 
 model EquityCompensationIssuance {
-    id                           String                 @id @default(auto()) @map("_id") @db.ObjectId
+    id                           String                 @id @default(uuid()) @map("_id")
     object_type                  EquityCompensationType
     stock_plan_id                String?                @db.ObjectId
     stock_class_id               String?                @db.ObjectId
@@ -165,12 +165,12 @@ model EquityCompensationIssuance {
 }
 
 model PlanSecurityIssuance {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_ISSUANCE")
 }
 
 model WarrantIssuance {
-    id                        String             @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String             @id @default(uuid()) @map("_id")
     object_type               String             @default("TX_WARRANT_ISSUANCE")
     quantity                  String? // TODO: Numeric
     exercise_price            String? // TODO: Monetary
@@ -192,7 +192,7 @@ model WarrantIssuance {
 
 // CONVERSION
 model ConvertibleConversion {
-    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String  @id @default(uuid()) @map("_id")
     object_type               String  @default("TX_CONVERTIBLE_CONVERSION")
     reason_text               String
     quantity_converted        String? // TODO: Numeric
@@ -206,7 +206,7 @@ model ConvertibleConversion {
 }
 
 model StockConversion {
-    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_STOCK_CONVERSION")
     balance_security_id    String?
     quantity_converted     String // TODO: Numeric
@@ -218,7 +218,7 @@ model StockConversion {
 
 // ACCEPTANCE
 model StockAcceptance {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_STOCK_ACCEPTANCE")
     comments    String?
     security_id String?
@@ -226,7 +226,7 @@ model StockAcceptance {
 }
 
 model ConvertibleAcceptance {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_CONVERTIBLE_ACCEPTANCE")
     comments    String?
     security_id String?
@@ -234,12 +234,12 @@ model ConvertibleAcceptance {
 }
 
 model PlanSecurityAcceptance {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_ACCEPTANCE")
 }
 
 model EquityCompensationAcceptance {
-    id          String                     @id @default(auto()) @map("_id") @db.ObjectId
+    id          String                     @id @default(uuid()) @map("_id")
     object_type AcceptanceTransactionTypes
     comments    String?
     security_id String?
@@ -247,7 +247,7 @@ model EquityCompensationAcceptance {
 }
 
 model WarrantyAcceptance {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_WARRANT_ACCEPTANCE")
     comments    String?
     security_id String?
@@ -256,7 +256,7 @@ model WarrantyAcceptance {
 
 // VESTING
 model VestingStart {
-    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                   String  @id @default(uuid()) @map("_id")
     object_type          String  @default("TX_VESTING_START")
     vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
     comments             String?
@@ -265,7 +265,7 @@ model VestingStart {
 }
 
 model VestingEvent {
-    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                   String  @id @default(uuid()) @map("_id")
     object_type          String  @default("TX_VESTING_EVENT")
     vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
     comments             String?
@@ -274,7 +274,7 @@ model VestingEvent {
 }
 
 model VestingAcceleration {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_VESTING_ACCELERATION")
     quantity    String // TODO: Numeric
     reason_text String
@@ -285,7 +285,7 @@ model VestingAcceleration {
 
 // CANCELLATION
 model ConvertibleCancellation {
-    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                  String  @id @default(uuid()) @map("_id")
     object_type         String  @default("TX_CONVERTIBLE_CANCELLATION")
     amount              String // TODO: Monetary
     comments            String?
@@ -296,7 +296,7 @@ model ConvertibleCancellation {
 }
 
 model EquityCompensationCancellation {
-    id                  String                       @id @default(auto()) @map("_id") @db.ObjectId
+    id                  String                       @id @default(uuid()) @map("_id")
     object_type         CancellationTransactionTypes
     quantity            String // TODO: Numeric
     comments            String?
@@ -307,12 +307,12 @@ model EquityCompensationCancellation {
 }
 
 model PlanSecurityCancellation {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_CANCELLATION")
 }
 
 model StockCancellation {
-    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                  String  @id @default(uuid()) @map("_id")
     object_type         String  @default("TX_STOCK_CANCELLATION")
     quantity            String // TODO: Numeric
     comments            String?
@@ -323,7 +323,7 @@ model StockCancellation {
 }
 
 model WarrantCancellation {
-    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                  String  @id @default(uuid()) @map("_id")
     object_type         String  @default("TX_WARRANT_CANCELLATION")
     quantity            String // TODO: Numeric
     security_id         String?
@@ -334,7 +334,7 @@ model WarrantCancellation {
 
 // TRANSFER 
 model ConvertibleTransfer {
-    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_CONVERTIBLE_TRANSFER")
     amount                 String // TODO: Monetary
     comments               String?
@@ -345,7 +345,7 @@ model ConvertibleTransfer {
 }
 
 model EquityCompensationTransfer {
-    id                     String                         @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String                         @id @default(uuid()) @map("_id")
     object_type            EquityCompensationTransferType
     quantity               String // TODO: Numeric
     comments               String?
@@ -357,12 +357,12 @@ model EquityCompensationTransfer {
 }
 
 model PlanSecurityTransfer {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_TRANSFER")
 }
 
 model StockTransfer {
-    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_STOCK_TRANSFER")
     quantity               String // TODO: Numeric
     comments               String?
@@ -374,7 +374,7 @@ model StockTransfer {
 }
 
 model WarrantTransfer {
-    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_WARRANT_TRANSFER")
     quantity               String // TODO: Numeric
     comments               String?
@@ -387,7 +387,7 @@ model WarrantTransfer {
 
 // RELEASE
 model EauityCompensationRelease {
-    id                     String                        @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String                        @id @default(uuid()) @map("_id")
     object_type            EquityCompensationReleaseType
     comments               String?
     security_id            String?
@@ -400,13 +400,13 @@ model EauityCompensationRelease {
 }
 
 model PlanSecurityRelease {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_RELEASE")
 }
 
 // EXERCISE 
 model EquityCompensationExercise {
-    id                     String                         @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String                         @id @default(uuid()) @map("_id")
     object_type            EquityCompensationExerciseType
     quantity               String // TODO: Numeric
     comments               String?
@@ -417,12 +417,12 @@ model EquityCompensationExercise {
 }
 
 model PlanSecurityExercise {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_EXERCISE")
 }
 
 model WarrantExercise {
-    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_PLAN_SECURITY_EXERCISE")
     trigger_id             String
     comments               String?
@@ -434,7 +434,7 @@ model WarrantExercise {
 
 // REISSUANCE
 model StockReissuance {
-    id                     String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_STOCK_REISSUANCE")
     comments               String?
     security_id            String?
@@ -446,7 +446,7 @@ model StockReissuance {
 
 // REPURCHASE
 model StockRepurchase {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_STOCK_REPURCHASE")
     comments    String?
     security_id String?
@@ -454,13 +454,13 @@ model StockRepurchase {
 
 // RETURN TO POOL
 model StockPlanReturnToPool {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_STOCK_PLAN_RETURN_TO_POOL")
 }
 
 // SPLIT
 model StockClassSplit {
-    id             String  @id @default(auto()) @map("_id") @db.ObjectId
+    id             String  @id @default(uuid()) @map("_id")
     object_type    String  @default("TX_STOCK_CLASS_SPLIT")
     comments       String?
     date           String?
@@ -470,7 +470,7 @@ model StockClassSplit {
 
 // RETRACTION
 model ConvertibleRetraction {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_CONVERTIBLE_RETRACTION")
     comments    String?
     security_id String?
@@ -479,7 +479,7 @@ model ConvertibleRetraction {
 }
 
 model EquityCompensationRetraction {
-    id          String                           @id @default(auto()) @map("_id") @db.ObjectId
+    id          String                           @id @default(uuid()) @map("_id")
     object_type EquityCompensationRetractionType
     comments    String?
     security_id String?
@@ -488,13 +488,13 @@ model EquityCompensationRetraction {
 }
 
 model PlanSecurityRetraction {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_PLAN_SECURITY_RETRACTION")
     comments    String?
 }
 
 model StockRetraction {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_STOCK_RETRACTION")
     comments    String?
     security_id String?
@@ -503,7 +503,7 @@ model StockRetraction {
 }
 
 model WarrantRetraction {
-    id          String  @id @default(auto()) @map("_id") @db.ObjectId
+    id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_WARRANT_RETRACTION")
     comments    String?
     security_id String?
@@ -513,7 +513,7 @@ model WarrantRetraction {
 
 // ADJUSTMENT
 model IssuerAuthorizedSharesAdjustment {
-    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String  @id @default(uuid()) @map("_id")
     object_type               String  @default("TX_WARRANT_RETRACTION")
     comments                  String?
     date                      String?
@@ -524,7 +524,7 @@ model IssuerAuthorizedSharesAdjustment {
 }
 
 model StockClassAuthorizedSharesAdjustment {
-    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String  @id @default(uuid()) @map("_id")
     object_type               String  @default("TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT")
     comments                  String?
     date                      String? // TODO: Date
@@ -535,7 +535,7 @@ model StockClassAuthorizedSharesAdjustment {
 }
 
 model StockClassConversionRatioAdjustment {
-    id                             String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                             String  @id @default(uuid()) @map("_id")
     object_type                    String  @default("TX_STOCK_CLASS_CONVERSION_RATIO_ADJUSTMENT")
     comments                       String?
     date                           String?
@@ -544,7 +544,7 @@ model StockClassConversionRatioAdjustment {
 }
 
 model StockPlanPoolAdjustment {
-    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String  @id @default(uuid()) @map("_id")
     object_type               String  @default("TX_STOCK_PLAN_POOL_ADJUSTMENT")
     comments                  String?
     date                      String?
