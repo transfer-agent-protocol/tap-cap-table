@@ -1,41 +1,25 @@
 const { PrismaClient } = require("@prisma/client");
-const stakeholdersJson = require('./stakeholders.json')
+const inputStakeholders = require('./stakeholders.json')
 
 
 const prisma = new PrismaClient();
 
 async function main() {
 
-    if(stakeholdersJson.file_type === "OCF_STAKEHOLDERS_FILE") {
+    if(inputStakeholders.file_type === "OCF_STAKEHOLDERS_FILE") {
         console.log('Adding stakeholder to DB')
 
-        const stakeholderData = stakeholdersJson.items[0]
+        for (const inputStakeholder of inputStakeholders.items) {
+            const stakeholder = await prisma.stakeholder.create({
+                data: inputStakeholder
+            }); 
 
-        const stakeholderDb = await prisma.stakeholder.create({
-            data: stakeholderData
-        });
-
-        console.log('Stakeholder added ', stakeholderDb)
+            console.log('Stakeholder added ', stakeholder)
+        }
 
     } else {
         console.log('Data does not match a known object')
     }
-   
-
-
-    // const stakeholder2 = await prisma.stakeholder.create({
-    //     data: {
-    //         name: {
-    //             legal_name: "Victor Augusto Cardenas Mimo",
-    //             first_name: "Victor Augusto",
-    //             last_name: "Cardenas Mimo",
-    //         },
-    //         stakeholder_type: "INDIVIDUAL",
-    //         current_relationship: "FOUNDER",
-    //         issuer_assigned_id: "POET_2",
-    //         comments: "Second Stakeholder",
-    //     },
-    // });
 
     // const issuer = await prisma.issuer.create({
     //     data: {
