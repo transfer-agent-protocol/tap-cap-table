@@ -42,16 +42,16 @@ model StockClass {
     name                            String
     class_type                      StockClassType
     default_id_prefix               String
-    initial_shares_authorized       String // either AuthorizedSharesTypes or Numeric
+    initial_shares_authorized       String
     board_approval_date             String?
-    votes_per_share                 String // Numeric
-    par_value                       String? // Monetary
-    price_per_share                 String? //  Monetary
-    seniority                       String // Numeric;
-    conversion_rights               String[] // TODO: later
-    liquidation_preference_multiple String? // Numeric
-    participation_cap_multiple      String? // Numeric
-    comments                        String?
+    votes_per_share                 String
+    par_value                       Json?
+    price_per_share                 Json?
+    seniority                       String
+    conversion_rights               Json?
+    liquidation_preference_multiple String?
+    participation_cap_multiple      String?
+    comments                        String[]
 }
 
 model StockLegendTemplate {
