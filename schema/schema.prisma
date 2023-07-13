@@ -79,7 +79,7 @@ model Valuations {
     object_type         String        @default("VALUATION")
     provider            String?
     board_approval_date String?
-    price_per_share     String // TODO: Monetary
+    price_per_share     Json
     effective_date      String
     stock_class_id      String
     valuation_type      ValuationType
@@ -92,7 +92,7 @@ model VestingTerms {
     name               String
     description        String
     allocation_type    AllocationType
-    vesting_conditions String[] // TODO: VestingConditions array for a later date.
+    vesting_conditions Json
     comments           String[]
 }
 
