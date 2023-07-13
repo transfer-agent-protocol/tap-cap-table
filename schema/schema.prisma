@@ -70,7 +70,7 @@ model StockPlan {
     stockholder_approval_date     String?
     initial_shares_reserved       String
     default_cancellation_behavior String?
-    stock_class_id                String   @db.ObjectId
+    stock_class_id                String
     comments                      String[]
 }
 
@@ -81,7 +81,7 @@ model Valuations {
     board_approval_date String?
     price_per_share     String // TODO: Monetary
     effective_date      String
-    stock_class_id      String        @db.ObjectId
+    stock_class_id      String
     valuation_type      ValuationType
     comments            String[]
 }
