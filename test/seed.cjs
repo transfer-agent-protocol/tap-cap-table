@@ -3,6 +3,7 @@ const inputStakeholders = require('../ocf/samples/Stakeholders.ocf.json')
 const inputStockClasses = require('../ocf/samples/StockClasses.ocf.json')
 const inputStockLegends = require('../ocf/samples/StockLegends.ocf.json')
 const inputStockPlans = require('../ocf/samples/StockPlans.ocf.json')
+const inputValuations = require('../ocf/samples/Valuations.ocf.json')
 
 // manifest wraps all of these.
 
@@ -50,6 +51,15 @@ async function main() {
             console.log('Stock plan added ', stockPlan)
         }
 
+        // VALUATION
+        console.log('Adding Valuation to DB')
+        for (const inputValuation of inputValuations.items) {
+            const valuation = await prisma.valuation.create({
+                data: inputValuation
+            })
+
+            console.log('Valuation added ', valuation)
+        }
 
 
 }
