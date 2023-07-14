@@ -18,7 +18,8 @@
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
         "prepare": "husky install",
-        "seed": "node test/seed.cjs"
+        "seed": "node test/seed.cjs",
+        "deseed": "node test/deseed.cjs"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0",
