@@ -1,11 +1,9 @@
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient()
 
 async function main() {
 
         //TODO: only execute if running on local DB instance
-    
-        const deleteAllUsers = await prisma.user.deleteMany()
-        console.log(`Deleted ${deleteAllUsers.count} users`)
 
         // STAKEHOLDER
         const deleteAllStakeholders = await prisma.stakeholder.deleteMany()
