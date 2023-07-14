@@ -98,36 +98,52 @@ model VestingTerms {
 
 // *** TRANSACTIONS *** // 
 
-// ISSUANCE
-model StockIssuance {
-    id                      String             @id @default(uuid()) @map("_id")
-    object_type             String             @default("TX_STOCK_ISSUANCE")
-    stock_class_id          String             @db.ObjectId
-    stock_plan_id           String?            @db.ObjectId
-    share_numbers_issued    String[] // TODO: ShareNumberRange, also look up prisma optional arrays
-    share_price             String // TODO: Monetary
-    quantity                String // TODO: Numeric 
-    vesting_terms_id        String?            @db.ObjectId
-    cost_basis              String? // TODO: Monetary
-    stock_legend_ids        String[]           @db.ObjectId
-    issuance_type           StockIssuanceType?
-    comments                String?
-    security_id             String?
-    date                    String?
-    custom_id               String?
-    stakeholder_id          String?            @db.ObjectId
-    board_approval_date     String?
-    consideration_text      String?
-    security_law_exemptions String?
+// ACCEPTANCE
+model ConvertibleAcceptance {
+    id          String  @id @default(uuid()) @map("_id")
+    object_type String  @default("TX_CONVERTIBLE_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
 }
 
+model EquityCompensationAcceptance {
+    id          String                     @id @default(uuid()) @map("_id")
+    object_type AcceptanceTransactionTypes
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model PlanSecurityAcceptance {
+    id          String @id @default(uuid()) @map("_id")
+    object_type String @default("TX_PLAN_SECURITY_ACCEPTANCE")
+}
+
+model StockAcceptance {
+    id          String  @id @default(uuid()) @map("_id")
+    object_type String  @default("TX_STOCK_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+model WarrantyAcceptance {
+    id          String  @id @default(uuid()) @map("_id")
+    object_type String  @default("TX_WARRANT_ACCEPTANCE")
+    comments    String?
+    security_id String?
+    date        String?
+}
+
+// ISSUANCE
 model ConvertibleIssuance {
     id                      String          @id @default(uuid()) @map("_id")
     object_type             String          @default("TX_CONVERTIBLE_ISSUANCE")
-    investment_amount       String // TODO: Monetary
+    investment_amount       Json
     convertible_type        ConvertibleType
-    conversion_triggers     String[] // TODO: Conversion triggers array
-    pro_rata                String? // TODO: Numeric
+    conversion_triggers     Json[]
+    pro_rata                String?
     seniority               Int
     comments                String?
     security_id             String?
@@ -167,6 +183,28 @@ model EquityCompensationIssuance {
 model PlanSecurityIssuance {
     id          String @id @default(uuid()) @map("_id")
     object_type String @default("TX_PLAN_SECURITY_ISSUANCE")
+}
+
+model StockIssuance {
+    id                      String             @id @default(uuid()) @map("_id")
+    object_type             String             @default("TX_STOCK_ISSUANCE")
+    stock_class_id          String             @db.ObjectId
+    stock_plan_id           String?            @db.ObjectId
+    share_numbers_issued    String[] // TODO: ShareNumberRange, also look up prisma optional arrays
+    share_price             String // TODO: Monetary
+    quantity                String // TODO: Numeric 
+    vesting_terms_id        String?            @db.ObjectId
+    cost_basis              String? // TODO: Monetary
+    stock_legend_ids        String[]           @db.ObjectId
+    issuance_type           StockIssuanceType?
+    comments                String?
+    security_id             String?
+    date                    String?
+    custom_id               String?
+    stakeholder_id          String?            @db.ObjectId
+    board_approval_date     String?
+    consideration_text      String?
+    security_law_exemptions String?
 }
 
 model WarrantIssuance {
@@ -214,44 +252,6 @@ model StockConversion {
     security_id            String?
     date                   String?
     resulting_security_ids String?
-}
-
-// ACCEPTANCE
-model StockAcceptance {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_STOCK_ACCEPTANCE")
-    comments    String?
-    security_id String?
-    date        String?
-}
-
-model ConvertibleAcceptance {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_CONVERTIBLE_ACCEPTANCE")
-    comments    String?
-    security_id String?
-    date        String?
-}
-
-model PlanSecurityAcceptance {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_ACCEPTANCE")
-}
-
-model EquityCompensationAcceptance {
-    id          String                     @id @default(uuid()) @map("_id")
-    object_type AcceptanceTransactionTypes
-    comments    String?
-    security_id String?
-    date        String?
-}
-
-model WarrantyAcceptance {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_WARRANT_ACCEPTANCE")
-    comments    String?
-    security_id String?
-    date        String?
 }
 
 // VESTING
