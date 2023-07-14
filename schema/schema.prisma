@@ -21,7 +21,7 @@ model Issuer {
     phone                            String?
     address                          String?
     initial_shares_authorized        String?
-    comments                         String?
+    comments                         String[]
 }
 
 model Stakeholder {
@@ -100,9 +100,9 @@ model VestingTerms {
 
 // ACCEPTANCE
 model ConvertibleAcceptance {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_CONVERTIBLE_ACCEPTANCE")
-    comments    String?
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_CONVERTIBLE_ACCEPTANCE")
+    comments    String[]
     security_id String?
     date        String?
 }
@@ -110,49 +110,53 @@ model ConvertibleAcceptance {
 model EquityCompensationAcceptance {
     id          String                     @id @default(uuid()) @map("_id")
     object_type AcceptanceTransactionTypes
-    comments    String?
+    comments    String[]
     security_id String?
     date        String?
 }
 
 model PlanSecurityAcceptance {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_ACCEPTANCE")
-}
-
-model StockAcceptance {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_STOCK_ACCEPTANCE")
-    comments    String?
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_PLAN_SECURITY_ACCEPTANCE")
+    comments    String[]
     security_id String?
     date        String?
 }
 
-model WarrantyAcceptance {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_WARRANT_ACCEPTANCE")
-    comments    String?
+model StockAcceptance {
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_STOCK_ACCEPTANCE")
+    comments    String[]
+    security_id String?
+    date        String?
+}
+
+model WarrantAcceptance {
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_WARRANT_ACCEPTANCE")
+    comments    String[]
     security_id String?
     date        String?
 }
 
 // ISSUANCE
 model ConvertibleIssuance {
-    id                      String          @id @default(uuid()) @map("_id")
-    object_type             String          @default("TX_CONVERTIBLE_ISSUANCE")
-    investment_amount       Json
-    convertible_type        ConvertibleType
-    conversion_triggers     Json[]
-    pro_rata                String?
-    seniority               Int
-    comments                String?
-    security_id             String?
-    date                    String?
-    custom_id               String?
-    stakeholder_id          String?
-    board_approval_date     String?
-    consideration_text      String?
-    security_law_exemptions String?
+    id                        String          @id @default(uuid()) @map("_id")
+    object_type               String          @default("TX_CONVERTIBLE_ISSUANCE")
+    investment_amount         Json
+    convertible_type          ConvertibleType
+    conversion_triggers       Json[]
+    pro_rata                  String?
+    seniority                 Int
+    comments                  String[]
+    security_id               String?
+    date                      String?
+    custom_id                 String?
+    stakeholder_id            String?
+    board_approval_date       String?
+    stockholder_approval_date String?
+    consideration_text        String?
+    security_law_exemptions   Json[]
 }
 
 model EquityCompensationIssuance {
@@ -169,7 +173,7 @@ model EquityCompensationIssuance {
     vesting_terms_id             String?
     expiration_date              String? // Making optional so that it's a Nullable String
     termination_exercise_windows Json
-    comments                     String?
+    comments                     String[]
     security_id                  String?
     date                         String?
     custom_id                    String?
@@ -177,47 +181,47 @@ model EquityCompensationIssuance {
     board_approval_date          String?
     stockholder_approval_date    String?
     consideration_text           String?
-    security_law_exemptions      String?
+    security_law_exemptions      Json[]
 }
 
 model PlanSecurityIssuance {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_ISSUANCE")
+    id                           String   @id @default(uuid()) @map("_id")
+    object_type                  String   @default("TX_PLAN_SECURITY_ISSUANCE")
+    stock_plan_id                String?
+    stock_class_id               String?
+    compensation_type            String
+    option_grant_type            String?
+    quantity                     String
+    exercise_price               Json?
+    base_price                   Json?
+    early_exercisable            Boolean?
+    vesting_terms_id             String?
+    expiration_date              String? // Making optional so that it's a Nullable String
+    termination_exercise_windows Json
+    comments                     String[]
+    security_id                  String?
+    date                         String?
+    custom_id                    String?
+    stakeholder_id               String?
+    board_approval_date          String?
+    stockholder_approval_date    String?
+    consideration_text           String?
+    security_law_exemptions      Json[]
 }
 
 model StockIssuance {
-    id                      String             @id @default(uuid()) @map("_id")
-    object_type             String             @default("TX_STOCK_ISSUANCE")
-    stock_class_id          String
-    stock_plan_id           String?
-    share_numbers_issued    Json?
-    share_price             Json
-    quantity                String
-    vesting_terms_id        String?
-    cost_basis              Json?
-    stock_legend_ids        String[]
-    issuance_type           StockIssuanceType?
-    comments                String?
-    security_id             String?
-    date                    String?
-    custom_id               String?
-    stakeholder_id          String?
-    board_approval_date     String?
-    consideration_text      String?
-    security_law_exemptions String?
-}
-
-model WarrantIssuance {
     id                        String             @id @default(uuid()) @map("_id")
-    object_type               String             @default("TX_WARRANT_ISSUANCE")
-    quantity                  String?
-    exercise_price            Json?
-    purchase_price            Json
-    exercise_triggers         Json[]
-    warrant_expiration_date   String?
+    object_type               String             @default("TX_STOCK_ISSUANCE")
+    stock_class_id            String
+    stock_plan_id             String?
+    share_numbers_issued      Json?
+    share_price               Json
+    quantity                  String
     vesting_terms_id          String?
-    quantity_source           QuantitySourceType
-    comments                  String?
+    cost_basis                Json?
+    stock_legend_ids          String[]
+    issuance_type             StockIssuanceType?
+    comments                  String[]
     security_id               String?
     date                      String?
     custom_id                 String?
@@ -225,70 +229,91 @@ model WarrantIssuance {
     board_approval_date       String?
     stockholder_approval_date String?
     consideration_text        String?
-    security_law_exemptions   String?
+    security_law_exemptions   Json[]
+}
+
+model WarrantIssuance {
+    id                        String              @id @default(uuid()) @map("_id")
+    object_type               String              @default("TX_WARRANT_ISSUANCE")
+    quantity                  String?
+    exercise_price            Json?
+    purchase_price            Json
+    exercise_triggers         Json[]
+    warrant_expiration_date   String?
+    vesting_terms_id          String?
+    quantity_source           QuantitySourceType?
+    comments                  String[]
+    security_id               String?
+    date                      String?
+    custom_id                 String?
+    stakeholder_id            String?
+    board_approval_date       String?
+    stockholder_approval_date String?
+    consideration_text        String?
+    security_law_exemptions   Json[]
 }
 
 // CONVERSION
 model ConvertibleConversion {
-    id                        String  @id @default(uuid()) @map("_id")
-    object_type               String  @default("TX_CONVERTIBLE_CONVERSION")
+    id                        String   @id @default(uuid()) @map("_id")
+    object_type               String   @default("TX_CONVERTIBLE_CONVERSION")
     reason_text               String
     quantity_converted        String?
     balance_security_id       String?
     trigger_id                String
     capitalization_definition Json?
-    comments                  String?
+    comments                  String[]
     security_id               String?
     date                      String?
-    resulting_security_ids    String?
+    resulting_security_ids    String[]
 }
 
 model StockConversion {
-    id                     String  @id @default(uuid()) @map("_id")
-    object_type            String  @default("TX_STOCK_CONVERSION")
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_STOCK_CONVERSION")
     balance_security_id    String?
     quantity_converted     String
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
 }
 
 // VESTING
 model VestingStart {
-    id                   String  @id @default(uuid()) @map("_id")
-    object_type          String  @default("TX_VESTING_START")
+    id                   String   @id @default(uuid()) @map("_id")
+    object_type          String   @default("TX_VESTING_START")
     vesting_condition_id String
-    comments             String?
+    comments             String[]
     date                 String?
-    security_id          String?
+    security_id          String
 }
 
 model VestingEvent {
-    id                   String  @id @default(uuid()) @map("_id")
-    object_type          String  @default("TX_VESTING_EVENT")
+    id                   String   @id @default(uuid()) @map("_id")
+    object_type          String   @default("TX_VESTING_EVENT")
     vesting_condition_id String
-    comments             String?
+    comments             String[]
     date                 String?
-    security_id          String?
+    security_id          String
 }
 
 model VestingAcceleration {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_VESTING_ACCELERATION")
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_VESTING_ACCELERATION")
     quantity    String
     reason_text String
-    comments    String?
+    comments    String[]
     date        String?
-    security_id String?
+    security_id String
 }
 
 // CANCELLATION
 model ConvertibleCancellation {
-    id                  String  @id @default(uuid()) @map("_id")
-    object_type         String  @default("TX_CONVERTIBLE_CANCELLATION")
+    id                  String   @id @default(uuid()) @map("_id")
+    object_type         String   @default("TX_CONVERTIBLE_CANCELLATION")
     amount              Json
-    comments            String?
+    comments            String[]
     security_id         String?
     date                String?
     balance_security_id String?
@@ -299,7 +324,7 @@ model EquityCompensationCancellation {
     id                  String                       @id @default(uuid()) @map("_id")
     object_type         CancellationTransactionTypes
     quantity            String
-    comments            String?
+    comments            String[]
     security_id         String?
     date                String?
     balance_security_id String?
@@ -307,15 +332,21 @@ model EquityCompensationCancellation {
 }
 
 model PlanSecurityCancellation {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_CANCELLATION")
+    id                  String   @id @default(uuid()) @map("_id")
+    object_type         String   @default("TX_PLAN_SECURITY_CANCELLATION")
+    comments            String[]
+    security_id         String?
+    date                String?
+    quantity            String?
+    balance_security_id String?
+    reason_text         String?
 }
 
 model StockCancellation {
-    id                  String  @id @default(uuid()) @map("_id")
-    object_type         String  @default("TX_STOCK_CANCELLATION")
+    id                  String   @id @default(uuid()) @map("_id")
+    object_type         String   @default("TX_STOCK_CANCELLATION")
     quantity            String
-    comments            String?
+    comments            String[]
     security_id         String?
     date                String?
     balance_security_id String?
@@ -323,9 +354,10 @@ model StockCancellation {
 }
 
 model WarrantCancellation {
-    id                  String  @id @default(uuid()) @map("_id")
-    object_type         String  @default("TX_WARRANT_CANCELLATION")
+    id                  String   @id @default(uuid()) @map("_id")
+    object_type         String   @default("TX_WARRANT_CANCELLATION")
     quantity            String
+    comments            String[]
     security_id         String?
     date                String?
     balance_security_id String?
@@ -334,74 +366,90 @@ model WarrantCancellation {
 
 // TRANSFER 
 model ConvertibleTransfer {
-    id                     String  @id @default(uuid()) @map("_id")
-    object_type            String  @default("TX_CONVERTIBLE_TRANSFER")
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_CONVERTIBLE_TRANSFER")
     amount                 Json
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
     consideration_text     String?
-    resulting_security_ids String?
+    balance_security_id    String?
+    resulting_security_ids String[]
 }
 
 model EquityCompensationTransfer {
     id                     String                         @id @default(uuid()) @map("_id")
     object_type            EquityCompensationTransferType
     quantity               String
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
     consideration_text     String?
     balance_security_id    String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
 }
 
 model PlanSecurityTransfer {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_TRANSFER")
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_PLAN_SECURITY_TRANSFER")
+    quantity               String
+    comments               String[]
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    balance_security_id    String?
+    resulting_security_ids String[]
 }
 
 model StockTransfer {
-    id                     String  @id @default(uuid()) @map("_id")
-    object_type            String  @default("TX_STOCK_TRANSFER")
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_STOCK_TRANSFER")
     quantity               String
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
     consideration_text     String?
     balance_security_id    String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
 }
 
 model WarrantTransfer {
-    id                     String  @id @default(uuid()) @map("_id")
-    object_type            String  @default("TX_WARRANT_TRANSFER")
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_WARRANT_TRANSFER")
     quantity               String
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
     consideration_text     String?
     balance_security_id    String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
 }
 
 // RELEASE
 model EquityCompensationRelease {
     id                     String                        @id @default(uuid()) @map("_id")
     object_type            EquityCompensationReleaseType
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
-    settlement_price       String?
-    release_price          String?
-    quantity               String?
+    settlement_date        String
+    release_price          Json
+    quantity               String
     consideration_text     String?
-    resulting_security_ids String
+    resulting_security_ids String[]
 }
 
 model PlanSecurityRelease {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_RELEASE")
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_PLAN_SECURITY_RELEASE")
+    comments               String[]
+    security_id            String?
+    date                   String?
+    settlement_date        String
+    release_price          Json
+    quantity               String
+    consideration_text     String?
+    resulting_security_ids String[]
 }
 
 // EXERCISE 
@@ -409,113 +457,133 @@ model EquityCompensationExercise {
     id                     String                         @id @default(uuid()) @map("_id")
     object_type            EquityCompensationExerciseType
     quantity               String
-    comments               String?
+    comments               String[]
     security_id            String?
     date                   String?
     consideration_text     String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
 }
 
 model PlanSecurityExercise {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_PLAN_SECURITY_EXERCISE")
-}
-
-model WarrantExercise {
-    id                     String  @id @default(uuid()) @map("_id")
-    object_type            String  @default("TX_PLAN_SECURITY_EXERCISE")
-    trigger_id             String
-    comments               String?
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_PLAN_SECURITY_EXERCISE")
+    quantity               String
+    comments               String[]
     security_id            String?
     date                   String?
     consideration_text     String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
+}
+
+model WarrantExercise {
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_PLAN_SECURITY_EXERCISE")
+    trigger_id             String
+    comments               String[]
+    security_id            String?
+    date                   String?
+    consideration_text     String?
+    resulting_security_ids String[]
 }
 
 // REISSUANCE
 model StockReissuance {
-    id                     String  @id @default(uuid()) @map("_id")
-    object_type            String  @default("TX_STOCK_REISSUANCE")
-    comments               String?
+    id                     String   @id @default(uuid()) @map("_id")
+    object_type            String   @default("TX_STOCK_REISSUANCE")
+    comments               String[]
     security_id            String?
     date                   String?
-    resulting_security_ids String?
+    resulting_security_ids String[]
     split_transaction_id   String?
     reason_text            String?
 }
 
 // REPURCHASE
 model StockRepurchase {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_STOCK_REPURCHASE")
-    comments    String?
-    security_id String?
+    id                  String   @id @default(uuid()) @map("_id")
+    object_type         String   @default("TX_STOCK_REPURCHASE")
+    comments            String[]
+    security_id         String?
+    date                String
+    price               Json
+    quantity            String
+    consideration_text  String?
+    balance_security_id String?
 }
 
 // RETURN TO POOL
 model StockPlanReturnToPool {
-    id          String @id @default(uuid()) @map("_id")
-    object_type String @default("TX_STOCK_PLAN_RETURN_TO_POOL")
+    id            String   @id @default(uuid()) @map("_id")
+    object_type   String   @default("TX_STOCK_PLAN_RETURN_TO_POOL")
+    comments      String[]
+    security_id   String?
+    date          String?
+    reason_text   String
+    quantity      String
+    stock_plan_id String
 }
 
 // SPLIT
 model StockClassSplit {
-    id             String  @id @default(uuid()) @map("_id")
-    object_type    String  @default("TX_STOCK_CLASS_SPLIT")
-    comments       String?
+    id             String   @id @default(uuid()) @map("_id")
+    object_type    String   @default("TX_STOCK_CLASS_SPLIT")
+    comments       String[]
     date           String?
-    stock_class_id String?
+    stock_class_id String
     split_ratio    Json
 }
 
 // RETRACTION
 model ConvertibleRetraction {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_CONVERTIBLE_RETRACTION")
-    comments    String?
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_CONVERTIBLE_RETRACTION")
+    comments    String[]
     security_id String?
     date        String?
-    reason_text String?
+    reason_text String
 }
 
 model EquityCompensationRetraction {
     id          String                           @id @default(uuid()) @map("_id")
     object_type EquityCompensationRetractionType
-    comments    String?
+    comments    String[]
     security_id String?
     date        String?
-    reason_text String?
+    reason_text String
 }
 
 model PlanSecurityRetraction {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_PLAN_SECURITY_RETRACTION")
-    comments    String?
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_PLAN_SECURITY_RETRACTION")
+    comments    String[]
+    security_id String?
+    date        String?
+    reason_text String
 }
 
 model StockRetraction {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_STOCK_RETRACTION")
-    comments    String?
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_STOCK_RETRACTION")
+    comments    String[]
     security_id String?
     date        String?
-    reason_text String?
+    reason_text String
 }
 
 model WarrantRetraction {
-    id          String  @id @default(uuid()) @map("_id")
-    object_type String  @default("TX_WARRANT_RETRACTION")
-    comments    String?
+    id          String   @id @default(uuid()) @map("_id")
+    object_type String   @default("TX_WARRANT_RETRACTION")
+    comments    String[]
     security_id String?
     date        String?
-    reason_text String?
+    reason_text String
 }
 
 // ADJUSTMENT
 model IssuerAuthorizedSharesAdjustment {
-    id                        String  @id @default(uuid()) @map("_id")
-    object_type               String  @default("TX_WARRANT_RETRACTION")
-    comments                  String?
+    id                        String   @id @default(uuid()) @map("_id")
+    object_type               String   @default("TX_WARRANT_RETRACTION")
+    comments                  String[]
     date                      String?
     issuer_id                 String?
     new_shares_authorized     String
@@ -524,9 +592,9 @@ model IssuerAuthorizedSharesAdjustment {
 }
 
 model StockClassAuthorizedSharesAdjustment {
-    id                        String  @id @default(uuid()) @map("_id")
-    object_type               String  @default("TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT")
-    comments                  String?
+    id                        String   @id @default(uuid()) @map("_id")
+    object_type               String   @default("TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT")
+    comments                  String[]
     date                      String?
     stock_class_id            String?
     new_shares_authorized     String
@@ -535,18 +603,18 @@ model StockClassAuthorizedSharesAdjustment {
 }
 
 model StockClassConversionRatioAdjustment {
-    id                             String  @id @default(uuid()) @map("_id")
-    object_type                    String  @default("TX_STOCK_CLASS_CONVERSION_RATIO_ADJUSTMENT")
-    comments                       String?
+    id                             String   @id @default(uuid()) @map("_id")
+    object_type                    String   @default("TX_STOCK_CLASS_CONVERSION_RATIO_ADJUSTMENT")
+    comments                       String[]
     date                           String?
     stock_class_id                 String?
     new_ratio_conversion_mechanism Json
 }
 
 model StockPlanPoolAdjustment {
-    id                        String  @id @default(uuid()) @map("_id")
-    object_type               String  @default("TX_STOCK_PLAN_POOL_ADJUSTMENT")
-    comments                  String?
+    id                        String   @id @default(uuid()) @map("_id")
+    object_type               String   @default("TX_STOCK_PLAN_POOL_ADJUSTMENT")
+    comments                  String[]
     date                      String?
     stock_plan_id             String?
     board_approval_date       String?
