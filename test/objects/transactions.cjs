@@ -24,7 +24,7 @@ const transactionTests = async (inputTransactions, prisma) => {
                 });
                 console.log("Acceptance transaction added ", acceptanceTransaction);
             } else if (inputTransaction.object_type === "TX_WARRANT_ACCEPTANCE") {
-                const acceptanceTransaction = await prisma.warrantyAcceptance.create({
+                const acceptanceTransaction = await prisma.warrantAcceptance.create({
                     data: inputTransaction,
                 });
                 console.log("Acceptance transaction added ", acceptanceTransaction);
