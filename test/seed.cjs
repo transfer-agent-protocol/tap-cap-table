@@ -1,51 +1,90 @@
 const { PrismaClient } = require("@prisma/client");
+const inputStakeholders = require('../ocf/samples/Stakeholders.ocf.json') 
+const inputStockClasses = require('../ocf/samples/StockClasses.ocf.json')
+const inputStockLegends = require('../ocf/samples/StockLegends.ocf.json')
+const inputStockPlans = require('../ocf/samples/StockPlans.ocf.json')
+const inputValuations = require('../ocf/samples/Valuations.ocf.json')
+const inputVestingTerms = require('../ocf/samples/VestingTerms.ocf.json')
+const inputVestingTransactions = require('../ocf/samples/VestingTransactions.examples.ocf.json')
+const inputTransactions = require('../ocf/samples/Transactions.ocf.json')
+
+const transactionTests = require('./objects/transactions.cjs');
+
+// manifest wraps all of these.
 
 const prisma = new PrismaClient();
 
 async function main() {
-    const issuer = await prisma.issuer.create({
-        data: {
-            legal_name: "Poet Network Inc.",
-            dba: "Poet",
-            formation_date: "2022-08-23",
-            country_of_formation: "US",
-            country_subdivision_of_formation: "DE",
-            tax_ids: ["12-315-69"],
-            email: "concierge@poet.network",
-            phone: "212-111-111",
-            initial_shares_authorized: "10000000",
-        },
-    });
 
-    const stakeholder1 = await prisma.stakeholder.create({
-        data: {
-            name: {
-                legal_name: "Alex Palmer",
-                first_name: "Alex",
-                last_name: "Palmer",
-            },
-            stakeholder_type: "INDIVIDUAL",
-            current_relationship: "FOUNDER",
-            issuer_assigned_id: "POET_1",
-            comments: "First Stakeholder",
-        },
-    });
+    // STAKEHOLDER
+    console.log('Adding Stakeholders to DB')
+    for (const inputStakeholder of inputStakeholders.items) {
+        const stakeholder = await prisma.stakeholder.create({
+            data: inputStakeholder
+        }); 
 
-    const stakeholder2 = await prisma.stakeholder.create({
-        data: {
-            name: {
-                legal_name: "Victor Augusto Cardenas Mimo",
-                first_name: "Victor Augusto",
-                last_name: "Cardenas Mimo",
-            },
-            stakeholder_type: "INDIVIDUAL",
-            current_relationship: "FOUNDER",
-            issuer_assigned_id: "POET_2",
-            comments: "Second Stakeholder",
-        },
-    });
+        console.log('Stakeholder added ', stakeholder)
+    }
 
-    console.log(issuer, stakeholder1, stakeholder2);
+    // STOCK CLASS
+    console.log('Adding Stock Classes to DB')
+    for (const inputStockClass of inputStockClasses.items) {
+        const stockClass = await prisma.stockClass.create({
+            data: inputStockClass
+        })
+
+        console.log('Stockclass added ', stockClass)
+    }
+
+    // STOCK LEGEND
+    console.log('Adding Stock Legends to DB')
+    for (const inputStockLegend of inputStockLegends.items) {
+        const stockLegend = await prisma.stockLegendTemplate.create({
+            data: inputStockLegend
+        })
+
+        console.log('Stock legend added ', stockLegend)
+    }
+
+    // STOCK PLANS
+    console.log('Adding Stock Plans to DB')
+    for (const inputStockPlan of inputStockPlans.items) {
+        const stockPlan = await prisma.stockPlan.create({
+            data: inputStockPlan
+        })
+
+        console.log('Stock plan added ', stockPlan)
+    }
+
+    // VALUATIONS
+    console.log('Adding Valuations to DB')
+    for (const inputValuation of inputValuations.items) {
+        const valuation = await prisma.valuations.create({
+            data: inputValuation
+        })
+
+        console.log('Valuation added ', valuation)
+    }
+
+    // VESTING TERMS
+    console.log('Adding Vesting Terms to DB')
+    for (const inputVestingTerm of inputVestingTerms.items) {
+        const vestingTerm = await prisma.vestingTerms.create({
+            data: inputVestingTerm
+        })
+        
+        console.log('Vesting term added ', vestingTerm)
+    }
+
+    // VESTING TRANSACTIONS
+    console.log('Adding Vesting Transactions to DB')
+    const vestingTransactions = await transactionTests(inputVestingTransactions, prisma)
+
+    // GENERAL TRANSACTIONS STREAM
+    console.log('Adding General Transactions to DB')
+    const transactions = await transactionTests(inputTransactions, prisma)
+
+
 }
 
 main()

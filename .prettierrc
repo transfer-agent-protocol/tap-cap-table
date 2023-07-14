@@ -7,5 +7,7 @@
     "jsxBracketSameLine": false,
     "arrowParens": "always",
     "printWidth": 150,
-    "endOfLine": "auto"
+    "endOfLine": "auto",
+    "formatOnSave": true,
+    "editor.formatOnSave": true
 }

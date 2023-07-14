@@ -18,7 +18,10 @@
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
         "prepare": "husky install",
-        "seed": "node test/seed.cjs"
+        "seed": "node test/seed.cjs",
+        "deseed": "node test/deseed.cjs",
+        "validate-example-ocf-files":  "cd ocf && yarn validate-example-ocf-files",
+        "validate-and-insert-example-ocf-files": "yarn validate-example-ocf-files && yarn seed"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0",
@@ -42,7 +45,6 @@
         "prettier": "^2.7.1",
         "prisma": "^5.0.0",
         "solhint": "^3.4.1",
-        "ts-node": "^10.9.1",
         "typescript": "^5.1.6",
         "uuid": "^9.0.0"
     },
