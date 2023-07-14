@@ -158,17 +158,17 @@ model ConvertibleIssuance {
 model EquityCompensationIssuance {
     id                           String                 @id @default(uuid()) @map("_id")
     object_type                  EquityCompensationType
-    stock_plan_id                String?                @db.ObjectId
-    stock_class_id               String?                @db.ObjectId
-    compensation_type            String // TODO: CompensationType schema
-    option_grant_type            String? // TODO: OptionGrant schema
-    quantity                     String // TODO: Numeric
-    exercise_price               String? // TODO: Monetary
-    base_price                   String? // TODO: Monetary
+    stock_plan_id                String?
+    stock_class_id               String?
+    compensation_type            String
+    option_grant_type            String?
+    quantity                     String
+    exercise_price               Json?
+    base_price                   Json?
     early_exercisable            Boolean?
-    vesting_terms_id             String?                @db.ObjectId
-    expiration_date              String // TODO: Nullable Date Custom Type
-    termination_exercise_windows String // TODO: TerminationWindow schema
+    vesting_terms_id             String?
+    expiration_date              String? // Making optional so that it's a Nullable String
+    termination_exercise_windows Json
     comments                     String?
     security_id                  String?
     date                         String?
@@ -188,20 +188,20 @@ model PlanSecurityIssuance {
 model StockIssuance {
     id                      String             @id @default(uuid()) @map("_id")
     object_type             String             @default("TX_STOCK_ISSUANCE")
-    stock_class_id          String             @db.ObjectId
-    stock_plan_id           String?            @db.ObjectId
-    share_numbers_issued    String[] // TODO: ShareNumberRange, also look up prisma optional arrays
-    share_price             String // TODO: Monetary
-    quantity                String // TODO: Numeric 
-    vesting_terms_id        String?            @db.ObjectId
-    cost_basis              String? // TODO: Monetary
-    stock_legend_ids        String[]           @db.ObjectId
+    stock_class_id          String
+    stock_plan_id           String?
+    share_numbers_issued    Json?
+    share_price             Json
+    quantity                String
+    vesting_terms_id        String?
+    cost_basis              Json?
+    stock_legend_ids        String[]
     issuance_type           StockIssuanceType?
     comments                String?
     security_id             String?
     date                    String?
     custom_id               String?
-    stakeholder_id          String?            @db.ObjectId
+    stakeholder_id          String?
     board_approval_date     String?
     consideration_text      String?
     security_law_exemptions String?
@@ -210,11 +210,11 @@ model StockIssuance {
 model WarrantIssuance {
     id                        String             @id @default(uuid()) @map("_id")
     object_type               String             @default("TX_WARRANT_ISSUANCE")
-    quantity                  String? // TODO: Numeric
-    exercise_price            String? // TODO: Monetary
-    purchase_price            String // TODO: Monetary
-    exercise_triggers         String[] // TODO: Exercise triggers array
-    warrant_expiration_date   String? // TODO: Date schema
+    quantity                  String?
+    exercise_price            Json?
+    purchase_price            Json
+    exercise_triggers         Json[]
+    warrant_expiration_date   String?
     vesting_terms_id          String?
     quantity_source           QuantitySourceType
     comments                  String?
