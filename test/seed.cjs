@@ -5,6 +5,10 @@ const inputStockLegends = require('../ocf/samples/StockLegends.ocf.json')
 const inputStockPlans = require('../ocf/samples/StockPlans.ocf.json')
 const inputValuations = require('../ocf/samples/Valuations.ocf.json')
 const inputVestingTerms = require('../ocf/samples/VestingTerms.ocf.json')
+const inputVestingTransactions = require('../ocf/samples/VestingTransactions.examples.ocf.json')
+const inputTransactions = require('../ocf/samples/Transactions.ocf.json')
+
+const transactionTests = require('./objects/transactions.cjs');
 
 // manifest wraps all of these.
 
@@ -12,65 +16,73 @@ const prisma = new PrismaClient();
 
 async function main() {
 
-        // STAKEHOLDER
-        console.log('Adding Stakeholders to DB')
-        for (const inputStakeholder of inputStakeholders.items) {
-            const stakeholder = await prisma.stakeholder.create({
-                data: inputStakeholder
-            }); 
+    // STAKEHOLDER
+    console.log('Adding Stakeholders to DB')
+    for (const inputStakeholder of inputStakeholders.items) {
+        const stakeholder = await prisma.stakeholder.create({
+            data: inputStakeholder
+        }); 
 
-            console.log('Stakeholder added ', stakeholder)
-        }
-    
-        // STOCK CLASS
-        console.log('Adding Stock Classes to DB')
-        for (const inputStockClass of inputStockClasses.items) {
-            const stockClass = await prisma.stockClass.create({
-                data: inputStockClass
-            })
+        console.log('Stakeholder added ', stakeholder)
+    }
 
-            console.log('Stockclass added ', stockClass)
-        }
+    // STOCK CLASS
+    console.log('Adding Stock Classes to DB')
+    for (const inputStockClass of inputStockClasses.items) {
+        const stockClass = await prisma.stockClass.create({
+            data: inputStockClass
+        })
 
-        // STOCK LEGEND
-        console.log('Adding Stock Legends to DB')
-        for (const inputStockLegend of inputStockLegends.items) {
-            const stockLegend = await prisma.stockLegendTemplate.create({
-                data: inputStockLegend
-            })
+        console.log('Stockclass added ', stockClass)
+    }
 
-            console.log('Stock legend added ', stockLegend)
-        }
+    // STOCK LEGEND
+    console.log('Adding Stock Legends to DB')
+    for (const inputStockLegend of inputStockLegends.items) {
+        const stockLegend = await prisma.stockLegendTemplate.create({
+            data: inputStockLegend
+        })
 
-        // STOCK PLANS
-        console.log('Adding Stock Plans to DB')
-        for (const inputStockPlan of inputStockPlans.items) {
-            const stockPlan = await prisma.stockPlan.create({
-                data: inputStockPlan
-            })
+        console.log('Stock legend added ', stockLegend)
+    }
 
-            console.log('Stock plan added ', stockPlan)
-        }
+    // STOCK PLANS
+    console.log('Adding Stock Plans to DB')
+    for (const inputStockPlan of inputStockPlans.items) {
+        const stockPlan = await prisma.stockPlan.create({
+            data: inputStockPlan
+        })
 
-        // VALUATIONS
-        console.log('Adding Valuations to DB')
-        for (const inputValuation of inputValuations.items) {
-            const valuation = await prisma.valuations.create({
-                data: inputValuation
-            })
+        console.log('Stock plan added ', stockPlan)
+    }
 
-            console.log('Valuation added ', valuation)
-        }
+    // VALUATIONS
+    console.log('Adding Valuations to DB')
+    for (const inputValuation of inputValuations.items) {
+        const valuation = await prisma.valuations.create({
+            data: inputValuation
+        })
 
-        // VESTING TERMS
-        console.log('Adding Vesting Terms to DB')
-        for (const inputVestingTerm of inputVestingTerms.items) {
-            const vestingTerm = await prisma.vestingTerms.create({
-                data: inputVestingTerm
-            })
+        console.log('Valuation added ', valuation)
+    }
 
-            console.log('Vesting term added ', vestingTerm)
-        }
+    // VESTING TERMS
+    console.log('Adding Vesting Terms to DB')
+    for (const inputVestingTerm of inputVestingTerms.items) {
+        const vestingTerm = await prisma.vestingTerms.create({
+            data: inputVestingTerm
+        })
+        
+        console.log('Vesting term added ', vestingTerm)
+    }
+
+    // VESTING TRANSACTIONS
+    console.log('Adding Vesting Transactions to DB')
+    const vestingTransactions = await transactionTests(inputVestingTransactions, prisma)
+
+    // GENERAL TRANSACTIONS STREAM
+    console.log('Adding General Transactions to DB')
+    const transactions = await transactionTests(inputTransactions, prisma)
 
 
 }
