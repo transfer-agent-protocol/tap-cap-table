@@ -233,10 +233,10 @@ model ConvertibleConversion {
     id                        String  @id @default(uuid()) @map("_id")
     object_type               String  @default("TX_CONVERTIBLE_CONVERSION")
     reason_text               String
-    quantity_converted        String? // TODO: Numeric
-    balance_security_id       String? // Link
+    quantity_converted        String?
+    balance_security_id       String?
     trigger_id                String
-    capitalization_definition Json? // TODO: CapitalizationDefinition Schema
+    capitalization_definition Json?
     comments                  String?
     security_id               String?
     date                      String?
@@ -247,7 +247,7 @@ model StockConversion {
     id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_STOCK_CONVERSION")
     balance_security_id    String?
-    quantity_converted     String // TODO: Numeric
+    quantity_converted     String
     comments               String?
     security_id            String?
     date                   String?
@@ -258,7 +258,7 @@ model StockConversion {
 model VestingStart {
     id                   String  @id @default(uuid()) @map("_id")
     object_type          String  @default("TX_VESTING_START")
-    vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
+    vesting_condition_id String
     comments             String?
     date                 String?
     security_id          String?
@@ -267,7 +267,7 @@ model VestingStart {
 model VestingEvent {
     id                   String  @id @default(uuid()) @map("_id")
     object_type          String  @default("TX_VESTING_EVENT")
-    vesting_condition_id String // TODO: Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.
+    vesting_condition_id String
     comments             String?
     date                 String?
     security_id          String?
@@ -276,7 +276,7 @@ model VestingEvent {
 model VestingAcceleration {
     id          String  @id @default(uuid()) @map("_id")
     object_type String  @default("TX_VESTING_ACCELERATION")
-    quantity    String // TODO: Numeric
+    quantity    String
     reason_text String
     comments    String?
     date        String?
@@ -287,7 +287,7 @@ model VestingAcceleration {
 model ConvertibleCancellation {
     id                  String  @id @default(uuid()) @map("_id")
     object_type         String  @default("TX_CONVERTIBLE_CANCELLATION")
-    amount              String // TODO: Monetary
+    amount              Json
     comments            String?
     security_id         String?
     date                String?
@@ -298,7 +298,7 @@ model ConvertibleCancellation {
 model EquityCompensationCancellation {
     id                  String                       @id @default(uuid()) @map("_id")
     object_type         CancellationTransactionTypes
-    quantity            String // TODO: Numeric
+    quantity            String
     comments            String?
     security_id         String?
     date                String?
@@ -314,7 +314,7 @@ model PlanSecurityCancellation {
 model StockCancellation {
     id                  String  @id @default(uuid()) @map("_id")
     object_type         String  @default("TX_STOCK_CANCELLATION")
-    quantity            String // TODO: Numeric
+    quantity            String
     comments            String?
     security_id         String?
     date                String?
@@ -325,7 +325,7 @@ model StockCancellation {
 model WarrantCancellation {
     id                  String  @id @default(uuid()) @map("_id")
     object_type         String  @default("TX_WARRANT_CANCELLATION")
-    quantity            String // TODO: Numeric
+    quantity            String
     security_id         String?
     date                String?
     balance_security_id String?
@@ -336,7 +336,7 @@ model WarrantCancellation {
 model ConvertibleTransfer {
     id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_CONVERTIBLE_TRANSFER")
-    amount                 String // TODO: Monetary
+    amount                 Json
     comments               String?
     security_id            String?
     date                   String?
@@ -347,7 +347,7 @@ model ConvertibleTransfer {
 model EquityCompensationTransfer {
     id                     String                         @id @default(uuid()) @map("_id")
     object_type            EquityCompensationTransferType
-    quantity               String // TODO: Numeric
+    quantity               String
     comments               String?
     security_id            String?
     date                   String?
@@ -364,7 +364,7 @@ model PlanSecurityTransfer {
 model StockTransfer {
     id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_STOCK_TRANSFER")
-    quantity               String // TODO: Numeric
+    quantity               String
     comments               String?
     security_id            String?
     date                   String?
@@ -376,7 +376,7 @@ model StockTransfer {
 model WarrantTransfer {
     id                     String  @id @default(uuid()) @map("_id")
     object_type            String  @default("TX_WARRANT_TRANSFER")
-    quantity               String // TODO: Numeric
+    quantity               String
     comments               String?
     security_id            String?
     date                   String?
@@ -408,7 +408,7 @@ model PlanSecurityRelease {
 model EquityCompensationExercise {
     id                     String                         @id @default(uuid()) @map("_id")
     object_type            EquityCompensationExerciseType
-    quantity               String // TODO: Numeric
+    quantity               String
     comments               String?
     security_id            String?
     date                   String?
@@ -465,7 +465,7 @@ model StockClassSplit {
     comments       String?
     date           String?
     stock_class_id String?
-    split_ratio    String // TODO: Ratio schema. https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Ratio.schema.json
+    split_ratio    Json
 }
 
 // RETRACTION
@@ -518,20 +518,20 @@ model IssuerAuthorizedSharesAdjustment {
     comments                  String?
     date                      String?
     issuer_id                 String?
-    new_shares_authorized     String // TODO: NUMERIC
-    board_approval_date       String? // TODO: Date
-    stockholder_approval_date String? // TODO: Date
+    new_shares_authorized     String
+    board_approval_date       String?
+    stockholder_approval_date String?
 }
 
 model StockClassAuthorizedSharesAdjustment {
     id                        String  @id @default(uuid()) @map("_id")
     object_type               String  @default("TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT")
     comments                  String?
-    date                      String? // TODO: Date
+    date                      String?
     stock_class_id            String?
-    new_shares_authorized     String // TODO: NUMERIC
-    board_approval_date       String? // TODO: Date
-    stockholder_approval_date String? // TODO: Date
+    new_shares_authorized     String
+    board_approval_date       String?
+    stockholder_approval_date String?
 }
 
 model StockClassConversionRatioAdjustment {
@@ -540,7 +540,7 @@ model StockClassConversionRatioAdjustment {
     comments                       String?
     date                           String?
     stock_class_id                 String?
-    new_ratio_conversion_mechanism String // TODO: Ratio Conversion Mechanism "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/RatioConversionMechanism.schema.json"
+    new_ratio_conversion_mechanism Json
 }
 
 model StockPlanPoolAdjustment {
@@ -549,9 +549,9 @@ model StockPlanPoolAdjustment {
     comments                  String?
     date                      String?
     stock_plan_id             String?
-    board_approval_date       String? // TODO: Date
-    stockholder_approval_date String? // TODO: Date
-    shares_reserved           String // TODO: NUMERIC
+    board_approval_date       String?
+    stockholder_approval_date String?
+    shares_reserved           String
 }
 
 // *** ENUMS ***
