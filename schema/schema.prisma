@@ -386,7 +386,7 @@ model WarrantTransfer {
 }
 
 // RELEASE
-model EauityCompensationRelease {
+model EquityCompensationRelease {
     id                     String                        @id @default(uuid()) @map("_id")
     object_type            EquityCompensationReleaseType
     comments               String?
