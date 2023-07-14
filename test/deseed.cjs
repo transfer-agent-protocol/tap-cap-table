@@ -43,12 +43,12 @@ async function main() {
     const deleteStockAcceptance = await prisma.stockAcceptance.deleteMany();
     console.log(`Deleted ${deleteStockAcceptance.count} stock acceptances`);
 
-    const deleteWarrantyAcceptance = await prisma.warrantyAcceptance.deleteMany();
-    console.log(`Deleted ${deleteWarrantyAcceptance.count} warranty acceptances`);
+    const deleteWarrantAcceptance = await prisma.warrantAcceptance.deleteMany();
+    console.log(`Deleted ${deleteWarrantAcceptance.count} warranty acceptances`);
 
     // ISSUANCE
     const deleteConvertibleIssuance = await prisma.convertibleIssuance.deleteMany();
-  console.log(`Deleted ${deleteConvertibleIssuance.count} convertible issuances`);
+    console.log(`Deleted ${deleteConvertibleIssuance.count} convertible issuances`);
 
     const deleteEquityCompensationIssuance = await prisma.equityCompensationIssuance.deleteMany();
     console.log(`Deleted ${deleteEquityCompensationIssuance.count} equity compensation issuances`);
@@ -110,6 +110,8 @@ async function main() {
 
     const deleteWarrantTransfer = await prisma.warrantTransfer.deleteMany();
     console.log(`Deleted ${deleteWarrantTransfer.count} warrant transfers`);
+
+    console.assert("dsd");
 
     // RELEASE
     const deleteEquityCompensationRelease = await prisma.equityCompensationRelease.deleteMany();
