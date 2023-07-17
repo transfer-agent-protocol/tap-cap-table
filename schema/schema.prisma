@@ -28,9 +28,9 @@ model Stakeholder {
     id                   String                       @id @default(uuid()) @map("_id")
     object_type          String                       @default("STAKEHOLDER")
     name                 Json
-    stakeholder_type     StakeholderType
+    stakeholder_type     String
     issuer_assigned_id   String?
-    current_relationship StakeholderRelationshipType?
+    current_relationship String?
     primary_contact      Json?
     contact_info         Json?
     comments             String[]
@@ -40,7 +40,7 @@ model StockClass {
     id                              String         @id @default(uuid()) @map("_id")
     object_type                     String         @default("STOCK_CLASS")
     name                            String
-    class_type                      StockClassType
+    class_type                      String
     default_id_prefix               String
     initial_shares_authorized       String
     board_approval_date             String?
@@ -91,7 +91,7 @@ model VestingTerms {
     object_type        String         @default("VESTING_TERMS")
     name               String
     description        String
-    allocation_type    AllocationType
+    allocation_type    String
     vesting_conditions Json
     comments           String[]
 }
@@ -144,7 +144,7 @@ model ConvertibleIssuance {
     id                        String          @id @default(uuid()) @map("_id")
     object_type               String          @default("TX_CONVERTIBLE_ISSUANCE")
     investment_amount         Json
-    convertible_type          ConvertibleType
+    convertible_type          String
     conversion_triggers       Json[]
     pro_rata                  String?
     seniority                 Int
@@ -220,7 +220,7 @@ model StockIssuance {
     vesting_terms_id          String?
     cost_basis                Json?
     stock_legend_ids          String[]
-    issuance_type             StockIssuanceType?
+    issuance_type             String?
     comments                  String[]
     security_id               String?
     date                      String?
@@ -241,7 +241,7 @@ model WarrantIssuance {
     exercise_triggers         Json[]
     warrant_expiration_date   String?
     vesting_terms_id          String?
-    quantity_source           QuantitySourceType?
+    quantity_source           String?
     comments                  String[]
     security_id               String?
     date                      String?
@@ -623,90 +623,6 @@ model StockPlanPoolAdjustment {
 }
 
 // *** ENUMS ***
-enum StockClassType {
-    PREFERRED
-    COMMON
-}
-
-enum ConvertibleType {
-    NOTE
-    SAFE
-    CONVERTIBLE_SECURITY
-}
-
-enum QuantitySourceType {
-    HUMAN_ESTIMATED
-    MACHINE_ESTIMATED
-    UNSPECIFIED
-    INSTRUMENT_FIXED
-    INSTRUMENT_MAX
-    INSTRUMENT_MIN
-}
-
-enum AuthorizedSharesTypes {
-    NOT_APPLICABLE
-    UNLIMITED
-}
-
-enum StockPlanCancellationBehaviorType {
-    RETURN_TO_POOL
-    CANCEL
-}
-
-enum AllocationType {
-    CUMULATIVE_ROUNDING
-    CUMULATIVE_ROUND_DOWN
-    FRONT_LOADED
-    BACK_LOADED
-    FRONT_LOADED_TO_SINGLE_TRANCHE
-    BACK_LOADED_TO_SINGLE_TRANCHE
-    FRACTIONAL
-}
-
-enum AddressType {
-    LEGAL
-    CONTACT
-    OTHER
-}
-
-enum EmailType {
-    PERSONAL
-    BUSINESS
-    OTHER
-}
-
-enum PhoneType {
-    MOBILE
-    HOME
-    BUSINESS
-}
-
-enum StakeholderType {
-    INDIVIDUAL
-    INSTITUTION
-}
-
-enum StakeholderRelationshipType {
-    ADVISOR
-    BOARD_MEMBER
-    CONSULTANT
-    EMPLOYEE
-    EX_ADVISOR
-    EX_CONSULTANT
-    EX_EMPLOYEE
-    EXECUTIVE
-    FOUNDER
-    INVESTOR
-    NON_US_EMPLOYEE
-    OFFICER
-    OTHER
-}
-
-enum StockIssuanceType {
-    RSA
-    FOUNDER_STOCK
-}
-
 // Transaction Types
 
 // Acceptance
