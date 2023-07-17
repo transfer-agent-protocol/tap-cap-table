@@ -1,90 +1,111 @@
 const { PrismaClient } = require("@prisma/client");
-const inputStakeholders = require('../ocf/samples/Stakeholders.ocf.json') 
-const inputStockClasses = require('../ocf/samples/StockClasses.ocf.json')
-const inputStockLegends = require('../ocf/samples/StockLegends.ocf.json')
-const inputStockPlans = require('../ocf/samples/StockPlans.ocf.json')
-const inputValuations = require('../ocf/samples/Valuations.ocf.json')
-const inputVestingTerms = require('../ocf/samples/VestingTerms.ocf.json')
-const inputVestingTransactions = require('../ocf/samples/VestingTransactions.examples.ocf.json')
-const inputTransactions = require('../ocf/samples/Transactions.ocf.json')
+const fs = require("fs").promises;
+const path = require("path");
+const inputStakeholders = require("../ocf/samples/Stakeholders.ocf.json");
+const inputStockClasses = require("../ocf/samples/StockClasses.ocf.json");
+const inputStockLegends = require("../ocf/samples/StockLegends.ocf.json");
+const inputStockPlans = require("../ocf/samples/StockPlans.ocf.json");
+const inputValuations = require("../ocf/samples/Valuations.ocf.json");
+const inputVestingTerms = require("../ocf/samples/VestingTerms.ocf.json");
+const inputVestingTransactions = require("../ocf/samples/VestingTransactions.examples.ocf.json");
+const inputTransactions = require("../ocf/samples/Transactions.ocf.json");
 
-const transactionTests = require('./objects/transactions.cjs');
+const inputManifest = require("../ocf/samples/Manifest.ocf.json");
+
+const transactionTests = require("./objects/transactions.cjs");
 
 // manifest wraps all of these.
+
+async function readAndParseJSON(inputPath) {
+    const dataPath = path.join("./ocf/samples", inputPath);
+    try {
+        const data = await fs.readFile(dataPath, "utf8");
+        const jsonData = JSON.parse(data);
+        return jsonData;
+    } catch (err) {
+        console.error(`Error reading file: ${err}`);
+    }
+}
 
 const prisma = new PrismaClient();
 
 async function main() {
+    const inputIssuer = inputManifest.issuer;
+    const issuer = await prisma.issuer.create({ data: inputIssuer });
 
-    // STAKEHOLDER
-    console.log('Adding Stakeholders to DB')
-    for (const inputStakeholder of inputStakeholders.items) {
-        const stakeholder = await prisma.stakeholder.create({
-            data: inputStakeholder
-        }); 
+    console.log("Issuer added ", issuer);
 
-        console.log('Stakeholder added ', stakeholder)
+    // TODO: Each of these categories are arrays of files inside of the manifest.
+
+    // STOCK PLANS
+    const inputStockPlans = await readAndParseJSON(inputManifest.stock_plans_files[0].filepath);
+    console.log("Adding Stock Plans to DB");
+    for (const inputStockPlan of inputStockPlans.items) {
+        const stockPlan = await prisma.stockPlan.create({
+            data: inputStockPlan,
+        });
+
+        console.log("Stock plan added ", stockPlan);
+    }
+
+    // STOCK LEGENDS
+    const inputStockLegends = await readAndParseJSON(inputManifest.stock_legend_templates_files[0].filepath);
+    console.log("Adding Stock Legends to DB");
+    for (const inputStockLegend of inputStockLegends.items) {
+        const stockLegend = await prisma.stockLegendTemplate.create({
+            data: inputStockLegend,
+        });
+
+        console.log("Stock legend added ", stockLegend);
     }
 
     // STOCK CLASS
-    console.log('Adding Stock Classes to DB')
+    const inputStockClasses = await readAndParseJSON(inputManifest.stock_classes_files[0].filepath);
+    console.log("Adding Stock Classes to DB");
     for (const inputStockClass of inputStockClasses.items) {
         const stockClass = await prisma.stockClass.create({
-            data: inputStockClass
-        })
+            data: inputStockClass,
+        });
 
-        console.log('Stockclass added ', stockClass)
+        console.log("Stock classes added ", stockClass);
     }
 
-    // STOCK LEGEND
-    console.log('Adding Stock Legends to DB')
-    for (const inputStockLegend of inputStockLegends.items) {
-        const stockLegend = await prisma.stockLegendTemplate.create({
-            data: inputStockLegend
-        })
+    // TRANSACTIONS
+    const inputTransactions = await readAndParseJSON(inputManifest.transactions_files[0].filepath);
+    console.log("Adding Transactions to DB");
+    const transactions = await transactionTests(inputTransactions, prisma);
 
-        console.log('Stock legend added ', stockLegend)
-    }
+    // STAKEHOLDERS
+    const inputStakeholders = await readAndParseJSON(inputManifest.stakeholders_files[0].filepath);
+    console.log("Adding Stakeholders to DB");
+    for (const inputStakeholder of inputStakeholders.items) {
+        const stakeholder = await prisma.stakeholder.create({
+            data: inputStakeholder,
+        });
 
-    // STOCK PLANS
-    console.log('Adding Stock Plans to DB')
-    for (const inputStockPlan of inputStockPlans.items) {
-        const stockPlan = await prisma.stockPlan.create({
-            data: inputStockPlan
-        })
-
-        console.log('Stock plan added ', stockPlan)
-    }
-
-    // VALUATIONS
-    console.log('Adding Valuations to DB')
-    for (const inputValuation of inputValuations.items) {
-        const valuation = await prisma.valuations.create({
-            data: inputValuation
-        })
-
-        console.log('Valuation added ', valuation)
+        console.log("Stakeholder added ", stakeholder);
     }
 
     // VESTING TERMS
-    console.log('Adding Vesting Terms to DB')
+    const inputVestingTerms = await readAndParseJSON(inputManifest.vesting_terms_files[0].filepath);
+    console.log("Adding Vesting Terms to DB");
     for (const inputVestingTerm of inputVestingTerms.items) {
         const vestingTerm = await prisma.vestingTerms.create({
-            data: inputVestingTerm
-        })
-        
-        console.log('Vesting term added ', vestingTerm)
+            data: inputVestingTerm,
+        });
+
+        console.log("Vesting term added ", vestingTerm);
     }
 
-    // VESTING TRANSACTIONS
-    console.log('Adding Vesting Transactions to DB')
-    const vestingTransactions = await transactionTests(inputVestingTransactions, prisma)
-
-    // GENERAL TRANSACTIONS STREAM
-    console.log('Adding General Transactions to DB')
-    const transactions = await transactionTests(inputTransactions, prisma)
-
-
+    // VALUATIONS
+    const inputValuations = await readAndParseJSON(inputManifest.valuations_files[0].filepath);
+    console.log("Adding Valuations to DB");
+    for (const inputValuation of inputValuations.items) {
+        const valuation = await prisma.valuations.create({
+            data: inputValuation,
+        });
+        console.log("Valuation added ", valuation);
+    }
 }
 
 main()
