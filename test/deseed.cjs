@@ -4,6 +4,10 @@ const prisma = new PrismaClient();
 async function main() {
     //TODO: only execute if running on local DB instance
 
+    // ISSUER
+    const deleteIssuer = await prisma.issuer.deleteMany();
+    console.log(`Deleted ${deleteIssuer.count} issuers`);
+
     // STAKEHOLDER
     const deleteAllStakeholders = await prisma.stakeholder.deleteMany();
     console.log(`Deleted ${deleteAllStakeholders.count} stakeholders`);
