@@ -16,10 +16,10 @@ model Issuer {
     formation_date                   String // OCF Date type is a string
     country_of_formation             String
     country_subdivision_of_formation String
-    tax_ids                          String[]
-    email                            String?
-    phone                            String?
-    address                          String?
+    tax_ids                          Json[]
+    email                            Json?
+    phone                            Json?
+    address                          Json?
     initial_shares_authorized        String?
     comments                         String[]
 }
