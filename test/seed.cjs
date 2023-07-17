@@ -1,20 +1,11 @@
 const { PrismaClient } = require("@prisma/client");
 const fs = require("fs").promises;
 const path = require("path");
-const inputStakeholders = require("../ocf/samples/Stakeholders.ocf.json");
-const inputStockClasses = require("../ocf/samples/StockClasses.ocf.json");
-const inputStockLegends = require("../ocf/samples/StockLegends.ocf.json");
-const inputStockPlans = require("../ocf/samples/StockPlans.ocf.json");
-const inputValuations = require("../ocf/samples/Valuations.ocf.json");
-const inputVestingTerms = require("../ocf/samples/VestingTerms.ocf.json");
-const inputVestingTransactions = require("../ocf/samples/VestingTransactions.examples.ocf.json");
-const inputTransactions = require("../ocf/samples/Transactions.ocf.json");
 
+// OCF Provided Sample
 const inputManifest = require("../ocf/samples/Manifest.ocf.json");
 
 const transactionTests = require("./objects/transactions.cjs");
-
-// manifest wraps all of these.
 
 async function readAndParseJSON(inputPath) {
     const dataPath = path.join("./ocf/samples", inputPath);
