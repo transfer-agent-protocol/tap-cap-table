@@ -22,8 +22,9 @@
         "seedPoet": "node test/seedPoet.cjs",
         "deseed": "node test/deseed.cjs",
         "validate-example-ocf-files":  "cd ocf && yarn validate-example-ocf-files",
+        "validate-poet-files": "cd ocf && yarn validate-poet-files",
         "validate-and-insert-example-ocf-files": "yarn validate-example-ocf-files && yarn seed",
-        "validate-and-insert-poet-files": "yarn validate-example-ocf-files && yarn seedPoet"
+        "validate-and-insert-poet-files": "yarn validate-poet-files && yarn seedPoet"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0",
