@@ -2,13 +2,12 @@ const { PrismaClient } = require("@prisma/client");
 const fs = require("fs").promises;
 const path = require("path");
 
-// OCF Provided Sample
-const inputManifest = require("../ocf/samples/Manifest.ocf.json");
+const inputManifest = require("./poet/Manifest.ocf.json");
 
 const transactionTests = require("./objects/transactions.cjs");
 
 async function readAndParseJSON(inputPath) {
-    const dataPath = path.join("./ocf/samples", inputPath);
+    const dataPath = path.join("./test/poet", inputPath);
     try {
         const data = await fs.readFile(dataPath, "utf8");
         const jsonData = JSON.parse(data);
@@ -86,16 +85,6 @@ async function main() {
         });
 
         console.log("Vesting term added ", vestingTerm);
-    }
-
-    // VALUATIONS
-    const inputValuations = await readAndParseJSON(inputManifest.valuations_files[0].filepath);
-    console.log("Adding Valuations to DB");
-    for (const inputValuation of inputValuations.items) {
-        const valuation = await prisma.valuations.create({
-            data: inputValuation,
-        });
-        console.log("Valuation added ", valuation);
     }
 }
 
