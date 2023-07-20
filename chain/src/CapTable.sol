@@ -78,6 +78,4 @@ contract CapTable is Ownable {
             stockClasses[index].initialSharesAuthorized
         );
     }
-
-    
 }
