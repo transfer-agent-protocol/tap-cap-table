@@ -25,7 +25,7 @@
         "validate-poet-files": "cd ocf && yarn validate-poet-files",
         "validate-and-insert-example-ocf-files": "yarn validate-example-ocf-files && yarn seed",
         "validate-and-insert-poet-files": "yarn validate-poet-files && yarn seedPoet",
-        "update-issuer-legal-name": "node chain-scripts/issuer.cjs"
+        "test-onchain-cap-table": "node chain-scripts/capTable.cjs"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0",
