@@ -2,7 +2,7 @@ const { ethers } = require("ethers");
 
 // ABI & Contract Address
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
-const CONTRACT_ADDRESS = "0x610178dA211FEF7D417bC0e6FeD39F05609AD788";
+const CONTRACT_ADDRESS = "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE";
 
 // Replace with your wallet private key (keep this safe and NEVER expose in client-side code)
 const WALLET_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
