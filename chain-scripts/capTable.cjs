@@ -2,10 +2,15 @@ const { ethers } = require("ethers");
 
 // ABI & Contract Address
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
-const CONTRACT_ADDRESS = "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE";
+const CONTRACT_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
 
 // Replace with your wallet private key (keep this safe and NEVER expose in client-side code)
 const WALLET_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+
+// script to deploy the contract
+/*
+forge create --rpc-url http://127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 src/CapTable.sol:CapTable --constructor-args "1212-1212-1212" "Poet Network" "10000000"
+*/
 
 async function main() {
     const customNetwork = {
