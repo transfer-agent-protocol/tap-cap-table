@@ -2,7 +2,7 @@ const { ethers } = require("ethers");
 
 // ABI & Contract Address
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
-const CONTRACT_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
+const CONTRACT_ADDRESS = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
 
 // Replace with your wallet private key (keep this safe and NEVER expose in client-side code)
 const WALLET_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
@@ -38,10 +38,11 @@ async function main() {
         const newIssuer = await contract.getIssuer();
         console.log("New issuer with name: ", newIssuer);
 
-        const newStakeholder = await contract.createStakeholder("111-111-111");
+        const stakeholderId = "111-111-111";
+        const newStakeholder = await contract.createStakeholder(stakeholderId);
         await newStakeholder.wait();
 
-        const stakeHolderAdded = await contract.getStakeholder(0);
+        const stakeHolderAdded = await contract.getStakeholder(stakeholderId);
         console.log("Getting new stakeholder ", stakeHolderAdded);
 
         const newStockClass = await contract.createStockClass("CS-1", "COMMON", 100, 100, 4000000);
