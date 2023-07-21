@@ -15,5 +15,14 @@ contract CapTableTest is Test {
         capTable.updateLegalName("Test Issuer Updated");
         (, string memory legalName, ) = capTable.getIssuer();
         assertEq(legalName, "Test Issuer Updated");
+
+    }
+
+    function testCreateStakeholder() public {
+        string memory id = "123-123-123";
+        capTable.createStakeholder(id);
+        string memory _id = capTable.getStakeholder(0);
+        assertEq(_id, id);
+
     }
 }
