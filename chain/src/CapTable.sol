@@ -63,9 +63,13 @@ contract CapTable is Ownable {
         return (issuer.id, issuer.legalName, issuer.initialSharesAuthorized);
     }
 
-    function getStakeholder(uint256 index) public view returns (string memory) {
-        require(index < stakeholders.length, "Index out of bounds");
-        return stakeholders[index].id;
+    function getStakeholder(string memory id) public view returns (string memory) {
+        for (uint256 i = 0; i < stakeholders.length; i ++) {
+            if(keccak256(abi.encodePacked(stakeholders[i].id ))== keccak256(abi.encodePacked(id))) {
+                return stakeholders[i].id;
+            }
+        }
+        return "";
     }
 
     function getStockClass(uint256 index) public view returns (string memory, string memory, uint256, uint256, uint256) {

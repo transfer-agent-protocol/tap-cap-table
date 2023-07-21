@@ -14,15 +14,16 @@ contract CapTableTest is Test {
     function testUpdateLegalName() public {
         capTable.updateLegalName("Test Issuer Updated");
         (, string memory legalName, ) = capTable.getIssuer();
-        assertEq(legalName, "Test Issuer Updated");
+        assertEq(legalName, "Test Issuer Updated", "Test Issuer has been updated successfuly");
+        assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
 
     }
 
     function testCreateStakeholder() public {
-        string memory id = "123-123-123";
-        capTable.createStakeholder(id);
-        string memory _id = capTable.getStakeholder(0);
-        assertEq(_id, id);
-
+        string memory expectedId = "123-123-123";
+        capTable.createStakeholder(expectedId);
+        string memory actualId = capTable.getStakeholder(expectedId);
+        assertEq(actualId, expectedId, "Stakeholder ID should match and it doesn't");
+        assertNotEq(actualId, "444-444-444", "Stakeholder ID should not match");
     }
 }
