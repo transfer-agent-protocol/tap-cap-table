@@ -1,63 +1,94 @@
 const { ethers } = require("ethers");
+const { v4: uuid } = require("uuid");
 
-// ABI & Contract Address
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
-const CONTRACT_ADDRESS = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
-
-// Replace with your wallet private key (keep this safe and NEVER expose in client-side code)
+const CONTRACT_ADDRESS = "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c";
 const WALLET_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
-// script to deploy the contract
-/*
-forge create --rpc-url http://127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 src/CapTable.sol:CapTable --constructor-args "1212-1212-1212" "Poet Network" "10000000"
-*/
+const customNetwork = {
+    chainId: 31337,
+    name: "local",
+};
+
+const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
+const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
+const contract = new ethers.Contract(CONTRACT_ADDRESS, CAP_TABLE_ABI, wallet);
+
+async function updateLegalName() {
+    const tx = await contract.updateLegalName("Poetic Justice");
+    await tx.wait();
+    console.log("Legal name updated successfully!");
+}
+
+async function displayIssuer() {
+    const newIssuer = await contract.getIssuer();
+    console.log("New issuer with name:", newIssuer);
+}
+
+async function createAndDisplayStakeholder() {
+    const stakeholderId = uuid();
+    const tx = await contract.createStakeholder(stakeholderId);
+    await tx.wait();
+    const stakeHolderAdded = await contract.getStakeholder(stakeholderId);
+    console.log("Stakeholder for Existing ID:", stakeHolderAdded);
+}
+
+async function displayNonExistingStakeholder() {
+    const nonExistingStakeholder = await contract.getStakeholder("222-222-222");
+    console.log("Stakeholder for Non-Existing ID:", nonExistingStakeholder);
+}
+
+async function createAndDisplayStockClass() {
+    const stockClassId = uuid();
+    const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
+    await newStockClass.wait();
+    const stockClassAdded = await contract.getStockClass(stockClassId);
+    console.log("--- Stock Class for Existing ID ---");
+    console.log("Getting new stock class:");
+    console.log("ID:", stockClassAdded[0]);
+    console.log("Type:", stockClassAdded[1]);
+    console.log("Price Per Share:", ethers.utils.formatUnits(stockClassAdded[2], 6));
+    console.log("Par Value:", ethers.utils.formatUnits(stockClassAdded[3], 6));
+    console.log("Initial Shares Authorized:", stockClassAdded[4].toString());
+}
+
+async function displayNonExistingStockClass() {
+    const nonExistingStockClass = await contract.getStockClass("222-222-222");
+    console.log("--- Stock Class for Non-Existing ID ---");
+    console.log("Getting new stock class:");
+    console.log("ID:", nonExistingStockClass[0]);
+    console.log("Type:", nonExistingStockClass[1]);
+    console.log("Price Per Share:", ethers.utils.formatUnits(nonExistingStockClass[2], 6));
+    console.log("Par Value:", ethers.utils.formatUnits(nonExistingStockClass[3], 6));
+    console.log("Initial Shares Authorized:", nonExistingStockClass[4].toString());
+}
+
+async function totalNumberOfStakeholders() {
+    const totalStakeholders = await contract.getTotalNumberOfStakeholders();
+    console.log("Total number of stakeholders:", totalStakeholders.toString());
+}
+
+async function totalNumberOfStockClasses() {
+    const totalStockClasses = await contract.getTotalNumberOfStockClasses();
+    console.log("Total number of stock classes:", totalStockClasses.toString());
+}
 
 async function main() {
-    const customNetwork = {
-        chainId: 31337,
-        name: "local",
-    };
-
-    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
-
-    const blockNumber = await provider.getBlockNumber();
-    console.log("Current block number:", blockNumber);
-
-    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const balance = await provider.getBalance(wallet.address);
-    console.log("Ether balance:", ethers.utils.formatEther(balance));
-
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CAP_TABLE_ABI, wallet);
-
-    console.log("Fetching cap table...");
     try {
-        const updateLegalName = await contract.updateLegalName("Poetic Justice");
-        await updateLegalName.wait();
-        console.log("Legal name updated successfully!");
-
-        const newIssuer = await contract.getIssuer();
-        console.log("New issuer with name: ", newIssuer);
-
-        const stakeholderId = "111-111-111";
-        const newStakeholder = await contract.createStakeholder(stakeholderId);
-        await newStakeholder.wait();
-
-        const stakeHolderAdded = await contract.getStakeholder(stakeholderId);
-        console.log("Getting new stakeholder ", stakeHolderAdded);
-
-        const newStockClass = await contract.createStockClass("CS-1", "COMMON", 100, 100, 4000000);
-
-        await newStockClass.wait();
-
-        const stockClassAdded = await contract.getStockClass(0);
-        console.log("Getting new stock class:");
-        console.log("ID:", stockClassAdded[0]);
-        console.log("Type:", stockClassAdded[1]);
-        console.log("Price Per Share:", ethers.utils.formatUnits(stockClassAdded[2], 6)); // Formatting to 6 decimals for clarity
-        console.log("Par Value:", ethers.utils.formatUnits(stockClassAdded[3], 6)); // Formatting to 6 decimals for clarity
-        console.log("Initial Shares Authorized:", stockClassAdded[4].toString());
+        await updateLegalName();
+        await displayIssuer();
+        await createAndDisplayStakeholder();
+        await displayNonExistingStakeholder();
+        await createAndDisplayStockClass();
+        await displayNonExistingStockClass();
+        await totalNumberOfStakeholders();
+        await totalNumberOfStockClasses();
     } catch (err) {
-        console.error("Error updating legal name", err);
+        if (err.reason) {
+            console.error("Smart contract reverted with reason:", err.reason);
+        } else {
+            console.error("Error encountered:", err.message);
+        }
     }
 }
 
