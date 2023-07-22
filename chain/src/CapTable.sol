@@ -72,14 +72,26 @@ contract CapTable is Ownable {
         return "";
     }
 
-    function getStockClass(uint256 index) public view returns (string memory, string memory, uint256, uint256, uint256) {
-        require(index < stockClasses.length, "Index out of bounds");
-        return (
-            stockClasses[index].id,
-            stockClasses[index].classType,
-            stockClasses[index].pricePerShare,
-            stockClasses[index].parValue,
-            stockClasses[index].initialSharesAuthorized
-        );
+    function getStockClass(string memory id) public view returns (string memory, string memory, uint256, uint256, uint256) {
+        for (uint256 i = 0; i < stockClasses.length; i ++) {
+            if(keccak256(abi.encodePacked(stockClasses[i].id)) == keccak256(abi.encodePacked(id))) {
+                return (
+                    stockClasses[i].id,
+                    stockClasses[i].classType, 
+                    stockClasses[i].pricePerShare,
+                    stockClasses[i].parValue,
+                    stockClasses[i].initialSharesAuthorized
+                );
+            }
+        }
+        return ("", "", 0, 0, 0);
+    }
+
+    function getTotalNumberOfStakeholders() public view returns (uint256) {
+        return stakeholders.length;
+    }
+
+    function getTotalNumberOfStockClasses() public view returns (uint256) {
+        return stockClasses.length;
     }
 }
