@@ -32,6 +32,15 @@ contract CapTableTest is Test {
         assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
     }
 
+    // using test_ keyword
+    function updateLegalName() public {
+        capTable.updateLegalName("Ceranium Inc.");
+        (, string memory legalName, ) = capTable.getIssuer();
+        console.log("Legal name in test_ function ", legalName);
+        assertEq(legalName, "Ceranium Inc.", "Test Issuer has been updated successfuly");
+        assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
+    }
+
     // // using testFail_ keyword
     // function test_UpdateLegalNameToEmptyString() public {
     //     capTable.updateLegalName("");
