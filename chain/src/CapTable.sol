@@ -32,13 +32,17 @@ contract CapTable is Ownable {
     event StakeholderCreated(string id);
     event StockClassCreated(string id, string classType, uint256 pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
 
-    constructor(string memory _id, string memory _legalName, string memory _initialSharesAuthorized) {
+    modifier legalNameNotEmpty (string memory _legalName) {
         require(keccak256(abi.encodePacked(_legalName)) != keccak256(abi.encodePacked("")), "Legal name cannot be empty");
+        _;
+    }
+
+    constructor(string memory _id, string memory _legalName, string memory _initialSharesAuthorized) legalNameNotEmpty(_legalName) {
         issuer = Issuer(_id, _legalName, _initialSharesAuthorized);
         emit IssuerCreated(_id, _legalName, _initialSharesAuthorized);
     }
 
-	function updateLegalName(string memory _legalName) public onlyOwner {
+	function updateLegalName(string memory _legalName) public onlyOwner legalNameNotEmpty(_legalName) {
         string memory previousLegalName = issuer.legalName;
         issuer.legalName = _legalName;
         emit IssuerLegalNameUpdated(previousLegalName, _legalName);
