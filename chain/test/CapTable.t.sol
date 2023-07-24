@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
+
 import "../src/CapTable.sol";
 
 contract CapTableTest is Test {
@@ -11,13 +13,36 @@ contract CapTableTest is Test {
         capTable = new CapTable("123-123-123", "Test Issuer", "10000000");
     }
 
+    // not using test_ keyword
     function testUpdateLegalName() public {
-        capTable.updateLegalName("Test Issuer Updated");
+        capTable.updateLegalName("Apple Inc.");
         (, string memory legalName, ) = capTable.getIssuer();
-        assertEq(legalName, "Test Issuer Updated", "Test Issuer has been updated successfuly");
+        assertEq(legalName, "Apple Inc.", "Test Issuer has been updated successfuly");
         assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
 
     }
+
+    // using test_ keyword
+    function test_UpdateLegalName() public {
+        capTable.updateLegalName("Microsoft Inc.");
+        (, string memory legalName, ) = capTable.getIssuer();
+        console.log("Legal name in test_ function ", legalName);
+        assertEq(legalName, "Microsoft Inc.", "Test Issuer has been updated successfuly");
+        assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
+    }
+
+    // // using testFail_ keyword
+    // function test_UpdateLegalNameToEmptyString() public {
+    //     capTable.updateLegalName("");
+    //     (, string memory legalName, ) = capTable.getIssuer();
+
+    // }
+
+    //  // using testFail_ keyword
+    // function testFail_UpdateLegalNameToEmptyString() public {
+    //     capTable.updateLegalName("");
+    //     (, string memory legalName, ) = capTable.getIssuer();
+    // }
 
     function testCreateStakeholder() public {
         string memory expectedId = "123-123-123";
