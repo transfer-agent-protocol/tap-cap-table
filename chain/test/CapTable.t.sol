@@ -22,7 +22,7 @@ contract CapTableTest is Test {
     function testCreateStakeholder() public {
         string memory expectedId = "123-123-123";
         capTable.createStakeholder(expectedId);
-        string memory actualId = capTable.getStakeholder(expectedId);
+        string memory actualId = capTable.getStakeholderById(expectedId);
         assertEq(actualId, expectedId, "Stakeholder ID should match and it doesn't");
         assertNotEq(actualId, "444-444-444", "Stakeholder ID should not match");
     }
@@ -47,7 +47,7 @@ contract CapTableTest is Test {
             uint256 actualPricePerShare,
             uint256 actualParValue,
             uint256 actualInitialSharesAuthorized
-        ) = capTable.getStockClass(expectedId);
+        ) = capTable.getStockClassById(expectedId);
         
         assertEq(actualId, expectedId, "Stock Class ID should match and it doesn't");
         assertEq(actualClassType, expectedClassType, "Stock Class Type should match and it doesn't");
