@@ -32,49 +32,49 @@ contract CapTable is Ownable {
     event StakeholderCreated(string id);
     event StockClassCreated(string id, string classType, uint256 pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
 
-    constructor(string memory id, string memory legalName, string memory initialSharesAuthorized) {
-        issuer = Issuer(id, legalName, initialSharesAuthorized);
-        emit IssuerCreated(id, legalName, initialSharesAuthorized);
+    constructor(string memory _id, string memory _legalName, string memory _initialSharesAuthorized) {
+        issuer = Issuer(_id, _legalName, _initialSharesAuthorized);
+        emit IssuerCreated(_id, _legalName, _initialSharesAuthorized);
     }
 
-	function updateLegalName(string memory legalName) public onlyOwner {
+	function updateLegalName(string memory _legalName) public onlyOwner {
         string memory previousLegalName = issuer.legalName;
-        issuer.legalName = legalName;
-        emit IssuerLegalNameUpdated(previousLegalName, legalName);
+        issuer.legalName = _legalName;
+        emit IssuerLegalNameUpdated(previousLegalName, _legalName);
     }
 
-    function createStakeholder(string memory id) public onlyOwner {
-        stakeholders.push(Stakeholders(id));
-        emit StakeholderCreated(id);
+    function createStakeholder(string memory _id) public onlyOwner {
+        stakeholders.push(Stakeholders(_id));
+        emit StakeholderCreated(_id);
     }
 
     function createStockClass(
-        string memory id,
-        string memory classType,
-        uint256 pricePerShare,
-        uint256 parValue,
-        uint256 initialSharesAuthorized
+        string memory _id,
+        string memory _classType,
+        uint256 _pricePerShare,
+        uint256 _parValue,
+        uint256 _initialSharesAuthorized
     ) public onlyOwner {
-        stockClasses.push(StockClasses(id, classType, pricePerShare, parValue, initialSharesAuthorized));
-        emit StockClassCreated(id, classType, pricePerShare, parValue, initialSharesAuthorized);
+        stockClasses.push(StockClasses(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized));
+        emit StockClassCreated(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized);
     }
 
     function getIssuer() public view returns (string memory, string memory, string memory) {
         return (issuer.id, issuer.legalName, issuer.initialSharesAuthorized);
     }
 
-    function getStakeholder(string memory id) public view returns (string memory) {
+    function getStakeholderById(string memory _id) public view returns (string memory) {
         for (uint256 i = 0; i < stakeholders.length; i ++) {
-            if(keccak256(abi.encodePacked(stakeholders[i].id ))== keccak256(abi.encodePacked(id))) {
+            if(keccak256(abi.encodePacked(stakeholders[i].id ))== keccak256(abi.encodePacked(_id))) {
                 return stakeholders[i].id;
             }
         }
         return "";
     }
 
-    function getStockClass(string memory id) public view returns (string memory, string memory, uint256, uint256, uint256) {
+    function getStockClassById(string memory _id) public view returns (string memory, string memory, uint256, uint256, uint256) {
         for (uint256 i = 0; i < stockClasses.length; i ++) {
-            if(keccak256(abi.encodePacked(stockClasses[i].id)) == keccak256(abi.encodePacked(id))) {
+            if(keccak256(abi.encodePacked(stockClasses[i].id)) == keccak256(abi.encodePacked(_id))) {
                 return (
                     stockClasses[i].id,
                     stockClasses[i].classType, 
