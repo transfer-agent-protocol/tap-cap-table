@@ -17,6 +17,7 @@ contract CapTableTest is Test {
     function testUpdateLegalName() public {
         capTable.updateLegalName("Apple Inc.");
         (, string memory legalName, ) = capTable.getIssuer();
+        console.log("Legal name in test function ", legalName);
         assertEq(legalName, "Apple Inc.", "Test Issuer has been updated successfuly");
         assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
 
