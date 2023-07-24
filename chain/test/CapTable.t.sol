@@ -13,7 +13,6 @@ contract CapTableTest is Test {
         capTable = new CapTable("123-123-123", "Test Issuer", "10000000");
     }
 
-    // not using test_ keyword
     function testUpdateLegalName() public {
         capTable.updateLegalName("Apple Inc.");
         (, string memory legalName, ) = capTable.getIssuer();
@@ -24,35 +23,17 @@ contract CapTableTest is Test {
     }
 
     // using test_ keyword
-    function test_UpdateLegalName() public {
-        capTable.updateLegalName("Microsoft Inc.");
+    function test_UpdateLegalNameToEmptyString() public {
+        capTable.updateLegalName("");
         (, string memory legalName, ) = capTable.getIssuer();
-        console.log("Legal name in test_ function ", legalName);
-        assertEq(legalName, "Microsoft Inc.", "Test Issuer has been updated successfuly");
-        assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
+
     }
 
-    // using test_ keyword
-    function updateLegalName() public {
-        capTable.updateLegalName("Ceranium Inc.");
+     // using testFail_ keyword
+    function testFail_UpdateLegalNameToEmptyString() public {
+        capTable.updateLegalName("");
         (, string memory legalName, ) = capTable.getIssuer();
-        console.log("Legal name in test_ function ", legalName);
-        assertEq(legalName, "Ceranium Inc.", "Test Issuer has been updated successfuly");
-        assertNotEq(legalName, "Poet Network Inc.", "Test Issuer has not been updated successfuly");
     }
-
-    // // using testFail_ keyword
-    // function test_UpdateLegalNameToEmptyString() public {
-    //     capTable.updateLegalName("");
-    //     (, string memory legalName, ) = capTable.getIssuer();
-
-    // }
-
-    //  // using testFail_ keyword
-    // function testFail_UpdateLegalNameToEmptyString() public {
-    //     capTable.updateLegalName("");
-    //     (, string memory legalName, ) = capTable.getIssuer();
-    // }
 
     function testCreateStakeholder() public {
         string memory expectedId = "123-123-123";
