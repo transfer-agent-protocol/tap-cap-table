@@ -34,7 +34,9 @@ contract CapTableTest is Test {
         capTable.updateLegalName("Apple Inc.");
 
         (, string memory legalName, ) = capTable.getIssuer();  //.legalName
-        assertEq(convertStringToHash(legalName), convertStringToHash("Plato Inc."), "Legal name has not changed");
+        assertEq(convertStringToHash(legalName), convertStringToHash("Plato Inc"), "Error: Legal names do not match");
+        assertNotEq(convertStringToHash(legalName), convertStringToHash("Apple Inc"), "Error: Legal names match");
+
         console.log("Legal name is ", legalName);
     }
 
