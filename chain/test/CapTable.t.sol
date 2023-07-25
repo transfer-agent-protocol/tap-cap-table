@@ -26,16 +26,16 @@ contract CapTableTest is Test {
 
     function testCannotUpdateLegalNameWithWrongOwner() public {
         capTable.updateLegalName("Plato Inc.");
-
+        
         // set a new address to test that only owner can change legal name
         createPranksterAndExpectRevert();
 
         // should not update legal name
         capTable.updateLegalName("Apple Inc.");
 
-        (, string memory legalName, ) = capTable.getIssuer();  //.legalName
-        assertEq(convertStringToHash(legalName), convertStringToHash("Plato Inc"), "Error: Legal names do not match");
-        assertNotEq(convertStringToHash(legalName), convertStringToHash("Apple Inc"), "Error: Legal names match");
+        (, string memory legalName, ) = capTable.getIssuer(); 
+        assertEq(convertStringToHash(legalName), convertStringToHash("Plato Inc."), "Legal names do not match, and they should");
+        assertNotEq(convertStringToHash(legalName), convertStringToHash("Apple Inc."), "Legal names match, and they shouldn't");
 
         console.log("Legal name is ", legalName);
     }
@@ -44,10 +44,9 @@ contract CapTableTest is Test {
         capTable.updateLegalName("Apple Inc.");
         (, string memory legalName, ) = capTable.getIssuer();
         console.log("Legal name ", legalName);
-        assertEq(convertStringToHash(legalName), convertStringToHash("Apple Inc."), "Legal name matches");
+        assertEq(convertStringToHash(legalName), convertStringToHash("Apple Inc."), "Legal names do not match, and they should");
     }
 
-    // this way of testing for failure allows you test logic after test fails.
     function testCannotUpdateLegalNameToEmptyString() public {
         vm.expectRevert();
         // legal name should not be updated
@@ -55,28 +54,24 @@ contract CapTableTest is Test {
 
         (, string memory legalName, ) = capTable.getIssuer();
         console.log("legal name is ", legalName);
-        assertEq(convertStringToHash(legalName), convertStringToHash("Test Issuer"), "Legal name has not changed from set up");
+        assertEq(convertStringToHash(legalName), convertStringToHash("Test Issuer"), "Legal names do not match, and they should");
     }
 
-    // // only owner is able to create a new stakeholder
-    // function testCannotCreateStakeholderWithWrongOwner() public {
-    //     // default address is owner.
-    //     capTable.createStakeholder("7777-7777-7777");
+    function testCannotCreateStakeholderWithWrongOwner() public {
+        capTable.createStakeholder("7777-7777-7777");
 
-    //     uint256 totalStakeholdersBefore = capTable.getTotalNumberOfStakeholders();
-    //     console.log("total stakeholders before wrong owner", totalStakeholdersBefore);
+        uint256 totalStakeholdersBefore = capTable.getTotalNumberOfStakeholders();
+        console.log("Total stakeholders before wrong owner tries to create one", totalStakeholdersBefore);
 
-    //     // pass prankster address to ensure only owner can create new stakeholder
-    //     address prankster = address(0);
-    //     vm.prank(prankster);
-    //     vm.expectRevert();
-    //     capTable.createStakeholder("999-999-999");
+        // pass prankster address to ensure only owner can create new stakeholder
+        createPranksterAndExpectRevert();
+        capTable.createStakeholder("9999-9999-9999");
 
-    //     uint256 totalStakeholdersAfter= capTable.getTotalNumberOfStakeholders();
-    //     console.log("Total stakeholders after wrong owner", totalStakeholdersAfter);
+        uint256 totalStakeholdersAfter= capTable.getTotalNumberOfStakeholders();
+        console.log("Total stakeholders after wrong owner", totalStakeholdersAfter);
 
-    //     assertEq(totalStakeholdersBefore, totalStakeholdersAfter);
-    // }
+        assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Stakeholder was added and it shouldn't have");
+    }
 
     // function testCreateStakeholder() public {
     //     string memory expectedId = "123-123-123";
