@@ -27,11 +27,11 @@ contract CapTable is Ownable {
     Stakeholders[] public stakeholders;
     StockClasses[] public stockClasses;
 
-    event IssuerCreated(string id, string legalName, string initialSharesAuthorized);
+    event IssuerCreated(string indexed id, string indexed legalName, string indexed initialSharesAuthorized);
     event IssuerLegalNameUpdated(string oldLegalName, string newLegalName);
 
-    event StakeholderCreated(string id);
-    event StockClassCreated(string id, string classType, uint256 pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
+    event StakeholderCreated(string indexed id);
+    event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
 
     modifier legalNameNotEmpty (string memory _legalName) {
         require(keccak256(abi.encodePacked(_legalName)) != keccak256(abi.encodePacked("")), "Legal name cannot be empty");
