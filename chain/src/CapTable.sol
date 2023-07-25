@@ -10,6 +10,7 @@ contract CapTable is Ownable {
         string initialSharesAuthorized;
     }
 
+    // TODO: stakeholders need a relationship to how much stock they own.
     struct Stakeholders {
         string id;
     }
@@ -71,7 +72,7 @@ contract CapTable is Ownable {
     function getStakeholderById(string memory _id) public view returns (string memory) {
         for (uint256 i = 0; i < stakeholders.length; i ++) {
             if(keccak256(abi.encodePacked(stakeholders[i].id ))== keccak256(abi.encodePacked(_id))) {
-                return stakeholders[i].id;
+                return stakeholders[i].id; // will be extended with more data to return
             }
         }
         return "";
