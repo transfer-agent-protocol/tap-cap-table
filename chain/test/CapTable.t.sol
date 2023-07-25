@@ -40,7 +40,7 @@ contract CapTableTest is Test {
         console.log("Legal name is ", legalName);
     }
 
-    function testUpdateLegalNameWithCorrectOwner () public {
+    function testUpdateLegalNameWithOwner () public {
         capTable.updateLegalName("Apple Inc.");
         (, string memory legalName, ) = capTable.getIssuer();
         console.log("Legal name ", legalName);
@@ -81,7 +81,7 @@ contract CapTableTest is Test {
         assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Total number of stakeholders has changed and it shouldn't have");
     }
 
-    function testCreateStakeholderWithCorrectOwner() public {
+    function testCreateStakeholderWithOwner() public {
         string memory expectedId = "1234-1234-1234";
         capTable.createStakeholder(expectedId);
         string memory actualId = capTable.getStakeholderById(expectedId);
@@ -89,40 +89,96 @@ contract CapTableTest is Test {
         assertNotEq(actualId, "4444-4444-4444");
     }
 
-    // function testCreateStockClass() public {
-    //     string memory expectedId = "123-123-123";
-    //     string memory expectedClassType = "Common";
-    //     uint256 expectedPricePerShare = 100;
-    //     uint256 expectedParValue = 1;
-    //     uint256 expectedInitialSharesAuthorized = 10000000;
-    //     capTable.createStockClass(
-    //         expectedId,
-    //         expectedClassType,
-    //         expectedPricePerShare,
-    //         expectedParValue,
-    //         expectedInitialSharesAuthorized
-    //     );
+    function createInitialDummyStockClassData () public pure returns (string memory, string memory, uint256, uint256, uint256) {
+        string memory expectedId = "1234-1234-1234";
+        string memory expectedClassType = "Common";
+        uint256 expectedPricePerShare = 100;
+        uint256 expectedParValue = 1;
+        uint256 expectedInitialSharesAuthorized = 10000000;
 
-    //     (
-    //         string memory actualId,
-    //         string memory actualClassType,
-    //         uint256 actualPricePerShare,
-    //         uint256 actualParValue,
-    //         uint256 actualInitialSharesAuthorized
-    //     ) = capTable.getStockClassById(expectedId);
+        return (expectedId, expectedClassType, expectedPricePerShare, expectedParValue, expectedInitialSharesAuthorized);
+    }
+
+
+    function testCannotCreateStockClassWithWrongOwner() public {
+        (
+            string memory expectedId,
+            string memory expectedClassType,
+            uint256 expectedPricePerShare,
+            uint256 expectedParValue,
+            uint256 expectedInitialSharesAuthorized
+        ) = createInitialDummyStockClassData();
+
+        capTable.createStockClass(
+            expectedId,
+            expectedClassType,
+            expectedPricePerShare,
+            expectedParValue,
+            expectedInitialSharesAuthorized
+        );
+
+        // get total number of stock classes before creating one with wrong owner
+        uint256 totalStockClassesBefore = capTable.getTotalNumberOfStockClasses();
+
+        // create a prankster to change owner address and try to create a new stock class
+        createPranksterAndExpectRevert();
+        string memory pranksterStockClassId = "6666-6666-6666";
+        capTable.createStockClass(
+            pranksterStockClassId,
+            "Common",
+            100,
+            1,
+            10
+        );
+
+        // get total number of stock classes after creating one with wrong owner
+        uint256 totalStockClassesAfter = capTable.getTotalNumberOfStockClasses();
+
+        // fetch prankster stock class to ensure it was not created
+        (string memory id, ,,,) = capTable.getStockClassById(pranksterStockClassId);
+
+        assertNotEq(id, pranksterStockClassId, "Prankster stock class was created and it shouldn't have");
+        assertEq(totalStockClassesBefore, totalStockClassesAfter, "Total number of stock classes has changed and it shouldn't have");
+
+    }
+
+    function testCannotCreateStockClassWithOwner() public {
+         (
+            string memory expectedId,
+            string memory expectedClassType,
+            uint256 expectedPricePerShare,
+            uint256 expectedParValue,
+            uint256 expectedInitialSharesAuthorized
+        ) = createInitialDummyStockClassData();
         
-    //     assertEq(actualId, expectedId);
-    //     assertEq(actualClassType, expectedClassType);
-    //     assertEq(actualPricePerShare, expectedPricePerShare);
-    //     assertEq(actualParValue, expectedParValue);
-    //     assertEq(
-    //         actualInitialSharesAuthorized,
-    //         expectedInitialSharesAuthorized
-    //     );
-    //     assertNotEq(actualId, "444-444-444", "Stock Class ID should not match");
-    //     assertNotEq(actualClassType, "Preferred", "Stock Class Type should not match");
-    //     assertNotEq(actualPricePerShare, 200, "Stock Class Price Per Share should not match");
-    //     assertNotEq(actualParValue, 2, "Stock Class Par Value should not match");
-    //     assertNotEq(actualInitialSharesAuthorized, 20000000, "Stock Class Initial Shares Authorized should not match");
-    // }
+        capTable.createStockClass(
+            expectedId,
+            expectedClassType,
+            expectedPricePerShare,
+            expectedParValue,
+            expectedInitialSharesAuthorized
+        );
+
+        (
+            string memory actualId,
+            string memory actualClassType,
+            uint256 actualPricePerShare,
+            uint256 actualParValue,
+            uint256 actualInitialSharesAuthorized
+        ) = capTable.getStockClassById(expectedId);
+        
+        assertEq(actualId, expectedId);
+        assertEq(actualClassType, expectedClassType);
+        assertEq(actualPricePerShare, expectedPricePerShare);
+        assertEq(actualParValue, expectedParValue);
+        assertEq(
+            actualInitialSharesAuthorized,
+            expectedInitialSharesAuthorized
+        );
+        assertNotEq(actualId, "444-444-444", "Stock Class ID should not match");
+        assertNotEq(actualClassType, "Preferred", "Stock Class Type should not match");
+        assertNotEq(actualPricePerShare, 200, "Stock Class Price Per Share should not match");
+        assertNotEq(actualParValue, 2, "Stock Class Par Value should not match");
+        assertNotEq(actualInitialSharesAuthorized, 20000000, "Stock Class Initial Shares Authorized should not match");
+    }
 }
