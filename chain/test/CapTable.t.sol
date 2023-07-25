@@ -181,4 +181,33 @@ contract CapTableTest is Test {
         assertNotEq(actualParValue, 2, "Stock Class Par Value should not match");
         assertNotEq(actualInitialSharesAuthorized, 20000000, "Stock Class Initial Shares Authorized should not match");
     }
+
+    function testCreateManyStakeholders() public {
+        // Creating 5 stakeholders
+        capTable.createStakeholder("1111-1111-1111-1111");
+        capTable.createStakeholder("2222-2222-2222-2222");
+        capTable.createStakeholder("3333-3333-3333-3333");
+        capTable.createStakeholder("4444-4444-4444-4444");
+        capTable.createStakeholder("5555-5555-5555-5555");
+
+        // fetch total number
+        uint256 totalStakeholders = capTable.getTotalNumberOfStakeholders();
+
+        assertEq(totalStakeholders, 5, "Error: Total number is not 5");
+        assertNotEq(totalStakeholders, 4, "Error: Total number is 4");
+    }
+
+    function testFakeIdForGettingStakeholder() public {
+        string memory realId = "1111-1111-1111-1111";
+        capTable.createStakeholder(realId);
+        string memory fetchedRealId = capTable.getStakeholderById(realId);
+
+        string memory fakeId = "9999-9999-9999-9999";
+        string memory emptyId = capTable.getStakeholderById(fakeId);
+
+        assertEq(realId, fetchedRealId, "Error: Real ID does not match fetched ID");
+        assertNotEq(fakeId, emptyId, "Error: Fake ID matches empty ID");
+    }
+
+
 }
