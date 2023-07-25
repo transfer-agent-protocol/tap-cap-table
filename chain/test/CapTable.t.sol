@@ -58,19 +58,27 @@ contract CapTableTest is Test {
     }
 
     function testCannotCreateStakeholderWithWrongOwner() public {
-        capTable.createStakeholder("7777-7777-7777");
+        string memory initialStakeholderId = "7777-7777-7777";
+        capTable.createStakeholder(initialStakeholderId);
 
+        // get total number of stakeholders, one should have been added
         uint256 totalStakeholdersBefore = capTable.getTotalNumberOfStakeholders();
         console.log("Total stakeholders before wrong owner tries to create one", totalStakeholdersBefore);
 
         // pass prankster address to ensure only owner can create new stakeholder
         createPranksterAndExpectRevert();
-        capTable.createStakeholder("9999-9999-9999");
+        string memory pranksterStakeholderIdToBeAdded = "9999-9999-9999";
+        capTable.createStakeholder(pranksterStakeholderIdToBeAdded);
 
+        // fetch prankster ID which should return empty string
+        string memory pranksterId = capTable.getStakeholderById(pranksterStakeholderIdToBeAdded);
+
+        // get total number of stakeholders, none should have been added
         uint256 totalStakeholdersAfter= capTable.getTotalNumberOfStakeholders();
         console.log("Total stakeholders after wrong owner", totalStakeholdersAfter);
 
-        assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Stakeholder was added and it shouldn't have");
+        assertNotEq(pranksterStakeholderIdToBeAdded, pranksterId, "Prankster ID was added and it shouldn't have");
+        assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Total number of stakeholders has changed and it shouldn't have");
     }
 
     // function testCreateStakeholder() public {
