@@ -40,7 +40,7 @@ contract CapTableTest is Test {
         console.log("Legal name is ", legalName);
     }
 
-    function testUpdateLegalName() public {
+    function testUpdateLegalNameWithCorrectOwner () public {
         capTable.updateLegalName("Apple Inc.");
         (, string memory legalName, ) = capTable.getIssuer();
         console.log("Legal name ", legalName);
@@ -81,13 +81,13 @@ contract CapTableTest is Test {
         assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Total number of stakeholders has changed and it shouldn't have");
     }
 
-    // function testCreateStakeholder() public {
-    //     string memory expectedId = "123-123-123";
-    //     capTable.createStakeholder(expectedId);
-    //     string memory actualId = capTable.getStakeholderById(expectedId);
-    //     assertEq(actualId, expectedId);
-    //     assertNotEq(actualId, "444-444-444");
-    // }
+    function testCreateStakeholderWithCorrectOwner() public {
+        string memory expectedId = "1234-1234-1234";
+        capTable.createStakeholder(expectedId);
+        string memory actualId = capTable.getStakeholderById(expectedId);
+        assertEq(actualId, expectedId);
+        assertNotEq(actualId, "4444-4444-4444");
+    }
 
     // function testCreateStockClass() public {
     //     string memory expectedId = "123-123-123";
