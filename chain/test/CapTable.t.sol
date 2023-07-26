@@ -13,6 +13,12 @@ contract CapTableTest is Test {
         capTable = new CapTable("123-123-123", "Test Issuer", "10000000");
     }
 
+    function testIssuerCreated() public {
+        (string memory id, ,) = capTable.getIssuer();
+
+        assertEq(id, "123-123-123", "Error: IDs don't match.");
+    }
+
     function convertStringToHash (string memory _str) public pure returns (bytes32) {
         bytes32 hash = keccak256(abi.encodePacked(_str));
         return hash;
