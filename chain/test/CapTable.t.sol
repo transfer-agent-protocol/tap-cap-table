@@ -13,12 +13,7 @@ contract CapTableTest is Test {
         capTable = new CapTable("123-123-123", "Test Issuer", "10000000");
     }
 
-    function testIssuerCreated() public {
-        (string memory id, ,) = capTable.getIssuer();
-
-        assertEq(id, "123-123-123", "Error: IDs don't match.");
-    }
-
+    /* Helpers */
     function convertStringToHash (string memory _str) public pure returns (bytes32) {
         bytes32 hash = keccak256(abi.encodePacked(_str));
         return hash;
@@ -29,6 +24,23 @@ contract CapTableTest is Test {
         vm.prank(prankster);
         vm.expectRevert();
     } 
+
+    function createInitialDummyStockClassData () public pure returns (string memory, string memory, uint256, uint256, uint256) {
+        string memory expectedId = "1234-1234-1234";
+        string memory expectedClassType = "Common";
+        uint256 expectedPricePerShare = 100;
+        uint256 expectedParValue = 1;
+        uint256 expectedInitialSharesAuthorized = 10000000;
+
+        return (expectedId, expectedClassType, expectedPricePerShare, expectedParValue, expectedInitialSharesAuthorized);
+    }
+
+    /* Issuer Tests */
+    function testIssuerCreated() public {
+        (string memory id, ,) = capTable.getIssuer();
+
+        assertEq(id, "123-123-123", "Error: IDs don't match.");
+    }
 
     function testCannotUpdateLegalNameWithWrongOwner() public {
         capTable.updateLegalName("Plato Inc.");
@@ -63,7 +75,17 @@ contract CapTableTest is Test {
         assertEq(convertStringToHash(legalName), convertStringToHash("Test Issuer"), "Legal names do not match, and they should");
     }
 
-    function testCannotCreateStakeholderWithWrongOwner() public {
+
+    /* Stakeholder Tests */
+    function testCreateStakeholderWithOwner() public {
+        string memory expectedId = "1234-1234-1234";
+        capTable.createStakeholder(expectedId);
+        string memory actualId = capTable.getStakeholderById(expectedId);
+        assertEq(actualId, expectedId);
+        assertNotEq(actualId, "4444-4444-4444");
+    }
+
+    function testCannotCreateStakeholderWithoutOwner() public {
         string memory initialStakeholderId = "7777-7777-7777";
         capTable.createStakeholder(initialStakeholderId);
 
@@ -87,68 +109,51 @@ contract CapTableTest is Test {
         assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Total number of stakeholders has changed and it shouldn't have");
     }
 
-    function testCreateStakeholderWithOwner() public {
-        string memory expectedId = "1234-1234-1234";
-        capTable.createStakeholder(expectedId);
-        string memory actualId = capTable.getStakeholderById(expectedId);
-        assertEq(actualId, expectedId);
-        assertNotEq(actualId, "4444-4444-4444");
+    function testCreateManyStakeholders() public {
+        // Creating 5 stakeholders
+        capTable.createStakeholder("1111-1111-1111-1111");
+        capTable.createStakeholder("2222-2222-2222-2222");
+        capTable.createStakeholder("3333-3333-3333-3333");
+        capTable.createStakeholder("4444-4444-4444-4444");
+        capTable.createStakeholder("5555-5555-5555-5555");
+
+        // fetch total number
+        uint256 totalStakeholders = capTable.getTotalNumberOfStakeholders();
+
+        assertEq(totalStakeholders, 5, "Error: Total number is not 5");
+        assertNotEq(totalStakeholders, 4, "Error: Total number is 4");
     }
 
-    function createInitialDummyStockClassData () public pure returns (string memory, string memory, uint256, uint256, uint256) {
-        string memory expectedId = "1234-1234-1234";
-        string memory expectedClassType = "Common";
-        uint256 expectedPricePerShare = 100;
-        uint256 expectedParValue = 1;
-        uint256 expectedInitialSharesAuthorized = 10000000;
+    function testFakeIdDoesNotReturnStakeholder() public {
+        string memory realId = "1111-1111-1111-1111";
+        capTable.createStakeholder(realId);
+        string memory fetchedRealId = capTable.getStakeholderById(realId);
 
-        return (expectedId, expectedClassType, expectedPricePerShare, expectedParValue, expectedInitialSharesAuthorized);
+        string memory fakeId = "9999-9999-9999-9999";
+        string memory emptyId = capTable.getStakeholderById(fakeId);
+
+        assertEq(realId, fetchedRealId, "Error: Real ID does not match fetched ID");
+        assertNotEq(fakeId, emptyId, "Error: Fake ID matches empty ID");
     }
 
+    function testCannotCreateDuplicateStakeholders() public {
+        string memory stakeholderId = "1111-1111-1111-1111";
+        capTable.createStakeholder(stakeholderId);
 
-    function testCannotCreateStockClassWithWrongOwner() public {
-        (
-            string memory expectedId,
-            string memory expectedClassType,
-            uint256 expectedPricePerShare,
-            uint256 expectedParValue,
-            uint256 expectedInitialSharesAuthorized
-        ) = createInitialDummyStockClassData();
+        // get total number of stakeholders, one should have been added
+        uint256 totalStakeholdersBefore = capTable.getTotalNumberOfStakeholders();
 
-        capTable.createStockClass(
-            expectedId,
-            expectedClassType,
-            expectedPricePerShare,
-            expectedParValue,
-            expectedInitialSharesAuthorized
-        );
+        // should not add a duplicate stakeholder
+        vm.expectRevert();
+        capTable.createStakeholder(stakeholderId);
 
-        // get total number of stock classes before creating one with wrong owner
-        uint256 totalStockClassesBefore = capTable.getTotalNumberOfStockClasses();
+        uint256 totalStakeholdersAfter = capTable.getTotalNumberOfStakeholders();
 
-        // create a prankster to change owner address and try to create a new stock class
-        createPranksterAndExpectRevert();
-        string memory pranksterStockClassId = "6666-6666-6666";
-        capTable.createStockClass(
-            pranksterStockClassId,
-            "Common",
-            100,
-            1,
-            10
-        );
-
-        // get total number of stock classes after creating one with wrong owner
-        uint256 totalStockClassesAfter = capTable.getTotalNumberOfStockClasses();
-
-        // fetch prankster stock class to ensure it was not created
-        (string memory id, ,,,) = capTable.getStockClassById(pranksterStockClassId);
-
-        assertNotEq(id, pranksterStockClassId, "Prankster stock class was created and it shouldn't have");
-        assertEq(totalStockClassesBefore, totalStockClassesAfter, "Total number of stock classes has changed and it shouldn't have");
-
+        assertEq(totalStakeholdersBefore, totalStakeholdersAfter, "Total number of stakeholders has changed and it shouldn't have");
     }
 
-    function testCannotCreateStockClassWithOwner() public {
+    /* Stock Class Tests */
+     function testCreateStockClassWithOwner() public {
          (
             string memory expectedId,
             string memory expectedClassType,
@@ -188,32 +193,80 @@ contract CapTableTest is Test {
         assertNotEq(actualInitialSharesAuthorized, 20000000, "Stock Class Initial Shares Authorized should not match");
     }
 
-    function testCreateManyStakeholders() public {
-        // Creating 5 stakeholders
-        capTable.createStakeholder("1111-1111-1111-1111");
-        capTable.createStakeholder("2222-2222-2222-2222");
-        capTable.createStakeholder("3333-3333-3333-3333");
-        capTable.createStakeholder("4444-4444-4444-4444");
-        capTable.createStakeholder("5555-5555-5555-5555");
+    function testCannotCreateStockClassWithoutOwner() public {
+        (
+            string memory expectedId,
+            string memory expectedClassType,
+            uint256 expectedPricePerShare,
+            uint256 expectedParValue,
+            uint256 expectedInitialSharesAuthorized
+        ) = createInitialDummyStockClassData();
 
-        // fetch total number
-        uint256 totalStakeholders = capTable.getTotalNumberOfStakeholders();
+        capTable.createStockClass(
+            expectedId,
+            expectedClassType,
+            expectedPricePerShare,
+            expectedParValue,
+            expectedInitialSharesAuthorized
+        );
 
-        assertEq(totalStakeholders, 5, "Error: Total number is not 5");
-        assertNotEq(totalStakeholders, 4, "Error: Total number is 4");
+        // get total number of stock classes before creating one with wrong owner
+        uint256 totalStockClassesBefore = capTable.getTotalNumberOfStockClasses();
+
+        // create a prankster to change owner address and try to create a new stock class
+        createPranksterAndExpectRevert();
+        string memory pranksterStockClassId = "6666-6666-6666";
+        capTable.createStockClass(
+            pranksterStockClassId,
+            "Common",
+            100,
+            1,
+            10
+        );
+
+        // get total number of stock classes after creating one with wrong owner
+        uint256 totalStockClassesAfter = capTable.getTotalNumberOfStockClasses();
+
+        // fetch prankster stock class to ensure it was not created
+        (string memory id, ,,,) = capTable.getStockClassById(pranksterStockClassId);
+
+        assertNotEq(id, pranksterStockClassId, "Prankster stock class was created and it shouldn't have");
+        assertEq(totalStockClassesBefore, totalStockClassesAfter, "Total number of stock classes has changed and it shouldn't have");
     }
 
-    function testFakeIdForGettingStakeholder() public {
-        string memory realId = "1111-1111-1111-1111";
-        capTable.createStakeholder(realId);
-        string memory fetchedRealId = capTable.getStakeholderById(realId);
+    function testCannotCreateDuplicateStockClasses() public {
+        (
+            string memory expectedId,
+            string memory expectedClassType,
+            uint256 expectedPricePerShare,
+            uint256 expectedParValue,
+            uint256 expectedInitialSharesAuthorized
+        ) = createInitialDummyStockClassData();
 
-        string memory fakeId = "9999-9999-9999-9999";
-        string memory emptyId = capTable.getStakeholderById(fakeId);
+        capTable.createStockClass(
+            expectedId,
+            expectedClassType,
+            expectedPricePerShare,
+            expectedParValue,
+            expectedInitialSharesAuthorized
+        );
 
-        assertEq(realId, fetchedRealId, "Error: Real ID does not match fetched ID");
-        assertNotEq(fakeId, emptyId, "Error: Fake ID matches empty ID");
+        // get total number of stock classes before creating one with wrong owner
+        uint256 totalStockClassesBefore = capTable.getTotalNumberOfStockClasses();
+
+        // should not add a duplicate stock class
+        vm.expectRevert();
+        capTable.createStockClass(
+            expectedId,
+            expectedClassType,
+            expectedPricePerShare,
+            expectedParValue,
+            expectedInitialSharesAuthorized
+        );
+
+        // get total number of stock classes after creating one with wrong owner
+        uint256 totalStockClassesAfter = capTable.getTotalNumberOfStockClasses();
+
+        assertEq(totalStockClassesBefore, totalStockClassesAfter, "Total number of stock classes has changed and it shouldn't have");
     }
-
-
 }
