@@ -11,11 +11,11 @@ contract CapTable is Ownable {
     }
 
     // TODO: stakeholders need a relationship to how much stock they own.
-    struct Stakeholders {
+    struct Stakeholder {
         string id;
     }
 
-    struct StockClasses {
+    struct StockClass {
         string id;
         string classType;
         uint256 pricePerShare; // OCF standard is JSON
@@ -24,8 +24,13 @@ contract CapTable is Ownable {
     }
 
     Issuer public issuer;
-    Stakeholders[] public stakeholders;
-    StockClasses[] public stockClasses;
+    // Map the id of the Stakeholder to its position in the array for O(1) access
+    mapping (string id => uint256 index) public stakeholderIndex;
+    Stakeholder[] public stakeholders;
+
+    // Map the id of the StockClass to its position in the array for O(1) access
+    mapping (string id => uint256 index) public stockClassIndex;
+    StockClass[] public stockClasses;
 
     event IssuerCreated(string indexed id, string indexed legalName, string indexed initialSharesAuthorized);
     event IssuerLegalNameUpdated(string oldLegalName, string newLegalName);
@@ -51,7 +56,8 @@ contract CapTable is Ownable {
     function createStakeholder(string memory _id) public onlyOwner {
         require(keccak256(abi.encodePacked(getStakeholderById(_id))) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
 
-        stakeholders.push(Stakeholders(_id));
+        stakeholders.push(Stakeholder(_id));
+        stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
 
@@ -65,7 +71,8 @@ contract CapTable is Ownable {
         (string memory stockClassId, , , , ) = getStockClassById(_id);
         require(keccak256(abi.encodePacked(stockClassId)) == keccak256(abi.encodePacked("")), "Stock class already exists");
 
-        stockClasses.push(StockClasses(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized));
+        stockClasses.push(StockClass(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized));
+        stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized);
     }
 
@@ -74,27 +81,20 @@ contract CapTable is Ownable {
     }
 
     function getStakeholderById(string memory _id) public view returns (string memory) {
-        for (uint256 i = 0; i < stakeholders.length; i ++) {
-            if(keccak256(abi.encodePacked(stakeholders[i].id ))== keccak256(abi.encodePacked(_id))) {
-                return stakeholders[i].id; // will be extended with more data to return
-            }
+        if(stakeholderIndex[_id] > 0) {
+            return stakeholders[stakeholderIndex[_id] - 1].id;
+        } else {
+            return "";
         }
-        return "";
     }
 
     function getStockClassById(string memory _id) public view returns (string memory, string memory, uint256, uint256, uint256) {
-        for (uint256 i = 0; i < stockClasses.length; i ++) {
-            if(keccak256(abi.encodePacked(stockClasses[i].id)) == keccak256(abi.encodePacked(_id))) {
-                return (
-                    stockClasses[i].id,
-                    stockClasses[i].classType, 
-                    stockClasses[i].pricePerShare,
-                    stockClasses[i].parValue,
-                    stockClasses[i].initialSharesAuthorized
-                );
-            }
+        if(stockClassIndex[_id] > 0) {
+            StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
+            return (stockClass.id, stockClass.classType, stockClass.pricePerShare, stockClass.parValue, stockClass.initialSharesAuthorized);
+        } else {
+            return ("", "", 0, 0, 0);
         }
-        return ("", "", 0, 0, 0);
     }
 
     function getTotalNumberOfStakeholders() public view returns (uint256) {
