@@ -47,6 +47,12 @@ contract CapTable is Ownable {
         _;
     }
 
+    modifier avoidStockClassDuplicate(string memory _id) {
+         (string memory stockClassId, , , , ) = getStockClassById(_id);
+        require(keccak256(abi.encodePacked(stockClassId)) == keccak256(abi.encodePacked("")), "Stock class already exists");
+        _;
+    }
+
     constructor(string memory _id, string memory _legalName, string memory _initialSharesAuthorized) legalNameNotEmpty(_legalName) {
         issuer = Issuer(_id, _legalName, _initialSharesAuthorized);
         emit IssuerCreated(_id, _legalName, _initialSharesAuthorized);
@@ -70,10 +76,7 @@ contract CapTable is Ownable {
         uint256 _pricePerShare,
         uint256 _parValue,
         uint256 _initialSharesAuthorized
-    ) public onlyOwner {
-        (string memory stockClassId, , , , ) = getStockClassById(_id);
-        require(keccak256(abi.encodePacked(stockClassId)) == keccak256(abi.encodePacked("")), "Stock class already exists");
-
+    ) public onlyOwner avoidStockClassDuplicate(_id) {
         stockClasses.push(StockClass(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized);
