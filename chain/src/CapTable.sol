@@ -48,10 +48,8 @@ contract CapTable is Ownable {
         emit IssuerLegalNameUpdated(previousLegalName, _legalName);
     }
 
-
     function createStakeholder(string memory _id) public onlyOwner {
-        string memory existingStakeholderID = getStakeholderById(_id);
-        require(keccak256(abi.encodePacked(existingStakeholderID)) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
+        require(keccak256(abi.encodePacked(getStakeholderById(_id))) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
 
         stakeholders.push(Stakeholders(_id));
         emit StakeholderCreated(_id);
@@ -64,6 +62,9 @@ contract CapTable is Ownable {
         uint256 _parValue,
         uint256 _initialSharesAuthorized
     ) public onlyOwner {
+        (string memory stockClassId, , , , ) = getStockClassById(_id);
+        require(keccak256(abi.encodePacked(stockClassId)) == keccak256(abi.encodePacked("")), "Stock class already exists");
+
         stockClasses.push(StockClasses(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized));
         emit StockClassCreated(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized);
     }
