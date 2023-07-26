@@ -29,7 +29,6 @@ contract CapTable is Ownable {
 
     event IssuerCreated(string indexed id, string indexed legalName, string indexed initialSharesAuthorized);
     event IssuerLegalNameUpdated(string oldLegalName, string newLegalName);
-
     event StakeholderCreated(string indexed id);
     event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
 
@@ -49,7 +48,11 @@ contract CapTable is Ownable {
         emit IssuerLegalNameUpdated(previousLegalName, _legalName);
     }
 
+
     function createStakeholder(string memory _id) public onlyOwner {
+        string memory existingStakeholderID = getStakeholderById(_id);
+        require(keccak256(abi.encodePacked(existingStakeholderID)) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
+
         stakeholders.push(Stakeholders(_id));
         emit StakeholderCreated(_id);
     }
