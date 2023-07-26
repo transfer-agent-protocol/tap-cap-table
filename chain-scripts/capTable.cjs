@@ -27,14 +27,18 @@ async function displayIssuer() {
 
 async function createAndDisplayStakeholder() {
     const stakeholderId = uuid();
-    const tx = await contract.createStakeholder(stakeholderId);
-    await tx.wait();
-    const stakeHolderAdded = await contract.getStakeholder(stakeholderId);
+    try {
+        const tx = await contract.createStakeholder(stakeholderId);
+        await tx.wait();
+    } catch (error) {
+        console.log("Error encountered:", error.error.reason);
+    }
+    const stakeHolderAdded = await contract.getStakeholderById(stakeholderId);
     console.log("Stakeholder for Existing ID:", stakeHolderAdded);
 }
 
 async function displayNonExistingStakeholder() {
-    const nonExistingStakeholder = await contract.getStakeholder("222-222-222");
+    const nonExistingStakeholder = await contract.getStakeholderById("222-222-222");
     console.log("Stakeholder for Non-Existing ID:", nonExistingStakeholder);
 }
 
@@ -42,7 +46,7 @@ async function createAndDisplayStockClass() {
     const stockClassId = uuid();
     const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
     await newStockClass.wait();
-    const stockClassAdded = await contract.getStockClass(stockClassId);
+    const stockClassAdded = await contract.getStockClassById(stockClassId);
     console.log("--- Stock Class for Existing ID ---");
     console.log("Getting new stock class:");
     console.log("ID:", stockClassAdded[0]);
@@ -53,7 +57,7 @@ async function createAndDisplayStockClass() {
 }
 
 async function displayNonExistingStockClass() {
-    const nonExistingStockClass = await contract.getStockClass("222-222-222");
+    const nonExistingStockClass = await contract.getStockClassById("222-222-222");
     console.log("--- Stock Class for Non-Existing ID ---");
     console.log("Getting new stock class:");
     console.log("ID:", nonExistingStockClass[0]);
