@@ -25,7 +25,8 @@
         "validate-poet-files": "cd ocf && yarn validate-poet-files",
         "validate-and-insert-example-ocf-files": "yarn validate-example-ocf-files && yarn seed",
         "validate-and-insert-poet-files": "yarn validate-poet-files && yarn seedPoet",
-        "test-onchain-cap-table": "node chain-scripts/capTable.cjs",
+        "test-onchain-cap-table-local": "node chain-scripts/capTableLocal.cjs",
+        "test-onchain-cap-table-optimism-goerli": "node chain-scripts/capTableOptimismGoerli.cjs",
         "forge-deploy-local": "cd chain && forge script script/CapTable.s.sol:CapTableScript --fork-url http://127.0.0.1:8545 --broadcast --verify -vvvv",
         "forge-deploy-optimism-goerli": "cd chain && forge script script/CapTable.s.sol:CapTableScript --rpc-url optimism_goerli --broadcast --verify -vvvv"
     },
