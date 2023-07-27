@@ -25,7 +25,7 @@ async function main() {
 
     console.log("Issuer added ", issuer);
 
-    // TODO: Each of these categories are arrays of files inside of the manifest.
+    // TODO: Each of these categories are arrays of files inside of the manifest. We're using the first element for now since there's only one for Poet.
 
     // STOCK PLANS
     const inputStockPlans = await readAndParseJSON(inputManifest.stock_plans_files[0].filepath);

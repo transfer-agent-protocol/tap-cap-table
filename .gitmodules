@@ -1,9 +1,9 @@
-[submodule "tap-onchain/lib/forge-std"]
-	path = tap-onchain/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
 [submodule "ocf"]
 	path = ocf
 	url = https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF.git
 [submodule "chain/lib/forge-std"]
 	path = chain/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "chain/lib/openzeppelin-contracts"]
+	path = chain/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

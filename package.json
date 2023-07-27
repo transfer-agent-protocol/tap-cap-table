@@ -21,14 +21,17 @@
         "seed": "node test/seed.cjs",
         "seedPoet": "node test/seedPoet.cjs",
         "deseed": "node test/deseed.cjs",
-        "validate-example-ocf-files":  "cd ocf && yarn validate-example-ocf-files",
+        "validate-example-ocf-files": "cd ocf && yarn validate-example-ocf-files",
         "validate-poet-files": "cd ocf && yarn validate-poet-files",
         "validate-and-insert-example-ocf-files": "yarn validate-example-ocf-files && yarn seed",
-        "validate-and-insert-poet-files": "yarn validate-poet-files && yarn seedPoet"
+        "validate-and-insert-poet-files": "yarn validate-poet-files && yarn seedPoet",
+        "test-onchain-cap-table": "node chain-scripts/capTable.cjs",
+        "forge-deploy-local": "cd chain && forge script script/CapTable.s.sol:CapTableScript --fork-url http://127.0.0.1:8545 --broadcast --verify -vvvv"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0",
         "date-fns": "^2.28.0",
+        "ethers": "^5.7.2",
         "solc": "^0.8.20"
     },
     "browserslist": [
