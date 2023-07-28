@@ -36,6 +36,8 @@ async function createCapTable(contract) {
     const legalName = "Null Corp Inc.";
     const initialShares = "1000000";
 
+    console.log("Creating cap table with issuerId:", issuerId, "legalName:", legalName, "initialShares:", initialShares);
+
     try {
         const tx = await contract.createCapTable(issuerId, legalName, initialShares);
         await tx.wait();
@@ -44,13 +46,25 @@ async function createCapTable(contract) {
     } catch (error) {
         console.log("Error encountered:", error);
     }
+
+    return issuerId;
 }
 
-async function getCapTables(contract) {
+async function getTotalNumberOfCapTables(contract) {
     try {
         console.log("Getting total cap tables...");
-        const capTables = await contract.getTotalCapTables();
-        console.log("Cap Tables:", capTables.toString());
+        const capTables = await contract.getTotalNumberOfCapTables();
+        console.log("Total number of Cap Tables:", capTables.toString());
+    } catch (error) {
+        console.log("Error encountered getting total cap tables:", error);
+    }
+}
+
+async function getCapTableAddressById(contract, issuerId) {
+    try {
+        console.log("Getting total cap tables...");
+        const capTableAddress = await contract.getCapTableAddressById(issuerId);
+        console.log("Cap Table Address:", capTableAddress);
     } catch (error) {
         console.log("Error encountered getting total cap tables:", error);
     }
@@ -67,8 +81,9 @@ async function main({ chain }) {
     }
 
     try {
-        await createCapTable(contract);
-        await getCapTables(contract);
+        const issuerId = await createCapTable(contract);
+        await getTotalNumberOfCapTables(contract);
+        await getCapTableAddressById(contract, issuerId);
     } catch (err) {
         if (err.reason) {
             console.error("Smart contract reverted with reason:", err.reason);
