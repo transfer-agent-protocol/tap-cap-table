@@ -5,8 +5,13 @@ require("dotenv").config();
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
 
 async function localSetup() {
-    const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTable.s.sol/31337/run-latest.json").transactions[0].contractAddress;
-    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
+    // if deployed using forge script
+    //const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTable.s.sol/31337/run-latest.json").transactions[0].contractAddress;
+    const CONTRACT_ADDRESS_LOCAL = "0xa16E02E87b7454126E5E10d957A927A7F5B5d2be"; // fill in from capTableFactory
+    // if deployed using forge script
+    //const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
+
+    // TODO left off at trying to figure out how to deploy a new stakeholder using the factory.
 
     const customNetwork = {
         chainId: 31337,
@@ -21,7 +26,9 @@ async function localSetup() {
 }
 
 async function optimismGoerliSetup() {
-    const CONTRACT_ADDRESS_OPTIMISM_GOERLI = require("../chain/broadcast/CapTable.s.sol/420/run-latest.json").transactions[0].contractAddress;
+    // if deployed using forge script
+    // const CONTRACT_ADDRESS_OPTIMISM_GOERLI = require("../chain/broadcast/CapTable.s.sol/420/run-latest.json").transactions[0].contractAddress;
+    const CONTRACT_ADDRESS_OPTIMISM_GOERLI = "";
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
     const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
@@ -32,7 +39,7 @@ async function optimismGoerliSetup() {
 }
 
 async function updateLegalName(contract) {
-    const tx = await contract.updateLegalName("Poetic Justice");
+    const tx = await contract.updateLegalName("New Null Corp Inc.");
     await tx.wait();
     console.log("Legal name updated successfully!");
 }
