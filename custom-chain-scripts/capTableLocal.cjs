@@ -1,9 +1,10 @@
 const { ethers } = require("ethers");
 const { v4: uuid } = require("uuid");
+require("dotenv").config();
 
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
 const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-const WALLET_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
 const customNetwork = {
     chainId: 31337,
