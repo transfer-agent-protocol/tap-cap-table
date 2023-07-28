@@ -7,24 +7,25 @@ import "./CapTable.sol";
 // Note: this contract serves to organize the deployments of CapTable contracts from a single place, it doesn't yet
 // restrict that a CapTable contract only be deployed through this factory.
 contract CapTableFactory is Ownable {
-    CapTable[] public capTables;
+    mapping(string issuerId => uint256 index) public capTableIndex;
+    address[] public capTables; 
     
     event CapTableCreated(address capTableAddress, string issuerId, string issuerLegalName, string initialSharesAuthorized);
 
-    function createCapTable(string memory _issuerId, string memory _issuerLegalName, string memory _initialSharesAuthorized) public onlyOwner returns (CapTable) {
+    function createCapTable(string memory _issuerId, string memory _issuerLegalName, string memory _initialSharesAuthorized) public onlyOwner {
         CapTable capTable = new CapTable(_issuerId, _issuerLegalName, _initialSharesAuthorized);
-        capTables.push(capTable);
+        capTables.push(address(capTable));
+        capTableIndex[_issuerId] = capTables.length;
 
         emit CapTableCreated(address(capTable), _issuerId, _issuerLegalName, _initialSharesAuthorized);
-
-        return capTable;
     }
 
-    function getCapTable(uint index) public view returns (CapTable) {
-        return capTables[index];
+    function getCapTableAddressById(string memory _issuerId) public view returns (address) {
+        require(capTableIndex[_issuerId] > 0, "Cap table does not exist");
+        return capTables[capTableIndex[_issuerId] - 1];
     }
 
-    function getTotalCapTables() public view returns (uint256) {
+    function getTotalNumberOfCapTables() public view returns (uint256) {
         return capTables.length;
     }
 }
