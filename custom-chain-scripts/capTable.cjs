@@ -3,30 +3,46 @@ const { v4: uuid } = require("uuid");
 require("dotenv").config();
 
 const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
-const customNetwork = {
-    chainId: 31337,
-    name: "local",
-};
+async function localSetup() {
+    const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTable.s.sol/31337/run-latest.json").transactions[0].contractAddress;
+    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
-const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
-const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-const contract = new ethers.Contract(CONTRACT_ADDRESS, CAP_TABLE_ABI, wallet);
+    const customNetwork = {
+        chainId: 31337,
+        name: "local",
+    };
 
-async function updateLegalName() {
+    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
+    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, CAP_TABLE_ABI, wallet);
+
+    return contract;
+}
+
+async function optimismGoerliSetup() {
+    const CONTRACT_ADDRESS_OPTIMISM_GOERLI = require("../chain/broadcast/CapTable.s.sol/420/run-latest.json").transactions[0].contractAddress;
+    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
+
+    const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
+    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, CAP_TABLE_ABI, wallet);
+
+    return contract;
+}
+
+async function updateLegalName(contract) {
     const tx = await contract.updateLegalName("Poetic Justice");
     await tx.wait();
     console.log("Legal name updated successfully!");
 }
 
-async function displayIssuer() {
+async function displayIssuer(contract) {
     const newIssuer = await contract.getIssuer();
     console.log("New issuer with name:", newIssuer);
 }
 
-async function createAndDisplayStakeholder() {
+async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
     try {
         const tx = await contract.createStakeholder(stakeholderId);
@@ -38,12 +54,12 @@ async function createAndDisplayStakeholder() {
     console.log("Stakeholder for Existing ID:", stakeHolderAdded);
 }
 
-async function displayNonExistingStakeholder() {
+async function displayNonExistingStakeholder(contract) {
     const nonExistingStakeholder = await contract.getStakeholderById("222-222-222");
     console.log("Stakeholder for Non-Existing ID:", nonExistingStakeholder);
 }
 
-async function createAndDisplayStockClass() {
+async function createAndDisplayStockClass(contract) {
     const stockClassId = uuid();
     const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
     await newStockClass.wait();
@@ -57,7 +73,7 @@ async function createAndDisplayStockClass() {
     console.log("Initial Shares Authorized:", stockClassAdded[4].toString());
 }
 
-async function displayNonExistingStockClass() {
+async function displayNonExistingStockClass(contract) {
     const nonExistingStockClass = await contract.getStockClassById("222-222-222");
     console.log("--- Stock Class for Non-Existing ID ---");
     console.log("Getting new stock class:");
@@ -68,26 +84,35 @@ async function displayNonExistingStockClass() {
     console.log("Initial Shares Authorized:", nonExistingStockClass[4].toString());
 }
 
-async function totalNumberOfStakeholders() {
+async function totalNumberOfStakeholders(contract) {
     const totalStakeholders = await contract.getTotalNumberOfStakeholders();
     console.log("Total number of stakeholders:", totalStakeholders.toString());
 }
 
-async function totalNumberOfStockClasses() {
+async function totalNumberOfStockClasses(contract) {
     const totalStockClasses = await contract.getTotalNumberOfStockClasses();
     console.log("Total number of stock classes:", totalStockClasses.toString());
 }
 
-async function main() {
+async function main({ chain }) {
+    let contract;
+    if (chain === "local") {
+        contract = await localSetup();
+    }
+
+    if (chain === "optimism-goerli") {
+        contract = await optimismGoerliSetup();
+    }
+
     try {
-        await updateLegalName();
-        await displayIssuer();
-        await createAndDisplayStakeholder();
-        await displayNonExistingStakeholder();
-        await createAndDisplayStockClass();
-        await displayNonExistingStockClass();
-        await totalNumberOfStakeholders();
-        await totalNumberOfStockClasses();
+        await updateLegalName(contract);
+        await displayIssuer(contract);
+        await createAndDisplayStakeholder(contract);
+        await displayNonExistingStakeholder(contract);
+        await createAndDisplayStockClass(contract);
+        await displayNonExistingStockClass(contract);
+        await totalNumberOfStakeholders(contract);
+        await totalNumberOfStockClasses(contract);
     } catch (err) {
         if (err.reason) {
             console.error("Smart contract reverted with reason:", err.reason);
@@ -97,4 +122,8 @@ async function main() {
     }
 }
 
-main().catch(console.error);
+const chain = process.argv[2];
+
+console.log("testing process.argv", chain);
+
+main({ chain }).catch(console.error);
