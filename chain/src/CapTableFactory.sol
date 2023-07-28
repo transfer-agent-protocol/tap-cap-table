@@ -24,7 +24,7 @@ contract CapTableFactory is Ownable {
         return capTables[index];
     }
 
-    function getCapTables() public view returns (CapTable[] memory) {
-        return capTables;
+    function getTotalCapTables() public view returns (uint256) {
+        return capTables.length;
     }
 }
