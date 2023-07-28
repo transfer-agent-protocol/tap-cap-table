@@ -14,10 +14,7 @@ contract CapTableFactoryTest is Test {
     }
 
     function testCreateCapTable() public {
-        CapTable capTable = capTableFactory.createCapTable("5432-5432-5432", "Jonny Nash Inc.", "1000000");
-
-        console.log("cap table address", address(capTable));
-
+        capTableFactory.createCapTable("5432-5432-5432", "Jonny Nash Inc.", "1000000");
 
     }
 
