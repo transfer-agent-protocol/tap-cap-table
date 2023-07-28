@@ -8,7 +8,6 @@ optimism_goerli = "${OPTIMISM_GOERLI_RPC_URL}"
 local = "${LOCAL_RPC_URL}"
 
 [etherscan]
-mainnet_etherscan = { key = "${ETHERSCAN_ETHEREUM_API_KEY}" }
 optimism_goerli_etherscan = { key = "${ETHERSCAN_OPTIMISM_API_KEY}", chain = "goerli" }
 
 
