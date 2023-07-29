@@ -8,10 +8,8 @@ async function localSetup() {
     // if deployed using forge script
     //const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTable.s.sol/31337/run-latest.json").transactions[0].contractAddress;
     const CONTRACT_ADDRESS_LOCAL = "0xa16E02E87b7454126E5E10d957A927A7F5B5d2be"; // fill in from capTableFactory
-    // if deployed using forge script
-    //const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
-    // TODO left off at trying to figure out how to deploy a new stakeholder using the factory.
+    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
     const customNetwork = {
         chainId: 31337,
@@ -39,14 +37,22 @@ async function optimismGoerliSetup() {
 }
 
 async function updateLegalName(contract) {
-    const tx = await contract.updateLegalName("New Null Corp Inc.");
-    await tx.wait();
-    console.log("Legal name updated successfully!");
+    try {
+        const tx = await contract.updateLegalName("New Null Corp Inc.");
+        await tx.wait();
+        console.log("Legal name updated successfully!");
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function displayIssuer(contract) {
-    const newIssuer = await contract.getIssuer();
-    console.log("New issuer with name:", newIssuer);
+    try {
+        const newIssuer = await contract.getIssuer();
+        console.log("New issuer with name:", newIssuer);
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function createAndDisplayStakeholder(contract) {
@@ -62,43 +68,63 @@ async function createAndDisplayStakeholder(contract) {
 }
 
 async function displayNonExistingStakeholder(contract) {
-    const nonExistingStakeholder = await contract.getStakeholderById("222-222-222");
-    console.log("Stakeholder for Non-Existing ID:", nonExistingStakeholder);
+    try {
+        const nonExistingStakeholder = await contract.getStakeholderById("222-222-222");
+        console.log("Stakeholder for Non-Existing ID:", nonExistingStakeholder);
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function createAndDisplayStockClass(contract) {
-    const stockClassId = uuid();
-    const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
-    await newStockClass.wait();
-    const stockClassAdded = await contract.getStockClassById(stockClassId);
-    console.log("--- Stock Class for Existing ID ---");
-    console.log("Getting new stock class:");
-    console.log("ID:", stockClassAdded[0]);
-    console.log("Type:", stockClassAdded[1]);
-    console.log("Price Per Share:", ethers.utils.formatUnits(stockClassAdded[2], 6));
-    console.log("Par Value:", ethers.utils.formatUnits(stockClassAdded[3], 6));
-    console.log("Initial Shares Authorized:", stockClassAdded[4].toString());
+    try {
+        const stockClassId = uuid();
+        const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
+        await newStockClass.wait();
+        const stockClassAdded = await contract.getStockClassById(stockClassId);
+        console.log("--- Stock Class for Existing ID ---");
+        console.log("Getting new stock class:");
+        console.log("ID:", stockClassAdded[0]);
+        console.log("Type:", stockClassAdded[1]);
+        console.log("Price Per Share:", ethers.utils.formatUnits(stockClassAdded[2], 6));
+        console.log("Par Value:", ethers.utils.formatUnits(stockClassAdded[3], 6));
+        console.log("Initial Shares Authorized:", stockClassAdded[4].toString());
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function displayNonExistingStockClass(contract) {
-    const nonExistingStockClass = await contract.getStockClassById("222-222-222");
-    console.log("--- Stock Class for Non-Existing ID ---");
-    console.log("Getting new stock class:");
-    console.log("ID:", nonExistingStockClass[0]);
-    console.log("Type:", nonExistingStockClass[1]);
-    console.log("Price Per Share:", ethers.utils.formatUnits(nonExistingStockClass[2], 6));
-    console.log("Par Value:", ethers.utils.formatUnits(nonExistingStockClass[3], 6));
-    console.log("Initial Shares Authorized:", nonExistingStockClass[4].toString());
+    try {
+        const nonExistingStockClass = await contract.getStockClassById("222-222-222");
+        console.log("--- Stock Class for Non-Existing ID ---");
+        console.log("Getting new stock class:");
+        console.log("ID:", nonExistingStockClass[0]);
+        console.log("Type:", nonExistingStockClass[1]);
+        console.log("Price Per Share:", ethers.utils.formatUnits(nonExistingStockClass[2], 6));
+        console.log("Par Value:", ethers.utils.formatUnits(nonExistingStockClass[3], 6));
+        console.log("Initial Shares Authorized:", nonExistingStockClass[4].toString());
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function totalNumberOfStakeholders(contract) {
-    const totalStakeholders = await contract.getTotalNumberOfStakeholders();
-    console.log("Total number of stakeholders:", totalStakeholders.toString());
+    try {
+        const totalStakeholders = await contract.getTotalNumberOfStakeholders();
+        console.log("Total number of stakeholders:", totalStakeholders.toString());
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function totalNumberOfStockClasses(contract) {
-    const totalStockClasses = await contract.getTotalNumberOfStockClasses();
-    console.log("Total number of stock classes:", totalStockClasses.toString());
+    try {
+        const totalStockClasses = await contract.getTotalNumberOfStockClasses();
+        console.log("Total number of stock classes:", totalStockClasses.toString());
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 }
 
 async function main({ chain }) {
@@ -111,22 +137,14 @@ async function main({ chain }) {
         contract = await optimismGoerliSetup();
     }
 
-    try {
-        await updateLegalName(contract);
-        await displayIssuer(contract);
-        await createAndDisplayStakeholder(contract);
-        await displayNonExistingStakeholder(contract);
-        await createAndDisplayStockClass(contract);
-        await displayNonExistingStockClass(contract);
-        await totalNumberOfStakeholders(contract);
-        await totalNumberOfStockClasses(contract);
-    } catch (err) {
-        if (err.reason) {
-            console.error("Smart contract reverted with reason:", err.reason);
-        } else {
-            console.error("Error encountered:", err.message);
-        }
-    }
+    await updateLegalName(contract);
+    await displayIssuer(contract);
+    await createAndDisplayStakeholder(contract);
+    await displayNonExistingStakeholder(contract);
+    await createAndDisplayStockClass(contract);
+    await displayNonExistingStockClass(contract);
+    await totalNumberOfStakeholders(contract);
+    await totalNumberOfStockClasses(contract);
 }
 
 const chain = process.argv[2];
