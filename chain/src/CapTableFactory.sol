@@ -17,6 +17,8 @@ contract CapTableFactory is Ownable {
         capTables.push(address(capTable));
         capTableIndex[_issuerId] = capTables.length;
 
+        capTable.transferOwnership(msg.sender);
+
         emit CapTableCreated(address(capTable), _issuerId, _issuerLegalName, _initialSharesAuthorized);
     }
 
