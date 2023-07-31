@@ -7,7 +7,7 @@ const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
 async function localSetup() {
     // if deployed using forge script
     //const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTable.s.sol/31337/run-latest.json").transactions[0].contractAddress;
-    const CONTRACT_ADDRESS_LOCAL = "0xa16E02E87b7454126E5E10d957A927A7F5B5d2be"; // fill in from capTableFactory
+    const CONTRACT_ADDRESS_LOCAL = "0x5fbdb2315678afecb367f032d93f642f64180aa3"; // fill in from capTableFactory
 
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
@@ -58,13 +58,17 @@ async function displayIssuer(contract) {
 async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
     try {
-        const tx = await contract.createStakeholder(stakeholderId);
+        const tx = await contract.createStakeholder(stakeholderId, 1000000);
         await tx.wait();
     } catch (error) {
         console.log("Error encountered:", error.error.reason);
     }
     const stakeHolderAdded = await contract.getStakeholderById(stakeholderId);
-    console.log("Stakeholder for Existing ID:", stakeHolderAdded);
+    const id = stakeHolderAdded[0];
+    const shares = stakeHolderAdded[1].toString();
+    console.log("Stakeholder for Existing ID:", { id, shares });
+
+    return stakeholderId;
 }
 
 async function displayNonExistingStakeholder(contract) {
@@ -82,6 +86,7 @@ async function createAndDisplayStockClass(contract) {
         const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
         await newStockClass.wait();
         const stockClassAdded = await contract.getStockClassById(stockClassId);
+        console.log("Stock class object ", stockClassAdded);
         console.log("--- Stock Class for Existing ID ---");
         console.log("Getting new stock class:");
         console.log("ID:", stockClassAdded[0]);
@@ -127,6 +132,27 @@ async function totalNumberOfStockClasses(contract) {
     }
 }
 
+async function transferOwnership(contract, sellerId) {
+    try {
+        const tx = await contract.transferStockOwnership(sellerId, true, 300000);
+        await tx.wait();
+        console.log("Ownership transferred successfully!");
+
+        const seller = await contract.getStakeholderById(sellerId);
+        const sellerIdFetched = seller[0];
+        const sellerShares = seller[1].toString();
+
+        const buyer = await contract.getStakeholderById("9876-9876-9876");
+        const buyerIdFetched = buyer[0];
+        const buyerShares = buyer[1].toString();
+
+        console.log("Seller new values after transfer:", { id: sellerIdFetched, shares: sellerShares });
+        console.log("Buyer new values after transfer:", { id: buyerIdFetched, shares: buyerShares });
+    } catch (error) {
+        console.error("Error encountered for transfer ownership:", error);
+    }
+}
+
 async function main({ chain }) {
     let contract;
     if (chain === "local") {
@@ -137,14 +163,15 @@ async function main({ chain }) {
         contract = await optimismGoerliSetup();
     }
 
-    await updateLegalName(contract);
+    // await updateLegalName(contract);
     await displayIssuer(contract);
-    await createAndDisplayStakeholder(contract);
-    await displayNonExistingStakeholder(contract);
+    const id = await createAndDisplayStakeholder(contract);
+    //await displayNonExistingStakeholder(contract);
     await createAndDisplayStockClass(contract);
     await displayNonExistingStockClass(contract);
     await totalNumberOfStakeholders(contract);
     await totalNumberOfStockClasses(contract);
+    await transferOwnership(contract, id);
 }
 
 const chain = process.argv[2];
