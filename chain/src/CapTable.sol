@@ -13,6 +13,7 @@ contract CapTable is Ownable {
     // TODO: stakeholders need a relationship to how much stock they own.
     struct Stakeholder {
         string id;
+        uint256 sharesOwned;
     }
 
     struct StockClass {
@@ -42,10 +43,10 @@ contract CapTable is Ownable {
         _;
     }
 
-    modifier avoidStakeholderDuplicate(string memory _id) {
-        require(keccak256(abi.encodePacked(getStakeholderById(_id))) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
-        _;
-    }
+    // modifier avoidStakeholderDuplicate(string memory _id) {
+    //     require(keccak256(abi.encodePacked(getStakeholderById(_id))) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
+    //     _;
+    // }
 
     modifier avoidStockClassDuplicate(string memory _id) {
          (string memory stockClassId, , , , ) = getStockClassById(_id);
@@ -64,8 +65,9 @@ contract CapTable is Ownable {
         emit IssuerLegalNameUpdated(previousLegalName, _legalName);
     }
 
-    function createStakeholder(string memory _id) public onlyOwner avoidStakeholderDuplicate(_id) {
-        stakeholders.push(Stakeholder(_id));
+    // avoidStakeholderDuplicate(_id)
+    function createStakeholder(string memory _id, uint sharesOwned) public onlyOwner  {
+        stakeholders.push(Stakeholder(_id, sharesOwned));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
@@ -82,15 +84,37 @@ contract CapTable is Ownable {
         emit StockClassCreated(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized);
     }
 
+    // Sample transfer: isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. Currently it is a simple boolean
+    function transferStockOwnership(string memory sellerStakeholderId, bool isBuyerVerified, uint256 sharesToTransfer) public onlyOwner {
+        require(isBuyerVerified, "Buyer must confirm");
+        require(sharesToTransfer > 0, "Shares to transfer must be greater than 0");
+        require(stakeholderIndex[sellerStakeholderId] > 0, "Seller stakeholder does not exist");
+        require(stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned >= sharesToTransfer, "Seller does not have enough shares to transfer");
+
+        // Seller activities
+        (, uint256 sharesOwned) = getStakeholderById(sellerStakeholderId);
+        uint256 remainingSharesForSeller = sharesOwned - sharesToTransfer;
+        // update seller's shares
+        stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
+
+        // Buyer activities
+        createStakeholder("9876-9876-9876", sharesToTransfer);
+
+        // Emit event of a transfer
+        
+    }
+
+
     function getIssuer() public view returns (string memory, string memory, string memory) {
         return (issuer.id, issuer.legalName, issuer.initialSharesAuthorized);
     }
 
-    function getStakeholderById(string memory _id) public view returns (string memory) {
+    function getStakeholderById(string memory _id) public view returns (string memory, uint256) {
         if(stakeholderIndex[_id] > 0) {
-            return stakeholders[stakeholderIndex[_id] - 1].id;
+            Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
+            return (stakeholder.id, stakeholder.sharesOwned);
         } else {
-            return "";
+            return ("", 0);
         }
     }
 
