@@ -26,7 +26,7 @@ async function localSetup() {
 async function optimismGoerliSetup() {
     // if deployed using forge script
     // const CONTRACT_ADDRESS_OPTIMISM_GOERLI = require("../chain/broadcast/CapTable.s.sol/420/run-latest.json").transactions[0].contractAddress;
-    const CONTRACT_ADDRESS_OPTIMISM_GOERLI = "";
+    const CONTRACT_ADDRESS_OPTIMISM_GOERLI = "0x027A280A63376308658A571ac2DB5D612bA77912";
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
     const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
