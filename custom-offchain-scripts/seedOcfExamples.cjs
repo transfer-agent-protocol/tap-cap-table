@@ -1,22 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
-const fs = require("fs").promises;
-const path = require("path");
+const readAndParseJSON = require("./utils/readAndParseJson.cjs");
 
 // OCF Provided Sample
 const inputManifest = require("../ocf/samples/Manifest.ocf.json");
 
 const transactionTests = require("./objects/transactions.cjs");
-
-async function readAndParseJSON(inputPath) {
-    const dataPath = path.join("./ocf/samples", inputPath);
-    try {
-        const data = await fs.readFile(dataPath, "utf8");
-        const jsonData = JSON.parse(data);
-        return jsonData;
-    } catch (err) {
-        console.error(`Error reading file: ${err}`);
-    }
-}
 
 const prisma = new PrismaClient();
 
