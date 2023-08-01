@@ -6,13 +6,14 @@ import "./transactions/Issuance.sol";
 import "./transactions/Transfer.sol";
 
 contract CapTable is Ownable {
+    // these are states with minimal info translated from the OCF primary objects.
     struct Issuer {
         string id;
         string legalName;
         string initialSharesAuthorized;
     }
 
-    // TODO: stakeholders need a relationship to how much stock they own.
+    // TODO: stakeholders need a relationship to how much stock they own. What are the missing states - if we're tracking transactions 
     struct Stakeholder {
         string id;
         uint256 sharesOwned;
