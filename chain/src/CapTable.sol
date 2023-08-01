@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "./transactions/Issuance.sol";
+import "./transactions/Transfer.sol";
 
 contract CapTable is Ownable {
     struct Issuer {
@@ -23,6 +25,8 @@ contract CapTable is Ownable {
         uint256 parValue; // OCF standard is string
         uint256 initialSharesAuthorized; // OCF standard is string
     }
+
+    address[] public transactions;
 
     Issuer public issuer;
     // Map the id of the Stakeholder to its position in the array for O(1) access
@@ -66,10 +70,11 @@ contract CapTable is Ownable {
     }
 
     // avoidStakeholderDuplicate(_id)
-    function createStakeholder(string memory _id, uint sharesOwned) public onlyOwner  {
+    function createStakeholder(string memory _id, uint256 sharesOwned) public onlyOwner returns (string memory)  {
         stakeholders.push(Stakeholder(_id, sharesOwned));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
+        return _id;
     }
 
     function createStockClass(
@@ -85,23 +90,56 @@ contract CapTable is Ownable {
     }
 
     // Sample transfer: isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. Currently it is a simple boolean
-    function transferStockOwnership(string memory sellerStakeholderId, bool isBuyerVerified, uint256 sharesToTransfer) public onlyOwner {
+    // assuming buyer is not on the cap table yet
+    function transferStockOwnership(string memory sellerStakeholderId, bool isBuyerVerified, uint256 quantity, int sharePrice) public onlyOwner {
         require(isBuyerVerified, "Buyer must confirm");
-        require(sharesToTransfer > 0, "Shares to transfer must be greater than 0");
+        require(quantity > 0, "Shares to transfer must be greater than 0");
         require(stakeholderIndex[sellerStakeholderId] > 0, "Seller stakeholder does not exist");
-        require(stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned >= sharesToTransfer, "Seller does not have enough shares to transfer");
+        require(stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned >= quantity, "Seller does not have enough shares to transfer");
 
         // Seller activities
         (, uint256 sharesOwned) = getStakeholderById(sellerStakeholderId);
-        uint256 remainingSharesForSeller = sharesOwned - sharesToTransfer;
+        uint256 remainingSharesForSeller = sharesOwned - quantity;
         // update seller's shares
         stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
 
-        // Buyer activities
-        createStakeholder("9876-9876-9876", sharesToTransfer);
+         // Buyer activities
+        string memory buyerId = createStakeholder("9876-9876-9876", quantity);
 
-        // Emit event of a transfer
+        StockIssuanceTX buyerIssuanceTx = new StockIssuanceTX(
+            "1234-1234-1234",
+            "TX_STOCK_ISSUANCE",
+            "Common A",
+            sharePrice,
+            quantity,
+            "sec-id-1234",
+            buyerId
+        );
+
+        StockIssuanceTX postTransactionSellerIssuanceTx = new StockIssuanceTX(
+            "2345-2345-2345-2345",
+            "TX_STOCK_ISSUANCE",
+            "Common A",
+            sharePrice,
+            remainingSharesForSeller,
+            "sec-id-9999",
+            sellerStakeholderId
+        );
+
+        string[] memory resultingSecurityIds = new string[](1);
+        resultingSecurityIds[0] = "sec-id-1234";
+        StockTransferTX transferTx = new StockTransferTX(
+            "1234-1234-1234",
+            "TX_STOCK_TRANSFER",
+            quantity,
+            "sec-id-0000",
+            "sec-id-9999",
+            resultingSecurityIds
+        );
         
+        transactions.push(address(buyerIssuanceTx));
+        transactions.push(address(transferTx));
+        transactions.push(address(postTransactionSellerIssuanceTx));
     }
 
 
