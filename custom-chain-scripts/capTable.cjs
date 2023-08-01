@@ -134,7 +134,7 @@ async function totalNumberOfStockClasses(contract) {
 
 async function transferOwnership(contract, sellerId) {
     try {
-        const tx = await contract.transferStockOwnership(sellerId, true, 300000);
+        const tx = await contract.transferStockOwnership(sellerId, true, 300000, 123);
         await tx.wait();
         console.log("Ownership transferred successfully!");
 
@@ -148,6 +148,12 @@ async function transferOwnership(contract, sellerId) {
 
         console.log("Seller new values after transfer:", { id: sellerIdFetched, shares: sellerShares });
         console.log("Buyer new values after transfer:", { id: buyerIdFetched, shares: buyerShares });
+
+        const firstTX = await contract.transactions(0);
+        const secondTX = await contract.transactions(1);
+        const thirdTX = await contract.transactions(2);
+
+        console.log("First transaction:", firstTX, "Second transaction:", secondTX, "Third transaction:", thirdTX);
     } catch (error) {
         console.error("Error encountered for transfer ownership:", error);
     }
