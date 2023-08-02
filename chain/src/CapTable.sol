@@ -14,9 +14,10 @@ contract CapTable is Ownable {
     }
 
     // TODO: stakeholders need a relationship to how much stock they own. What are the missing states - if we're tracking transactions 
+    // stakeholder will likely have multiple positions. of Multiple stock classes (or it should be allowed at least)
     struct Stakeholder {
         string id;
-        uint256 sharesOwned;
+        uint256 sharesOwned; // latest positions
     }
 
     struct StockClass {
@@ -138,6 +139,9 @@ contract CapTable is Ownable {
             resultingSecurityIds
         );
         
+        // logic to calculate latest positions
+
+
         transactions.push(address(buyerIssuanceTx));
         transactions.push(address(transferTx));
         transactions.push(address(postTransactionSellerIssuanceTx));
