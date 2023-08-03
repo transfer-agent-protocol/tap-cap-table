@@ -209,27 +209,28 @@ model PlanSecurityIssuance {
     security_law_exemptions      Json[]
 }
 
+// This model is verified with optional and required fields, comments must remain to aid on-chain to off-chain translation.
 model StockIssuance {
     id                        String             @id @default(uuid()) @map("_id")
     object_type               String             @default("TX_STOCK_ISSUANCE")
     stock_class_id            String
     stock_plan_id             String?
-    share_numbers_issued      Json?
-    share_price               Json
-    quantity                  String
-    vesting_terms_id          String?
-    cost_basis                Json?
-    stock_legend_ids          String[]
-    issuance_type             String?
+    share_numbers_issued      Json[] // Optional: NOT INCLUDED IN ISSUANCE CAP TABLE
+    share_price               Json // Monetary JSON containing amount and currency
+    quantity                  String // Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    vesting_terms_id          String? 
+    cost_basis                Json? // Monetary JSON containing amount and currency, original value purchased at from the company. 
+    stock_legend_ids          String[] // Array of stock legends that are applicable to this stock, can be empty
+    issuance_type             String? // Optional for special types (["RSA", "FOUNDERS_STOCK"],)
     comments                  String[]
-    security_id               String?
-    date                      String?
-    custom_id                 String?
-    stakeholder_id            String?
+    security_id               String
+    date                      String // Dates are strings
+    custom_id                 String? // unclear, Victor asking in discussions.
+    stakeholder_id            String
     board_approval_date       String?
     stockholder_approval_date String?
     consideration_text        String?
-    security_law_exemptions   Json[]
+    security_law_exemptions   Json[] // Can be empty
 }
 
 model WarrantIssuance {
@@ -401,16 +402,17 @@ model PlanSecurityTransfer {
     resulting_security_ids String[]
 }
 
+// This model is verified with optional and required fields, comments must remain to aid on-chain to off-chain translation.
 model StockTransfer {
     id                     String   @id @default(uuid()) @map("_id")
     object_type            String   @default("TX_STOCK_TRANSFER")
-    quantity               String
-    comments               String[]
-    security_id            String?
-    date                   String?
+    quantity               String // Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    comments               String[] // Optional to remain empty
+    security_id            String // Transferor's security ID
+    date                   String // Dates are strings in the schema
     consideration_text     String?
     balance_security_id    String?
-    resulting_security_ids String[]
+    resulting_security_ids String[] // Not optional since it's the security ID of the Transferee, Bob can transfer to many people at once.
 }
 
 model WarrantTransfer {
