@@ -5,6 +5,8 @@ import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./transactions/Issuance.sol";
 import "./transactions/Transfer.sol";
 
+import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
+
 contract CapTable is Ownable {
     // these are states with minimal info translated from the OCF primary objects.
     struct Issuer {
@@ -17,7 +19,7 @@ contract CapTable is Ownable {
     // stakeholder will likely have multiple positions. of Multiple stock classes (or it should be allowed at least)
     struct Stakeholder {
         string id;
-        uint256 sharesOwned; // latest positions
+        uint256 sharesOwned; // latest positions, it might need to be security
     }
 
     struct StockClass {
@@ -93,58 +95,106 @@ contract CapTable is Ownable {
 
     // Sample transfer: isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. Currently it is a simple boolean
     // assuming buyer is not on the cap table yet
-    function transferStockOwnership(string memory sellerStakeholderId, bool isBuyerVerified, uint256 quantity, int sharePrice) public onlyOwner {
+    function transferStockOwnership(string memory transferorStakeholderId, bool isBuyerVerified, uint256 quantity, int sharePrice) public onlyOwner {
         require(isBuyerVerified, "Buyer must confirm");
         require(quantity > 0, "Shares to transfer must be greater than 0");
-        require(stakeholderIndex[sellerStakeholderId] > 0, "Seller stakeholder does not exist");
-        require(stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned >= quantity, "Seller does not have enough shares to transfer");
+        require(stakeholderIndex[transferorStakeholderId] > 0, "Seller stakeholder does not exist");
+        require(stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned >= quantity, "Seller does not have enough shares to transfer");
 
         // Seller activities
-        (, uint256 sharesOwned) = getStakeholderById(sellerStakeholderId);
+        (, uint256 sharesOwned) = getStakeholderById(transferorStakeholderId);
         uint256 remainingSharesForSeller = sharesOwned - quantity;
         // update seller's shares
-        stakeholders[stakeholderIndex[sellerStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
+        stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
 
-         // Buyer activities
-        string memory buyerId = createStakeholder("9876-9876-9876", quantity);
+         // Buyer activities: assuming transferee is not on the cap table yet, need new ID
+        string memory transfereeId = createStakeholder("9876-9876-9876", quantity);
+        address transfereeIssuanceTx = _handleTransfereeStockIssuanceTX(transfereeId, quantity, sharePrice);
 
-        StockIssuanceTX buyerIssuanceTx = new StockIssuanceTX(
-            "1234-1234-1234",
-            "TX_STOCK_ISSUANCE",
-            "Common A",
-            sharePrice,
-            quantity,
-            "sec-id-1234",
-            buyerId
-        );
-
-        StockIssuanceTX postTransactionSellerIssuanceTx = new StockIssuanceTX(
-            "2345-2345-2345-2345",
-            "TX_STOCK_ISSUANCE",
-            "Common A",
-            sharePrice,
-            remainingSharesForSeller,
-            "sec-id-9999",
-            sellerStakeholderId
-        );
-
-        string[] memory resultingSecurityIds = new string[](1);
-        resultingSecurityIds[0] = "sec-id-1234";
-        StockTransferTX transferTx = new StockTransferTX(
-            "1234-1234-1234",
-            "TX_STOCK_TRANSFER",
-            quantity,
-            "sec-id-0000",
-            "sec-id-9999",
-            resultingSecurityIds
-        );
+        // Seller activities: seller must be on the cap table already
+        address transferorPostTransferIssuanceTx = _handleTransferorStockIssuanceTX(transferorStakeholderId, remainingSharesForSeller, sharePrice);
+       
+        // Transfer activities
+        address transferTx = _handleStockTransferTX(quantity);
         
         // logic to calculate latest positions
 
+         transactions.push(address(transfereeIssuanceTx));
+         transactions.push(address(transferorPostTransferIssuanceTx));
+         transactions.push(address(transferTx));
+       
+    }
 
-        transactions.push(address(buyerIssuanceTx));
-        transactions.push(address(transferTx));
-        transactions.push(address(postTransactionSellerIssuanceTx));
+
+    // TODO: Running experiment where transferor and transferee are in different funtions since the struct is static. Need to make this 
+    // so it's only one function after this test.
+
+    function _handleTransfereeStockIssuanceTX(string memory transfereeId, uint256 quantity, int sharePrice) internal returns (address) {
+        StockIssuanceTX issuance = new StockIssuanceTX(StockIssuance(
+            "1234-1234-1234", // would be a new ID
+            "TX_STOCK_ISSUANCE",
+            "Common A", // this can point to stockclass
+            "", // stock plan id
+            sharePrice, 
+            quantity,
+            "", // vesting terms id
+            "", // cost basis
+            new string[](0), // stock_legend_ids
+            "", // issuance type
+            new string[](0), // comments
+            "sec-id-0000", // security id: would be a new ID
+            transfereeId,
+            "", // board approval date
+            "", // stockholder approval date
+            "", // consideration text
+            new string[](0) // security law exemptions
+        ));
+
+        return address(issuance);
+    }
+
+    function _handleTransferorStockIssuanceTX(string memory transferorId, uint256 remainingSharesForTransferor, int sharePrice) internal returns (address) {
+        StockIssuanceTX issuance = new StockIssuanceTX(StockIssuance(
+            "2345-2345-2345-2345",
+            "TX_STOCK_ISSUANCE",
+            "Common A",
+            "", // stock plan id
+            sharePrice,
+            remainingSharesForTransferor,
+            "", // vesting terms id
+            "", // cost basis
+            new string[](0), // stock legends ids
+            "", // issuance type
+            new string[](0), // comments
+            "sec-id-9999", // security id: would be a new ID
+            transferorId,
+            "", // board approval date
+            "", // stockholder approval date
+            "", // consideration text
+            new string[](0) // security law exemptions
+        ));
+
+        return address(issuance);
+    }
+
+    // experiment ends here.
+
+    function _handleStockTransferTX(uint256 quantity) internal returns (address) {
+        string[] memory resultingSecurityIds = new string[](1);
+        resultingSecurityIds[0] = "sec-id-0000";
+
+        StockTransferTX transfer = new StockTransferTX(StockTransfer(
+            "1234-1234-1234",
+            "TX_STOCK_TRANSFER",
+            quantity,
+            new string[](0), // comments
+            "sec-id-1111", // BOBs original security ID.
+            "", //consideration text
+            "sec-id-9999", // balance security id
+            resultingSecurityIds
+        ));
+
+        return address(transfer);
     }
 
 
