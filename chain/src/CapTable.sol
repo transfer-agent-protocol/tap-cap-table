@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "./transactions/Issuance.sol";
-import "./transactions/Transfer.sol";
+import "./transactions/StockIssuance.sol";
+import "./transactions/StockTransfer.sol";
 
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 
@@ -11,7 +11,6 @@ contract CapTable is Ownable {
     // these are states with minimal info translated from the OCF primary objects.
     struct Issuer {
         string id;
-        string legalName;
         string initialSharesAuthorized;
     }
 
@@ -41,8 +40,7 @@ contract CapTable is Ownable {
     mapping (string id => uint256 index) public stockClassIndex;
     StockClass[] public stockClasses;
 
-    event IssuerCreated(string indexed id, string indexed legalName, string indexed initialSharesAuthorized);
-    event IssuerLegalNameUpdated(string oldLegalName, string newLegalName);
+    event IssuerCreated(string indexed id, string indexed initialSharesAuthorized);
     event StakeholderCreated(string indexed id);
     event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
 
@@ -62,15 +60,9 @@ contract CapTable is Ownable {
         _;
     }
 
-    constructor(string memory _id, string memory _legalName, string memory _initialSharesAuthorized) legalNameNotEmpty(_legalName) {
-        issuer = Issuer(_id, _legalName, _initialSharesAuthorized);
-        emit IssuerCreated(_id, _legalName, _initialSharesAuthorized);
-    }
-
-	function updateLegalName(string memory _legalName) public onlyOwner legalNameNotEmpty(_legalName) {
-        string memory previousLegalName = issuer.legalName;
-        issuer.legalName = _legalName;
-        emit IssuerLegalNameUpdated(previousLegalName, _legalName);
+    constructor(string memory _id, string memory _initialSharesAuthorized) {
+        issuer = Issuer(_id, _initialSharesAuthorized);
+        emit IssuerCreated(_id, _initialSharesAuthorized);
     }
 
     // avoidStakeholderDuplicate(_id)
@@ -198,8 +190,8 @@ contract CapTable is Ownable {
     }
 
 
-    function getIssuer() public view returns (string memory, string memory, string memory) {
-        return (issuer.id, issuer.legalName, issuer.initialSharesAuthorized);
+    function getIssuer() public view returns (string memory, string memory) {
+        return (issuer.id, issuer.initialSharesAuthorized);
     }
 
     function getStakeholderById(string memory _id) public view returns (string memory, uint256) {
