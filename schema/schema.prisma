@@ -24,18 +24,20 @@ model Issuer {
     comments                         String[]
 }
 
+// This model is verified with optional and required fields, comments must remain to aid on-chain to off-chain translation.
 model Stakeholder {
     id                   String                       @id @default(uuid()) @map("_id")
     object_type          String                       @default("STAKEHOLDER")
     name                 Json
     stakeholder_type     String
-    issuer_assigned_id   String?
-    current_relationship String?
+    issuer_assigned_id   String? // Meant to be an optional ID for internal to the company, like an employee
+    current_relationship String? // ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
     primary_contact      Json?
     contact_info         Json?
     comments             String[]
 }
 
+// This model is verified with optional and required fields, comments must remain to aid on-chain to off-chain translation.
 model StockClass {
     id                              String         @id @default(uuid()) @map("_id")
     object_type                     String         @default("STOCK_CLASS")
@@ -62,6 +64,7 @@ model StockLegendTemplate {
     comments    String[]
 }
 
+// subset of Stock Class
 model StockPlan {
     id                            String   @id @default(uuid()) @map("_id")
     object_type                   String   @default("STOCK_PLAN")
