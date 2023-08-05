@@ -197,14 +197,14 @@ contract CapTable is Ownable {
     }
 
     // Experiment of stock issuance passing a struct as parameter
-    // function stockIssuance(StockIssuance calldata issuance) external onlyOwner {
-    //     // TODO: need lots of checks
-    //     // check that it's part of a stock class and stake holder exists, if not create a new stakeholder?
-    //     StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
-    //     ownerships[issuance.stakeholderId][issuance.stockClassId] = issuance.quantity;
-    //     securityIds[issuance.securityId] = issuance.stakeholderId;
-    //     transactions.push(address(issuanceTX));
-    // }
+    function stockIssuance(StockIssuance calldata issuance) external onlyOwner {
+        // TODO: need lots of checks
+        // check that it's part of a stock class and stake holder exists, if not create a new stakeholder?
+        StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
+        ownerships[issuance.stakeholder_id][issuance.stock_class_id] = issuance.quantity;
+        securityIds[issuance.security_id] = issuance.stakeholder_id;
+        transactions.push(address(issuanceTX));
+    }
 
 
     function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory, uint256) {
