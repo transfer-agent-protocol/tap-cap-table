@@ -102,7 +102,7 @@ contract CapTable is Ownable {
         require(stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned >= quantity, "Seller does not have enough shares to transfer");
 
         // Seller activities
-        (, uint256 sharesOwned) = getStakeholderById(transferorStakeholderId);
+        (,,, uint256 sharesOwned) = getStakeholderById(transferorStakeholderId);
         uint256 remainingSharesForSeller = sharesOwned - quantity;
         // update seller's shares
         stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
@@ -207,16 +207,12 @@ contract CapTable is Ownable {
     // }
 
 
-    function getIssuer() public view returns (string memory, string memory, string memory) {
-        return (issuer.id, issuer.name, issuer.initial_shares_authorized);
-    }
-
-    function getStakeholderById(string memory _id) public view returns (string memory, uint256) {
+    function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory, uint256) {
         if(stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
-            return (stakeholder.id, stakeholder.sharesOwned);
+            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship, stakeholder.sharesOwned);
         } else {
-            return ("", 0);
+            return ("", "", "", 0);
         }
     }
 
