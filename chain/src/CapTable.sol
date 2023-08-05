@@ -5,69 +5,78 @@ import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./transactions/StockIssuance.sol";
 import "./transactions/StockTransfer.sol";
 
+import "forge-std/console.sol";
+
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 
 contract CapTable is Ownable {
-    // these are states with minimal info translated from the OCF primary objects.
+    // @dev These structs will be created off-chain, then reflected on-chain.
+    // Struct variables have underscore naming to match OCF naming.
+    /* Objects kept intentionally off-chain unless they become useful
+        - Stock Legend Template
+        - Stock Plan
+        - Vesting Terms
+        - Valuations
+    */
+    // Wallets aren't yet tracked. They would live in the stakeholder struct
     struct Issuer {
         string id;
-        string initialSharesAuthorized;
+        string name;
+        string initial_shares_authorized; // TODO: might be useful but not sure how 
     }
 
     // TODO: stakeholders need a relationship to how much stock they own. What are the missing states - if we're tracking transactions 
     // stakeholder will likely have multiple positions. of Multiple stock classes (or it should be allowed at least)
+    // TODO: wallets could be tracked here
     struct Stakeholder {
+        // base variables
         string id;
-        uint256 sharesOwned; // latest positions, it might need to be security
+        string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
+        string current_relationship; //OPTIONAL but might be useful ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
+        // string[] securityIds;// Security might tie a stakeholder to an entire position they own. Unclear right now.
+        uint256 sharesOwned; // latest positions, it might need to be security id
     }
 
+    // can be later extended to add things like seniority, conversion_rights, etc.
     struct StockClass {
         string id;
-        string classType;
-        uint256 pricePerShare; // OCF standard is JSON
-        uint256 parValue; // OCF standard is string
-        uint256 initialSharesAuthorized; // OCF standard is string
+        string class_type; // ["COMMON", "PREFERRED"]
+        uint256 price_per_share; // Per-share price this stock class was issued for, is this needed for trading?
+        uint256 initial_shares_authorized; // OCF standard is string
     }
 
+    // @dev Transactions will be created on-chain then reflected off-chain. They contain the source of truth.
     address[] public transactions;
 
     Issuer public issuer;
-    // Map the id of the Stakeholder to its position in the array for O(1) access
-    mapping (string id => uint256 index) public stakeholderIndex;
     Stakeholder[] public stakeholders;
-
-    // Map the id of the StockClass to its position in the array for O(1) access
-    mapping (string id => uint256 index) public stockClassIndex;
     StockClass[] public stockClasses;
 
-    event IssuerCreated(string indexed id, string indexed initialSharesAuthorized);
+    // stakeholder id -> index
+    mapping (string => uint256) public stakeholderIndex;
+    // stock class id -> index
+    mapping (string id => uint256 index) public stockClassIndex;
+    // TODO: placeholder mapping until more info is uncovered.
+    // stakeholder id -> stock class id -> shares owned
+    mapping (string => mapping (string => uint256)) public ownerships;
+    
+    // security id -> stakeholder id
+    mapping (string => string) private securityIds;
+
+    event IssuerCreated(string indexed id, string indexed _name, string initialSharesAuthorized);
     event StakeholderCreated(string indexed id);
-    event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 parValue, uint256 initialSharesAuthorized);
+    event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
 
-    modifier legalNameNotEmpty (string memory _legalName) {
-        require(keccak256(abi.encodePacked(_legalName)) != keccak256(abi.encodePacked("")), "Legal name cannot be empty");
-        _;
+    constructor(string memory _id, string memory _name, string memory _initialSharesAuthorized) {
+        issuer = Issuer(_id, _name, _initialSharesAuthorized);
+        emit IssuerCreated(_id, _name, _initialSharesAuthorized);
     }
 
-    // modifier avoidStakeholderDuplicate(string memory _id) {
-    //     require(keccak256(abi.encodePacked(getStakeholderById(_id))) == keccak256(abi.encodePacked("")), "Stakeholder already exists");
-    //     _;
-    // }
-
-    modifier avoidStockClassDuplicate(string memory _id) {
-         (string memory stockClassId, , , , ) = getStockClassById(_id);
-        require(keccak256(abi.encodePacked(stockClassId)) == keccak256(abi.encodePacked("")), "Stock class already exists");
-        _;
-    }
-
-    constructor(string memory _id, string memory _initialSharesAuthorized) {
-        issuer = Issuer(_id, _initialSharesAuthorized);
-        emit IssuerCreated(_id, _initialSharesAuthorized);
-    }
-
-    // avoidStakeholderDuplicate(_id)
-    function createStakeholder(string memory _id, uint256 sharesOwned) public onlyOwner returns (string memory)  {
-        stakeholders.push(Stakeholder(_id, sharesOwned));
+    function createStakeholder(string memory _id, string memory _stakeholder_type, string memory _current_relationship, uint256 _sharesOwned) public onlyOwner returns (string memory)  {
+        console.log("stakeholder type is %s", _stakeholder_type);
+        console.log("current relationship is %s", _current_relationship);
+        console.log("shares owned is %s", _sharesOwned);
+        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship, _sharesOwned));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
         return _id;
@@ -75,14 +84,13 @@ contract CapTable is Ownable {
 
     function createStockClass(
         string memory _id,
-        string memory _classType,
-        uint256 _pricePerShare,
-        uint256 _parValue,
-        uint256 _initialSharesAuthorized
-    ) public onlyOwner avoidStockClassDuplicate(_id) {
-        stockClasses.push(StockClass(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized));
+        string memory _class_type,
+        uint256 _price_per_share,
+        uint256 _initial_share_authorized
+    ) public onlyOwner {
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
         stockClassIndex[_id] = stockClasses.length;
-        emit StockClassCreated(_id, _classType, _pricePerShare, _parValue, _initialSharesAuthorized);
+        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
 
     // Sample transfer: isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. Currently it is a simple boolean
@@ -100,7 +108,7 @@ contract CapTable is Ownable {
         stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
 
          // Buyer activities: assuming transferee is not on the cap table yet, need new ID
-        string memory transfereeId = createStakeholder("9876-9876-9876", quantity);
+        string memory transfereeId = createStakeholder("123e4567-e89b-12d3-a456-426614174000", "INDIVIDUAL", "OTHER", quantity);
         address transfereeIssuanceTx = _handleTransfereeStockIssuanceTX(transfereeId, quantity, sharePrice);
 
         // Seller activities: seller must be on the cap table already
@@ -119,8 +127,7 @@ contract CapTable is Ownable {
 
 
     // TODO: Running experiment where transferor and transferee are in different funtions since the struct is static. Need to make this 
-    // so it's only one function after this test.
-
+    // so it's only one function after this test
     function _handleTransfereeStockIssuanceTX(string memory transfereeId, uint256 quantity, int sharePrice) internal returns (address) {
         StockIssuanceTX issuance = new StockIssuanceTX(StockIssuance(
             "1234-1234-1234", // would be a new ID
@@ -189,9 +196,19 @@ contract CapTable is Ownable {
         return address(transfer);
     }
 
+    // Experiment of stock issuance passing a struct as parameter
+    // function stockIssuance(StockIssuance calldata issuance) external onlyOwner {
+    //     // TODO: need lots of checks
+    //     // check that it's part of a stock class and stake holder exists, if not create a new stakeholder?
+    //     StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
+    //     ownerships[issuance.stakeholderId][issuance.stockClassId] = issuance.quantity;
+    //     securityIds[issuance.securityId] = issuance.stakeholderId;
+    //     transactions.push(address(issuanceTX));
+    // }
 
-    function getIssuer() public view returns (string memory, string memory) {
-        return (issuer.id, issuer.initialSharesAuthorized);
+
+    function getIssuer() public view returns (string memory, string memory, string memory) {
+        return (issuer.id, issuer.name, issuer.initial_shares_authorized);
     }
 
     function getStakeholderById(string memory _id) public view returns (string memory, uint256) {
@@ -203,14 +220,15 @@ contract CapTable is Ownable {
         }
     }
 
-    function getStockClassById(string memory _id) public view returns (string memory, string memory, uint256, uint256, uint256) {
+    function getStockClassById(string memory _id) public view returns (string memory, string memory, uint256, uint256) {
         if(stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.classType, stockClass.pricePerShare, stockClass.parValue, stockClass.initialSharesAuthorized);
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
         } else {
-            return ("", "", 0, 0, 0);
+            return ("", "", 0, 0);
         }
     }
+
 
     function getTotalNumberOfStakeholders() public view returns (uint256) {
         return stakeholders.length;
