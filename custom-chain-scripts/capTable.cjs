@@ -36,14 +36,6 @@ async function optimismGoerliSetup() {
     return contract;
 }
 
-async function displayIssuer(contract) {
-    try {
-        const newIssuer = await contract.getIssuer();
-        console.log("New issuer with name:", newIssuer);
-    } catch (error) {
-        console.error("Error encountered:", error.error.reason);
-    }
-}
 
 async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
@@ -57,7 +49,7 @@ async function createAndDisplayStakeholder(contract) {
     const id = stakeHolderAdded[0];
     const type = stakeHolderAdded[1];
     const role = stakeHolderAdded[2];
-    const shares = stakeHolderAdded[3];
+    const shares = stakeHolderAdded[3].toString();
     console.log("New Stakeholder created:", { id, type, role, shares });
 
     return stakeholderId;
@@ -117,9 +109,10 @@ async function totalNumberOfStockClasses(contract) {
 
 async function transferOwnership(contract, sellerId) {
     try {
-        const tx = await contract.transferStockOwnership(sellerId, true, 300000, 123);
+        const amountToTransfer = 300000;
+        console.log(`transferring ${amountToTransfer} shares`);
+        const tx = await contract.transferStockOwnership(sellerId, true, amountToTransfer, 123);
         await tx.wait();
-        console.log("Ownership transferred successfully!");
 
         const seller = await contract.getStakeholderById(sellerId);
         const sellerIdFetched = seller[0];
@@ -127,12 +120,14 @@ async function transferOwnership(contract, sellerId) {
         const sellerRole = seller[2];
         const sellerShares = seller[3].toString();
 
+        console.log("Created new stakeholder with ID ", sellerIdFetched);
+
         const buyer = await contract.getStakeholderById("123e4567-e89b-12d3-a456-426614174000");
         const buyerIdFetched = buyer[0];
         const buyerType = buyer[1];
         const buyerRole = buyer[2];
         const buyerShares = buyer[3].toString();
-
+        console.log("Ownership transferred successfully!");
         console.log("Seller new values after transfer:", { id: sellerIdFetched, type: sellerType, role: sellerRole, shares: sellerShares });
         console.log("Buyer new values after transfer:", { id: buyerIdFetched, type: buyerType, role: buyerRole, shares: buyerShares });
 
@@ -148,6 +143,11 @@ async function transferOwnership(contract, sellerId) {
     }
 }
 
+const issuerTest = async (contract) => {
+    const issuer = await contract.issuer();
+    console.log("Issuer", issuer);
+};
+
 async function main({ chain }) {
     let contract;
     if (chain === "local") {
@@ -158,11 +158,12 @@ async function main({ chain }) {
         contract = await optimismGoerliSetup();
     }
 
-    await displayIssuer(contract);
-    const id = await createAndDisplayStakeholder(contract);
-    //await createAndDisplayStockClass(contract);
-    await transferOwnership(contract, id);
-    await totalNumberOfStakeholders(contract);
+    //await issuerTest(contract);
+    // await displayIssuer(contract);
+    // const id = await createAndDisplayStakeholder(contract);
+    // //await createAndDisplayStockClass(contract);
+    // await transferOwnership(contract, id);
+    // await totalNumberOfStakeholders(contract);
 }
 
 const chain = process.argv[2];
