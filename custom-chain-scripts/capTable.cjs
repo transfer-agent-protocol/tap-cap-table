@@ -36,16 +36,6 @@ async function optimismGoerliSetup() {
     return contract;
 }
 
-async function updateLegalName(contract) {
-    try {
-        const tx = await contract.updateLegalName("New Null Corp Inc.");
-        await tx.wait();
-        console.log("Legal name updated successfully!");
-    } catch (error) {
-        console.error("Error encountered:", error.error.reason);
-    }
-}
-
 async function displayIssuer(contract) {
     try {
         const newIssuer = await contract.getIssuer();
@@ -58,26 +48,19 @@ async function displayIssuer(contract) {
 async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
     try {
-        const tx = await contract.createStakeholder(stakeholderId, 1000000);
+        const tx = await contract.createStakeholder(stakeholderId, "INDIVIDUAL", "EMPLOYEE", 1000000);
         await tx.wait();
     } catch (error) {
         console.log("Error encountered:", error.error.reason);
     }
     const stakeHolderAdded = await contract.getStakeholderById(stakeholderId);
     const id = stakeHolderAdded[0];
-    const shares = stakeHolderAdded[1].toString();
-    console.log("Stakeholder for Existing ID:", { id, shares });
+    const type = stakeHolderAdded[1];
+    const role = stakeHolderAdded[2];
+    const shares = stakeHolderAdded[3];
+    console.log("New Stakeholder created:", { id, type, role, shares });
 
     return stakeholderId;
-}
-
-async function displayNonExistingStakeholder(contract) {
-    try {
-        const nonExistingStakeholder = await contract.getStakeholderById("222-222-222");
-        console.log("Stakeholder for Non-Existing ID:", nonExistingStakeholder);
-    } catch (error) {
-        console.error("Error encountered:", error.error.reason);
-    }
 }
 
 async function createAndDisplayStockClass(contract) {
@@ -140,20 +123,26 @@ async function transferOwnership(contract, sellerId) {
 
         const seller = await contract.getStakeholderById(sellerId);
         const sellerIdFetched = seller[0];
-        const sellerShares = seller[1].toString();
+        const sellerType = seller[1];
+        const sellerRole = seller[2];
+        const sellerShares = seller[3].toString();
 
-        const buyer = await contract.getStakeholderById("9876-9876-9876");
+        const buyer = await contract.getStakeholderById("123e4567-e89b-12d3-a456-426614174000");
         const buyerIdFetched = buyer[0];
-        const buyerShares = buyer[1].toString();
+        const buyerType = buyer[1];
+        const buyerRole = buyer[2];
+        const buyerShares = buyer[3].toString();
 
-        console.log("Seller new values after transfer:", { id: sellerIdFetched, shares: sellerShares });
-        console.log("Buyer new values after transfer:", { id: buyerIdFetched, shares: buyerShares });
+        console.log("Seller new values after transfer:", { id: sellerIdFetched, type: sellerType, role: sellerRole, shares: sellerShares });
+        console.log("Buyer new values after transfer:", { id: buyerIdFetched, type: buyerType, role: buyerRole, shares: buyerShares });
 
         const firstTX = await contract.transactions(0);
         const secondTX = await contract.transactions(1);
         const thirdTX = await contract.transactions(2);
 
-        console.log("First transaction:", firstTX, "Second transaction:", secondTX, "Third transaction:", thirdTX);
+        console.log("First issuance transaction address:", firstTX);
+        console.log("Second issuance transaction address,", secondTX);
+        console.log("Transfer transaction address,", thirdTX);
     } catch (error) {
         console.error("Error encountered for transfer ownership:", error);
     }
@@ -169,15 +158,11 @@ async function main({ chain }) {
         contract = await optimismGoerliSetup();
     }
 
-    // await updateLegalName(contract);
     await displayIssuer(contract);
     const id = await createAndDisplayStakeholder(contract);
-    //await displayNonExistingStakeholder(contract);
-    await createAndDisplayStockClass(contract);
-    await displayNonExistingStockClass(contract);
-    await totalNumberOfStakeholders(contract);
-    await totalNumberOfStockClasses(contract);
+    //await createAndDisplayStockClass(contract);
     await transferOwnership(contract, id);
+    await totalNumberOfStakeholders(contract);
 }
 
 const chain = process.argv[2];
