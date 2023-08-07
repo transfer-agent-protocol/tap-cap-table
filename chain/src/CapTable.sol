@@ -18,10 +18,10 @@ contract CapTable is Ownable {
         - Vesting Terms
         - Valuations
     */
-    // Wallets aren't yet tracked. They would live in the stakeholder struct
+    // Wallets aren't yet tracked. They could live in the stakeholder struct
     struct Issuer {
-        string id;
-        string name;
+        string id; // same ID as offchain DB
+        string legal_name;
         string initial_shares_authorized; // TODO: might be useful but not sure how 
     }
 
@@ -30,38 +30,45 @@ contract CapTable is Ownable {
     // TODO: wallets could be tracked here
     struct Stakeholder {
         // base variables
-        string id;
+        string id; // same ID as offchain DB
         string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
-        string current_relationship; //OPTIONAL but might be useful ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
-        // string[] securityIds;// Security ID ties a stakeholder to an entire position they own. Confirming with OCF
-        uint256 sharesOwned; // latest positions, it might need to be security id
+        string current_relationship; //OPTIONAL but might be useful for communities: ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
     }
 
     // can be later extended to add things like seniority, conversion_rights, etc.
     struct StockClass {
         string id;
         string class_type; // ["COMMON", "PREFERRED"]
-        uint256 price_per_share; // Per-share price this stock class was issued for, is this needed for trading?
-        uint256 initial_shares_authorized; // OCF standard is string
+        uint256 price_per_share; // don't think it's needed
+        uint256 initial_shares_authorized; // don't think it's needed
     }
 
-    // @dev Transactions will be created on-chain then reflected off-chain. They contain the source of truth.
-    address[] public transactions;
+    struct ActivePosition {
+        string stakeholder_id;
+        string stock_class_id;
+        string security_id; // can be used to query the stockIssuance to get more info
+        uint256 quantity;
+        int share_price;
+        string date; // TODO: safeNow()
+    }
 
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
-
-    // stakeholder id -> index
-    mapping (string => uint256) public stakeholderIndex;
-    // stock class id -> index
-    mapping (string id => uint256 index) public stockClassIndex;
-    // TODO: placeholder mapping until more info is uncovered.
-    // stakeholder id -> security id -> shares owned
-    mapping (string => mapping (string => uint256)) public positions;
+    // @dev Transactions will be created on-chain then reflected off-chain. They contain the source of truth.
+    address[] public transactions;
     
-    // security id -> stakeholder id
-    mapping (string => string) private securityIds;
+    // @dev These mappings are used to lookup the index of a struct in the array
+    // stakeholder_id -> index
+    mapping (string => uint256) public stakeholderIndex;
+    // stock class_id -> index
+    mapping (string id => uint256 index) public stockClassIndex;
+
+    // stakeholder_id -> -> stock_class_id -> security_ids
+    mapping(string => mapping(string => string[])) activeStakeholderSecurityIdsByStockClass;
+    // stakeholder_id -> security_id -> ActivePosition
+    mapping(string => mapping(string => ActivePosition)) activePositions;
+
 
     event IssuerCreated(string indexed id, string indexed _name, string initialSharesAuthorized);
     event StakeholderCreated(string indexed id);
@@ -72,11 +79,21 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name, _initialSharesAuthorized);
     }
 
-    function createStakeholder(string memory _id, string memory _stakeholder_type, string memory _current_relationship, uint256 _sharesOwned) public onlyOwner returns (string memory)  {
-        console.log("stakeholder type is %s", _stakeholder_type);
-        console.log("current relationship is %s", _current_relationship);
-        console.log("shares owned is %s", _sharesOwned);
-        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship, _sharesOwned));
+    // this means that on transfer, we need to know stock class 
+    function getActivePositionByStakeholderStockClass(string memory _stakeholder_id, string memory _stock_class_id) public view returns (ActivePosition memory activePosition) {
+        // TODO complete requires
+
+        string[] memory securityIdsForStockClass = activeStakeholderSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
+        
+        // only getting first security id for now
+        string memory securityId = securityIdsForStockClass[0];
+        ActivePosition memory position = activePositions[_stakeholder_id][securityId];
+        return position;
+    
+    }
+
+    function createStakeholder(string memory _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner returns (string memory)  {
+        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
         return _id;
@@ -94,125 +111,144 @@ contract CapTable is Ownable {
     }
 
     // Sample transfer: isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. Currently it is a simple boolean
-    // assuming buyer is not on the cap table yet
-    function transferStockOwnership(string memory transferorStakeholderId, bool isBuyerVerified, uint256 quantity, int sharePrice) public onlyOwner {
-        require(isBuyerVerified, "Buyer must confirm");
+    // transferee should not be onboarded to the cap table on-chain. Ensure that new stakeholder for transferee is created off-chain and reflected on-chain first.
+    function transferStockOwnership(string memory transferorStakeholderId, string memory transfereeStakeholderId, string memory stock_class_id, bool isBuyerVerified, uint256 quantity, int sharePrice) public onlyOwner {
+        require(isBuyerVerified, "Buyer must be verified");
         require(quantity > 0, "Shares to transfer must be greater than 0");
         require(stakeholderIndex[transferorStakeholderId] > 0, "Seller stakeholder does not exist");
-        require(stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned >= quantity, "Seller does not have enough shares to transfer");
 
-        // Seller activities
-        (,,, uint256 sharesOwned) = getStakeholderById(transferorStakeholderId);
-        uint256 remainingSharesForSeller = sharesOwned - quantity;
-        // update seller's shares
-        stakeholders[stakeholderIndex[transferorStakeholderId] - 1].sharesOwned = remainingSharesForSeller;
+        ActivePosition memory latestTransferorPosition = getActivePositionByStakeholderStockClass(transferorStakeholderId, stock_class_id);
+        require(latestTransferorPosition.quantity >= quantity, "Seller does not have enough shares to sell"); //TODO: need to extend another funtion to look for all active positins for the same class
 
-         // Buyer activities: assuming transferee is not on the cap table yet, need new ID
-        string memory transfereeId = createStakeholder("123e4567-e89b-12d3-a456-426614174000", "INDIVIDUAL", "OTHER", quantity);
-        address transfereeIssuanceTx = _handleTransfereeStockIssuanceTX(transfereeId, quantity, sharePrice);
+        // first, create new issuance for transferee
+        StockIssuance memory transfereeIssuance = _handleStockIssuanceStructForTransfer(transfereeStakeholderId, quantity, sharePrice, stock_class_id);
+        issueStock(transfereeIssuance);
 
-        // Seller activities: seller must be on the cap table already
-        address transferorPostTransferIssuanceTx = _handleTransferorStockIssuanceTX(transferorStakeholderId, remainingSharesForSeller, sharePrice);
-       
-        // Transfer activities
-        address transferTx = _handleStockTransferTX(quantity);
-        
-        // logic to calculate latest positions
+    
+        uint256 remainingSharesForTransferor = latestTransferorPosition.quantity - quantity;
+        string memory balance_security_id;
+        // check if transferor has any remaining shares
+        if(remainingSharesForTransferor > 0) {
+            // if so, create a new issuance for the transferor
+            StockIssuance memory transferorPostTransferIssuance = _handleStockIssuanceStructForTransfer(transferorStakeholderId, remainingSharesForTransferor, sharePrice, stock_class_id);
+            issueStock(transferorPostTransferIssuance);
+            balance_security_id = transferorPostTransferIssuance.security_id;
+            // need to delete the old issuance in the ActivePositions
+        } else {
+            balance_security_id = "";
+        }
 
-         transactions.push(address(transfereeIssuanceTx));
-         transactions.push(address(transferorPostTransferIssuanceTx));
-         transactions.push(address(transferTx));
+        // transfer
+        StockTransfer memory transfer = _handleStockTransferStruct(quantity, latestTransferorPosition.security_id, transfereeIssuance.security_id, balance_security_id);
+        transferStock(transfer);
        
     }
 
+    // function _deleteNoLongerActivePosition(string memory _stakeholder_id, string memory _security_id, string memory _stock_class_id) internal {
+    //     delete activePositions[_stakeholder_id][_security_id];
 
-    // TODO: Running experiment where transferor and transferee are in different funtions since the struct is static. Need to make this 
-    // so it's only one function after this test
-    function _handleTransfereeStockIssuanceTX(string memory transfereeId, uint256 quantity, int sharePrice) internal returns (address) {
-        StockIssuanceTX issuance = new StockIssuanceTX(StockIssuance(
-            "1234-1234-1234", // would be a new ID
+
+    // }
+
+    function _handleStockIssuanceStructForTransfer(string memory transfereeId, uint256 quantity, int sharePrice, string memory stockClassId) internal view returns (StockIssuance memory issuance) {
+        return StockIssuance(
+            string(abi.encodePacked(block.timestamp, msg.sender)), // id // TODO: just for testing, need a secure UUID
             "TX_STOCK_ISSUANCE",
-            "Common A", // this can point to stockclass
-            "", // stock plan id
+            stockClassId,
+            "", // stock plan id (optional) TODO: should we include in cap table?
             sharePrice, 
             quantity,
-            "", // vesting terms id
-            "", // cost basis
-            new string[](0), // stock_legend_ids
-            "", // issuance type
+            "", // vesting terms id (optional) TODO: should we include in cap table?
+            "", // cost basis (optional) TODO: should we include in cap table?
+            new string[](0), // stock_legend_ids (optional) TODO: should we include in cap table?
+            "", // issuance type (optional) TODO: should we include in cap table?
             new string[](0), // comments
-            "sec-id-0000", // security id: would be a new ID
+            string(abi.encodePacked(block.timestamp, msg.sender)), // security_id //TODO: just for testing, need a secure UUID
             transfereeId,
-            "", // board approval date
-            "", // stockholder approval date
-            "", // consideration text
-            new string[](0) // security law exemptions
-        ));
-
-        return address(issuance);
+            "", // board approval date (optional) TODO: should we include in cap table?
+            "", // stockholder approval date (optional) TODO: should we include in cap table?
+            "", // consideration text (optional) TODO: should we include in cap table?
+            new string[](0) // security law exemptions (optional) TODO: should we include in cap table?
+        );
     }
 
-    function _handleTransferorStockIssuanceTX(string memory transferorId, uint256 remainingSharesForTransferor, int sharePrice) internal returns (address) {
-        StockIssuanceTX issuance = new StockIssuanceTX(StockIssuance(
-            "2345-2345-2345-2345",
-            "TX_STOCK_ISSUANCE",
-            "Common A",
-            "", // stock plan id
-            sharePrice,
-            remainingSharesForTransferor,
-            "", // vesting terms id
-            "", // cost basis
-            new string[](0), // stock legends ids
-            "", // issuance type
-            new string[](0), // comments
-            "sec-id-9999", // security id: would be a new ID
-            transferorId,
-            "", // board approval date
-            "", // stockholder approval date
-            "", // consideration text
-            new string[](0) // security law exemptions
-        ));
+    /* It's likely we see two types of issuances, one created during transfers (see above) and another created one time by the TA with more relevant data, like for a new employee */
 
-        return address(issuance);
-    }
+    // function _handleStockIssuanceStructByTA(string memory transfereeId, uint256 quantity, int sharePrice, string memory stockClassId) internal returns (StockIssuance memory issuance) {
+    //     return StockIssuance(
+    //         string(abi.encodePacked(block.timestamp, msg.sender)), // id // TODO: just for testing, need a secure UUID
+    //         "TX_STOCK_ISSUANCE",
+    //         stockClassId,
+    //         "", // stock plan id (optional) TODO: should we include in cap table?
+    //         sharePrice, 
+    //         quantity,
+    //         "", // vesting terms id (optional) TODO: should we include in cap table?
+    //         "", // cost basis (optional) TODO: should we include in cap table?
+    //         new string[](0), // stock_legend_ids (optional) TODO: should we include in cap table?
+    //         "", // issuance type (optional) TODO: should we include in cap table?
+    //         new string[](0), // comments
+    //         string(abi.encodePacked(block.timestamp, msg.sender)), // security_id //TODO: just for testing, need a secure UUID
+    //         transfereeId,
+    //         "", // board approval date (optional) TODO: should we include in cap table?
+    //         "", // stockholder approval date (optional) TODO: should we include in cap table?
+    //         "", // consideration text (optional) TODO: should we include in cap table?
+    //         new string[](0) // security law exemptions (optional) TODO: should we include in cap table?
+    //     );
+    // }
 
-    // experiment ends here.
-
-    function _handleStockTransferTX(uint256 quantity) internal returns (address) {
+    // only supporting of transfer from one person to another. Not one to many.
+    function _handleStockTransferStruct(uint256 quantity, string memory security_id, string memory resulting_security_id, string memory balance_security_id) internal view returns (StockTransfer memory transfer) {
         string[] memory resultingSecurityIds = new string[](1);
-        resultingSecurityIds[0] = "sec-id-0000";
-
-        StockTransferTX transfer = new StockTransferTX(StockTransfer(
-            "1234-1234-1234",
+        resultingSecurityIds[0] = resulting_security_id;
+        
+        return StockTransfer(
+            string(abi.encodePacked(block.timestamp, msg.sender)), // id // TODO: just for testing, need a secure UUID
             "TX_STOCK_TRANSFER",
             quantity,
-            new string[](0), // comments
-            "sec-id-1111", // BOBs original security ID.
-            "", //consideration text
-            "sec-id-9999", // balance security id
+            new string[](0), // comments,
+            security_id,
+            "", // consideration text (optional) TODO: should we include in cap table?
+            balance_security_id,
             resultingSecurityIds
-        ));
-
-        return address(transfer);
+        );
     }
 
-    // Experiment of stock issuance passing a struct as parameter
-    function stockIssuance(StockIssuance calldata issuance) external onlyOwner {
+    function issueStock(StockIssuance memory issuance) public onlyOwner {
         // TODO: need lots of checks
-        // check that it's part of a stock class and stake holder exists, if not create a new stakeholder?
+        // check that it's part of a stock class and stake holder exists
         StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
-        ownerships[issuance.stakeholder_id][issuance.stock_class_id] = issuance.quantity;
-        securityIds[issuance.security_id] = issuance.stakeholder_id;
+
+        // first ,create mapping of stakeholder id to security id array
+        // @todo: should be renamed to activeStakeholderSecurityIds
+        activeStakeholderSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
+
+        // then, update latest positions
+        activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
+            issuance.stakeholder_id,
+            issuance.stock_class_id,
+            issuance.security_id,
+            issuance.quantity,
+            issuance.share_price,
+            "2021-01-01"  // safeNow()
+        );
+
         transactions.push(address(issuanceTX));
+        // emit new issuance
     }
 
+    function transferStock(StockTransfer memory transfer) public onlyOwner {
+        // TODO: need lots of checks, similar to aboev
+        StockTransferTX transferTX = new StockTransferTX(transfer);
+        transactions.push(address(transferTX));
+        // emit new transfer
+    }
 
-    function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory, uint256) {
+    function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory) {
         if(stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
-            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship, stakeholder.sharesOwned);
+            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
         } else {
-            return ("", "", "", 0);
+            return ("", "", "");
         }
     }
 
