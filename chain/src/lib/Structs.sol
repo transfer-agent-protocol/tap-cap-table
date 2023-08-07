@@ -11,7 +11,7 @@ struct StockIssuance {
         int share_price; // OCF Monetary (USD is all that matters). Amount is  Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
         uint256 quantity; // Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
         string vesting_terms_id; // Optional
-        string cost_basis; // OCF Monetary (USD is all that matters). Amount is  Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+        string cost_basis; // Optional OCF Monetary (USD is all that matters). Amount is  Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
         string[] stock_legend_ids; // Optional
         string issuance_type; // Optional for special types (["RSA", "FOUNDERS_STOCK"],)
         string[] comments; // Optional
