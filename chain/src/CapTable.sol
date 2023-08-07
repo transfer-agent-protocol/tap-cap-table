@@ -33,7 +33,7 @@ contract CapTable is Ownable {
         string id;
         string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
         string current_relationship; //OPTIONAL but might be useful ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
-        // string[] securityIds;// Security might tie a stakeholder to an entire position they own. Unclear right now.
+        // string[] securityIds;// Security ID ties a stakeholder to an entire position they own. Confirming with OCF
         uint256 sharesOwned; // latest positions, it might need to be security id
     }
 
@@ -57,8 +57,8 @@ contract CapTable is Ownable {
     // stock class id -> index
     mapping (string id => uint256 index) public stockClassIndex;
     // TODO: placeholder mapping until more info is uncovered.
-    // stakeholder id -> stock class id -> shares owned
-    mapping (string => mapping (string => uint256)) public ownerships;
+    // stakeholder id -> security id -> shares owned
+    mapping (string => mapping (string => uint256)) public positions;
     
     // security id -> stakeholder id
     mapping (string => string) private securityIds;
