@@ -64,6 +64,8 @@ contract CapTable is Ownable {
     event IssuerCreated(string indexed id, string indexed _name, string initialSharesAuthorized);
     event StakeholderCreated(string indexed id);
     event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
+    event StockIssuanceCreated(string indexed stakeholderId, string indexed stockClassId, string indexed securityId);
+    event StockTransferCreated(string indexed securityId, uint256 quantity);
 
     constructor(string memory _id, string memory _name, string memory _initialSharesAuthorized) {
         issuer = Issuer(_id, _name, _initialSharesAuthorized);
@@ -165,14 +167,14 @@ contract CapTable is Ownable {
         );
 
         transactions.push(address(issuanceTX));
-        //TODO: emit new issuance
+        emit StockIssuanceCreated(issuance.stakeholder_id, issuance,stock_class_id, issuance.security_id);
     }
 
     function transferStock(StockTransfer memory transfer) public onlyOwner {
         // TODO: need lots of checks, similar to aboev
         StockTransferTX transferTX = new StockTransferTX(transfer);
         transactions.push(address(transferTX));
-        //TODO: emit new transfer
+        emit StockTransferCreated(transfer.security_id, transfer.quantity);
     }
 
     function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory) {
