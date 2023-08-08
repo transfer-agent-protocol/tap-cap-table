@@ -40,13 +40,12 @@ contract CapTable is Ownable {
     }
 
     struct ActivePosition {
-        string stakeholder_id;
         string stock_class_id;
-        string security_id; // can be used to query the stockIssuance to get more info
         uint256 quantity;
         int share_price;
         string date; // TODO: safeNow()
     }
+    
 
     Issuer public issuer;
     Stakeholder[] public stakeholders;
@@ -71,16 +70,20 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name, _initialSharesAuthorized);
     }
 
-    function getActivePositionsByStakeholderStockClass(string memory _stakeholder_id, string memory _stock_class_id) public view returns (ActivePosition memory activePosition) {
+    function getActivePositionsBySecurityId(string memory _stakeholder_id, string memory _security_id) public view returns (ActivePosition memory activePosition) {
+        // TODO complete requires
+
+        return activePositions[_stakeholder_id][_security_id];
+    
+    }
+
+    function getFirstSecurityIdByStockClass(string memory _stakeholder_id, string memory _stock_class_id) public view returns (string memory securityId) {
         // TODO complete requires
 
         string[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
         
         // only getting first earliest active position for the stock class, for now.
-        string memory securityId = activeSecurityIDs[0];
-        ActivePosition memory position = activePositions[_stakeholder_id][securityId];
-        return position;
-    
+        return activeSecurityIDs[0];
     }
 
     function createStakeholder(string memory _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner returns (string memory)  {
@@ -108,7 +111,8 @@ contract CapTable is Ownable {
         require(quantity > 0, "Shares to transfer must be greater than 0");
         require(stakeholderIndex[transferorStakeholderId] > 0, "Seller stakeholder does not exist");
 
-        ActivePosition memory transferorActivePosition = getActivePositionsByStakeholderStockClass(transferorStakeholderId, stock_class_id);
+        string memory transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stock_class_id);
+        ActivePosition memory transferorActivePosition = getActivePositionsBySecurityId(transferorStakeholderId, transferorSecurityId);
         require(transferorActivePosition.quantity >= quantity, "Transferor does not have enough shares to transfer"); 
 
         StockIssuance memory transfereeIssuance = _handleStockIssuanceStructForTransfer(transfereeStakeholderId, quantity, sharePrice, stock_class_id);
@@ -126,10 +130,10 @@ contract CapTable is Ownable {
             balance_security_id = "";
         }
 
-        StockTransfer memory transfer = _handleStockTransferStruct(quantity, transferorActivePosition.security_id, transfereeIssuance.security_id, balance_security_id);
+        StockTransfer memory transfer = _handleStockTransferStruct(quantity, transferorSecurityId, transfereeIssuance.security_id, balance_security_id);
         transferStock(transfer);
 
-        _deleteActivePosition(transferorStakeholderId, transferorActivePosition.security_id);
+        _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
         _deleteActiveStakeholderSecurityIdsByStockClass();
        
     }
@@ -215,9 +219,7 @@ contract CapTable is Ownable {
 
         // then, update latest positions
         activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
-            issuance.stakeholder_id,
             issuance.stock_class_id,
-            issuance.security_id,
             issuance.quantity,
             issuance.share_price,
             "2021-01-01"  //TODO: safeNow()
