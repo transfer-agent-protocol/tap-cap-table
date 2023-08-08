@@ -74,15 +74,11 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name, _initialSharesAuthorized);
     }
 
-    function getActivePositionsBySecurityId(
+    function getActivePositionBySecurityId(
         string memory _stakeholder_id,
         string memory _security_id
     ) public view returns (ActivePosition memory activePosition) {
-        // TODO complete requires
-        /*
-        
-        */
-
+        require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
         return activePositions[_stakeholder_id][_security_id];
     }
 
@@ -90,8 +86,7 @@ contract CapTable is Ownable {
         string memory _stakeholder_id,
         string memory _stock_class_id
     ) public view returns (string memory securityId) {
-        // TODO complete requires
-
+        require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
         string[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
 
         // only getting first earliest active position for the stock class, for now.
@@ -99,6 +94,7 @@ contract CapTable is Ownable {
     }
 
     function createStakeholder(string memory _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
+        require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
@@ -107,41 +103,50 @@ contract CapTable is Ownable {
     function createStockClass(
         string memory _id,
         string memory _class_type,
-        uint256 _price_per_share,
+        uint256 _price_per_share, 
         uint256 _initial_share_authorized
     ) public onlyOwner {
+        require(stockClassIndex[_id] == 0, "Stock class already exists");
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
 
-    // Sample transfer: isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. Currently it is a simple boolean
-    // TODO: Should a transferee already created on the cap table off-chain or created here for the first time?
+    // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function transferStockOwnership(
         string memory transferorStakeholderId,
         string memory transfereeStakeholderId,
-        string memory stock_class_id,
+        string memory stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
         int sharePrice
     ) public onlyOwner {
-        require(isBuyerVerified, "Buyer must be verified");
-        require(quantity > 0, "Shares to transfer must be greater than 0");
-        require(stakeholderIndex[transferorStakeholderId] > 0, "Seller stakeholder does not exist");
+        // Checks related to entities' existence
+        require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
+        require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        string memory transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stock_class_id);
-        ActivePosition memory transferorActivePosition = getActivePositionsBySecurityId(transferorStakeholderId, transferorSecurityId);
-        require(transferorActivePosition.quantity >= quantity, "Transferor does not have enough shares to transfer");
+        // Checks related to transaction validity
+        require(isBuyerVerified, "Buyer unverified");
+        require(quantity > 0, "Invalid quantity");
+        require(sharePrice > 0, "Invalid price");
+
+        string memory transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId);
+        ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
+        
+        // Checks related to transfer feasibility
+        require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
         StockIssuance memory transfereeIssuance = TransactionHelper.createStockIssuanceStructForTransfer(
             transfereeStakeholderId,
             quantity,
             sharePrice,
-            stock_class_id
+            stockClassId
         );
         _issueStock(transfereeIssuance);
 
         uint256 remainingSharesForTransferor = transferorActivePosition.quantity - quantity;
+
         string memory balance_security_id;
 
         if (remainingSharesForTransferor > 0) {
@@ -149,7 +154,7 @@ contract CapTable is Ownable {
                 transferorStakeholderId,
                 remainingSharesForTransferor,
                 sharePrice,
-                stock_class_id
+                stockClassId
             );
             _issueStock(transferorPostTransferIssuance);
             balance_security_id = transferorPostTransferIssuance.security_id;
@@ -163,11 +168,12 @@ contract CapTable is Ownable {
             transfereeIssuance.security_id,
             balance_security_id
         );
-        transferStock(transfer);
-
+        _transferStock(transfer);
+        
         _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
         _deleteActiveStakeholderSecurityIdsByStockClass();
     }
+
 
     function _deleteActivePosition(string memory _stakeholder_id, string memory _security_id) internal {
         delete activePositions[_stakeholder_id][_security_id];
@@ -177,12 +183,15 @@ contract CapTable is Ownable {
     function _deleteActiveStakeholderSecurityIdsByStockClass() internal {}
 
     function issueStockByTA(string memory stakeholderId, uint256 quantity, int sharePrice, string memory stockClassId) external onlyOwner {
-        // TODO: requires
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+        require(quantity > 0, "Invalid quantity");
+        require(sharePrice > 0, "Invalid price");
+
         _issueStock(TransactionHelper.createStockIssuanceStructByTA(stakeholderId, quantity, sharePrice, stockClassId));
     }
 
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
-        // TODO: complete requires (check that it's part of a stock class and stake holder exists)
         StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
 
         activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
@@ -198,8 +207,7 @@ contract CapTable is Ownable {
         emit StockIssuanceCreated(issuance.stakeholder_id, issuance.stock_class_id, issuance.security_id);
     }
 
-    function transferStock(StockTransfer memory transfer) public onlyOwner {
-        // TODO: need lots of checks, similar to aboev
+    function _transferStock(StockTransfer memory transfer) internal onlyOwner {
         StockTransferTX transferTX = new StockTransferTX(transfer);
         transactions.push(address(transferTX));
         emit StockTransferCreated(transfer.security_id, transfer.quantity);
