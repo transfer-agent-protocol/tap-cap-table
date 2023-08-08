@@ -8,6 +8,8 @@ import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 import "./lib/TransactionHelper.sol";
 import { StockClassType } from "./lib/Enums.sol";
 
+import "forge-std/console.sol";
+
 contract CapTable is Ownable {
     // @dev Issuer, Stakeholder and StockClass will be created off-chain then reflected on-chain to match IDs. Struct variables have underscore naming to match OCF naming.
     /* Objects kept intentionally off-chain unless they become useful
@@ -120,14 +122,14 @@ contract CapTable is Ownable {
         require(transferorActivePosition.quantity >= quantity, "Transferor does not have enough shares to transfer"); 
 
         StockIssuance memory transfereeIssuance = TransactionHelper.createStockIssuanceStructForTransfer(transfereeStakeholderId, quantity, sharePrice, stock_class_id);
-        issueStock(transfereeIssuance);
+        _issueStock(transfereeIssuance);
 
         uint256 remainingSharesForTransferor = transferorActivePosition.quantity - quantity;
         string memory balance_security_id;
 
         if(remainingSharesForTransferor > 0) {
             StockIssuance memory transferorPostTransferIssuance =  TransactionHelper.createStockIssuanceStructForTransfer(transferorStakeholderId, remainingSharesForTransferor, sharePrice, stock_class_id);
-            issueStock(transferorPostTransferIssuance);
+            _issueStock(transferorPostTransferIssuance);
             balance_security_id = transferorPostTransferIssuance.security_id;
             
         } else {
@@ -152,13 +154,18 @@ contract CapTable is Ownable {
       
     }
 
-    function issueStock(StockIssuance memory issuance) public onlyOwner {
+    function issueStockByTA(string memory stakeholderId, uint256 quantity, int sharePrice, string memory stockClassId) external onlyOwner {
+        // TODO: requires
+        _issueStock(TransactionHelper.createStockIssuanceStructByTA(stakeholderId, quantity, sharePrice, stockClassId));
+    }
+
+
+    function _issueStock(StockIssuance memory issuance) internal onlyOwner {
         // TODO: complete requires (check that it's part of a stock class and stake holder exists)
         StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
 
         activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
 
-        // then, update latest positions
         activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
             issuance.stock_class_id,
             issuance.quantity,
