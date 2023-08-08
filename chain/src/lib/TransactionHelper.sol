@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
 import { StockIssuance, StockTransfer } from "./Structs.sol";
@@ -32,7 +33,7 @@ library TransactionHelper {
             "", // issuance type (optional) TODO: should we include in cap table?
             new string[](0), // comments
             "security-id", // security_id //TODO: just for testing, need a secure UUID
-            transfereeId,
+            transfereeId, // stakeholder_id
             "", // board approval date (optional) TODO: should we include in cap table?
             "", // stockholder approval date (optional) TODO: should we include in cap table?
             "", // consideration text (optional) TODO: should we include in cap table?
@@ -41,7 +42,7 @@ library TransactionHelper {
     }
 
     function createStockIssuanceStructByTA(
-        string memory transfereeId, 
+        string memory stakeholderId, 
         uint256 quantity, 
         int sharePrice, 
         string memory stockClassId
@@ -68,7 +69,7 @@ library TransactionHelper {
             "",                                         // Issuance type (optional)
             new string[](0),                            // Comments
             securityId,                                 // Security ID
-            transfereeId,                               // Transferee ID
+            stakeholderId,                               // Stakeholder ID
             "",                                         // Board approval date (optional)
             "",                                         // Stockholder approval date (optional)
             "",                                         // Consideration text (optional)
