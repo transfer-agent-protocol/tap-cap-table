@@ -55,8 +55,8 @@ contract CapTable is Ownable {
 
     // O(1) search
     // id -> index
-    mapping(string => uint256) public stakeholderIndex;
-    mapping(string => uint256) public stockClassIndex;
+    mapping(string => uint256) stakeholderIndex;
+    mapping(string => uint256) stockClassIndex;
 
     // stakeholder_id -> -> stock_class_id -> security_ids
     mapping(string => mapping(string => string[])) activeSecurityIdsByStockClass;
