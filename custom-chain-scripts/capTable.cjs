@@ -40,7 +40,7 @@ async function optimismGoerliSetup() {
 async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
     try {
-        const tx = await contract.createStakeholder(stakeholderId, "INDIVIDUAL", "EMPLOYEE", 1000000);
+        const tx = await contract.createStakeholder(stakeholderId, "INDIVIDUAL", "EMPLOYEE");
         await tx.wait();
     } catch (error) {
         console.log("Error encountered:", error.error.reason);
@@ -49,8 +49,7 @@ async function createAndDisplayStakeholder(contract) {
     const id = stakeHolderAdded[0];
     const type = stakeHolderAdded[1];
     const role = stakeHolderAdded[2];
-    const shares = stakeHolderAdded[3].toString();
-    console.log("New Stakeholder created:", { id, type, role, shares });
+    console.log("New Stakeholder created:", { id, type, role });
 
     return stakeholderId;
 }
@@ -58,32 +57,17 @@ async function createAndDisplayStakeholder(contract) {
 async function createAndDisplayStockClass(contract) {
     try {
         const stockClassId = uuid();
-        const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 100, 4000000);
+        const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 4000000);
         await newStockClass.wait();
         const stockClassAdded = await contract.getStockClassById(stockClassId);
-        console.log("Stock class object ", stockClassAdded);
         console.log("--- Stock Class for Existing ID ---");
         console.log("Getting new stock class:");
         console.log("ID:", stockClassAdded[0]);
         console.log("Type:", stockClassAdded[1]);
         console.log("Price Per Share:", ethers.utils.formatUnits(stockClassAdded[2], 6));
-        console.log("Par Value:", ethers.utils.formatUnits(stockClassAdded[3], 6));
-        console.log("Initial Shares Authorized:", stockClassAdded[4].toString());
-    } catch (error) {
-        console.error("Error encountered:", error.error.reason);
-    }
-}
+        console.log("Initial Shares Authorized:", stockClassAdded[3].toString());
 
-async function displayNonExistingStockClass(contract) {
-    try {
-        const nonExistingStockClass = await contract.getStockClassById("222-222-222");
-        console.log("--- Stock Class for Non-Existing ID ---");
-        console.log("Getting new stock class:");
-        console.log("ID:", nonExistingStockClass[0]);
-        console.log("Type:", nonExistingStockClass[1]);
-        console.log("Price Per Share:", ethers.utils.formatUnits(nonExistingStockClass[2], 6));
-        console.log("Par Value:", ethers.utils.formatUnits(nonExistingStockClass[3], 6));
-        console.log("Initial Shares Authorized:", nonExistingStockClass[4].toString());
+        return stockClassId;
     } catch (error) {
         console.error("Error encountered:", error.error.reason);
     }
@@ -107,29 +91,29 @@ async function totalNumberOfStockClasses(contract) {
     }
 }
 
-async function transferOwnership(contract, sellerId) {
+async function transferOwnership(contract) {
+    const sellerId = "e47a1d5f-91c1-47c5-8f64-edd0fb054f63";
+    const buyerId = "593c1fba-7894-48fc-b19c-49304c447d22";
+    const stockClassId = "77a2026f-fea4-4530-97e0-8a1ba6681f19";
+
     try {
         const amountToTransfer = 300000;
         console.log(`transferring ${amountToTransfer} shares`);
-        const tx = await contract.transferStockOwnership(sellerId, true, amountToTransfer, 123);
+        const tx = await contract.transferStockOwnership(sellerId, buyerId, stockClassId, true, amountToTransfer, 123);
         await tx.wait();
 
         const seller = await contract.getStakeholderById(sellerId);
         const sellerIdFetched = seller[0];
         const sellerType = seller[1];
         const sellerRole = seller[2];
-        const sellerShares = seller[3].toString();
 
-        console.log("Created new stakeholder with ID ", sellerIdFetched);
-
-        const buyer = await contract.getStakeholderById("123e4567-e89b-12d3-a456-426614174000");
+        const buyer = await contract.getStakeholderById(buyerId);
         const buyerIdFetched = buyer[0];
         const buyerType = buyer[1];
         const buyerRole = buyer[2];
-        const buyerShares = buyer[3].toString();
         console.log("Ownership transferred successfully!");
-        console.log("Seller new values after transfer:", { id: sellerIdFetched, type: sellerType, role: sellerRole, shares: sellerShares });
-        console.log("Buyer new values after transfer:", { id: buyerIdFetched, type: buyerType, role: buyerRole, shares: buyerShares });
+        console.log("Seller new values after transfer:", { id: sellerIdFetched, type: sellerType, role: sellerRole });
+        console.log("Buyer new values after transfer:", { id: buyerIdFetched, type: buyerType, role: buyerRole });
 
         const firstTX = await contract.transactions(0);
         const secondTX = await contract.transactions(1);
@@ -139,13 +123,26 @@ async function transferOwnership(contract, sellerId) {
         console.log("Second issuance transaction address,", secondTX);
         console.log("Transfer transaction address,", thirdTX);
     } catch (error) {
-        console.error("Error encountered for transfer ownership:", error);
+        console.error("Error encountered for transfer ownership:", error.error.reason);
     }
 }
 
 const issuerTest = async (contract) => {
     const issuer = await contract.issuer();
     console.log("Issuer", issuer);
+};
+
+const issueStakeholderStock = async (contract, stakeholderId, stockClassId) => {
+    const amount = 1000000;
+    const sharePrice = 123;
+
+    try {
+        const tx = await contract.issueStockByTA(stakeholderId, amount, sharePrice, stockClassId);
+        await tx.wait();
+        console.log("Issued stock successfully");
+    } catch (error) {
+        console.error("Error encountered for issuing stock", error);
+    }
 };
 
 async function main({ chain }) {
@@ -160,9 +157,10 @@ async function main({ chain }) {
 
     //await issuerTest(contract);
     // await displayIssuer(contract);
-    // const id = await createAndDisplayStakeholder(contract);
-    // //await createAndDisplayStockClass(contract);
-    // await transferOwnership(contract, id);
+    //const id = await createAndDisplayStakeholder(contract);
+    //const stockClassId = await createAndDisplayStockClass(contract);
+    //await issueStakeholderStock(contract, id, stockClassId);
+    await transferOwnership(contract);
     // await totalNumberOfStakeholders(contract);
 }
 
