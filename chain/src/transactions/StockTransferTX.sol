@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import { StockTransfer } from "../lib/Structs.sol";
 
@@ -13,4 +13,3 @@ contract StockTransferTX {
         emit StockTransferCreated(_stockTransfer);
     }
 }
-

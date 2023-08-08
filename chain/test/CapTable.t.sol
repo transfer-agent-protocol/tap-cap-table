@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -23,7 +23,7 @@ contract CapTableTest is Test {
     //     address prankster = address(0);
     //     vm.prank(prankster);
     //     vm.expectRevert();
-    // } 
+    // }
 
     // function createInitialDummyStockClassData () public pure returns (string memory, string memory, uint256, uint256, uint256) {
     //     string memory expectedId = "1234-1234-1234";
@@ -44,14 +44,14 @@ contract CapTableTest is Test {
 
     // function testCannotUpdateLegalNameWithWrongOwner() public {
     //     capTable.updateLegalName("Plato Inc.");
-        
+
     //     // set a new address to test that only owner can change legal name
     //     createPranksterAndExpectRevert();
 
     //     // should not update legal name
     //     capTable.updateLegalName("Apple Inc.");
 
-    //     (, string memory legalName, ) = capTable.getIssuer(); 
+    //     (, string memory legalName, ) = capTable.getIssuer();
     //     assertEq(convertStringToHash(legalName), convertStringToHash("Plato Inc."), "Legal names do not match, and they should");
     //     assertNotEq(convertStringToHash(legalName), convertStringToHash("Apple Inc."), "Legal names match, and they shouldn't");
 
@@ -74,7 +74,6 @@ contract CapTableTest is Test {
     //     console.log("legal name is ", legalName);
     //     assertEq(convertStringToHash(legalName), convertStringToHash("Test Issuer"), "Legal names do not match, and they should");
     // }
-
 
     // /* Stakeholder Tests */
     // function testCreateStakeholderWithOwner() public {
@@ -161,7 +160,7 @@ contract CapTableTest is Test {
     //         uint256 expectedParValue,
     //         uint256 expectedInitialSharesAuthorized
     //     ) = createInitialDummyStockClassData();
-        
+
     //     capTable.createStockClass(
     //         expectedId,
     //         expectedClassType,
@@ -177,7 +176,7 @@ contract CapTableTest is Test {
     //         uint256 actualParValue,
     //         uint256 actualInitialSharesAuthorized
     //     ) = capTable.getStockClassById(expectedId);
-        
+
     //     assertEq(actualId, expectedId);
     //     assertEq(actualClassType, expectedClassType);
     //     assertEq(actualPricePerShare, expectedPricePerShare);
