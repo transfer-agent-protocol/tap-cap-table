@@ -33,7 +33,7 @@ contract CapTable is Ownable {
     // can be later extended to add things like seniority, conversion_rights, etc.
     struct StockClass {
         string id;
-        StockClassType class_type; // ["COMMON", "PREFERRED"]
+        string class_type; // ["COMMON", "PREFERRED"]
         uint256 price_per_share; // don't think it's needed
         uint256 initial_shares_authorized; // don't think it's needed
     }
@@ -167,7 +167,7 @@ contract CapTable is Ownable {
         );
 
         transactions.push(address(issuanceTX));
-        emit StockIssuanceCreated(issuance.stakeholder_id, issuance,stock_class_id, issuance.security_id);
+        emit StockIssuanceCreated(issuance.stakeholder_id, issuance.stock_class_id, issuance.security_id);
     }
 
     function transferStock(StockTransfer memory transfer) public onlyOwner {
