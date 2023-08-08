@@ -44,7 +44,7 @@ contract CapTable is Ownable {
         string stock_class_id;
         uint256 quantity;
         int share_price;
-        string date; // TODO: safeNow(). Date is meant to track active positions
+        uint40 timestamp; 
     }
 
     Issuer public issuer;
@@ -171,7 +171,7 @@ contract CapTable is Ownable {
         _transferStock(transfer);
         
         _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
-        _deleteActiveStakeholderSecurityIdsByStockClass();
+        _deleteActiveSecurityIdsByStockClass();
     }
 
 
@@ -179,8 +179,7 @@ contract CapTable is Ownable {
         delete activePositions[_stakeholder_id][_security_id];
     }
 
-    // TODO
-    function _deleteActiveStakeholderSecurityIdsByStockClass() internal {}
+    function _deleteActiveSecurityIdsByStockClass() internal {}
 
     function issueStockByTA(string memory stakeholderId, uint256 quantity, int sharePrice, string memory stockClassId) external onlyOwner {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
@@ -200,11 +199,15 @@ contract CapTable is Ownable {
             issuance.stock_class_id,
             issuance.quantity,
             issuance.share_price,
-            "2021-01-01" //TODO: safeNow()
+            _safeNow()
         );
 
         transactions.push(address(issuanceTX));
         emit StockIssuanceCreated(issuance.stakeholder_id, issuance.stock_class_id, issuance.security_id);
+    }
+
+    function _safeNow() internal view returns (uint40) {
+        return uint40(block.timestamp);
     }
 
     function _transferStock(StockTransfer memory transfer) internal onlyOwner {
