@@ -4,11 +4,9 @@ pragma solidity ^0.8.19;
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
-
-import "forge-std/console.sol";
-
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 import "./lib/TransactionHelper.sol";
+import { StockClassType } from "./lib/Enums.sol";
 
 contract CapTable is Ownable {
     // @dev Issuer, Stakeholder and StockClass will be created off-chain then reflected on-chain to match IDs. Struct variables have underscore naming to match OCF naming.
@@ -28,14 +26,14 @@ contract CapTable is Ownable {
     // TODO: wallets could be tracked here
     struct Stakeholder {
         string id;
-        string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
+        string stakeholder_type; // TODO: verify usefulness ["INDIVIDUAL", "INSTITUTION"]
         string current_relationship; //TODO: verify usefulness: ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
     }
 
     // can be later extended to add things like seniority, conversion_rights, etc.
     struct StockClass {
         string id;
-        string class_type; // ["COMMON", "PREFERRED"]
+        StockClassType class_type; // ["COMMON", "PREFERRED"]
         uint256 price_per_share; // don't think it's needed
         uint256 initial_shares_authorized; // don't think it's needed
     }
