@@ -58,7 +58,7 @@ contract CapTable is Ownable {
     mapping (string id => uint256 index) public stockClassIndex;
 
     // stakeholder_id -> -> stock_class_id -> security_ids
-    mapping(string => mapping(string => string[])) activeStakeholderSecurityIdsByStockClass;
+    mapping(string => mapping(string => string[])) activeSecurityIdsByStockClass;
     // stakeholder_id -> security_id -> ActivePosition
     mapping(string => mapping(string => ActivePosition)) activePositions;
 
@@ -74,7 +74,7 @@ contract CapTable is Ownable {
     function getActivePositionsByStakeholderStockClass(string memory _stakeholder_id, string memory _stock_class_id) public view returns (ActivePosition memory activePosition) {
         // TODO complete requires
 
-        string[] memory activeSecurityIDs = activeStakeholderSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
+        string[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
         
         // only getting first earliest active position for the stock class, for now.
         string memory securityId = activeSecurityIDs[0];
@@ -211,7 +211,7 @@ contract CapTable is Ownable {
         // TODO: complete requires (check that it's part of a stock class and stake holder exists)
         StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
 
-        activeStakeholderSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
+        activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
 
         // then, update latest positions
         activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
