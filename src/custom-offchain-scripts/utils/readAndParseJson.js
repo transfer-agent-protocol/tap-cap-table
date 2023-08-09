@@ -1,5 +1,5 @@
-const fs = require("fs").promises;
-const path = require("path");
+import { promises as fs } from "fs";
+import path from "path";
 
 const ROOT_PATH = "./src/custom-offchain-scripts/samples/";
 
@@ -14,4 +14,4 @@ async function readAndParseJSON(inputPath, notRealCompany) {
     }
 }
 
-module.exports = readAndParseJSON;
+export default readAndParseJSON;

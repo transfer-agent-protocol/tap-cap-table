@@ -260,4 +260,4 @@ const transactionTests = async (inputTransactions, prisma) => {
     }
 };
 
-module.exports = transactionTests;
+export default transactionTests;
