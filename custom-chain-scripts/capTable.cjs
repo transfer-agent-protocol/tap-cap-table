@@ -91,23 +91,21 @@ async function totalNumberOfStockClasses(contract) {
     }
 }
 
-async function transferOwnership(contract) {
-    const sellerId = "e47a1d5f-91c1-47c5-8f64-edd0fb054f63";
-    const buyerId = "593c1fba-7894-48fc-b19c-49304c447d22";
-    const stockClassId = "77a2026f-fea4-4530-97e0-8a1ba6681f19";
-
+async function transferOwnership(contract, transferorId, transfereeId, stockClassId) {
     try {
         const amountToTransfer = 300000;
         console.log(`transferring ${amountToTransfer} shares`);
-        const tx = await contract.transferStockOwnership(sellerId, buyerId, stockClassId, true, amountToTransfer, 123);
+        const tx = await contract.transferStockOwnership(transferorId, transfereeId, stockClassId, true, amountToTransfer, 123);
         await tx.wait();
 
-        const seller = await contract.getStakeholderById(sellerId);
+        console.log("transfer was successfull");
+
+        const seller = await contract.getStakeholderById(transferorId);
         const sellerIdFetched = seller[0];
         const sellerType = seller[1];
         const sellerRole = seller[2];
 
-        const buyer = await contract.getStakeholderById(buyerId);
+        const buyer = await contract.getStakeholderById(transfereeId);
         const buyerIdFetched = buyer[0];
         const buyerType = buyer[1];
         const buyerRole = buyer[2];
@@ -155,12 +153,16 @@ async function main({ chain }) {
         contract = await optimismGoerliSetup();
     }
 
+    const transferorId = "b5f5394e-cb6f-4ea9-a1c0-983777680e86";
+    const transfereeId = "7ee7b19a-ff37-4a17-982c-822785711329";
+    const stockClassId = "4ff26d92-b2c2-4657-b756-6ea5598881fd";
+
     //await issuerTest(contract);
     // await displayIssuer(contract);
     //const id = await createAndDisplayStakeholder(contract);
     //const stockClassId = await createAndDisplayStockClass(contract);
-    //await issueStakeholderStock(contract, id, stockClassId);
-    await transferOwnership(contract);
+    //await issueStakeholderStock(contract, transfereeId, stockClassId);
+    await transferOwnership(contract, transferorId, transfereeId, stockClassId);
     // await totalNumberOfStakeholders(contract);
 }
 
