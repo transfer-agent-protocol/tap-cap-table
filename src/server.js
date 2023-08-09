@@ -10,7 +10,7 @@ const PORT = 3000;
 
 // set up ethers listeners
 const CHAIN = "local";
-await startOnchainListeners(CHAIN);
+await startOnchainListeners(CHAIN, prisma);
 
 app.get("/", async (req, res) => {
     res.send(`Hello World!`);
