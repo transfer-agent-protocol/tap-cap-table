@@ -58,7 +58,7 @@ contract CapTable is Ownable {
     mapping(string => uint256) stakeholderIndex;
     mapping(string => uint256) stockClassIndex;
 
-    // stakeholder_id -> -> stock_class_id -> security_ids
+    // stakeholder_id -> stock_class_id -> security_ids
     mapping(string => mapping(string => string[])) activeSecurityIdsByStockClass;
     // stakeholder_id -> security_id -> ActivePosition
     mapping(string => mapping(string => ActivePosition)) activePositions;
@@ -181,6 +181,7 @@ contract CapTable is Ownable {
 
     function _deleteActiveSecurityIdsByStockClass() internal {}
 
+    // can extend this to check that it's not issuing more than stock_class initial shares issued
     function issueStockByTA(string memory stakeholderId, uint256 quantity, int sharePrice, string memory stockClassId) external onlyOwner {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
