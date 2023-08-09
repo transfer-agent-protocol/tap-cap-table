@@ -66,8 +66,8 @@ contract CapTable is Ownable {
     event IssuerCreated(string indexed id, string indexed _name, string initialSharesAuthorized);
     event StakeholderCreated(string indexed id);
     event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
-    event StockIssuanceCreated(string indexed stakeholderId, string indexed stockClassId, string indexed securityId);
-    event StockTransferCreated(string indexed securityId, uint256 quantity);
+    event StockTransferCreated(StockTransfer transfer);
+    event StockIssuanceCreated(StockIssuance issuance);
 
     constructor(string memory _id, string memory _name, string memory _initialSharesAuthorized) {
         issuer = Issuer(_id, _name, _initialSharesAuthorized);
@@ -204,7 +204,7 @@ contract CapTable is Ownable {
         );
 
         transactions.push(address(issuanceTX));
-        emit StockIssuanceCreated(issuance.stakeholder_id, issuance.stock_class_id, issuance.security_id);
+        emit StockIssuanceCreated(issuance);
     }
 
     function _safeNow() internal view returns (uint40) {
@@ -214,7 +214,7 @@ contract CapTable is Ownable {
     function _transferStock(StockTransfer memory transfer) internal onlyOwner {
         StockTransferTX transferTX = new StockTransferTX(transfer);
         transactions.push(address(transferTX));
-        emit StockTransferCreated(transfer.security_id, transfer.quantity);
+        emit StockTransferCreated(transfer);
     }
 
     function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory) {
