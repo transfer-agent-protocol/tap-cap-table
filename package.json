@@ -62,6 +62,6 @@
         "uuid": "^9.0.0"
     },
     "prisma": {
-        "schema": "schema/schema.prisma"
+        "schema": "src/db/schema.prisma"
     }
 }
