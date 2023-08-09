@@ -2,7 +2,7 @@ const { ethers } = require("ethers");
 const { v4: uuid } = require("uuid");
 require("dotenv").config();
 
-const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
+const CAP_TABLE_ABI = require("../../chain/out/CapTable.sol/CapTable.json").abi;
 
 async function localSetup() {
     // if deployed using forge script
@@ -35,7 +35,6 @@ async function optimismGoerliSetup() {
 
     return contract;
 }
-
 
 async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
@@ -155,14 +154,14 @@ async function main({ chain }) {
 
     const transferorId = "b5f5394e-cb6f-4ea9-a1c0-983777680e86";
     const transfereeId = "7ee7b19a-ff37-4a17-982c-822785711329";
-    const stockClassId = "4ff26d92-b2c2-4657-b756-6ea5598881fd";
+    //const stockClassId = "4ff26d92-b2c2-4657-b756-6ea5598881fd";
 
     //await issuerTest(contract);
     // await displayIssuer(contract);
-    //const id = await createAndDisplayStakeholder(contract);
-    //const stockClassId = await createAndDisplayStockClass(contract);
-    //await issueStakeholderStock(contract, transfereeId, stockClassId);
-    await transferOwnership(contract, transferorId, transfereeId, stockClassId);
+    const id = await createAndDisplayStakeholder(contract);
+    const stockClassId = await createAndDisplayStockClass(contract);
+    await issueStakeholderStock(contract, id, stockClassId);
+    // await transferOwnership(contract, transferorId, transfereeId, stockClassId);
     // await totalNumberOfStakeholders(contract);
 }
 
