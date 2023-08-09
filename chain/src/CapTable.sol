@@ -6,7 +6,6 @@ import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 import "./lib/TransactionHelper.sol";
-import { StockClassType } from "./lib/Enums.sol";
 
 import "forge-std/console.sol";
 

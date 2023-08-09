@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { StockIssuance, StockTransfer } from "./Structs.sol";
-import { IssuanceTX, TransferTX } from "./Enums.sol";
 
 library TransactionHelper {
     /* It's likely we see two types of issuances, 
@@ -18,7 +17,7 @@ library TransactionHelper {
         return
             StockIssuance(
                 "random-id", // id // TODO: just for testing, need a secure UUID
-                IssuanceTX.TX_STOCK_ISSUANCE,
+                "TX_STOCK_ISSUANCE",
                 stockClassId,
                 "", // stock plan id (optional) TODO: should we include in cap table?
                 sharePrice,
@@ -51,7 +50,7 @@ library TransactionHelper {
         return
             StockIssuance(
                 id, // ID
-                IssuanceTX.TX_STOCK_ISSUANCE, // Transaction type
+                "TX_STOCK_ISSUANCE", // Transaction type
                 stockClassId, // Stock class ID
                 "", // Stock plan ID (optional)
                 sharePrice, // Share price
@@ -82,7 +81,7 @@ library TransactionHelper {
         return
             StockTransfer(
                 "ramdom-id", // id // TODO: just for testing, need a secure UUID
-                TransferTX.TX_STOCK_TRANSFER,
+                "TX_STOCK_TRANSFER",
                 quantity,
                 new string[](0), // comments,
                 security_id,

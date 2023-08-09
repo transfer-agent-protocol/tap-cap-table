@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { IssuanceTX, TransferTX } from "./Enums.sol";
-
 // @dev are unique identifiers in solidity are bytes32?
 // date fields are going to use block timestamp
 struct StockIssuance {
     string id;
-    IssuanceTX object_type;
+    string object_type;
     string stock_class_id;
     string stock_plan_id; // Optional
     int share_price; // OCF Monetary (USD is all that matters). Amount is  Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
@@ -29,7 +27,7 @@ struct StockIssuance {
 // date fields are going to use block timestamp
 struct StockTransfer {
     string id;
-    TransferTX object_type;
+    string object_type;
     uint256 quantity;
     string[] comments; // optional
     string security_id;
