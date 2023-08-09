@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -15,7 +15,5 @@ contract CapTableFactoryTest is Test {
 
     function testCreateCapTable() public {
         capTableFactory.createCapTable("5432-5432-5432", "Jonny Nash Inc.", "1000000");
-
     }
-
 }
