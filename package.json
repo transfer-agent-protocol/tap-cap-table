@@ -7,7 +7,7 @@
     "description": "Transfer Agent Protocol compliant cap table",
     "type": "module",
     "scripts": {
-        "start": "nodemon server.js",
+        "start": "nodemon src/server.js",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "yarn run eslint . --ext .js,.jsx,.ts,.tsx",
         "format": "prettier '**/*' --ignore-unknown --write",
@@ -38,7 +38,6 @@
         "dotenv": "^16.3.1",
         "ethers": "^5.7.2",
         "express": "^4.18.2",
-        "nodemon": "^3.0.1",
         "solc": "^0.8.20"
     },
     "browserslist": [
@@ -55,6 +54,7 @@
         "eslint-plugin-import": "^2.26.0",
         "husky": "^8.0.1",
         "lint-staged": "^13.0.3",
+        "nodemon": "^3.0.1",
         "prettier": "^2.7.1",
         "prisma": "^5.0.0",
         "solhint": "^3.4.1",
