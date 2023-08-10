@@ -19,27 +19,27 @@ contract CapTable is Ownable {
     */
 
     struct Issuer {
-        string id;
+        bytes16 id;
         string legal_name;
     }
 
     // TODO: wallets could be tracked here
     struct Stakeholder {
-        string id;
-        string stakeholder_type; // TODO: verify usefulness ["INDIVIDUAL", "INSTITUTION"]
-        string current_relationship; //TODO: verify usefulness: ENUM with values  ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
+        bytes16 id;
+        string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
+        string current_relationship; // ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
     }
 
     // can be later extended to add things like seniority, conversion_rights, etc.
     struct StockClass {
-        string id;
+        bytes16 id;
         string class_type; // ["COMMON", "PREFERRED"]
-        uint256 price_per_share; // don't think it's needed
+        uint256 price_per_share; // Per-share price this stock class was issued for
         uint256 initial_shares_authorized;
     }
 
     struct ActivePosition {
-        string stock_class_id;
+        bytes16 stock_class_id;
         uint256 quantity;
         int share_price;
         uint40 timestamp; 
@@ -53,45 +53,45 @@ contract CapTable is Ownable {
 
     // O(1) search
     // id -> index
-    mapping(string => uint256) stakeholderIndex;
-    mapping(string => uint256) stockClassIndex;
+    mapping(bytes16 => uint256) stakeholderIndex;
+    mapping(bytes16 => uint256) stockClassIndex;
 
     // stakeholder_id -> stock_class_id -> security_ids
-    mapping(string => mapping(string => string[])) activeSecurityIdsByStockClass;
+    mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
     // stakeholder_id -> security_id -> ActivePosition
-    mapping(string => mapping(string => ActivePosition)) activePositions;
+    mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions;
 
-    event IssuerCreated(string indexed id, string indexed _name);
-    event StakeholderCreated(string indexed id);
-    event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
+    event IssuerCreated(bytes16 indexed id, string indexed _name);
+    event StakeholderCreated(bytes16 indexed id);
+    event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
     event StockTransferCreated(StockTransfer transfer);
     event StockIssuanceCreated(StockIssuance issuance);
 
-    constructor(string memory _id, string memory _name) {
+    constructor(bytes16 _id, string memory _name) {
         issuer = Issuer(_id, _name);
         emit IssuerCreated(_id, _name);
     }
 
     function getActivePositionBySecurityId(
-        string memory _stakeholder_id,
-        string memory _security_id
+        bytes16 _stakeholder_id,
+        bytes16 _security_id
     ) public view returns (ActivePosition memory activePosition) {
         require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
         return activePositions[_stakeholder_id][_security_id];
     }
 
     function getFirstSecurityIdByStockClass(
-        string memory _stakeholder_id,
-        string memory _stock_class_id
-    ) public view returns (string memory securityId) {
+        bytes16 _stakeholder_id,
+        bytes16 _stock_class_id
+    ) public view returns (bytes16 securityId) {
         require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
-        string[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
+        bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
 
         // only getting first earliest active position for the stock class, for now.
         return activeSecurityIDs[0];
     }
 
-    function createStakeholder(string memory _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
@@ -99,7 +99,7 @@ contract CapTable is Ownable {
     }
 
     function createStockClass(
-        string memory _id,
+        bytes16 _id,
         string memory _class_type,
         uint256 _price_per_share, 
         uint256 _initial_share_authorized
@@ -112,9 +112,9 @@ contract CapTable is Ownable {
 
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function transferStockOwnership(
-        string memory transferorStakeholderId,
-        string memory transfereeStakeholderId,
-        string memory stockClassId,
+        bytes16 transferorStakeholderId,
+        bytes16 transfereeStakeholderId,
+        bytes16 stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
         int sharePrice
@@ -129,7 +129,7 @@ contract CapTable is Ownable {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
-        string memory transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId);
+        bytes16 transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId);
         ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
         
         // Checks related to transfer feasibility
@@ -145,13 +145,13 @@ contract CapTable is Ownable {
 
         uint256 remainingSharesForTransferor = transferorActivePosition.quantity - quantity;
 
-        string memory balance_security_id;
+        bytes16 balance_security_id;
 
         if (remainingSharesForTransferor > 0) {
             StockIssuance memory transferorPostTransferIssuance = TransactionHelper.createStockIssuanceStructForTransfer(
                 transferorStakeholderId,
                 remainingSharesForTransferor,
-                sharePrice,
+                transferorActivePosition.share_price,
                 stockClassId
             );
             _issueStock(transferorPostTransferIssuance);
@@ -173,14 +173,14 @@ contract CapTable is Ownable {
     }
 
 
-    function _deleteActivePosition(string memory _stakeholder_id, string memory _security_id) internal {
+    function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
         delete activePositions[_stakeholder_id][_security_id];
     }
 
     function _deleteActiveSecurityIdsByStockClass() internal {}
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
-    function issueStockByTA(string memory stakeholderId, uint256 quantity, int sharePrice, string memory stockClassId) external onlyOwner {
+    function issueStockByTA(bytes16 stakeholderId, uint256 quantity, int sharePrice, bytes16 stockClassId) external onlyOwner {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
         require(quantity > 0, "Invalid quantity");
@@ -215,7 +215,7 @@ contract CapTable is Ownable {
         emit StockTransferCreated(transfer);
     }
 
-    function getStakeholderById(string memory _id) public view returns (string memory, string memory, string memory) {
+    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
         if (stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
             return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
@@ -224,7 +224,7 @@ contract CapTable is Ownable {
         }
     }
 
-    function getStockClassById(string memory _id) public view returns (string memory, string memory, uint256, uint256) {
+    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
             return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
