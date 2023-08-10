@@ -1,35 +1,5 @@
-const { ethers } = require("ethers");
 const { v4: uuid } = require("uuid");
-require("dotenv").config();
-
-const CAP_TABLE_FACTORY_ABI = require("../chain/out/CapTableFactory.sol/CapTableFactory.json").abi;
-
-async function localSetup() {
-    const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTableFactory.s.sol/31337/run-latest.json").transactions[0].contractAddress;
-    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
-
-    const customNetwork = {
-        chainId: 31337,
-        name: "local",
-    };
-
-    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
-    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, CAP_TABLE_FACTORY_ABI, wallet);
-
-    return contract;
-}
-
-async function optimismGoerliSetup() {
-    const CONTRACT_ADDRESS_OPTIMISM_GOERLI = require("../chain/broadcast/CapTableFactory.s.sol/420/run-latest.json").transactions[0].contractAddress;
-    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
-
-    const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
-    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, CAP_TABLE_FACTORY_ABI, wallet);
-
-    return contract;
-}
+const { localSetup, optimismGoerliSetup } = require("./chainSetup");
 
 async function createCapTable(contract) {
     const issuerId = uuid();
