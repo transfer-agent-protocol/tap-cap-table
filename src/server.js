@@ -1,8 +1,15 @@
-import express from "express";
+import express, { json, urlencoded } from "express";
 import { PrismaClient } from "@prisma/client";
 import addNotPoetToDB from "./custom-offchain-scripts/seedNotPoet.js";
-import { exec } from "child_process";
 import startOnchainListeners from "./custom-chain-scripts/transactionListener.js";
+
+import { promisify } from "util";
+import { exec as originalExec } from "child_process";
+
+import { config } from "dotenv";
+config();
+
+const exec = promisify(originalExec);
 
 const prisma = new PrismaClient();
 const app = express();
@@ -12,18 +19,23 @@ const PORT = 3000;
 const CHAIN = "local";
 await startOnchainListeners(CHAIN, prisma);
 
+// middlewares
+app.use(urlencoded({ limit: "50mb", extended: true }));
+app.use(json({ limit: "50mb" }));
+app.enable("trust proxy");
+
 app.get("/", async (req, res) => {
     res.send(`Hello World!`);
 });
 
 // POC to onboard a cap table via API
 // needs to be generalized and importing JSONs needs to be shaped.
-app.get("/add-not-poet", async (req, res) => {
-    exec("yarn validate-not-poet-files", async (error, stdout, stderr) => {
-        if (error) {
-            console.error(`exec error: ${error}`);
-            return;
-        }
+app.post("/add-not-poet-to-db", async (req, res) => {
+    // TODO: Input validation
+    try {
+        // Validate and Insert to DB
+        const { stdout, stderr } = await exec("yarn validate-not-poet-files");
+
         console.log(`stdout: ${stdout}`);
         // console.error(`stderr: ${stderr}`);
 
@@ -31,12 +43,68 @@ app.get("/add-not-poet", async (req, res) => {
         await prisma.$disconnect();
 
         console.log("Success");
+        res.status(200).send("Success");
+    } catch (error) {
+        console.error(`exec error: ${error}`);
+    }
+});
 
-        res.send("success");
-    });
+app.post("/mint-cap-table", async (req, res) => {
+    // TODO: Input validation
+    console.log("body ", req.body);
+
+    const { issuerId } = req.body;
+
+    try {
+        // get issuer info
+        const issuer = await prisma.issuer.findUnique({
+            where: {
+                id: issuerId,
+            },
+        });
+
+        if (!issuer) {
+            res.status(500).send("Issuer not found");
+        }
+
+        console.log("issuer ", issuer);
+
+        const initialSharesAuthorized = issuer.initial_shares_authorized ? issuer.initial_shares_authorized : 0;
+
+        //mint locally
+        //if we do this with a script we can get the deployed to address.
+        const forgeCommand = `cd chain && forge create --rpc-url http://127.0.0.1:8545 --private-key ${process.env.PRIVATE_KEY_FAKE_ACCOUNT} src/CapTable.sol:CapTable --constructor-args "${issuer.id}" "${issuer.legal_name}" "${initialSharesAuthorized}"`;
+        console.log("forgeCommand ", forgeCommand);
+
+        const { stdout, stderr } = await exec(forgeCommand, { maxBuffer: 1024 * 1024 * 10 });
+
+        console.log("forge errors ", stderr);
+
+        console.log(`stdout: ${stdout}`);
+
+        // somehow get the address of the contract
+        const deployedTo = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+
+        // update issuer with contract address
+        await prisma.issuer.update({
+            where: {
+                id: issuerId,
+            },
+            data: {
+                comments: [`Cap Table has been deployed to ${deployedTo}`],
+            },
+        });
+
+        await prisma.$disconnect();
+
+        console.log("success");
+
+        res.status(200).send("Success");
+    } catch (error) {
+        console.error(`exec error: ${error}`);
+    }
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
 });
- 
