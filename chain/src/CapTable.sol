@@ -21,7 +21,6 @@ contract CapTable is Ownable {
     struct Issuer {
         string id;
         string legal_name;
-        string initial_shares_authorized; // TODO: verify usefulness of this field
     }
 
     // TODO: wallets could be tracked here
@@ -36,7 +35,7 @@ contract CapTable is Ownable {
         string id;
         string class_type; // ["COMMON", "PREFERRED"]
         uint256 price_per_share; // don't think it's needed
-        uint256 initial_shares_authorized; // don't think it's needed
+        uint256 initial_shares_authorized;
     }
 
     struct ActivePosition {
@@ -62,15 +61,15 @@ contract CapTable is Ownable {
     // stakeholder_id -> security_id -> ActivePosition
     mapping(string => mapping(string => ActivePosition)) activePositions;
 
-    event IssuerCreated(string indexed id, string indexed _name, string initialSharesAuthorized);
+    event IssuerCreated(string indexed id, string indexed _name);
     event StakeholderCreated(string indexed id);
     event StockClassCreated(string indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
     event StockTransferCreated(StockTransfer transfer);
     event StockIssuanceCreated(StockIssuance issuance);
 
-    constructor(string memory _id, string memory _name, string memory _initialSharesAuthorized) {
-        issuer = Issuer(_id, _name, _initialSharesAuthorized);
-        emit IssuerCreated(_id, _name, _initialSharesAuthorized);
+    constructor(string memory _id, string memory _name) {
+        issuer = Issuer(_id, _name);
+        emit IssuerCreated(_id, _name);
     }
 
     function getActivePositionBySecurityId(
