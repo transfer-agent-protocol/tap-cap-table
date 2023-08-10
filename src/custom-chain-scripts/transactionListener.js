@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { ethers } from "ethers";
 import { config } from "dotenv";
 config();
@@ -6,6 +5,7 @@ config();
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 const CAP_TABLE_ABI = CAP_TABLE.abi;
 // import { localSetup, optimismGoerliSetup } from "./chainSetup";
+import { convertBytes16ToUUID } from "../utils";
 
 async function localSetup() {
     // if deployed using forge script
@@ -74,35 +74,34 @@ async function startOnchainListeners(chain, prisma) {
         const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
         const costBasisOCF = stock.cost_basis.toString ? { amount: stock.cost_basis.toString(), currency: "USD" } : {};
 
-        // TODO: think about data validation and whether we would validate it using OCF here.
+        const stockIssuance = convertBytes16ToUUID(stock);
 
-        // save to DB
-        const stockIssuance = await prisma.stockIssuance.create({
+        const createdStockIssuance = await prisma.stockIssuance.create({
             data: {
-                id: uuidv4(), // stock.id is currently a dummy, need to figure out on-chain UUIDs
-                object_type: stock.object_type,
-                stock_class_id: stock.stock_class_id,
-                stock_plan_id: stock.stock_plan_id,
-                share_numbers_issued: [{}],
+                id: stockIssuance.id,
+                object_type: stockIssuance.object_type,
+                stock_class_id: stockIssuance.stock_class_id,
+                stock_plan_id: stockIssuance.stock_plan_id,
+                share_numbers_issued: stockIssuance.share_numbers_issued.toString(), // OCF structure is [{}], check how it returns
                 share_price: sharePriceOCF,
                 quantity: stock.quantity.toString(),
-                vesting_terms_id: stock.vesting_terms_id,
+                vesting_terms_id: stockIssuance.vesting_terms_id,
                 cost_basis: costBasisOCF,
-                stock_legend_ids: stock.stock_legend_ids,
-                issuance_type: stock.issuance_type,
-                comments: stock.comments,
-                security_id: stock.security_id,
+                stock_legend_ids: stockIssuance.stock_legend_ids,
+                issuance_type: stockIssuance.issuance_type,
+                comments: stockIssuance.comments,
+                security_id: stockIssuance.security_id,
                 date: dateOCF,
-                custom_id: "", // not using custom ID on-chain
-                stakeholder_id: stock.stakeholder_id,
-                board_approval_date: stock.board_approval_date,
-                stockholder_approval_date: stock.stockholder_approval_date,
-                consideration_text: stock.consideration_text,
-                security_law_exemptions: stock.security_law_exemptions,
+                custom_id: stockIssuance.custom_id,
+                stakeholder_id: stockIssuance.stakeholder_id,
+                board_approval_date: stockIssuance.board_approval_date,
+                stockholder_approval_date: stockIssuance.stockholder_approval_date,
+                consideration_text: stockIssuance.consideration_text,
+                security_law_exemptions: stockIssuance.security_law_exemptions,
             },
         });
 
-        console.log("New Stock Issuance Object Created !", stockIssuance);
+        console.log("New Stock Issuance Object Created !", createdStockIssuance);
     });
 }
 
