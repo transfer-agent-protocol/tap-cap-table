@@ -1,13 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
-const readAndParseJSON = require("./utils/readAndParseJson.cjs");
+import readAndParseJSON from "../utils/readAndParseJson.js";
 
-const inputManifest = require("./samples/notPoet/Manifest.ocf.json");
+import inputManifest from "./samples/notPoet/Manifest.ocf.json" assert { type: "json" };
+import transactionTests from "./objects/transactions.js";
 
-const transactionTests = require("./objects/transactions.cjs");
-
-const prisma = new PrismaClient();
-
-async function main() {
+async function addNotPoetToDB(prisma) {
     const inputIssuer = inputManifest.issuer;
     const issuer = await prisma.issuer.create({ data: inputIssuer });
 
@@ -16,7 +12,7 @@ async function main() {
     // TODO: Each of these categories are arrays of files inside of the manifest. We're using the first element for now since there's only one for Poet.
 
     // STOCK PLANS
-    const inputStockPlans = await readAndParseJSON(inputManifest.stock_plans_files[0].filepath, 'notPoet');
+    const inputStockPlans = await readAndParseJSON(inputManifest.stock_plans_files[0].filepath, "notPoet");
     console.log("Adding Stock Plans to DB");
     for (const inputStockPlan of inputStockPlans.items) {
         const stockPlan = await prisma.stockPlan.create({
@@ -27,7 +23,7 @@ async function main() {
     }
 
     // STOCK LEGENDS
-    const inputStockLegends = await readAndParseJSON(inputManifest.stock_legend_templates_files[0].filepath, 'notPoet');
+    const inputStockLegends = await readAndParseJSON(inputManifest.stock_legend_templates_files[0].filepath, "notPoet");
     console.log("Adding Stock Legends to DB");
     for (const inputStockLegend of inputStockLegends.items) {
         const stockLegend = await prisma.stockLegendTemplate.create({
@@ -38,7 +34,7 @@ async function main() {
     }
 
     // STOCK CLASS
-    const inputStockClasses = await readAndParseJSON(inputManifest.stock_classes_files[0].filepath, 'notPoet');
+    const inputStockClasses = await readAndParseJSON(inputManifest.stock_classes_files[0].filepath, "notPoet");
     console.log("Adding Stock Classes to DB");
     for (const inputStockClass of inputStockClasses.items) {
         const stockClass = await prisma.stockClass.create({
@@ -54,7 +50,7 @@ async function main() {
     const transactions = await transactionTests(inputTransactions, prisma);
 
     // STAKEHOLDERS
-    const inputStakeholders = await readAndParseJSON(inputManifest.stakeholders_files[0].filepath, 'notPoet');
+    const inputStakeholders = await readAndParseJSON(inputManifest.stakeholders_files[0].filepath, "notPoet");
     console.log("Adding Stakeholders to DB");
     for (const inputStakeholder of inputStakeholders.items) {
         const stakeholder = await prisma.stakeholder.create({
@@ -65,7 +61,7 @@ async function main() {
     }
 
     // VESTING TERMS
-    const inputVestingTerms = await readAndParseJSON(inputManifest.vesting_terms_files[0].filepath, 'notPoet');
+    const inputVestingTerms = await readAndParseJSON(inputManifest.vesting_terms_files[0].filepath, "notPoet");
     console.log("Adding Vesting Terms to DB");
     for (const inputVestingTerm of inputVestingTerms.items) {
         const vestingTerm = await prisma.vestingTerms.create({
@@ -76,11 +72,4 @@ async function main() {
     }
 }
 
-main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+export default addNotPoetToDB;

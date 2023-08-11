@@ -1,8 +1,8 @@
-const { ethers } = require("ethers");
 const { v4: uuid } = require("uuid");
-require("dotenv").config();
-
-const CAP_TABLE_ABI = require("../chain/out/CapTable.sol/CapTable.json").abi;
+const { ethers, utils } = require("ethers");
+const dotenv = require("dotenv").config();
+const CAP_TABLE = require("../../chain/out/CapTable.sol/CapTable.json");
+const CAP_TABLE_ABI = CAP_TABLE.abi;
 
 async function localSetup() {
     // if deployed using forge script
@@ -20,7 +20,7 @@ async function localSetup() {
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, CAP_TABLE_ABI, wallet);
 
-    return contract;
+    return { contract, provider };
 }
 
 async function optimismGoerliSetup() {
@@ -36,40 +36,58 @@ async function optimismGoerliSetup() {
     return contract;
 }
 
+// Convert a price to a BigNumber
+function toScaledBigNumber(price) {
+    return ethers.BigNumber.from(Math.round(price * 1e10).toString());
+}
+
+// Convert a BigNumber back to a decimal price
+function toDecimalPrice(scaledPriceBigNumber) {
+    return parseFloat(scaledPriceBigNumber / 1e10).toString();
+}
 
 async function createAndDisplayStakeholder(contract) {
     const stakeholderId = uuid();
+    const stakeholderIdBytes16 = utils.hexlify(utils.arrayify("0x" + stakeholderId.replace(/-/g, "")));
+    console.log("stakeholderId ", stakeholderId);
+    console.log("stakeholderIdBytes32", stakeholderIdBytes16);
+
     try {
-        const tx = await contract.createStakeholder(stakeholderId, "INDIVIDUAL", "EMPLOYEE");
+        const tx = await contract.createStakeholder(stakeholderIdBytes16, "INDIVIDUAL", "EMPLOYEE");
         await tx.wait();
     } catch (error) {
-        console.log("Error encountered:", error.error.reason);
+        console.log("Error encountered:", error);
     }
-    const stakeHolderAdded = await contract.getStakeholderById(stakeholderId);
+    const stakeHolderAdded = await contract.getStakeholderById(stakeholderIdBytes16);
     const id = stakeHolderAdded[0];
     const type = stakeHolderAdded[1];
     const role = stakeHolderAdded[2];
     console.log("New Stakeholder created:", { id, type, role });
 
-    return stakeholderId;
+    return stakeholderIdBytes16;
 }
 
 async function createAndDisplayStockClass(contract) {
     try {
         const stockClassId = uuid();
-        const newStockClass = await contract.createStockClass(stockClassId, "COMMON", 100, 4000000);
+        const stockClassIdBytes16 = utils.hexlify(utils.arrayify("0x" + stockClassId.replace(/-/g, "")));
+        const sharePrice = 0.987654321;
+        const scaledSharePrice = toScaledBigNumber(sharePrice);
+        console.log("scaledSharePrice", scaledSharePrice.toString());
+
+        const newStockClass = await contract.createStockClass(stockClassIdBytes16, "COMMON", scaledSharePrice, 4000000);
         await newStockClass.wait();
-        const stockClassAdded = await contract.getStockClassById(stockClassId);
+        const stockClassAdded = await contract.getStockClassById(stockClassIdBytes16);
         console.log("--- Stock Class for Existing ID ---");
         console.log("Getting new stock class:");
         console.log("ID:", stockClassAdded[0]);
         console.log("Type:", stockClassAdded[1]);
-        console.log("Price Per Share:", ethers.utils.formatUnits(stockClassAdded[2], 6));
+        console.log("Price Per Share:", toDecimalPrice(stockClassAdded[2].toString()));
         console.log("Initial Shares Authorized:", stockClassAdded[3].toString());
 
-        return stockClassId;
+        return stockClassIdBytes16;
     } catch (error) {
-        console.error("Error encountered:", error.error.reason);
+        console.error("Error encountered:", error);
     }
 }
 
@@ -144,25 +162,29 @@ const issueStakeholderStock = async (contract, stakeholderId, stockClassId) => {
 };
 
 async function main({ chain }) {
-    let contract;
+    let _contract;
+    let _provider;
     if (chain === "local") {
-        contract = await localSetup();
+        const { contract, provider } = await localSetup();
+        _contract = contract;
+        _provider = provider;
     }
 
     if (chain === "optimism-goerli") {
-        contract = await optimismGoerliSetup();
+        const { contract, provider } = await optimismGoerliSetup();
+        _contract = contract;
+        _provider = provider;
     }
+    const transferorId = "0x1636c898717741fbaa72f735622cad35";
+    const transfereeId = "0xb3174fbc904c495585690a1002351ee3";
+    //const stockClassId = "0xe6a02695fdf7479bb2e1a362e9cdfc69";
 
-    const transferorId = "b5f5394e-cb6f-4ea9-a1c0-983777680e86";
-    const transfereeId = "7ee7b19a-ff37-4a17-982c-822785711329";
-    const stockClassId = "4ff26d92-b2c2-4657-b756-6ea5598881fd";
-
-    //await issuerTest(contract);
+    //await issuerTest(_contract);
     // await displayIssuer(contract);
-    //const id = await createAndDisplayStakeholder(contract);
-    //const stockClassId = await createAndDisplayStockClass(contract);
-    //await issueStakeholderStock(contract, transfereeId, stockClassId);
-    await transferOwnership(contract, transferorId, transfereeId, stockClassId);
+    const id = await createAndDisplayStakeholder(_contract);
+    const stockClassId = await createAndDisplayStockClass(_contract);
+    await issueStakeholderStock(_contract, id, stockClassId);
+    //await transferOwnership(_contract, transferorId, transfereeId, stockClassId);
     // await totalNumberOfStakeholders(contract);
 }
 

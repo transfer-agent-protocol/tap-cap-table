@@ -7,6 +7,7 @@
     "description": "Transfer Agent Protocol compliant cap table",
     "type": "module",
     "scripts": {
+        "start": "nodemon src/server.js",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "yarn run eslint . --ext .js,.jsx,.ts,.tsx",
         "format": "prettier '**/*' --ignore-unknown --write",
@@ -18,13 +19,14 @@
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
         "prepare": "husky install",
-        "deseed": "node custom-offchain-scripts/deseed.cjs",
-        "validate-and-insert-example-ocf-files": "cd ocf && yarn validate-example-ocf-files && cd .. && node custom-offchain-scripts/seedOcfExamples.cjs",
-        "validate-and-insert-not-poet-files": "cd ocf && yarn validate-poet-files && cd .. && node custom-offchain-scripts/seedNotPoet.cjs",
-        "test-onchain-cap-table-local": "node custom-chain-scripts/capTable.cjs local",
-        "test-onchain-cap-table-optimism-goerli": "node custom-chain-scripts/capTable.cjs optimism-goerli",
-        "test-onchain-cap-table-factory-local": "node custom-chain-scripts/capTableFactory.cjs local",
-        "test-onchain-cap-table-factory-optimism-goerli": "node custom-chain-scripts/capTableFactory.cjs optimism-goerli",
+        "deseed": "node src/custom-offchain-scripts/deseed.cjs",
+        "validate-and-insert-example-ocf-files": "cd ocf && yarn validate-example-ocf-files && cd .. && node src/custom-offchain-scripts/seedOcfExamples.cjs",
+        "validate-not-poet-files": "cd ocf && yarn validate-poet-files",
+        "validate-and-insert-not-poet-files": "cd ocf && yarn validate-poet-files && cd .. && node src/custom-offchain-scripts/seedNotPoet.cjs",
+        "test-onchain-cap-table-local": "node src/custom-chain-scripts/capTable.cjs local",
+        "test-onchain-cap-table-optimism-goerli": "node src/custom-chain-scripts/capTable.cjs optimism-goerli",
+        "test-onchain-cap-table-factory-local": "node src/custom-chain-scripts/capTableFactory.cjs local",
+        "test-onchain-cap-table-factory-optimism-goerli": "node src/custom-chain-scripts/capTableFactory.cjs optimism-goerli",
         "forge-deploy-captable-local": "cd chain && forge script script/CapTable.s.sol:CapTableDeployLocalScript --fork-url local --broadcast --verify -vvvv",
         "forge-deploy-captable-optimism-goerli": "cd chain && forge script script/CapTable.s.sol:CapTableDeployOptimismGoerli --rpc-url optimism_goerli --etherscan-api-key optimism_goerli_etherscan --broadcast --verify -vvvv",
         "forge-deploy-captable-factory-local": "cd chain && forge script script/CapTableFactory.s.sol:CapTableFactoryDeployLocalScript --fork-url local --broadcast --verify -vvvv",
@@ -35,6 +37,7 @@
         "date-fns": "^2.28.0",
         "dotenv": "^16.3.1",
         "ethers": "^5.7.2",
+        "express": "^4.18.2",
         "solc": "^0.8.20"
     },
     "browserslist": [
@@ -51,6 +54,7 @@
         "eslint-plugin-import": "^2.26.0",
         "husky": "^8.0.1",
         "lint-staged": "^13.0.3",
+        "nodemon": "^3.0.1",
         "prettier": "^2.7.1",
         "prisma": "^5.0.0",
         "solhint": "^3.4.1",
@@ -58,6 +62,6 @@
         "uuid": "^9.0.0"
     },
     "prisma": {
-        "schema": "schema/schema.prisma"
+        "schema": "src/db/schema.prisma"
     }
 }

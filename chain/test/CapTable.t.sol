@@ -9,9 +9,9 @@ import "../src/CapTable.sol";
 contract CapTableTest is Test {
     CapTable public capTable;
 
-    function setUp() public {
-        capTable = new CapTable("123-123-123", "Test Issuer", "10000000");
-    }
+    // function setUp() public {
+    //     capTable = new CapTable("123-123-123", "Test Issuer", "10000000");
+    // }
 
     // /* Helpers */
     // function convertStringToHash (string memory _str) public pure returns (bytes32) {
