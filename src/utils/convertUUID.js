@@ -1,7 +1,7 @@
-import { utils } from "ethers";
+import { concat } from "viem";
 
-function convertToUUID(uuidBytes16) {
-    let uuidWithoutDashes = utils.stripZeros(uuidBytes16).substr(2); // removes the '0x' prefix and leading zeros
+function convertToUUID(bytes16) {
+    let uuidWithoutDashes = bytes16.slice(2);
     let uuid = [
         uuidWithoutDashes.slice(0, 8),
         "-",
@@ -16,7 +16,7 @@ function convertToUUID(uuidBytes16) {
     return uuid;
 }
 
-function convertBytes16ToUUID(object) {
+export function convertBytes16ToUUID(object) {
     let newObject;
     Object.keys(object).forEach((field) => {
         if (object[field].includes("0x")) {
@@ -32,8 +32,6 @@ function convertBytes16ToUUID(object) {
     return newObject;
 }
 
-function convertUUIDToBytes16(uuid) {
-    return utils.hexlify(utils.arrayify("0x" + uuid.replace(/-/g, "")));
+export function convertUUIDToBytes16(uuid) {
+    return concat(["0x", uuid.replace(/-/g, "")]);
 }
-
-export { convertBytes16ToUUID, convertUUIDToBytes16 };

@@ -1,9 +1,12 @@
-import { ethers } from "ethers";
 import { config } from "dotenv";
+import { createPublicClient, createWalletClient, http, getContract } from "viem";
+import { optimismGoerli, localhost } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+
 config();
 
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-const CAP_TABLE_ABI = CAP_TABLE.abi;
+const { abi } = CAP_TABLE;
 
 async function localSetup() {
     // if deployed using forge script
@@ -12,16 +15,42 @@ async function localSetup() {
 
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
-    const customNetwork = {
-        chainId: 31337,
-        name: "local",
-    };
+    // const { abi, address } = wagmiContractConfig // how do I get this?
 
-    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
-    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, CAP_TABLE_ABI, wallet);
+    const account = privateKeyToAccount(WALLET_PRIVATE_KEY);
 
-    return { contract, provider };
+    // const client = createPublicClient({
+    //     chain: localhost,
+    //     transport: http("http://127.0.0.1:8545"),
+    // });
+
+    const walletClient = createWalletClient({
+        account,
+        chain: localhost,
+        transport: http("http://127.0.0.1:8545"),
+    });
+
+    const publicClient = createPublicClient({
+        chain: localhost,
+        transport: http(),
+    });
+
+    console.log("here");
+
+    const chainId = await publicClient.getChainId();
+
+    console.log("chain id", chainId);
+
+    const contract = getContract({
+        abi,
+        address: CONTRACT_ADDRESS_LOCAL,
+        //walletClient,
+        publicClient,
+    });
+
+    console.log("contract ", contract);
+
+    return { contract, publicClient };
 }
 
 async function optimismGoerliSetup() {
@@ -30,11 +59,23 @@ async function optimismGoerliSetup() {
     const CONTRACT_ADDRESS_OPTIMISM_GOERLI = "0x027A280A63376308658A571ac2DB5D612bA77912";
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
-    const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
-    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, CAP_TABLE_ABI, wallet);
+    // const { abi, address } = wagmiContractConfig // how do I get this?
 
-    return contract;
+    const client = createPublicClient({
+        chain: optimismGoerli,
+        transport: http(), // defaulting to public node viem provides. Can add our alchemy goerli if we want
+    });
+
+    const account = privateKeyToAccount(WALLET_PRIVATE_KEY);
+
+    const contract = getContract({
+        abi,
+        address: CONTRACT_ADDRESS_OPTIMISM_GOERLI,
+        account,
+        publicClient: client,
+    });
+
+    return { contract, client };
 }
 
 export { localSetup, optimismGoerliSetup };

@@ -2,8 +2,7 @@ import express, { json, urlencoded } from "express";
 import { PrismaClient } from "@prisma/client";
 import addNotPoetToDB from "./custom-offchain-scripts/seedNotPoet.js";
 import startOnchainListeners from "./custom-chain-scripts/transactionListener.js";
-
-import { ethers, utils } from "ethers";
+import { convertUUIDToBytes16 } from "./utils/convertUUID.js";
 
 import { promisify } from "util";
 import { exec as originalExec } from "child_process";
@@ -71,15 +70,13 @@ app.post("/mint-cap-table", async (req, res) => {
 
         console.log("issuer ", issuer);
 
-        const initialSharesAuthorized = issuer.initial_shares_authorized ? issuer.initial_shares_authorized : 0;
+        const issuerIdToBytes16 = convertUUIDToBytes16(issuerId);
 
-        const issuerIdBytes16 = utils.hexlify(utils.arrayify("0x" + issuerId.replace(/-/g, "")));
-
-        console.log("issuer ID bytes32", issuerIdBytes16);
+        console.log("issuer ID bytes32", issuerIdToBytes16);
 
         //mint locally
         //if we do this with a script we can get the deployed to address.
-        const forgeCommand = `cd chain && forge create  --via-ir --rpc-url http://127.0.0.1:8545 --private-key ${process.env.PRIVATE_KEY_FAKE_ACCOUNT} src/CapTable.sol:CapTable --constructor-args "${issuerIdBytes16}" "${issuer.legal_name}" "${initialSharesAuthorized}"`;
+        const forgeCommand = `cd chain && forge create  --via-ir --rpc-url http://127.0.0.1:8545 --private-key ${process.env.PRIVATE_KEY_FAKE_ACCOUNT} src/CapTable.sol:CapTable --constructor-args "${issuerIdToBytes16}" "${issuer.legal_name}"`;
         console.log("forgeCommand ", forgeCommand);
 
         const { stdout, stderr } = await exec(forgeCommand, { maxBuffer: 1024 * 1024 * 10 });
