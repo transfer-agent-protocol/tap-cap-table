@@ -1,12 +1,5 @@
-import { ethers } from "ethers";
-import { config } from "dotenv";
-config();
-
-import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-const CAP_TABLE_ABI = CAP_TABLE.abi;
 import { localSetup, optimismGoerliSetup } from "./chainSetup.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
-
 
 async function startOnchainListeners(chain, prisma) {
     let _contract;
