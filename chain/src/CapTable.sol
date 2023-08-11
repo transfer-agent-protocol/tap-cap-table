@@ -41,8 +41,8 @@ contract CapTable is Ownable {
     struct ActivePosition {
         bytes16 stock_class_id;
         uint256 quantity;
-        int share_price;
-        uint40 timestamp; 
+        uint256 share_price;
+        uint40 timestamp;
     }
 
     Issuer public issuer;
@@ -72,18 +72,12 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name);
     }
 
-    function getActivePositionBySecurityId(
-        bytes16 _stakeholder_id,
-        bytes16 _security_id
-    ) public view returns (ActivePosition memory activePosition) {
+    function getActivePositionBySecurityId(bytes16 _stakeholder_id, bytes16 _security_id) public view returns (ActivePosition memory activePosition) {
         require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
         return activePositions[_stakeholder_id][_security_id];
     }
 
-    function getFirstSecurityIdByStockClass(
-        bytes16 _stakeholder_id,
-        bytes16 _stock_class_id
-    ) public view returns (bytes16 securityId) {
+    function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16 securityId) {
         require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
         bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
 
@@ -98,13 +92,9 @@ contract CapTable is Ownable {
         emit StakeholderCreated(_id);
     }
 
-    function createStockClass(
-        bytes16 _id,
-        string memory _class_type,
-        uint256 _price_per_share, 
-        uint256 _initial_share_authorized
-    ) public onlyOwner {
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyOwner {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
+
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
@@ -117,7 +107,7 @@ contract CapTable is Ownable {
         bytes16 stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
-        int sharePrice
+        uint256 sharePrice
     ) public onlyOwner {
         // Checks related to entities' existence
         require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
@@ -131,7 +121,7 @@ contract CapTable is Ownable {
 
         bytes16 transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId);
         ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
-        
+
         // Checks related to transfer feasibility
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
@@ -167,11 +157,10 @@ contract CapTable is Ownable {
             balance_security_id
         );
         _transferStock(transfer);
-        
+
         _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
         _deleteActiveSecurityIdsByStockClass();
     }
-
 
     function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
         delete activePositions[_stakeholder_id][_security_id];
@@ -180,13 +169,49 @@ contract CapTable is Ownable {
     function _deleteActiveSecurityIdsByStockClass() internal {}
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
-    function issueStockByTA(bytes16 stakeholderId, uint256 quantity, int sharePrice, bytes16 stockClassId) external onlyOwner {
+    function issueStockByTA(
+        bytes16 stockClassId,
+        bytes16 stockPlanId,
+        ShareNumbersIssued memory shareNumbersIssued,
+        uint256 sharePrice,
+        uint256 quantity,
+        bytes16 vestingTermsId,
+        uint256 costBasis,
+        bytes16[] memory stockLegendIds,
+        string memory issuanceType,
+        string[] memory comments,
+        string memory customId,
+        bytes16 stakeholderId,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate,
+        string memory considerationText,
+        string[] memory securityLawExemptions
+    ) external onlyOwner {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
-        _issueStock(TransactionHelper.createStockIssuanceStructByTA(stakeholderId, quantity, sharePrice, stockClassId));
+        _issueStock(
+            TransactionHelper.createStockIssuanceStructByTA(
+                stockClassId,
+                stockPlanId,
+                shareNumbersIssued,
+                sharePrice,
+                quantity,
+                vestingTermsId,
+                costBasis,
+                stockLegendIds,
+                issuanceType,
+                comments,
+                customId,
+                stakeholderId,
+                boardApprovalDate,
+                stockholderApprovalDate,
+                considerationText,
+                securityLawExemptions
+            )
+        );
     }
 
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
