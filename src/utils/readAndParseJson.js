@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-const ROOT_PATH = "./src/custom-offchain-scripts/samples/";
+const ROOT_PATH = "./src/db/samples/";
 
 async function readAndParseJSON(inputPath, notRealCompany) {
     const dataPath = path.join(ROOT_PATH + notRealCompany, inputPath);
