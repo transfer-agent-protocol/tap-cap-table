@@ -1,4 +1,4 @@
-import readAndParseJSON from "./utils/readAndParseJson.js";
+import readAndParseJSON from "../utils/readAndParseJson.js";
 
 import inputManifest from "./samples/notPoet/Manifest.ocf.json" assert { type: "json" };
 import transactionTests from "./objects/transactions.js";
