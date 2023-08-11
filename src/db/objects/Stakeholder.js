@@ -24,7 +24,7 @@ const StakeholderSchema = new mongoose.Schema({
     name: {},
     stakeholder_type: String,
     issuer_assigned_id: String, // Meant to be an optional ID for internal to the company, like an employee
-    object_type: { type: String, enum: CurrentRelationshipType },
+    current_relationship: { type: String, enum: CurrentRelationshipType },
     primary_contact: {},
     contact_info: {},
     comments: [String],
