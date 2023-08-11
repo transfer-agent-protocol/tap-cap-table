@@ -79,7 +79,7 @@ app.post("/mint-cap-table", async (req, res) => {
 
         //mint locally
         //if we do this with a script we can get the deployed to address.
-        const forgeCommand = `cd chain && forge create --rpc-url http://127.0.0.1:8545 --private-key ${process.env.PRIVATE_KEY_FAKE_ACCOUNT} src/CapTable.sol:CapTable --constructor-args "${issuerIdBytes16}" "${issuer.legal_name}" "${initialSharesAuthorized}"`;
+        const forgeCommand = `cd chain && forge create  --via-ir --rpc-url http://127.0.0.1:8545 --private-key ${process.env.PRIVATE_KEY_FAKE_ACCOUNT} src/CapTable.sol:CapTable --constructor-args "${issuerIdBytes16}" "${issuer.legal_name}" "${initialSharesAuthorized}"`;
         console.log("forgeCommand ", forgeCommand);
 
         const { stdout, stderr } = await exec(forgeCommand, { maxBuffer: 1024 * 1024 * 10 });
