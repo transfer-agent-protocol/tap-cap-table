@@ -9,6 +9,6 @@ const StockLegendTemplateSchema = new mongoose.Schema({
     comments: [String],
 });
 
-const StockLegendTemplate = model("StockLegendTemplate", StockLegendTemplateSchema);
+const StockLegendTemplate = mongoose.model("StockLegendTemplate", StockLegendTemplateSchema);
 
 export default StockLegendTemplate;
