@@ -13,6 +13,6 @@ const ValuationsSchema = new mongoose.Schema({
     comments: [String],
 });
 
-const Valuations = model("Valuations", ValuationsSchema);
+const Valuations = mongoose.model("Valuations", ValuationsSchema);
 
 export default Valuations;

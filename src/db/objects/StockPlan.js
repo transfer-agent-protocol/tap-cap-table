@@ -14,6 +14,6 @@ const StockPlanSchema = new mongoose.Schema({
     comments: [String],
 });
 
-const StockPlan = model("StockPlan", StockPlanSchema);
+const StockPlan = mongoose.model("StockPlan", StockPlanSchema);
 
 export default StockPlan;

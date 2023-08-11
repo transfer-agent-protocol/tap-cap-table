@@ -11,6 +11,6 @@ const VestingTermsSchema = new mongoose.Schema({
     comments: [String],
 });
 
-const VestingTerms = model("VestingTerms", VestingTermsSchema);
+const VestingTerms = mongoose.model("VestingTerms", VestingTermsSchema);
 
 export default VestingTerms;
