@@ -1,5 +1,14 @@
 import readAndParseJSON from "../../utils/readAndParseJson.js";
-import { createIssuer, createStockLegendTemplate, createStockClass, createStockIssuance, createStakeholder, createVestingTerms } from "./create.js";
+import {
+    createIssuer,
+    createStakeholder,
+    createStockClass,
+    createStockLegendTemplate,
+    createStockPlan,
+    createValuation,
+    createVestingTerms,
+    Transactions,
+} from "./create.js";
 import inputManifest from "../samples/notPoet/Manifest.ocf.json" assert { type: "json" };
 
 async function addNotPoetToDB() {
@@ -7,12 +16,12 @@ async function addNotPoetToDB() {
     const issuer = await createIssuer(inputIssuer);
     console.log("Issuer added ", issuer);
 
-    // STOCK LEGENDS
-    const inputStockLegends = await readAndParseJSON(inputManifest.stock_legend_templates_files[0].filepath, "notPoet");
-    console.log("Adding Stock Legends to DB");
-    for (const inputStockLegend of inputStockLegends.items) {
-        const stockLegend = await createStockLegendTemplate(inputStockLegend); // Updated to match the correct function name
-        console.log("Stock legend added ", stockLegend);
+    // STAKEHOLDERS
+    const inputStakeholders = await readAndParseJSON(inputManifest.stakeholders_files[0].filepath, "notPoet");
+    console.log("Adding Stakeholders to DB");
+    for (const inputStakeholder of inputStakeholders.items) {
+        const stakeholder = await createStakeholder(inputStakeholder);
+        console.log("Stakeholder added ", stakeholder);
     }
 
     // STOCK CLASS
@@ -23,22 +32,28 @@ async function addNotPoetToDB() {
         console.log("Stock classes added ", stockClass);
     }
 
-    // TRANSACTIONS
-    const inputTransactions = await readAndParseJSON(inputManifest.transactions_files[0].filepath, "notPoet");
-
-    console.log("Adding Transactions to DB");
-    for (const inputTransaction of inputTransactions.items) {
-        // Note the change here
-        const transaction = await createStockIssuance(inputTransaction); // Create a DB entry for each transaction
-        console.log("Transaction added ", transaction);
+    // STOCK LEGENDS
+    const inputStockLegends = await readAndParseJSON(inputManifest.stock_legend_templates_files[0].filepath, "notPoet");
+    console.log("Adding Stock Legends to DB");
+    for (const inputStockLegend of inputStockLegends.items) {
+        const stockLegend = await createStockLegendTemplate(inputStockLegend); // Updated to match the correct function name
+        console.log("Stock legend added ", stockLegend);
     }
 
-    // STAKEHOLDERS
-    const inputStakeholders = await readAndParseJSON(inputManifest.stakeholders_files[0].filepath, "notPoet");
-    console.log("Adding Stakeholders to DB");
-    for (const inputStakeholder of inputStakeholders.items) {
-        const stakeholder = await createStakeholder(inputStakeholder);
-        console.log("Stakeholder added ", stakeholder);
+    // STOCK PLANS
+    const inputStockPlans = await readAndParseJSON(inputManifest.stock_plans_files[0].filepath, "notPoet");
+    console.log("Adding Stock Plans to DB");
+    for (const inputStockPlan of inputStockPlans.items) {
+        const stockPlan = await createStockPlan(inputStockPlan);
+        console.log("Stock plan added ", stockPlan);
+    }
+
+    // VALUATIONS
+    const inputValuations = await readAndParseJSON(inputManifest.valuations_files[0].filepath, "notPoet");
+    console.log("Adding Valuations to DB");
+    for (const inputValuation of inputValuations.items) {
+        const valuation = await createValuation(inputValuation);
+        console.log("Valuation added ", valuation);
     }
 
     // VESTING TERMS
@@ -47,6 +62,14 @@ async function addNotPoetToDB() {
     for (const inputVestingTerm of inputVestingTerms.items) {
         const vestingTerm = await createVestingTerms(inputVestingTerm);
         console.log("Vesting term added ", vestingTerm);
+    }
+
+    // TRANSACTIONS
+    const inputTransactions = await readAndParseJSON(inputManifest.transactions_files[0].filepath, "notPoet");
+    console.log("Adding Transactions to DB");
+    for (const inputTransaction of inputTransactions.items) {
+        const transaction = await Transactions(inputTransaction);
+        console.log("Transaction added ", transaction);
     }
 }
 

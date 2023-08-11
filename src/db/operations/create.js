@@ -42,7 +42,7 @@ export const createVestingTerms = (vestingTermsData) => {
     return vestingTerms.save();
 };
 
-export const createStockIssuance = (stockIssuanceData) => {
+export const Transactions = (stockIssuanceData) => {
     const stockIssuance = new StockIssuance(stockIssuanceData);
     return stockIssuance.save();
 };
