@@ -34,7 +34,17 @@ async function getOptimismGoerliContractInstance() {
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, CAP_TABLE_ABI, wallet);
 
-    return contract;
+    return { contract, provider };
 }
 
-export { getLocalContractInstance, getOptimismGoerliContractInstance };
+async function getContractInstance(chain) {
+    if (chain === "local") {
+        return getLocalContractInstance();
+    } else if (chain === "optimism-goerli") {
+        return getOptimismGoerliContractInstance();
+    } else {
+        throw new Error(`Unsupported chain: ${chain}`);
+    }
+}
+
+export default getContractInstance;
