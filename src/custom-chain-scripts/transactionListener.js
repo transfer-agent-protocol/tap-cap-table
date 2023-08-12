@@ -1,17 +1,17 @@
-import { localSetup, optimismGoerliSetup } from "./chainSetup.js";
+import { getLocalContractInstance, getOptimismGoerliContractInstance } from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 
 async function startOnchainListeners(chain, prisma) {
     let _contract;
     let _provider;
     if (chain === "local") {
-        const { contract, provider } = await localSetup();
+        const { contract, provider } = await getLocalContractInstance();
         _contract = contract;
         _provider = provider;
     }
 
     if (chain === "optimism-goerli") {
-        const { contract, provider } = await optimismGoerliSetup();
+        const { contract, provider } = await getOptimismGoerliContractInstance();
         _contract = contract;
         _provider = provider;
     }
