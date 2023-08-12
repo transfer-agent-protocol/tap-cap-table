@@ -1,29 +1,17 @@
-import { getLocalContractInstance, getOptimismGoerliContractInstance } from "./getContractInstances.js";
+import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 
 async function startOnchainListeners(chain, prisma) {
-    let _contract;
-    let _provider;
-    if (chain === "local") {
-        const { contract, provider } = await getLocalContractInstance();
-        _contract = contract;
-        _provider = provider;
-    }
-
-    if (chain === "optimism-goerli") {
-        const { contract, provider } = await getOptimismGoerliContractInstance();
-        _contract = contract;
-        _provider = provider;
-    }
-
     console.log("🌐  Initiating on-chain event listeners... Stand by.");
 
-    _contract.on("error", (error) => {
+    const { contract, provider } = await getContractInstance(chain);
+
+    contract.on("error", (error) => {
         console.error("Error:", error);
     });
 
     // Assuming you already have a Contract instance "contract"
-    _contract.on("StockIssuanceCreated", async (stock, event) => {
+    contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!");
 
         // TODO: need a conversion from solidity types to OCF types. Beginning with POC
@@ -31,7 +19,7 @@ async function startOnchainListeners(chain, prisma) {
             amount: stock.share_price.toString(),
             currency: "USD",
         };
-        const block = await _provider.getBlock(event.blockNumber);
+        const block = await provider.getBlock(event.blockNumber);
         // Type represention of an ISO-8601 date, e.g. 2022-01-28
         const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
         const costBasisOCF = stock.cost_basis.toString ? { amount: stock.cost_basis.toString(), currency: "USD" } : {};
