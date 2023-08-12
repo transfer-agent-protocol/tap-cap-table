@@ -42,4 +42,14 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     return contract.address;
 }
 
-export { deployCapTableLocal, deployCapTableOptimismGoerli };
+async function deployCapTable(chain, issuerId, issuerName) {
+    if (chain === "local") {
+        return deployCapTableLocal(issuerId, issuerName);
+    } else if (chain === "optimism-goerli") {
+        return deployCapTableOptimismGoerli(issuerId, issuerName);
+    } else {
+        throw new Error(`Unsupported chain: ${chain}`);
+    }
+}
+
+export default deployCapTable;
