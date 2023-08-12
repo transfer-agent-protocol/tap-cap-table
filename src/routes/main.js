@@ -3,7 +3,7 @@ import { promisify } from "util";
 import { exec as originalExec } from "child_process";
 import addNotPoetToDB from "../custom-offchain-scripts/seedNotPoet.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
-import { deployCapTableLocal } from "../custom-chain-scripts/deployCapTable.js";
+import deployCapTable from "../custom-chain-scripts/deployCapTable.js";
 
 const exec = promisify(originalExec);
 
@@ -37,7 +37,7 @@ router.post("/add-not-poet-to-db", async (req, res) => {
 
 router.post("/mint-cap-table", async (req, res) => {
     // TODO: Input validation
-    const { prisma } = req;
+    const { prisma, chain } = req;
     const { issuerId } = req.body;
 
     try {
@@ -58,7 +58,7 @@ router.post("/mint-cap-table", async (req, res) => {
 
         console.log("issuer ID bytes32", issuerIdBytes16);
 
-        const deployedTo = await deployCapTableLocal(issuerIdBytes16, issuer.legal_name);
+        const deployedTo = await deployCapTable(chain, issuerIdBytes16, issuer.legal_name);
 
         await prisma.issuer.update({
             where: {
