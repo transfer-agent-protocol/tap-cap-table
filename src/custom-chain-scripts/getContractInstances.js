@@ -3,9 +3,9 @@ import { config } from "dotenv";
 config();
 
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-const CAP_TABLE_ABI = CAP_TABLE.abi;
+const { abi } = CAP_TABLE;
 
-async function localSetup() {
+async function getLocalContractInstance() {
     // if deployed using forge script
     //const CONTRACT_ADDRESS_LOCAL = require("../chain/broadcast/CapTable.s.sol/31337/run-latest.json").transactions[0].contractAddress;
     const CONTRACT_ADDRESS_LOCAL = "0x5fbdb2315678afecb367f032d93f642f64180aa3"; // fill in from capTableFactory
@@ -19,12 +19,12 @@ async function localSetup() {
 
     const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, CAP_TABLE_ABI, wallet);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, abi, wallet);
 
     return { contract, provider };
 }
 
-async function optimismGoerliSetup() {
+async function getOptimismGoerliContractInstance() {
     // if deployed using forge script
     // const CONTRACT_ADDRESS_OPTIMISM_GOERLI = require("../chain/broadcast/CapTable.s.sol/420/run-latest.json").transactions[0].contractAddress;
     const CONTRACT_ADDRESS_OPTIMISM_GOERLI = "0x027A280A63376308658A571ac2DB5D612bA77912";
@@ -37,4 +37,4 @@ async function optimismGoerliSetup() {
     return contract;
 }
 
-export { localSetup, optimismGoerliSetup };
+export { getLocalContractInstance, getOptimismGoerliContractInstance };
