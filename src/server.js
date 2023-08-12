@@ -22,6 +22,7 @@ app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
 app.use((req, res, next) => {
     req.prisma = prisma;
+    req.chain = CHAIN;
     next();
 });
 app.use("/", mainRoutes);
