@@ -241,7 +241,7 @@ contract CapTable is Ownable {
     function _deleteActiveSecurityIdsByStockClass() internal {}
 
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
-        StockIssuanceTX issuanceTX = new StockIssuanceTX(issuance);
+        StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
 
         activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
 
@@ -252,7 +252,7 @@ contract CapTable is Ownable {
             _safeNow()
         );
 
-        transactions.push(address(issuanceTX));
+        transactions.push(address(issuanceTx));
         emit StockIssuanceCreated(issuance);
     }
 
