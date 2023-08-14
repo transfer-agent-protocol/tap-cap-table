@@ -8,7 +8,7 @@ stakeholder.get("/", async (req, res) => {
 });
 
 // Onchain routes
-stakeholder.get("/onchain/:id", async (req, res) => {
+stakeholder.get("/onchain/id/:id", async (req, res) => {
     const { contract } = req;
     const { id } = req.params;
 
@@ -17,9 +17,21 @@ stakeholder.get("/onchain/:id", async (req, res) => {
     const stakeholderId = stakeHolderAdded[0];
     const type = stakeHolderAdded[1];
     const role = stakeHolderAdded[2];
-    console.log("New Stakeholder created:", { stakeholderId, type, role });
+    console.log("Stakeholder:", { stakeholderId, type, role });
 
     res.status(200).send({ stakeholderId, type, role });
+});
+
+stakeholder.get("/onchain/total-number", async (req, res) => {
+    const { contract } = req;
+    try {
+        const totalStakeholders = await contract.getTotalNumberOfStakeholders();
+        console.log("Total number of  stakeholders:", totalStakeholders.toString());
+
+        res.status(200).send(totalStakeholders.toString());
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
 });
 
 stakeholder.post("/onchain/reflect", async (req, res) => {
@@ -33,6 +45,8 @@ stakeholder.post("/onchain/reflect", async (req, res) => {
     try {
         const tx = await contract.createStakeholder(stakeholderIdBytes16, stakeholder_type, current_relationship);
         await tx.wait();
+
+        console.log("Stakeholder created:", { stakeholderIdBytes16, stakeholder_type, current_relationship });
     } catch (error) {
         console.log("Error encountered:", error);
     }
