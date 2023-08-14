@@ -1,5 +1,6 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
 
 async function startOnchainListeners(chain, prisma) {
     console.log("🌐  Initiating on-chain event listeners... Stand by.");
@@ -10,11 +11,16 @@ async function startOnchainListeners(chain, prisma) {
         console.error("Error:", error);
     });
 
-    // Assuming you already have a Contract instance "contract"
+    // TODO: need a conversion from solidity types to OCF types.
     contract.on("StockIssuanceCreated", async (stock, event) => {
-        console.log("StockIssuanceCreated Event Emitted!");
+        console.log("StockIssuanceCreated Event Emitted!", stock);
 
-        // TODO: need a conversion from solidity types to OCF types. Beginning with POC
+        const newStockDecimals = convertManyToDecimal(stock);
+
+        console.log("newStockDecimals", newStockDecimals);
+
+        return;
+
         const sharePriceOCF = {
             amount: stock.share_price.toString(),
             currency: "USD",
@@ -23,6 +29,8 @@ async function startOnchainListeners(chain, prisma) {
         // Type represention of an ISO-8601 date, e.g. 2022-01-28
         const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
         const costBasisOCF = stock.cost_basis.toString ? { amount: stock.cost_basis.toString(), currency: "USD" } : {};
+
+        // data validation
 
         const stockIssuance = convertBytes16ToUUID(stock);
 
