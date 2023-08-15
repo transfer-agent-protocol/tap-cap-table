@@ -83,7 +83,11 @@ transactions.post("/transfer/stock", async (req, res) => {
             sharePriceScaled
         );
         await tx.wait();
-        console.log("Transferred stock successfully");
+
+        console.log(`Transfer completed from transferee ID: ${transfereeId} to transferor ID: ${transferorId}`);
+        console.log(`Quantity transferred: ${quantity}`);
+        console.log(`Price per share: ${sharePrice}`);
+
         res.status(200).send("success");
     } catch (err) {
         console.error("Error encountered for transferring stock", err.error.reason);
