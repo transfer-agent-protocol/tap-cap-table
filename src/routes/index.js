@@ -19,11 +19,11 @@ router.post("/add-not-poet-to-db", async (req, res) => {
     // TODO: Input validation
     const { prisma } = req;
     try {
+        console.log("here");
         // Validate and Insert to DB
-        const { stdout, stderr } = await exec("yarn validate-not-poet-files");
+        // const { stdout, stderr } = await exec("yarn validate-not-poet-files");
 
-        console.log(`stdout: ${stdout}`);
-        // console.error(`stderr: ${stderr}`);
+        // console.log(`stdout: ${stdout}`);
 
         await addNotPoetToDB(prisma);
         await prisma.$disconnect();
