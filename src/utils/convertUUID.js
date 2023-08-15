@@ -1,7 +1,7 @@
 import { utils } from "ethers";
 
 function convertToUUID(uuidBytes16) {
-    let uuidWithoutDashes = utils.stripZeros(uuidBytes16).substr(2); // removes the '0x' prefix and leading zeros
+    let uuidWithoutDashes = uuidBytes16.substring(2); // removes the '0x' prefix
     let uuid = [
         uuidWithoutDashes.slice(0, 8),
         "-",
@@ -16,20 +16,22 @@ function convertToUUID(uuidBytes16) {
     return uuid;
 }
 
-function convertBytes16ToUUID(object) {
-    let newObject;
-    Object.keys(object).forEach((field) => {
-        if (object[field].includes("0x")) {
-            newObject[field] = convertToUUID(object[field]);
-        } else if (Array.isArray(object[field]) && object[field].length > 0) {
-            if (object[field][0].includes("0x")) {
-                newObject[field] = object[field].map(convertUUID);
-            }
-        } else {
-            newObject[field] = object[field];
+function convertBytes16ToUUID(obj) {
+    // single value
+    if (typeof obj === "string" && obj.startsWith("0x")) {
+        return convertToUUID(obj);
+        // handing events
+    } else if (Array.isArray(obj)) {
+        return obj.map((item) => convertBytes16ToUUID(item));
+    } else if (typeof obj === "object" && obj !== null) {
+        let newObject = {};
+        for (let key in obj) {
+            newObject[key] = convertBytes16ToUUID(obj[key]);
         }
-    });
-    return newObject;
+        return newObject;
+    } else {
+        return obj;
+    }
 }
 
 function convertUUIDToBytes16(uuid) {

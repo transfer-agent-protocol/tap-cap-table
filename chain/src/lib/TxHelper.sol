@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { StockIssuance, StockTransfer, ShareNumbersIssued } from "./Structs.sol";
 
-library TransactionHelper {
+library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId) public view returns (bytes16) {
         bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao)));
         return deterministicValue;

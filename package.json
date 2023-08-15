@@ -19,10 +19,8 @@
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
         "prepare": "husky install",
-        "deseed": "node src/custom-offchain-scripts/deseed.cjs",
-        "validate-and-insert-example-ocf-files": "cd ocf && yarn validate-example-ocf-files && cd .. && node src/custom-offchain-scripts/seedOcfExamples.cjs",
-        "validate-not-poet-files": "cd ocf && yarn validate-poet-files",
-        "validate-and-insert-not-poet-files": "cd ocf && yarn validate-poet-files && cd .. && node src/custom-offchain-scripts/seedNotPoet.cjs",
+        "seed": "node src/db/scripts/seed.js",
+        "deseed": "node src/db/scripts/deseed.js",
         "test-onchain-cap-table-local": "node src/custom-chain-scripts/capTable.cjs local",
         "test-onchain-cap-table-optimism-goerli": "node src/custom-chain-scripts/capTable.cjs optimism-goerli",
         "test-onchain-cap-table-factory-local": "node src/custom-chain-scripts/capTableFactory.cjs local",
@@ -38,6 +36,7 @@
         "dotenv": "^16.3.1",
         "ethers": "^5.7.2",
         "express": "^4.18.2",
+        "mongoose": "^7.4.2",
         "solc": "^0.8.20"
     },
     "browserslist": [
