@@ -1,8 +1,9 @@
 import express, { json, urlencoded } from "express";
 import { config } from "dotenv";
 config();
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+
+import connectDB from "./db/config/mongoose.js";
+// import addNotPoetToDB from "./custom-offchain-scripts/seedNotPoet.js";
 import startOnchainListeners from "./custom-chain-scripts/transactionListener.js";
 import getContractInstance from "./custom-chain-scripts/getContractInstances.js";
 
@@ -14,6 +15,9 @@ import stockClassRoutes from "./routes/stockClass.js";
 import transactionRoutes from "./routes/transactions.js";
 
 const app = express();
+
+// Connect to MongoDB
+connectDB();
 
 const PORT = 3000;
 const CHAIN = "local"; // change this to prod or env style variable
@@ -31,14 +35,15 @@ const chainMiddleware = (req, res, next) => {
     next();
 };
 
-app.use((req, res, next) => {
-    req.prisma = prisma;
-    next();
-});
+// app.use((req, res, next) => {
+//     req.prisma = prisma;
+//     next();
+// });
 
 app.use(urlencoded({ limit: "50mb", extended: true }));
 app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
+
 
 app.use("/", chainMiddleware, mainRoutes);
 app.use("/issuer", contractMiddleware, issuerRoutes);
