@@ -17,7 +17,7 @@ const deleteAll = async () => {
     await StockPlan.deleteMany({});
     await Valuation.deleteMany({});
     await VestingTerms.deleteMany({});
-    await StockIssuance.deleteMany({});
+    // await StockIssuance.deleteMany({});
 };
 
 const deseedDatabase = async () => {
