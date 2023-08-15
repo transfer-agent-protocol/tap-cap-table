@@ -1,4 +1,3 @@
-import connectDB from "../config/mongoose.js";
 import readAndParseJSON from "../../utils/readAndParseJson.js";
 import {
     createIssuer,
@@ -11,8 +10,6 @@ import {
 } from "../operations/create.js";
 import addTransactions from "../operations/transactions.js"; // Import addTransactions
 import inputManifest from "../samples/notPoet/Manifest.ocf.json" assert { type: "json" };
-
-connectDB();
 
 async function processEntity(entityFile, createEntityFunction) {
     const inputEntities = await readAndParseJSON(entityFile, "notPoet");
@@ -40,6 +37,4 @@ async function addNotPoetToDB() {
     await addTransactions(transactionsData); // Use addTransactions function here
 }
 
-addNotPoetToDB() // Call the seed function
-    .then(() => console.log("✅ Database seeded successfully"))
-    .catch((err) => console.log("❌ Error seeding database:", err));
+export default addNotPoetToDB;
