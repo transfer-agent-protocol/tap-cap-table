@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { StockTransfer } from "../lib/Structs.sol";
 
-contract StockTransferTX {
+contract StockTransferTx {
     StockTransfer private stockTransfer;
 
     constructor(StockTransfer memory _stockTransfer) {
