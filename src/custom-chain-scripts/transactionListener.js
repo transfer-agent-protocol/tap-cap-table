@@ -12,12 +12,18 @@ async function startOnchainListeners(chain, prisma) {
     });
 
     // TODO: need a conversion from solidity types to OCF types.
+    // @dev events return both an array and object, depending how you want to access. We're using objects
+    // TODO: the conversion functions are not working properly, need to fix
     contract.on("StockIssuanceCreated", async (stock, event) => {
-        console.log("StockIssuanceCreated Event Emitted!", stock);
+        console.log("StockIssuanceCreated Event Emitted!", stock[0]);
 
         const newStockDecimals = convertManyToDecimal(stock);
+        // console.log("new stock decimals ", newStockDecimals);
+        //const stockIssuance = convertBytes16ToUUID(newStockDecimals);
 
-        console.log("newStockDecimals", newStockDecimals);
+        // console.log("stock issuance", stockIssuance);
+
+        // console.log("newStockDecimals", newStockDecimals);
 
         return;
 
@@ -32,7 +38,7 @@ async function startOnchainListeners(chain, prisma) {
 
         // data validation
 
-        const stockIssuance = convertBytes16ToUUID(stock);
+        //const stockIssuance = convertBytes16ToUUID(stock);
 
         const createdStockIssuance = await prisma.stockIssuance.create({
             data: {
