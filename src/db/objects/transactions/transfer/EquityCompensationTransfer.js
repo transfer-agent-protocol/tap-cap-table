@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 const EquityCompensationTransferType = ["TX_PLAN_SECURITY_TRANSFER", "TX_EQUITY_COMPENSATION_TRANSFER"];
 
 const EquityCompensationTransferSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, enum: EquityCompensationTransferType },
     quantity: String,
     comments: [String],

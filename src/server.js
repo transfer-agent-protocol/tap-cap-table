@@ -3,7 +3,7 @@ import { config } from "dotenv";
 config();
 
 import connectDB from "./db/config/mongoose.js";
-// import addNotPoetToDB from "./custom-offchain-scripts/seedNotPoet.js";
+
 import startOnchainListeners from "./custom-chain-scripts/transactionListener.js";
 import getContractInstance from "./custom-chain-scripts/getContractInstances.js";
 
@@ -23,6 +23,11 @@ const PORT = 3000;
 const CHAIN = "local"; // change this to prod or env style variable
 
 // Middlewares
+const chainMiddleware = (req, res, next) => {
+    req.chain = CHAIN;
+    next();
+};
+
 const contractMiddleware = async (req, res, next) => {
     const { contract, provider } = await getContractInstance(CHAIN);
     req.contract = contract;
@@ -30,20 +35,9 @@ const contractMiddleware = async (req, res, next) => {
     next();
 };
 
-const chainMiddleware = (req, res, next) => {
-    req.chain = CHAIN;
-    next();
-};
-
-// app.use((req, res, next) => {
-//     req.prisma = prisma;
-//     next();
-// });
-
 app.use(urlencoded({ limit: "50mb", extended: true }));
 app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
-
 
 app.use("/", chainMiddleware, mainRoutes);
 app.use("/issuer", contractMiddleware, issuerRoutes);
@@ -55,5 +49,5 @@ app.use("/transactions/", contractMiddleware, transactionRoutes);
 
 app.listen(PORT, async () => {
     console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
-    await startOnchainListeners(CHAIN, prisma);
+    await startOnchainListeners(CHAIN);
 });

@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 
 // subset of Stock Class
 const StockPlanSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, default: "STOCK_PLAN" },
     plan_name: String,
     board_approval_date: String,
