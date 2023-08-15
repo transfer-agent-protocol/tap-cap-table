@@ -11,10 +11,6 @@
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "yarn run eslint . --ext .js,.jsx,.ts,.tsx",
         "format": "prettier '**/*' --ignore-unknown --write",
-        "generate": "yarn run generate:prisma",
-        "generate:prisma": "prisma generate",
-        "push": "yarn prisma db push",
-        "prisma:studio": "prisma studio",
         "typecheck": "concurrently --raw yarn:typecheck:*",
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
@@ -31,7 +27,6 @@
         "forge-deploy-captable-factory-optimism-goerli": "cd chain && forge script script/CapTableFactory.s.sol:CapTableFactoryDeployOptimismGoerli --rpc-url optimism_goerli --etherscan-api-key optimism_goerli_etherscan --broadcast --verify -vvvv"
     },
     "dependencies": {
-        "@prisma/client": "^5.0.0",
         "date-fns": "^2.28.0",
         "dotenv": "^16.3.1",
         "ethers": "^5.7.2",
@@ -55,12 +50,8 @@
         "lint-staged": "^13.0.3",
         "nodemon": "^3.0.1",
         "prettier": "^2.7.1",
-        "prisma": "^5.0.0",
         "solhint": "^3.4.1",
         "typescript": "^5.1.6",
         "uuid": "^9.0.0"
-    },
-    "prisma": {
-        "schema": "src/db/schema.prisma"
     }
 }
