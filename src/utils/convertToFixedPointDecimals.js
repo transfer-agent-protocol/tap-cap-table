@@ -15,8 +15,23 @@ function toDecimal(scaledPriceBigNumber) {
     }
 }
 
-function convertManyToDecimal(scaledPriceBigNumbers) {
-    return scaledPriceBigNumbers.map(toDecimal);
+// convert object to decimal
+// WIP, still not working fully properly
+function convertManyToDecimal(input) {
+    if (Array.isArray(input)) {
+        return input.map((item) => convertManyToDecimal(item));
+    } else if (typeof input === "object" && input !== null) {
+        if (input._isBigNumber) {
+            return toDecimal(input);
+        }
+        let newObj = {};
+        for (let key in input) {
+            newObj[key] = convertObjectToDecimal(input[key]);
+        }
+        return newObj;
+    } else {
+        return input;
+    }
 }
 
 export { toScaledBigNumber, toDecimal, convertManyToDecimal };
