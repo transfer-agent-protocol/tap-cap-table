@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { v4 as uuid } from "uuid";
 
 const WarrantTransferSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, default: "TX_WARRANT_TRANSFER" },
     quantity: String,
     comments: [String],

@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 
 // * PRIMARY OBJECTS: Links to validation schemas live under ocf repo schema/objects
 const IssuerSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, default: "ISSUER" },
     legal_name: String,
     dba: String,

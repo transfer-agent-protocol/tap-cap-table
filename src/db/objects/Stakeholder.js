@@ -19,7 +19,7 @@ const CurrentRelationshipType = [
 
 // This model is verified with optional and required fields, comments must remain to aid on-chain to off-chain translation.
 const StakeholderSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, default: "STAKEHOLDER" },
     name: {},
     stakeholder_type: String,

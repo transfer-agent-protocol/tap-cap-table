@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { v4 as uuid } from "uuid";
 
 const PlanSecurityIssuanceSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, default: "TX_PLAN_SECURITY_ISSUANCE" },
     stock_plan_id: String,
     stock_class_id: String,

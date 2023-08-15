@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 const CancellationTransactionTypes = ["TX_PLAN_SECURITY_CANCELLATION", "TX_EQUITY_COMPENSATION_CANCELLATION"];
 
 const EquityCompensationCancellationSchema = new mongoose.Schema({
-    id: { type: String, default: () => uuid() },
+    _id: { type: String, default: () => uuid() },
     object_type: { type: String, enum: CancellationTransactionTypes },
     quantity: String,
     comments: [String],
