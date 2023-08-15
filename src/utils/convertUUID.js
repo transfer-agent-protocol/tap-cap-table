@@ -20,7 +20,7 @@ function convertToUUID(uuidBytes16) {
 function convertBytes16ToUUID(arr) {
     let newArr;
     if (!Array.isArray(arr)) {
-        return convertToUUID(object);
+        return convertToUUID(arr);
     } else {
         arr.forEach((field) => {
             if (field.includes("0x")) {
