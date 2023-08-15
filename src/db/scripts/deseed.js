@@ -7,7 +7,6 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
-import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 
 const deleteAll = async () => {
     // Delete all documents from the collections
