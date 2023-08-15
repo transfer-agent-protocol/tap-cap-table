@@ -16,24 +16,21 @@ function convertToUUID(uuidBytes16) {
     return uuid;
 }
 
-// WIP: his function doesn't work for arrays
-function convertBytes16ToUUID(arr) {
-    let newArr;
-    if (!Array.isArray(arr)) {
-        return convertToUUID(arr);
-    } else {
-        arr.forEach((field) => {
-            if (field.includes("0x")) {
-                newObject[field] = convertToUUID(object[field]);
-            } else if (Array.isArray(object[field]) && object[field].length > 0) {
-                if (object[field][0].includes("0x")) {
-                    newObject[field] = object[field].map(convertUUID);
-                }
-            } else {
-                newObject[field] = object[field];
-            }
-        });
+function convertBytes16ToUUID(obj) {
+    // single value
+    if (typeof obj === "string" && obj.startsWith("0x")) {
+        return convertToUUID(obj);
+        // handing events
+    } else if (Array.isArray(obj)) {
+        return obj.map((item) => convertBytes16ToUUID(item));
+    } else if (typeof obj === "object" && obj !== null) {
+        let newObject = {};
+        for (let key in obj) {
+            newObject[key] = convertBytes16ToUUID(obj[key]);
+        }
         return newObject;
+    } else {
+        return obj;
     }
 }
 
