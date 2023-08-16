@@ -23,7 +23,6 @@ contract CapTable is Ownable {
         string legal_name;
     }
 
-    // TODO: wallets could be tracked here
     struct Stakeholder {
         bytes16 id;
         string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
@@ -60,6 +59,8 @@ contract CapTable is Ownable {
     mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
     // stakeholder_id -> security_id -> ActivePosition
     mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions;
+    // wallet address => stakeholder_id
+    mapping(address => bytes16) walletsPerStakeholder;
 
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
@@ -180,6 +181,25 @@ contract CapTable is Ownable {
         _deleteActiveSecurityIdsByStockClass();
     }
 
+    /// @notice Setter for walletsPerStakeholder mapping
+    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
+
+        walletsPerStakeholder[_wallet] = _stakeholder_id;
+    }
+
+    /// @notice Removing wallet from walletsPerStakeholder mapping
+    function removeWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] == 0, "Wallet already exists");
+
+        walletsPerStakeholder[_wallet] = bytes16(0);
+    }
+
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
@@ -198,6 +218,11 @@ contract CapTable is Ownable {
     function getActivePositionBySecurityId(bytes16 _stakeholder_id, bytes16 _security_id) public view returns (ActivePosition memory activePosition) {
         require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
         return activePositions[_stakeholder_id][_security_id];
+    }
+
+    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
+        return walletsPerStakeholder[_wallet];
     }
 
     function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16 securityId) {

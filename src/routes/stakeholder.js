@@ -34,6 +34,22 @@ stakeholder.get("/onchain/total-number", async (req, res) => {
     }
 });
 
+stakeholder.get("/onchain/wallet/:wallet", async (req, res) => {
+    const { contract } = req;
+    const { wallet } = req.params;
+
+    try {
+        const stakeholderId = await contract.getStakeholderIdByWallet(wallet);
+
+        // TODO: convert bytes16 to UUID
+        console.log("Stakeholder id:", stakeholderId.toString());
+
+        res.status(200).send(stakeholderId.toString());
+    } catch (error) {
+        console.error("Error encountered:", error.error.reason);
+    }
+});
+
 stakeholder.post("/onchain/reflect", async (req, res) => {
     const { contract } = req;
     const { id, stakeholder_type, current_relationship } = req.body;
@@ -52,6 +68,26 @@ stakeholder.post("/onchain/reflect", async (req, res) => {
     }
 
     res.status(200).send(stakeholderIdBytes16);
+});
+
+stakeholder.post("/onchain/add-wallet", async (req, res) => {
+    const { contract } = req;
+    const { id, wallet } = req.body;
+
+    const stakeholderIdBytes16 = convertUUIDToBytes16(id);
+    console.log("stakeholderId ", id);
+    console.log("stakeholderIdBytes32", stakeholderIdBytes16);
+
+    try {
+        const tx = await contract.addWalletToStakeholder(stakeholderIdBytes16, wallet);
+        await tx.wait();
+
+        console.log("Wallet added to stakeholder:", { stakeholderIdBytes16, wallet });
+
+        res.status(200).send({ stakeholderIdBytes16, wallet });
+    } catch (error) {
+        console.log("Error encountered:", error);
+    }
 });
 
 // Offchain routes
