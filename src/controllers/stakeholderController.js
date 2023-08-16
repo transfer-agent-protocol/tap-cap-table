@@ -46,13 +46,13 @@ export const reflectStakeholderOnchain = async (req, res) => {
     const stakeholderIdBytes16 = convertUUIDToBytes16(id);
 
     console.log("stakeholderId", id);
-    console.log("stakeholderIdBytes32", stakeholderIdBytes16);
+    console.log("stakeholderIdBytes16", stakeholderIdBytes16);
 
     try {
         const tx = await contract.createStakeholder(stakeholderIdBytes16, stakeholder_type, current_relationship); // Pass all three values
         await tx.wait();
 
-        console.log("Stakeholder created:", { stakeholderIdBytes16, stakeholder_type, current_relationship });
+        console.log("Stakeholder created  onchain:", { stakeholderIdBytes16, stakeholder_type, current_relationship });
         res.status(200).send(stakeholderIdBytes16);
     } catch (error) {
         console.log("Error encountered:", error);
