@@ -138,8 +138,25 @@ contract CapTable is Ownable {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
-        bytes16 transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId);
-        ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
+        bytes16[] memory transferorSecurityIds = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId); // returns array of security IDs  for the stock class
+
+        // TODO: refactor as helper function
+        // determine how many active positions are required to match the quantity of the transfer
+        ActivePosition memory transferorActivePosition
+        for (uint256 i = 0; i < transferorSecurityIds.length; i++) {
+            transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityIds[i]);
+ 
+            if (quantity <= transferorActivePosition.quantity) {
+               // one transfer is enough
+               return transferorActivePosition
+               break;
+            } else {
+                // need multiple transfers
+            }
+        }
+
+
+        // ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
 
         // Checks related to transfer feasibility
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
@@ -225,12 +242,12 @@ contract CapTable is Ownable {
         return walletsPerStakeholder[_wallet];
     }
 
-    function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16 securityId) {
+    function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16[] memory securityId) {
         require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
         bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
 
         // only getting first earliest active position for the stock class, for now.
-        return activeSecurityIDs[0];
+        return activeSecurityIDs;
     }
 
     function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
