@@ -40,6 +40,8 @@ docker compose up
 yarn seed
 ```
 
+This script currently uses Manifest.ocf.json inside of our src/db/samples/notPoet folder.
+
 6. **Run [Mongo Compass](https://www.mongodb.com/try/download/compass) or your preferred table tool - like [TablePlus](https://tableplus.com/) - to inspect the database**. You can find the connection string in the `.env` file:
 
 ```sh
