@@ -1,0 +1,75 @@
+{
+    "ocf_version": "1.1.1-alpha+main",
+    "file_type": "OCF_MANIFEST_FILE",
+    "as_of": "2023-07-17",
+    "generated_at": "2022-07-17T01:23:45-06:00",
+    "issuer": {
+        "object_type": "ISSUER",
+        "id": "d3373e0a-4dd9-430f-8a56-3281f2800e1e",
+        "legal_name": "Poet Network Inc.",
+        "formation_date": "2022-08-23",
+        "country_of_formation": "US",
+        "country_subdivision_of_formation": "DE",
+        "tax_ids": [
+            {
+                "tax_id": "88-3977591",
+                "country": "US"
+            }
+        ],
+        "email": {
+            "email_address": "concierge@poet.network",
+            "email_type": "BUSINESS"
+        },
+        "address": {
+            "address_type": "LEGAL",
+            "street_suite": "447 Broadway\n2nd Fl #713",
+            "city": "New York",
+            "country_subdivision": "NY",
+            "country": "US",
+            "postal_code": "10013"
+        },
+        "comments": []
+    },
+    "stock_plans_files": [
+        {
+            "filepath": "./StockPlans.ocf.json",
+            "md5": "c3e68dd645c6ab810f036923706355c8"
+        }
+    ],
+    "stock_legend_templates_files": [
+        {
+            "filepath": "./StockLegends.ocf.json",
+            "md5": "931d44dbd132cc09aef64ae4bab61987"
+        }
+    ],
+    "stock_classes_files": [
+        {
+            "filepath": "./StockClasses.ocf.json",
+            "md5": "45bbd5a565154f8c4a762c3d4fd711f1"
+        }
+    ],
+    "transactions_files": [
+        {
+            "filepath": "./Transactions.ocf.json",
+            "md5": "ab35839164924530cac5eecbb19f2c4d"
+        }
+    ],
+    "stakeholders_files": [
+        {
+            "filepath": "./Stakeholders.ocf.json",
+            "md5": "12c14ee9ac8e71a120cee15d075ecea6"
+        }
+    ],
+    "vesting_terms_files": [
+        {
+            "filepath": "./VestingTerms.ocf.json",
+            "md5": "c386f2a435dcb00ff89e08f30ed8e843"
+        }
+    ],
+    "valuations_files": [
+        {
+            "filepath": "./ValuationsSample.ocf.json",
+            "md5": "c386f2a435dcb00ff89e08f30ed8e843"
+        }
+    ]
+}

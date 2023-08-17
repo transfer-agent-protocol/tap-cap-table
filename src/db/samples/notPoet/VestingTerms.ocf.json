@@ -1,0 +1,58 @@
+{
+  "file_type": "OCF_VESTING_TERMS_FILE",
+  "items": [
+    {
+      "id": "vesting-schedule-1",
+      "object_type": "VESTING_TERMS",
+      "name": "1/48 monthly, 25% vest at 12 month cliff",
+      "description": "25% of the options vest 12 months after the vesting start date, the rest vests monthly in equal portions over the next 36 months",
+      "allocation_type": "CUMULATIVE_ROUND_DOWN",
+      "vesting_conditions": [
+        {
+          "id": "vesting-start",
+          "description": "The date on which the vesting period begins",
+          "trigger": {
+            "type": "VESTING_START_DATE"
+          },
+          "quantity": "0",
+          "next_condition_ids": [
+            "relative-expiration",
+            "absolute-expiration"
+          ]
+        },
+        {
+          "id": "relative-expiration",
+          "description": "100% vesting 48 months after vesting start",
+          "portion": {
+            "numerator": "1",
+            "denominator": "1"
+          },
+          "trigger": {
+            "type": "VESTING_SCHEDULE_RELATIVE",
+            "period": {
+              "length": 48,
+              "type": "MONTHS",
+              "occurrences": 1,
+              "day_of_month": "VESTING_START_DAY_OR_LAST_DAY_OF_MONTH"
+            },
+            "relative_to_condition_id": "vesting-start"
+          },
+          "next_condition_ids": []
+        },
+        {
+          "id": "absolute-expiration",
+          "description": "100% vesting after 4 years from start date",
+          "portion": {
+            "numerator": "1",
+            "denominator": "1"
+          },
+          "trigger": {
+            "type": "VESTING_SCHEDULE_ABSOLUTE",
+            "date": "2026-08-31"
+          },
+          "next_condition_ids": []
+        }
+      ]
+    }
+  ]
+}

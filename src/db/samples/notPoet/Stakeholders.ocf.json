@@ -1,0 +1,38 @@
+{
+  "file_type": "OCF_STAKEHOLDERS_FILE",
+  "items": [
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "aceb81e6-2d19-4ef2-ac53-05ff210d3509",
+      "name": {
+        "legal_name": "Alex Palmer",
+        "first_name": "Alex",
+        "last_name": "Palmer"
+      },
+      "stakeholder_type": "INDIVIDUAL",
+      "comments": []
+    },
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "aceb81e6-2d19-4ef2-ac53-05ff210d3508",
+      "name": {
+        "legal_name": "Victor Augusto Mimo Cardenas",
+        "first_name": "Victor",
+        "last_name": "Mimo"
+      },
+      "stakeholder_type": "INDIVIDUAL",
+      "comments": []
+    },
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "c4d8576e-a075-4c74-8dc3-925e25a0b31e",
+      "name": {
+        "legal_name": "Winston Smith",
+        "first_name": "Winston",
+        "last_name": "Smith"
+      },
+      "stakeholder_type": "INDIVIDUAL",
+      "comments": []
+    }
+  ]
+}

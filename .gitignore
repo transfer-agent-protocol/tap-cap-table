@@ -12,9 +12,6 @@
 # dependencies
 node_modules
 
-# don't merge potentially confidential info
-/test/poet
-
 # Mac
 .DS_Store
 
