@@ -15,7 +15,6 @@
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
         "prepare": "husky install",
-        "seed": "node src/db/scripts/seed.js",
         "deseed": "node src/db/scripts/deseed.js",
         "test-onchain-cap-table-local": "node src/custom-chain-scripts/capTable.cjs local",
         "test-onchain-cap-table-optimism-goerli": "node src/custom-chain-scripts/capTable.cjs optimism-goerli",
