@@ -119,6 +119,42 @@ contract CapTable is Ownable {
         );
     }
 
+    /*
+    quantity - 1100
+
+    spread over 2 security IDs
+
+    1. 1000 shares
+    2. 100 shares
+
+    what about if the first position is too small but the second is larger?
+
+*/
+    function elevenhunded(
+        bytes16 transferorStakeholderId,
+        bytes16 transfereeStakeholderId,
+        bytes16 stockClassId,
+        bool isBuyerVerified,
+        uint256 quantity,
+        uint256 sharePrice
+    ) external onlyOwner returns (ActivePosition memory transferorActivePosition) {
+        bytes16[] memory transferorSecurityIds = getSecurityIdsByStockClass(transferorStakeholderId, stockClassId); // returns array of security IDs  for the stock class
+
+        // determine how many active positions are required to match the quantity of the transfer
+        ActivePosition memory activePosition;
+        uint256 remaningQuantity = quantity;
+        for (uint256 i = 0; i < transferorSecurityIds.length; i++) {
+            activePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityIds[i]);
+
+            if (quantity <= transferorActivePosition.quantity) {
+                // one transfer is enough
+            } else {
+                // need to check if transferor has multiple positions to cover the transfer
+                remaningQuantity = remaningQuantity - activePosition.quantity;
+            }
+        }
+    }
+
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function transferStockOwnership(
         bytes16 transferorStakeholderId,
@@ -138,27 +174,11 @@ contract CapTable is Ownable {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
-        bytes16[] memory transferorSecurityIds = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId); // returns array of security IDs  for the stock class
+        bytes16 transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId); // returns array of security IDs  for the stock class
 
-        // TODO: refactor as helper function
-        // determine how many active positions are required to match the quantity of the transfer
-        ActivePosition memory transferorActivePosition
-        for (uint256 i = 0; i < transferorSecurityIds.length; i++) {
-            transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityIds[i]);
- 
-            if (quantity <= transferorActivePosition.quantity) {
-               // one transfer is enough
-               return transferorActivePosition
-               break;
-            } else {
-                // need multiple transfers
-            }
-        }
+        ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
 
-
-        // ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
-
-        // Checks related to transfer feasibility
+        // Not enough shares
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
@@ -214,7 +234,7 @@ contract CapTable is Ownable {
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] == 0, "Wallet already exists");
 
-        walletsPerStakeholder[_wallet] = bytes16(0);
+        delete walletsPerStakeholder[_wallet];
     }
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
@@ -242,7 +262,15 @@ contract CapTable is Ownable {
         return walletsPerStakeholder[_wallet];
     }
 
-    function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16[] memory securityId) {
+    function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16 securityId) {
+        require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
+        bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
+
+        // only getting first earliest active position for the stock class, for now.
+        return activeSecurityIDs[0];
+    }
+
+    function getSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16[] memory securityId) {
         require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
         bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
 
