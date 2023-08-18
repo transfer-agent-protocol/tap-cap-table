@@ -24,7 +24,7 @@ git clone --recurse-submodules https://github.com/poet-network/tap-cap-table.git
 Copy `.env.example` to `.env`, which gives you a DB connection string. You can change the values in the `.env` file, but the defaults should work for local development.
 
 ```sh
-cp .env.example .env
+cd tap-cap-table && cp .env.example .env
 ```
 
 Pull the official Mongo image, and run the local development database with `docker compose`:
@@ -41,7 +41,9 @@ yarn install && yarn setup
 
 ## Running the cap table
 
-Docker compose should have started the database. Now you can start the server with:
+Docker compose should have started the database. You'll need to update your `.env` files inside of both `chain` and at the root of the project. If you're a contributor working with us, you can get those values from our Bitwarden vault.
+
+Once that's done, start the server with:
 
 ```sh
 yarn start
