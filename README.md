@@ -33,10 +33,10 @@ Pull the official Mongo image, and run the local development database with `dock
 docker compose up
 ```
 
-Install dependencies and setup forge with our setup script:
+Install dependencies and setup [Foundry](https://book.getfoundry.sh/) and `forge` with our setup script:
 
 ```sh
-yarn setup
+yarn install && yarn setup
 ```
 
 ## Running the cap table
