@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-    createAndValidateStakeholder,
+    validateAndCreateStakeholder,
     convertAndReflectStakeholderOnchain,
     addWalletToStakeholder,
     removeWalletFromStakeholder,
@@ -15,10 +15,10 @@ stakeholder.get("/", async (req, res) => {
 });
 
 stakeholder.get("/id/:id", async (req, res) => {
-    try {
-        const { contract } = req;
-        const { id } = req.params;
+    const { contract } = req;
+    const { id } = req.params;
 
+    try {
         const { stakeholderId, type, role } = await getStakeholderById(contract, id);
 
         res.status(200).send({ stakeholderId, type, role });
@@ -29,8 +29,9 @@ stakeholder.get("/id/:id", async (req, res) => {
 });
 
 stakeholder.get("/total-number", async (req, res) => {
+    const { contract } = req;
+
     try {
-        const { contract } = req;
         const totalStakeholders = await getTotalNumberOfStakeholders(contract);
         res.status(200).send(totalStakeholders);
     } catch (error) {
@@ -43,18 +44,10 @@ stakeholder.get("/total-number", async (req, res) => {
 // Order to be determined.
 stakeholder.post("/create", async (req, res) => {
     const { contract } = req;
-    const { name, issuer_assigned_id, stakeholder_type, current_relationship, primary_contact, contact_info, comments } = req.body;
+
     try {
-        // importing req.body as a short cut, will need to import specific fields
-        const stakeholder = await createAndValidateStakeholder({
-            name,
-            issuer_assigned_id,
-            stakeholder_type,
-            current_relationship,
-            primary_contact,
-            contact_info,
-            comments,
-        });
+        // importing req.body as a short cut, since we're validating it in the controller
+        const stakeholder = await validateAndCreateStakeholder(req.body);
 
         await convertAndReflectStakeholderOnchain(contract, stakeholder);
         res.status(200).send({ stakeholder });
@@ -67,6 +60,7 @@ stakeholder.post("/create", async (req, res) => {
 stakeholder.post("/add-wallet", async (req, res) => {
     const { contract } = req;
     const { id, wallet } = req.body;
+
     try {
         await addWalletToStakeholder(contract, id, wallet);
         res.status(200).send("Success");
@@ -79,6 +73,7 @@ stakeholder.post("/add-wallet", async (req, res) => {
 stakeholder.post("/remove-wallet", async (req, res) => {
     const { contract } = req;
     const { id, wallet } = req.body;
+
     try {
         await removeWalletFromStakeholder(contract, id, wallet);
         res.status(200).send("Success");
