@@ -4,12 +4,11 @@ config();
 
 import connectDB from "./db/config/mongoose.js";
 
-import startOnchainListeners from "./custom-chain-scripts/transactionListener.js";
-import getContractInstance from "./custom-chain-scripts/getContractInstances.js";
+import startOnchainListeners from "./chain-operations/transactionListener.js";
+import getContractInstance from "./chain-operations/getContractInstances.js";
 
 // Routes
 import mainRoutes from "./routes/index.js";
-import issuerRoutes from "./routes/issuer.js";
 import stakeholderRoutes from "./routes/stakeholder.js";
 import stockClassRoutes from "./routes/stockClass.js";
 import transactionRoutes from "./routes/transactions.js";
@@ -20,7 +19,7 @@ const app = express();
 connectDB();
 
 const PORT = 3000;
-const CHAIN = "local"; // change this to prod or env style variable
+const CHAIN = "local"; // TODO change this to prod or env style variable
 
 // Middlewares
 const chainMiddleware = (req, res, next) => {
@@ -40,7 +39,6 @@ app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
 
 app.use("/", chainMiddleware, mainRoutes);
-app.use("/issuer", contractMiddleware, issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
 
