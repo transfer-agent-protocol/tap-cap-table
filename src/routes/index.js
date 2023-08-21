@@ -2,7 +2,7 @@ import { Router } from "express";
 import { promisify } from "util";
 import { exec as originalExec } from "child_process";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
-import deployCapTable from "../custom-chain-scripts/deployCapTable.js";
+import deployCapTable from "../chain-operations/deployCapTable.js";
 import addNotPoetToDB from "../db/scripts/seed.js";
 import { readIssuerById } from "../db/operations/read.js";
 
@@ -14,47 +14,40 @@ router.get("/", async (req, res) => {
     res.send(`Hello world!`);
 });
 
-// POC to onboard a cap table via API
-// needs to be generalized and importing JSONs needs to be shaped.
-router.post("/add-not-poet-to-db", async (req, res) => {
-    // TODO: Input validation
-    try {
-        console.log("here");
-        // Validate and Insert to DB
-        // const { stdout, stderr } = await exec("yarn validate-not-poet-files");
-
-        // console.log(`stdout: ${stdout}`);
-
-        await addNotPoetToDB();
-
-        console.log("Success");
-        res.status(200).send("Success");
-    } catch (error) {
-        console.error(`exec error: ${error}`);
-    }
-});
-
-router.post("/mint-cap-table", async (req, res) => {
-    // TODO: Input validation
+/// @dev: POC to onboard a cap table via manifest and API
+// this is hardcoded for Poet's manifest files living in /db/samples, will need to be extended.
+router.post("/add-poet-manifest-mint-cap-table", async (req, res) => {
     const { chain } = req;
-    const { issuerId } = req.body;
+    // First: validate the manifest against OCF
+
+    // since this example is hardcoded, it's not coming from the body. otherwise
+    // const { manifest } = req.body;
+    // then, validate it against OCF schema
+
+    // TODO: There's an error validating from OCF. It's tracked in Linear
+    // const { stdout, stderr } = await exec("yarn validate-poet-files");
+    // console.log(`stdout: ${stdout}`);
 
     try {
-        // get issuer info
-        const issuer = await readIssuerById(issuerId);
+        // Second: send manifest to seed script
+        const issuer = await addNotPoetToDB();
 
-        if (!issuer) {
-            res.status(500).send("Issuer not found");
-        }
-        console.log("issuer ", issuer);
-        const issuerIdBytes16 = convertUUIDToBytes16(issuerId);
-        console.log("issuer ID bytes32", issuerIdBytes16);
+        console.log("Success adding manifest to DB, issuer: ", issuer);
+
+        // Third: convert required fields from OCF standard to Onchain types
+        const issuerIdBytes16 = convertUUIDToBytes16(issuer._id);
+
+        // Fourth: mint the cap table. Right now, we're only minting the issuer, not adding stakeholders, stockclasses, etc.
         const deployedTo = await deployCapTable(chain, issuerIdBytes16, issuer.legal_name);
 
         console.log("Minted Cap Table to ", deployedTo);
-        res.status(200).send(deployedTo);
+
+        // TODO:Fifth: update contract with Stakeholders, Stockclasses, Transactions, etc.
+
+        res.status(200).send({ issuer });
     } catch (error) {
-        console.error(`exec error: ${error}`);
+        console.error(`error: ${error}`);
+        res.status(500).send({ error });
     }
 });
 
