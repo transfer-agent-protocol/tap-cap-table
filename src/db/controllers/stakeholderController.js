@@ -1,7 +1,7 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { createStakeholder } from "../operations/create.js";
 
-export const createAndValidateStakeholder = async (data) => {
+export const validateAndCreateStakeholder = async (data) => {
     // First: validate the manifest against OCF, for the stakeholder schema
     // TODO
 
