@@ -15,6 +15,7 @@ import transactionRoutes from "./routes/transactions.js";
 import stockLegendRoutes from "./routes/stockLegend.js";
 import stockPlanRoutes from "./routes/stockPlan.js";
 import valuationRoutes from "./routes/valuation.js";
+import vestingTermsRoutes from "./routes/vestingTerms.js";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/stock-class", contractMiddleware, stockClassRoutes);
 app.use("/stock-legend", stockLegendRoutes);
 app.use("/stock-plan", stockPlanRoutes);
 app.use("/valuation", valuationRoutes);
+app.use("/vesting-terms", vestingTermsRoutes);
 
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
