@@ -12,6 +12,7 @@ import mainRoutes from "./routes/index.js";
 import stakeholderRoutes from "./routes/stakeholder.js";
 import stockClassRoutes from "./routes/stockClass.js";
 import transactionRoutes from "./routes/transactions.js";
+import stockLegendRoutes from "./routes/stockLegend.js";
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.enable("trust proxy");
 app.use("/", chainMiddleware, mainRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
+app.use("/stock-legend", stockLegendRoutes);
 
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
