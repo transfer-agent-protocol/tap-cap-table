@@ -1,14 +1,35 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
+import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 
-async function startOnchainListeners(chain, prisma) {
-    console.log("🌐  Initiating on-chain event listeners... Stand by.");
+async function startOnchainListeners(chain) {
+    console.log("🌐| Initiating on-chain event listeners... Stand by.");
 
     const { contract, provider } = await getContractInstance(chain);
 
     contract.on("error", (error) => {
         console.error("Error:", error);
+    });
+
+    contract.on("StakeholderCreated", async (id, event) => {
+        console.log("StakeholderCreated Event Emitted!", id);
+
+        const incomingStakeholderId = convertBytes16ToUUID(id);
+
+        const stakeholder = await updateStakeholderById(incomingStakeholderId, { is_onchain_synced: true });
+
+        console.log("✅ | Stakeholder confirmation onchain ", stakeholder);
+    });
+
+    contract.on("StockClassCreated", async (id, event) => {
+        console.log("StockClassCreated Event Emitted!", id);
+
+        const incomingStockClassId = convertBytes16ToUUID(id);
+
+        const stockClass = await updateStockClassById(incomingStockClassId, { is_onchain_synced: true });
+
+        console.log("✅ | StockClass confirmation onchain ", stockClass);
     });
 
     // TODO: need a conversion from solidity types to OCF types.
