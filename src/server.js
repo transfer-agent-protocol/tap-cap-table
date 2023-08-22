@@ -13,6 +13,7 @@ import stakeholderRoutes from "./routes/stakeholder.js";
 import stockClassRoutes from "./routes/stockClass.js";
 import transactionRoutes from "./routes/transactions.js";
 import stockLegendRoutes from "./routes/stockLegend.js";
+import stockPlanRoutes from "./routes/stockPlan.js";
 
 const app = express();
 
@@ -42,7 +43,9 @@ app.enable("trust proxy");
 app.use("/", chainMiddleware, mainRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
+// No middleware required since these are only created offchain
 app.use("/stock-legend", stockLegendRoutes);
+app.use("/stock-plan", stockPlanRoutes);
 
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
