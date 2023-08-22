@@ -12,7 +12,7 @@ async function startOnchainListeners(chain) {
         console.error("Error:", error);
     });
 
-    contract.on("StakeholderCreated", async (id, event) => {
+    contract.on("StakeholderCreated", async (id, _) => {
         console.log("StakeholderCreated Event Emitted!", id);
 
         const incomingStakeholderId = convertBytes16ToUUID(id);
@@ -22,7 +22,7 @@ async function startOnchainListeners(chain) {
         console.log("✅ | Stakeholder confirmation onchain ", stakeholder);
     });
 
-    contract.on("StockClassCreated", async (id, event) => {
+    contract.on("StockClassCreated", async (id, _) => {
         console.log("StockClassCreated Event Emitted!", id);
 
         const incomingStockClassId = convertBytes16ToUUID(id);
@@ -32,11 +32,15 @@ async function startOnchainListeners(chain) {
         console.log("✅ | StockClass confirmation onchain ", stockClass);
     });
 
+    contract.on("StockTransferCreated", async (stock, event) => {
+        console.log("StockTransferCreated Event Emitted!", stock.id);
+    });
+
     // TODO: need a conversion from solidity types to OCF types.
     // @dev events return both an array and object, depending how you want to access. We're using objects
     // TODO: the conversion functions are not working properly, need to fix
     contract.on("StockIssuanceCreated", async (stock, event) => {
-        console.log("StockIssuanceCreated Event Emitted!", stock[0]);
+        console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
         const newStockDecimals = convertManyToDecimal(stock);
         // console.log("new stock decimals ", newStockDecimals);
