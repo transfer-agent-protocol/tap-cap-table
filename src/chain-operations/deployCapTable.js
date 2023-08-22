@@ -18,7 +18,6 @@ async function deployCapTableLocal(issuerId, issuerName) {
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName);
 
-    console.log("Contract deployed to address:", contract.address);
     console.log("Waiting for contract to be mined...");
     await contract.deployed();
     console.log("Contract mined!");
@@ -34,7 +33,6 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName);
 
-    console.log("Contract deployed to address:", contract.address);
     console.log("Waiting for contract to be mined...");
     await contract.deployed();
     console.log("Contract mined!");

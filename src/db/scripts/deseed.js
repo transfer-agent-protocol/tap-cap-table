@@ -7,6 +7,13 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import { typeToModelType } from "../operations/transactions.js"; // Import the typeToModelType object to delete all transactions
+
+const deleteAllTransactions = async () => {
+    for (const ModelType of Object.values(typeToModelType)) {
+        await ModelType.deleteMany({});
+    }
+};
 
 const deleteAll = async () => {
     // Delete all documents from the collections
@@ -17,7 +24,7 @@ const deleteAll = async () => {
     await StockPlan.deleteMany({});
     await Valuation.deleteMany({});
     await VestingTerms.deleteMany({});
-    // await StockIssuance.deleteMany({});
+    await deleteAllTransactions(); // Delete all transactions
 };
 
 const deseedDatabase = async () => {
