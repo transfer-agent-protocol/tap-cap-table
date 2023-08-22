@@ -18,6 +18,7 @@ const StockClassSchema = new mongoose.Schema({
     liquidation_preference_multiple: String,
     participation_cap_multiple: String,
     comments: [String],
+    is_onchain_synced: { type: Boolean, default: false },
 });
 
 const Stockclass = mongoose.model("StockClass", StockClassSchema);

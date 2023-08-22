@@ -5,6 +5,7 @@ import {
     getTotalNumberOfStockClasses,
     convertAndReflectStockClassOnchain,
 } from "../db/controllers/stockClassController.js";
+import { v4 as uuid } from "uuid";
 
 const stockClass = Router();
 
@@ -41,10 +42,16 @@ stockClass.get("/total-number", async (req, res) => {
 // Order to be determined.
 stockClass.post("/create", async (req, res) => {
     const { contract } = req;
-    try {
-        const stockClass = await validateAndCreateStockClass(req.body);
 
-        await convertAndReflectStockClassOnchain(contract, stockClass);
+    try {
+        const incomingStockClass = {
+            _id: uuid(),
+            ...req.body,
+        };
+
+        await convertAndReflectStockClassOnchain(contract, incomingStockClass);
+
+        const stockClass = await validateAndCreateStockClass(incomingStockClass);
 
         res.status(200).send({ stockClass });
     } catch (error) {
