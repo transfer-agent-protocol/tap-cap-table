@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "./transactions/StockIssuanceTx.sol";
-import "./transactions/StockTransferTx.sol";
+import "./transactions/StockIssuanceTX.sol";
+import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 import "./lib/TxHelper.sol";
 
