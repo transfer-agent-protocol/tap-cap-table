@@ -28,6 +28,7 @@ const StakeholderSchema = new mongoose.Schema({
     primary_contact: {},
     contact_info: {},
     comments: [String],
+    is_onchain_synced: { type: Boolean, default: false },
 });
 
 const Stakeholder = mongoose.model("Stakeholder", StakeholderSchema);

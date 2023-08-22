@@ -7,6 +7,7 @@ import {
     getStakeholderById,
     getTotalNumberOfStakeholders,
 } from "../db/controllers/stakeholderController.js"; // Importing the controller functions
+import { v4 as uuid } from "uuid";
 
 const stakeholder = Router();
 
@@ -40,16 +41,22 @@ stakeholder.get("/total-number", async (req, res) => {
     }
 });
 
-/// @dev: stakeholder is always added to the DB and created onchain in the same function.
-// Order to be determined.
+/// @dev: stakeholder is always created onchain, then to the DB
 stakeholder.post("/create", async (req, res) => {
     const { contract } = req;
 
     try {
-        // importing req.body as a short cut, since we're validating it in the controller
-        const stakeholder = await validateAndCreateStakeholder(req.body);
+        const incomingStakeholder = {
+            _id: uuid(),
+            ...req.body,
+        };
 
-        await convertAndReflectStakeholderOnchain(contract, stakeholder);
+        // 2. create the event listener to verify it fired a new stakeholder created
+        await convertAndReflectStakeholderOnchain(contract, incomingStakeholder);
+
+        // importing req.body as a short cut, since we're validating it in the controller
+        const stakeholder = await validateAndCreateStakeholder(incomingStakeholder);
+
         res.status(200).send({ stakeholder });
     } catch (error) {
         console.error(`error: ${error}`);
