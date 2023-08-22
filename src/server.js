@@ -14,6 +14,7 @@ import stockClassRoutes from "./routes/stockClass.js";
 import transactionRoutes from "./routes/transactions.js";
 import stockLegendRoutes from "./routes/stockLegend.js";
 import stockPlanRoutes from "./routes/stockPlan.js";
+import valuationRoutes from "./routes/valuation.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/stock-class", contractMiddleware, stockClassRoutes);
 // No middleware required since these are only created offchain
 app.use("/stock-legend", stockLegendRoutes);
 app.use("/stock-plan", stockPlanRoutes);
+app.use("/valuation", valuationRoutes);
 
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
