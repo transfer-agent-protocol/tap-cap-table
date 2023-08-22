@@ -6,6 +6,7 @@ import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 
+// READ By ID
 export const readIssuerById = async (id) => {
     const issuer = await Issuer.findById(id);
     return issuer;
@@ -39,4 +40,40 @@ export const readValuationById = async (id) => {
 export const readVestingTermsById = async (id) => {
     const vestingTerms = await VestingTerms.findById(id);
     return vestingTerms;
+};
+
+// COUNT
+export const countIssuers = async () => {
+    const totalIssuers = await Issuer.countDocuments();
+    return totalIssuers;
+};
+
+export const countStakeholders = async () => {
+    const totalStakeholders = await Stakeholder.countDocuments();
+    return totalStakeholders;
+};
+
+export const countStockClasses = async () => {
+    const totalStockClasses = await StockClass.countDocuments();
+    return totalStockClasses;
+};
+
+export const countStockLegendTemplates = async () => {
+    const totalTemplates = await StockLegendTemplate.countDocuments();
+    return totalTemplates;
+};
+
+export const countStockPlans = async () => {
+    const totalStockPlans = await StockPlan.countDocuments();
+    return totalStockPlans;
+};
+
+export const countValuations = async () => {
+    const totalValuations = await Valuation.countDocuments();
+    return totalValuations;
+};
+
+export const countVestingTerms = async () => {
+    const totalVestingTerms = await VestingTerms.countDocuments();
+    return totalVestingTerms;
 };

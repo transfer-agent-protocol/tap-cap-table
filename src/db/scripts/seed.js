@@ -35,6 +35,8 @@ async function addNotPoetToDB() {
     const transactionsFilePath = "Transactions.ocf.json";
     const transactionsData = await readAndParseJSON(transactionsFilePath, "notPoet");
     await addTransactions(transactionsData); // Use addTransactions function here
+
+    return issuer;
 }
 
 export default addNotPoetToDB;

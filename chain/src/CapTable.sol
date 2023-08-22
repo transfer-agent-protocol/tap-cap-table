@@ -192,12 +192,12 @@ contract CapTable is Ownable {
     }
 
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] == 0, "Wallet already exists");
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
 
-        walletsPerStakeholder[_wallet] = bytes16(0);
+        delete walletsPerStakeholder[_wallet];
     }
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {

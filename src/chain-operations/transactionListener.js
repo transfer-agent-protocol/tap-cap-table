@@ -1,9 +1,10 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
+import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 
-async function startOnchainListeners(chain, prisma) {
-    console.log("🌐  Initiating on-chain event listeners... Stand by.");
+async function startOnchainListeners(chain) {
+    console.log("🌐| Initiating on-chain event listeners... Stand by.");
 
     const { contract, provider } = await getContractInstance(chain);
 
@@ -11,11 +12,35 @@ async function startOnchainListeners(chain, prisma) {
         console.error("Error:", error);
     });
 
+    contract.on("StakeholderCreated", async (id, _) => {
+        console.log("StakeholderCreated Event Emitted!", id);
+
+        const incomingStakeholderId = convertBytes16ToUUID(id);
+
+        const stakeholder = await updateStakeholderById(incomingStakeholderId, { is_onchain_synced: true });
+
+        console.log("✅ | Stakeholder confirmation onchain ", stakeholder);
+    });
+
+    contract.on("StockClassCreated", async (id, _) => {
+        console.log("StockClassCreated Event Emitted!", id);
+
+        const incomingStockClassId = convertBytes16ToUUID(id);
+
+        const stockClass = await updateStockClassById(incomingStockClassId, { is_onchain_synced: true });
+
+        console.log("✅ | StockClass confirmation onchain ", stockClass);
+    });
+
+    contract.on("StockTransferCreated", async (stock, event) => {
+        console.log("StockTransferCreated Event Emitted!", stock.id);
+    });
+
     // TODO: need a conversion from solidity types to OCF types.
     // @dev events return both an array and object, depending how you want to access. We're using objects
     // TODO: the conversion functions are not working properly, need to fix
     contract.on("StockIssuanceCreated", async (stock, event) => {
-        console.log("StockIssuanceCreated Event Emitted!", stock[0]);
+        console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
         const newStockDecimals = convertManyToDecimal(stock);
         // console.log("new stock decimals ", newStockDecimals);
