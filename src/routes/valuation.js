@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { validateAndCreateValuation } from "../db/controllers/valuationController.js";
 import { countValuations, readValuationById } from "../db/operations/read.js";
+import { v4 as uuid } from "uuid";
+import { createValuation } from "../db/operations/create.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import valuationSchema from "../../ocf/schema/objects/Valuation.schema.json" assert { type: "json" };
 
 const valuation = Router();
 
@@ -31,7 +35,16 @@ valuation.get("/total-number", async (_, res) => {
 
 valuation.post("/create", async (req, res) => {
     try {
-        const valuation = await validateAndCreateValuation(req.body);
+        const incomingValuation = {
+            id: uuid(),
+            object_type: "VALUATION",
+            ...req.body,
+        };
+
+        await validateInputAgainstOCF(incomingValuation, valuationSchema);
+        const valuation = await createValuation(incomingValuation);
+
+        console.log("Created Valuation in DB: ", valuation);
 
         res.status(200).send({ valuation });
     } catch (error) {
