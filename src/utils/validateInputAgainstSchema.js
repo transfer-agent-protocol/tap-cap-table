@@ -5,6 +5,48 @@ import axios from "axios";
 const ajv = new Ajv();
 addFormats(ajv); // To support formats like date-time
 
+async function fetchRefsInSchema(schema) {
+    // If the schema has its own $ref references, fetch and add those first
+    if (schema.$ref) {
+        await fetchAndAddExternalSchema(schema.$ref);
+    }
+
+    // Handle $ref references inside properties
+    if (schema.properties) {
+        for (const propName in schema.properties) {
+            const prop = schema.properties[propName];
+
+            // Check for direct $ref in the property
+            if (prop.$ref) {
+                await fetchAndAddExternalSchema(prop.$ref);
+            }
+
+            // Check for $ref inside 'items' of an array property
+            if (prop.type === "array" && prop.items && prop.items.$ref) {
+                await fetchAndAddExternalSchema(prop.items.$ref);
+            }
+
+            // Handle nested oneOf, allOf, etc. inside properties
+            for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
+                if (prop[keyword]) {
+                    for (const subSchema of prop[keyword]) {
+                        await fetchRefsInSchema(subSchema);
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle $ref references inside "allOf", "anyOf", "oneOf", or "not" keywords
+    for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
+        if (schema[keyword]) {
+            for (const subSchema of schema[keyword]) {
+                await fetchRefsInSchema(subSchema);
+            }
+        }
+    }
+}
+
 async function fetchAndAddExternalSchema(schemaOrUrl) {
     let schema;
 
@@ -28,22 +70,24 @@ async function fetchAndAddExternalSchema(schemaOrUrl) {
     }
 
     // If the schema has "allOf", "anyOf", "oneOf", or "not" keywords, handle those
-    for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
-        if (schema[keyword]) {
-            for (const subSchema of schema[keyword]) {
-                if (subSchema.$ref) {
-                    await fetchAndAddExternalSchema(subSchema.$ref);
-                }
-            }
-        }
-    }
+    await fetchRefsInSchema(schema);
 
     // Handle $ref references inside properties
     if (schema.properties) {
         for (const propName in schema.properties) {
-            if (schema.properties[propName].$ref) {
-                await fetchAndAddExternalSchema(schema.properties[propName].$ref);
+            const prop = schema.properties[propName];
+
+            // Check for direct $ref in the property
+            if (prop.$ref) {
+                await fetchAndAddExternalSchema(prop.$ref);
             }
+
+            // Check for $ref inside 'items' of an array property
+            if (prop.type === "array" && prop.items && prop.items.$ref) {
+                await fetchAndAddExternalSchema(prop.items.$ref);
+            }
+
+            // You can further extend this to handle other nested structures as needed
         }
     }
 
