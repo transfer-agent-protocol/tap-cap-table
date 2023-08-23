@@ -1,12 +1,9 @@
 import { Router } from "express";
-import {
-    getStockClassById,
-    getTotalNumberOfStockClasses,
-    convertAndReflectStockClassOnchain,
-    validateStockClass,
-} from "../db/controllers/stockClassController.js";
 import { v4 as uuid } from "uuid";
+import stockClassSchema from "../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
+import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../db/controllers/stockClassController.js";
 import { createStockClass } from "../db/operations/create.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stockClass = Router();
 
@@ -50,10 +47,12 @@ stockClass.post("/create", async (req, res) => {
             object_type: "STOCK_CLASS",
             ...req.body,
         };
-        await validateStockClass(incomingStockClass);
+        await validateInputAgainstOCF(incomingStockClass, stockClassSchema);
         await convertAndReflectStockClassOnchain(contract, incomingStockClass);
 
         const stockClass = await createStockClass(incomingStockClass);
+
+        console.log("Stock Class created offchain:", stockClass);
 
         res.status(200).send({ stockClass });
     } catch (error) {
