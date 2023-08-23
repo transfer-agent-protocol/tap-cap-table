@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { validateAndCreateValuation } from "../db/controllers/valuationController.js";
-import { countValuations, readValuationById } from "../db/operations/read.js";
 import { v4 as uuid } from "uuid";
-import { createValuation } from "../db/operations/create.js";
-import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 import valuationSchema from "../../ocf/schema/objects/Valuation.schema.json" assert { type: "json" };
+import { createValuation } from "../db/operations/create.js";
+import { countValuations, readValuationById } from "../db/operations/read.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const valuation = Router();
 
