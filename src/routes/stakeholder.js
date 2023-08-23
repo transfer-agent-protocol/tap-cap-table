@@ -51,10 +51,8 @@ stakeholder.post("/create", async (req, res) => {
             ...req.body,
         };
 
-        // 2. create the event listener to verify it fired a new stakeholder created
         await convertAndReflectStakeholderOnchain(contract, incomingStakeholder);
 
-        // importing req.body as a short cut, since we're validating it in the controller
         const stakeholder = await validateAndCreateStakeholder(incomingStakeholder);
 
         res.status(200).send({ stakeholder });

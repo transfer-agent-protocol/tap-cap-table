@@ -1,11 +1,12 @@
 import { Router } from "express";
 import {
     getStockClassById,
-    validateAndCreateStockClass,
     getTotalNumberOfStockClasses,
     convertAndReflectStockClassOnchain,
+    validateStockClass,
 } from "../db/controllers/stockClassController.js";
 import { v4 as uuid } from "uuid";
+import { createStockClass } from "../db/operations/create.js";
 
 const stockClass = Router();
 
@@ -45,13 +46,14 @@ stockClass.post("/create", async (req, res) => {
 
     try {
         const incomingStockClass = {
-            _id: uuid(),
+            id: uuid(),
+            object_type: "STOCK_CLASS",
             ...req.body,
         };
-
+        await validateStockClass(incomingStockClass);
         await convertAndReflectStockClassOnchain(contract, incomingStockClass);
 
-        const stockClass = await validateAndCreateStockClass(incomingStockClass);
+        const stockClass = await createStockClass(incomingStockClass);
 
         res.status(200).send({ stockClass });
     } catch (error) {

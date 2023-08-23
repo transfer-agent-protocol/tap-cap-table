@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { validateAndCreateStockPlan } from "../db/controllers/stockPlanController.js";
+import { validateStockPlan } from "../db/controllers/stockPlanController.js";
 import { countStockPlans, readStockPlanById } from "../db/operations/read.js";
+import { createStockPlan } from "../db/operations/create.js";
 
 const stockPlan = Router();
 
@@ -33,7 +34,8 @@ stockPlan.get("/total-number", async (_, res) => {
 /// @dev: stock plan is currently only created offchain
 stockPlan.post("/create", async (req, res) => {
     try {
-        const stockPlan = await validateAndCreateStockPlan(req.body);
+        await validateStockPlan(req.body);
+        const stockPlan = await createStockPlan(req.body);
 
         res.status(200).send({ stockPlan });
     } catch (error) {
