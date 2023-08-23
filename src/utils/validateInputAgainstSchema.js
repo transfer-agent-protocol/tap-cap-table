@@ -69,4 +69,14 @@ async function validateInputAgainstSchema(input, schema) {
     };
 }
 
-export default validateInputAgainstSchema;
+async function validateInputAgainstOCF(input, schema) {
+    const { isValid, errors } = await validateInputAgainstSchema(input, schema);
+
+    if (isValid) {
+        console.log("Schema is valid ", isValid);
+    } else {
+        throw new Error(JSON.stringify(errors, null, 2));
+    }
+}
+
+export default validateInputAgainstOCF;
