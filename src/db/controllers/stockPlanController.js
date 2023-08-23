@@ -1,13 +1,13 @@
-import { createStockPlan } from "../operations/create.js";
+import stockPlanSchema from "../../../ocf/schema/objects/StockPlan.schema.json" assert { type: "json" };
+import validateInput from "../../utils/validateInputAgainstSchema.js";
 
-export const validateAndCreateStockPlan = async (data) => {
+export const validateStockPlan = async (data) => {
     // First: validate the manifest against OCF, for the stockplan schema
-    // TODO
+    const { isValid, errors } = await validateInput(data, stockPlanSchema);
 
-    // Second: create StockPlan in DB
-    const stockPlan = await createStockPlan(data);
-
-    console.log("StockPlan created:", stockPlan);
-
-    return stockPlan;
+    if (isValid) {
+        console.log("Schema is valid ", isValid);
+    } else {
+        throw new Error(JSON.stringify(errors, null, 2));
+    }
 };

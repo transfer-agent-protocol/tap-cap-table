@@ -1,17 +1,18 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
-import { createStockClass } from "../operations/create.js";
 
-export const validateAndCreateStockClass = async (data) => {
-    // First: validate the manifest against OCF, for the stockclass schema
-    // TODO
+import validateInput from "../../utils/validateInputAgainstSchema.js";
+import stockClassSchema from "../../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
 
-    // Second: create StockClass in DB
-    const stockClass = await createStockClass(data);
+export const validateStockClass = async (data) => {
+    // First: validate the manifest against OCF, for the stock class schema
+    const { isValid, errors } = await validateInput(data, stockClassSchema);
 
-    console.log("StockClass created:", stockClass);
-
-    return stockClass;
+    if (isValid) {
+        console.log("Schema is valid ", isValid);
+    } else {
+        throw new Error(JSON.stringify(errors, null, 2));
+    }
 };
 
 /// @dev: controller handles conversion from OCF type to Onchain types and creates the stock class.
