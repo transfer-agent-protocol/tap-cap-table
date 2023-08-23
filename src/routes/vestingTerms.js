@@ -1,6 +1,9 @@
 import { Router } from "express";
-import { validateAndCreateVestingTerms } from "../db/controllers/vestingTermsController.js";
+import { v4 as uuid } from "uuid";
+import vestingTermsSchema from "../../ocf/schema/objects/VestingTerms.schema.json" assert { type: "json" };
+import { createVestingTerms } from "../db/operations/create.js";
 import { countVestingTerms, readVestingTermsById } from "../db/operations/read.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const vestingTerms = Router();
 
@@ -33,7 +36,16 @@ vestingTerms.get("/total-number", async (_, res) => {
 
 vestingTerms.post("/create", async (req, res) => {
     try {
-        const vestingTerms = await validateAndCreateVestingTerms(req.body);
+        const incomingVestingTerms = {
+            id: uuid(),
+            object_type: "VESTING_TERMS",
+            ...req.body,
+        };
+
+        await validateInputAgainstOCF(incomingVestingTerms, vestingTermsSchema);
+        const vestingTerms = await createVestingTerms(incomingVestingTerms);
+
+        console.log("Created Vesting Terms in DB: ", vestingTerms);
 
         res.status(200).send({ vestingTerms });
     } catch (error) {
