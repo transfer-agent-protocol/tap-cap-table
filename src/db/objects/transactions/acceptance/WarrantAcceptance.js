@@ -7,6 +7,10 @@ const WarrantAcceptanceSchema = new mongoose.Schema({
     comments: [String],
     security_id: String,
     date: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const WarrantAcceptance = mongoose.model("WarrantAcceptance", WarrantAcceptanceSchema);

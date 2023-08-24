@@ -8,6 +8,10 @@ const VestingEventSchema = new mongoose.Schema({
     comments: [String],
     date: String,
     security_id: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const VestingEvent = mongoose.model("VestingEvent", VestingEventSchema);

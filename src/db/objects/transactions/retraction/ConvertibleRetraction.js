@@ -8,6 +8,10 @@ const ConvertibleRetractionSchema = new mongoose.Schema({
     security_id: String,
     date: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const ConvertibleRetraction = mongoose.model("ConvertibleRetraction", ConvertibleRetractionSchema);

@@ -10,6 +10,10 @@ const StockConversionSchema = new mongoose.Schema({
     security_id: String,
     date: String,
     resulting_security_ids: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockConversion = mongoose.model("StockConversion", StockConversionSchema);

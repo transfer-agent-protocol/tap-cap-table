@@ -8,6 +8,10 @@ const StockClassSplitSchema = new mongoose.Schema({
     date: String,
     stock_class_id: String,
     split_ratio: {},
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockClassSplit = mongoose.model("StockClassSplit", StockClassSplitSchema);

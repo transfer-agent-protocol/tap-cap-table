@@ -10,6 +10,10 @@ const PlanSecurityExerciseSchema = new mongoose.Schema({
     date: String,
     consideration_text: String,
     resulting_security_ids: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const PlanSecurityExercise = mongoose.model("PlanSecurityExercise", PlanSecurityExerciseSchema);

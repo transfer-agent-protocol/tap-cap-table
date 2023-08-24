@@ -10,6 +10,10 @@ const IssuerAuthorizedSharesAdjustmentSchema = new mongoose.Schema({
     new_shares_authorized: String,
     board_approval_date: String,
     stockholder_approval_date: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const IssuerAuthorizedSharesAdjustment = mongoose.model("IssuerAuthorizedSharesAdjustment", IssuerAuthorizedSharesAdjustmentSchema);

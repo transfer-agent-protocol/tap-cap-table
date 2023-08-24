@@ -10,6 +10,10 @@ const StockReissuanceSchema = new mongoose.Schema({
     resulting_security_ids: [String],
     split_transaction_id: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockReissuance = mongoose.model("StockReissuance", StockReissuanceSchema);

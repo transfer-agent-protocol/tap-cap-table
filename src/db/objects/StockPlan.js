@@ -12,6 +12,10 @@ const StockPlanSchema = new mongoose.Schema({
     default_cancellation_behavior: String,
     stock_class_id: String,
     comments: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockPlan = mongoose.model("StockPlan", StockPlanSchema);

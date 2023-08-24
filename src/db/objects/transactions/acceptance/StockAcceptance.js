@@ -7,6 +7,10 @@ const StockAcceptanceSchema = new mongoose.Schema({
     comments: [String],
     security_id: String,
     date: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockAcceptance = mongoose.model("StockAcceptance", StockAcceptanceSchema);
