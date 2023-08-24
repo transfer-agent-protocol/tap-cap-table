@@ -11,6 +11,10 @@ const StockRepurchaseSchema = new mongoose.Schema({
     quantity: String,
     consideration_text: String,
     balance_security_id: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockRepurchase = mongoose.model("StockRepurchase", StockRepurchaseSchema);

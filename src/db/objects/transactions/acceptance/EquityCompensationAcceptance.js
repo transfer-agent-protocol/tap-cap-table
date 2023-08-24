@@ -11,6 +11,10 @@ const EquityCompensationAcceptanceSchema = new mongoose.Schema({
     comments: [String],
     security_id: String,
     date: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const EquityCompensationAcceptance = mongoose.model("EquityCompensationAcceptance", EquityCompensationAcceptanceSchema);

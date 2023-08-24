@@ -1,13 +1,17 @@
 import { Router } from "express";
+import { v4 as uuid } from "uuid";
 import {
-    validateAndCreateStakeholder,
-    convertAndReflectStakeholderOnchain,
     addWalletToStakeholder,
-    removeWalletFromStakeholder,
+    convertAndReflectStakeholderOnchain,
     getStakeholderById,
     getTotalNumberOfStakeholders,
+    removeWalletFromStakeholder,
 } from "../db/controllers/stakeholderController.js"; // Importing the controller functions
-import { v4 as uuid } from "uuid";
+
+import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
+import { createStakeholder } from "../db/operations/create.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 const stakeholder = Router();
 
@@ -44,18 +48,30 @@ stakeholder.get("/total-number", async (req, res) => {
 /// @dev: stakeholder is always created onchain, then to the DB
 stakeholder.post("/create", async (req, res) => {
     const { contract } = req;
+    const { data, issuerId } = req.body;
 
     try {
-        const incomingStakeholder = {
-            _id: uuid(),
-            ...req.body,
+        const issuer = await readIssuerById(issuerId);
+
+        // OCF doesn't allow extra fields in their validation
+        const incomingStakeholderToValidate = {
+            id: uuid(),
+            object_type: "STAKEHOLDER",
+            ...data,
         };
 
-        // 2. create the event listener to verify it fired a new stakeholder created
-        await convertAndReflectStakeholderOnchain(contract, incomingStakeholder);
+        const incomingStakeholderForDB = {
+            ...incomingStakeholderToValidate,
+            issuer: issuer._id,
+        };
 
-        // importing req.body as a short cut, since we're validating it in the controller
-        const stakeholder = await validateAndCreateStakeholder(incomingStakeholder);
+        await validateInputAgainstOCF(incomingStakeholderToValidate, stakeholderSchema);
+
+        await convertAndReflectStakeholderOnchain(contract, incomingStakeholderForDB);
+
+        const stakeholder = await createStakeholder(incomingStakeholderForDB);
+
+        console.log("Stakeholder created offchain:", stakeholder);
 
         res.status(200).send({ stakeholder });
     } catch (error) {

@@ -11,6 +11,10 @@ const ValuationsSchema = new mongoose.Schema({
     stock_class_id: String,
     valuation_type: String,
     comments: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const Valuations = mongoose.model("Valuations", ValuationsSchema);

@@ -7,6 +7,10 @@ const ConvertibleAcceptanceSchema = new mongoose.Schema({
     comments: [String],
     security_id: String,
     date: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const ConvertibleAcceptance = mongoose.model("ConvertibleAcceptance", ConvertibleAcceptanceSchema);

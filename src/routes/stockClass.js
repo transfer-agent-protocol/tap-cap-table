@@ -1,11 +1,10 @@
 import { Router } from "express";
-import {
-    getStockClassById,
-    validateAndCreateStockClass,
-    getTotalNumberOfStockClasses,
-    convertAndReflectStockClassOnchain,
-} from "../db/controllers/stockClassController.js";
 import { v4 as uuid } from "uuid";
+import stockClassSchema from "../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
+import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../db/controllers/stockClassController.js";
+import { createStockClass } from "../db/operations/create.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 const stockClass = Router();
 
@@ -38,20 +37,31 @@ stockClass.get("/total-number", async (req, res) => {
     }
 });
 
-/// @dev: stock class is always added to the DB and created onchain in the same function.
-// Order to be determined.
+/// @dev: stock class is always created onchain, then to the DB
 stockClass.post("/create", async (req, res) => {
     const { contract } = req;
+    const { data, issuerId } = req.body;
 
     try {
-        const incomingStockClass = {
-            _id: uuid(),
-            ...req.body,
+        const issuer = await readIssuerById(issuerId);
+
+        // OCF doesn't allow extra fields in their validation
+        const incomingStockClassToValidate = {
+            id: uuid(),
+            object_type: "STOCK_CLASS",
+            ...data,
         };
 
-        await convertAndReflectStockClassOnchain(contract, incomingStockClass);
+        const incomingStockClassForDB = {
+            ...incomingStockClassToValidate,
+            issuer: issuer._id,
+        };
+        await validateInputAgainstOCF(incomingStockClassToValidate, stockClassSchema);
+        await convertAndReflectStockClassOnchain(contract, incomingStockClassForDB);
 
-        const stockClass = await validateAndCreateStockClass(incomingStockClass);
+        const stockClass = await createStockClass(incomingStockClassForDB);
+
+        console.log("Stock Class created offchain:", stockClass);
 
         res.status(200).send({ stockClass });
     } catch (error) {

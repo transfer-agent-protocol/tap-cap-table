@@ -8,6 +8,10 @@ const PlanSecurityRetractionSchema = new mongoose.Schema({
     security_id: String,
     date: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const PlanSecurityRetraction = mongoose.model("PlanSecurityRetraction", PlanSecurityRetractionSchema);

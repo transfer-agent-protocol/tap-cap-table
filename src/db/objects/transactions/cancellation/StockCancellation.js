@@ -10,6 +10,10 @@ const StockCancellationSchema = new mongoose.Schema({
     date: String,
     balance_security_id: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockCancellation = mongoose.model("StockCancellation", StockCancellationSchema);

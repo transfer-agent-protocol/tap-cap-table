@@ -12,6 +12,10 @@ const EquityCompensationExerciseSchema = new mongoose.Schema({
     date: String,
     consideration_text: String,
     resulting_security_ids: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const EquityCompensationExercise = mongoose.model("EquityCompensationExercise", EquityCompensationExerciseSchema);

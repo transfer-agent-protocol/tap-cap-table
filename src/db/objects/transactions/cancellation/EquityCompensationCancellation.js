@@ -12,6 +12,10 @@ const EquityCompensationCancellationSchema = new mongoose.Schema({
     date: String,
     balance_security_id: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const EquityCompensationCancellation = mongoose.model("EquityCompensationCancellation", EquityCompensationCancellationSchema);

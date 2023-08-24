@@ -7,6 +7,10 @@ const StockLegendTemplateSchema = new mongoose.Schema({
     name: String,
     text: String,
     comments: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockLegendTemplate = mongoose.model("StockLegendTemplate", StockLegendTemplateSchema);

@@ -10,6 +10,10 @@ const StockPlanReturnToPoolSchema = new mongoose.Schema({
     reason_text: String,
     quantity: String,
     stock_plan_id: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockPlanReturnToPool = mongoose.model("StockPlanReturnToPool", StockPlanReturnToPoolSchema);

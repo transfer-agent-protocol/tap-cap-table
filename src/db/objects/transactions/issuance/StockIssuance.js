@@ -22,6 +22,10 @@ const StockIssuanceSchema = new mongoose.Schema({
     stockholder_approval_date: String,
     consideration_text: String,
     security_law_exemptions: [{}],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockIssuance = mongoose.model("StockIssuance", StockIssuanceSchema);

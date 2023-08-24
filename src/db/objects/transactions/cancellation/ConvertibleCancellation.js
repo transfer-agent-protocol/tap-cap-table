@@ -10,6 +10,10 @@ const ConvertibleCancellationSchema = new mongoose.Schema({
     date: String,
     balance_security_id: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const ConvertibleCancellation = mongoose.model("ConvertibleCancellation", ConvertibleCancellationSchema);

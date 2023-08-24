@@ -9,6 +9,10 @@ const VestingTermsSchema = new mongoose.Schema({
     allocation_type: String,
     vesting_conditions: {},
     comments: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const VestingTerms = mongoose.model("VestingTerms", VestingTermsSchema);

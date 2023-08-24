@@ -10,6 +10,10 @@ const StockPlanPoolAdjustmentSchema = new mongoose.Schema({
     board_approval_date: String,
     stockholder_approval_date: String,
     shares_reserved: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockPlanPoolAdjustment = mongoose.model("StockPlanPoolAdjustment", StockPlanPoolAdjustmentSchema);

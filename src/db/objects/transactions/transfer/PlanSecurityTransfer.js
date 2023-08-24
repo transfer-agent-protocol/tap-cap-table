@@ -11,6 +11,10 @@ const PlanSecurityTransferSchema = new mongoose.Schema({
     consideration_text: String,
     balance_security_id: String,
     resulting_security_ids: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const PlanSecurityTransfer = mongoose.model("PlanSecurityTransfer", PlanSecurityTransferSchema);

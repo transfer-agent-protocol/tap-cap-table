@@ -86,9 +86,10 @@ const typeToModelType = {
     TX_VESTING_START: Vesting.VestingStart,
 };
 
-const addTransactions = async (inputTransactions) => {
+const addTransactions = async (inputTransactions, issuerId) => {
     if (inputTransactions.file_type === "OCF_TRANSACTIONS_FILE") {
-        for (const inputTransaction of inputTransactions.items) {
+        for (let inputTransaction of inputTransactions.items) {
+            inputTransaction = { ...inputTransaction, issuer: issuerId };
             const ModelType = typeToModelType[inputTransaction.object_type];
             if (ModelType) {
                 const transaction = await new ModelType(inputTransaction).save();
