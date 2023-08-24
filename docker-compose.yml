@@ -1,5 +1,15 @@
 version: '3.7'
+
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb_container
+
   mongodb_container:
     # This image automatically creates a replica set required for transactions
     image: mongo:latest
