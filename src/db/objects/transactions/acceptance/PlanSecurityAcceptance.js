@@ -7,6 +7,10 @@ const PlanSecurityAcceptanceSchema = new mongoose.Schema({
     comments: [String],
     security_id: String,
     date: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const PlanSecurityAcceptance = mongoose.model("PlanSecurityAcceptance", PlanSecurityAcceptanceSchema);

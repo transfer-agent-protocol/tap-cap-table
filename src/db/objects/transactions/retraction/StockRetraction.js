@@ -8,6 +8,10 @@ const StockRetractionSchema = new mongoose.Schema({
     security_id: String,
     date: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockRetraction = mongoose.model("StockRetraction", StockRetractionSchema);

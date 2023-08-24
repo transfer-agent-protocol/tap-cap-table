@@ -4,6 +4,7 @@ import valuationSchema from "../../ocf/schema/objects/Valuation.schema.json" ass
 import { createValuation } from "../db/operations/create.js";
 import { countValuations, readValuationById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 const valuation = Router();
 
@@ -32,16 +33,25 @@ valuation.get("/total-number", async (_, res) => {
     }
 });
 
+/// @dev: stock plan is currently only created offchain
 valuation.post("/create", async (req, res) => {
+    const { data, issuerId } = req.body;
     try {
-        const incomingValuation = {
+        const issuer = await readIssuerById(issuerId);
+
+        const incomingValuationToValidate = {
             id: uuid(),
             object_type: "VALUATION",
-            ...req.body,
+            ...data,
         };
 
-        await validateInputAgainstOCF(incomingValuation, valuationSchema);
-        const valuation = await createValuation(incomingValuation);
+        const incomingValuationForDB = {
+            ...incomingValuationToValidate,
+            issuer: issuer._id,
+        };
+
+        await validateInputAgainstOCF(incomingValuationToValidate, valuationSchema);
+        const valuation = await createValuation(incomingValuationForDB);
 
         console.log("Created Valuation in DB: ", valuation);
 

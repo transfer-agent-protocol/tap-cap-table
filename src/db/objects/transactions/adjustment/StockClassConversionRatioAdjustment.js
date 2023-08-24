@@ -8,6 +8,10 @@ const StockClassConversionRatioAdjustmentSchema = new mongoose.Schema({
     date: String,
     stock_class_id: String,
     new_ratio_conversion_mechanism: { type: mongoose.Schema.Types.Mixed },
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const StockClassConversionRatioAdjustment = mongoose.model("StockClassConversionRatioAdjustment", StockClassConversionRatioAdjustmentSchema);

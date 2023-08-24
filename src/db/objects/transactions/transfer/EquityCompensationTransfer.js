@@ -13,6 +13,10 @@ const EquityCompensationTransferSchema = new mongoose.Schema({
     consideration_text: String,
     balance_security_id: String,
     resulting_security_ids: [String],
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const EquityCompensationTransfer = mongoose.model("EquityCompensationTransfer", EquityCompensationTransferSchema);

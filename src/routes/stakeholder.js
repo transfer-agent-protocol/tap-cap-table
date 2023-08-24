@@ -11,6 +11,7 @@ import {
 import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
 import { createStakeholder } from "../db/operations/create.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 const stakeholder = Router();
 
@@ -47,19 +48,28 @@ stakeholder.get("/total-number", async (req, res) => {
 /// @dev: stakeholder is always created onchain, then to the DB
 stakeholder.post("/create", async (req, res) => {
     const { contract } = req;
+    const { data, issuerId } = req.body;
 
     try {
-        const incomingStakeholder = {
+        const issuer = await readIssuerById(issuerId);
+
+        // OCF doesn't allow extra fields in their validation
+        const incomingStakeholderToValidate = {
             id: uuid(),
             object_type: "STAKEHOLDER",
-            ...req.body,
+            ...data,
         };
 
-        await validateInputAgainstOCF(incomingStakeholder, stakeholderSchema);
+        const incomingStakeholderForDB = {
+            ...incomingStakeholderToValidate,
+            issuer: issuer._id,
+        };
 
-        await convertAndReflectStakeholderOnchain(contract, incomingStakeholder);
+        await validateInputAgainstOCF(incomingStakeholderToValidate, stakeholderSchema);
 
-        const stakeholder = await createStakeholder(incomingStakeholder);
+        await convertAndReflectStakeholderOnchain(contract, incomingStakeholderForDB);
+
+        const stakeholder = await createStakeholder(incomingStakeholderForDB);
 
         console.log("Stakeholder created offchain:", stakeholder);
 

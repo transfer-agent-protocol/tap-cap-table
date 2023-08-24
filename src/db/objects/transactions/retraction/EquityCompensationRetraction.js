@@ -10,6 +10,10 @@ const EquityCompensationRetractionSchema = new mongoose.Schema({
     security_id: String,
     date: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const EquityCompensationRetraction = mongoose.model("EquityCompensationRetraction", EquityCompensationRetractionSchema);

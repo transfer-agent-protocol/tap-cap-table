@@ -8,6 +8,10 @@ const WarrantRetractionSchema = new mongoose.Schema({
     security_id: String,
     date: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const WarrantRetraction = mongoose.model("WarrantRetraction", WarrantRetractionSchema);

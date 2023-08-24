@@ -10,6 +10,10 @@ const PlanSecurityCancellationSchema = new mongoose.Schema({
     quantity: String,
     balance_security_id: String,
     reason_text: String,
+    issuer: {
+        type: String,
+        ref: "Issuer",
+    },
 });
 
 const PlanSecurityCancellation = mongoose.model("PlanSecurityCancellation", PlanSecurityCancellationSchema);
