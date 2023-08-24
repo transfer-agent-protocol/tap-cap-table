@@ -34,6 +34,10 @@ async function startOnchainListeners(chain) {
 
     contract.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
+
+        // const quantity = toDecimal(stock.quantity);
+
+        // console.log("quantity", quantity);
     });
 
     // TODO: need a conversion from solidity types to OCF types.
@@ -42,7 +46,15 @@ async function startOnchainListeners(chain) {
     contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
-        const newStockDecimals = convertManyToDecimal(stock);
+        // const quantity = toDecimal(stock.quantity);
+        // const sharePrice = toDecimal(stock.share_price);
+
+        // console.log({ quantity, sharePrice });
+
+        // const id = convertBytes16ToUUID(stock.id);
+        // console.log("issuance ID converted ", id);
+
+        // const newStockDecimals = convertManyToDecimal(stock);
         // console.log("new stock decimals ", newStockDecimals);
         //const stockIssuance = convertBytes16ToUUID(newStockDecimals);
 

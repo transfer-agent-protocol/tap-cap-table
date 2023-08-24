@@ -1,6 +1,9 @@
 import { Router } from "express";
-import { validateAndCreateStockPlan } from "../db/controllers/stockPlanController.js";
+import { v4 as uuid } from "uuid";
+import stockPlanSchema from "../../ocf/schema/objects/StockPlan.schema.json" assert { type: "json" };
+import { createStockPlan } from "../db/operations/create.js";
 import { countStockPlans, readStockPlanById } from "../db/operations/read.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stockPlan = Router();
 
@@ -33,7 +36,16 @@ stockPlan.get("/total-number", async (_, res) => {
 /// @dev: stock plan is currently only created offchain
 stockPlan.post("/create", async (req, res) => {
     try {
-        const stockPlan = await validateAndCreateStockPlan(req.body);
+        const incomingStockPlan = {
+            id: uuid(),
+            object_type: "STOCK_PLAN",
+            ...req.body,
+        };
+
+        await validateInputAgainstOCF(incomingStockPlan, stockPlanSchema);
+        const stockPlan = await createStockPlan(incomingStockPlan);
+
+        console.log("Created Stock Plan in DB: ", stockPlan);
 
         res.status(200).send({ stockPlan });
     } catch (error) {

@@ -1,13 +1,16 @@
 import { Router } from "express";
+import { v4 as uuid } from "uuid";
 import {
-    validateAndCreateStakeholder,
-    convertAndReflectStakeholderOnchain,
     addWalletToStakeholder,
-    removeWalletFromStakeholder,
+    convertAndReflectStakeholderOnchain,
     getStakeholderById,
     getTotalNumberOfStakeholders,
+    removeWalletFromStakeholder,
 } from "../db/controllers/stakeholderController.js"; // Importing the controller functions
-import { v4 as uuid } from "uuid";
+
+import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
+import { createStakeholder } from "../db/operations/create.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stakeholder = Router();
 
@@ -47,15 +50,18 @@ stakeholder.post("/create", async (req, res) => {
 
     try {
         const incomingStakeholder = {
-            _id: uuid(),
+            id: uuid(),
+            object_type: "STAKEHOLDER",
             ...req.body,
         };
 
-        // 2. create the event listener to verify it fired a new stakeholder created
+        await validateInputAgainstOCF(incomingStakeholder, stakeholderSchema);
+
         await convertAndReflectStakeholderOnchain(contract, incomingStakeholder);
 
-        // importing req.body as a short cut, since we're validating it in the controller
-        const stakeholder = await validateAndCreateStakeholder(incomingStakeholder);
+        const stakeholder = await createStakeholder(incomingStakeholder);
+
+        console.log("Stakeholder created offchain:", stakeholder);
 
         res.status(200).send({ stakeholder });
     } catch (error) {
