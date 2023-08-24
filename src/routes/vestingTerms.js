@@ -4,6 +4,7 @@ import vestingTermsSchema from "../../ocf/schema/objects/VestingTerms.schema.jso
 import { createVestingTerms } from "../db/operations/create.js";
 import { countVestingTerms, readVestingTermsById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 const vestingTerms = Router();
 
@@ -35,15 +36,24 @@ vestingTerms.get("/total-number", async (_, res) => {
 });
 
 vestingTerms.post("/create", async (req, res) => {
+    const { data, issuerId } = req.body;
+
     try {
-        const incomingVestingTerms = {
+        const issuer = await readIssuerById(issuerId);
+
+        const incomingVestingTermsToValidate = {
             id: uuid(),
             object_type: "VESTING_TERMS",
-            ...req.body,
+            ...data,
         };
 
-        await validateInputAgainstOCF(incomingVestingTerms, vestingTermsSchema);
-        const vestingTerms = await createVestingTerms(incomingVestingTerms);
+        const incomingVestingTermsForDB = {
+            ...incomingVestingTermsToValidate,
+            issuer: issuer._id,
+        };
+
+        await validateInputAgainstOCF(incomingVestingTermsToValidate, vestingTermsSchema);
+        const vestingTerms = await createVestingTerms(incomingVestingTermsForDB);
 
         console.log("Created Vesting Terms in DB: ", vestingTerms);
 

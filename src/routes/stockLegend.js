@@ -4,6 +4,7 @@ import stockLegendSchema from "../../ocf/schema/objects/StockLegendTemplate.sche
 import { createStockLegendTemplate } from "../db/operations/create.js";
 import { countStockLegendTemplates, readStockLegendTemplateById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 const stockLegend = Router();
 
@@ -35,15 +36,23 @@ stockLegend.get("/total-number", async (_, res) => {
 
 /// @dev: stock legend is currently only created offchain
 stockLegend.post("/create", async (req, res) => {
+    const { data, issuerId } = req.body;
     try {
-        const incomingStockLegend = {
+        const issuer = await readIssuerById(issuerId);
+
+        const incomingStockLegendToValidate = {
             id: uuid(),
             object_type: "STOCK_LEGEND_TEMPLATE",
-            ...req.body,
+            ...data,
         };
 
-        await validateInputAgainstOCF(incomingStockLegend, stockLegendSchema);
-        const stockLegend = await createStockLegendTemplate(incomingStockLegend);
+        const incomingStockLegendForDB = {
+            ...incomingStockLegendToValidate,
+            issuer: issuer._id,
+        };
+
+        await validateInputAgainstOCF(incomingStockLegendToValidate, stockLegendSchema);
+        const stockLegend = await createStockLegendTemplate(incomingStockLegendForDB);
 
         console.log("Created Stock Legend in DB: ", stockLegend);
 
