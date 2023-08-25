@@ -97,7 +97,7 @@ We provide sample data to test the cap table. You can inspect and change it in [
 To seed the database, you'll need to run [Postman](https://www.postman.com/downloads/) and POST to this route:
 
 ```sh
-http://localhost:3000/add-poet-manifest-mint-cap-table
+http://localhost:8080/add-poet-manifest-mint-cap-table
 ```
 
 If you ever need to deseed the database, we provide a script that leaves the models and wipes the data:
