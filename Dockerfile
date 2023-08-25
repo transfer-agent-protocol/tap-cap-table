@@ -5,7 +5,7 @@ FROM node:18
 WORKDIR /app
 
 # Install curl and git
-RUN apt-get update && apt-get install -y curl git
+RUN apt-get update && apt-get install -y git
 
 # Install foundry
 RUN curl -L https://foundry.paradigm.xyz | bash
@@ -14,7 +14,7 @@ RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="/root/.foundry/bin:${PATH}"
 
 # Clone the git repository
-RUN git clone -b thibauld-docker-compose-file --recurse-submodules https://github.com/poet-network/tap-cap-table.git .
+RUN git clone -b --recurse-submodules https://github.com/poet-network/tap-cap-table.git .
 
 # Copy .env.example to .env in the root of the project
 RUN cp .env.example .env
