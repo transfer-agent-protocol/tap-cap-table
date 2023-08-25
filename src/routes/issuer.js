@@ -42,6 +42,7 @@ issuer.get("/total-number", async (req, res) => {
 });
 
 /// @dev: TODO: Issuer does not have confirmation flag on the DB because it's used  to seed
+// unsure if this route should exist or we should only onboard issuers via manifest due to how we're using the IssuerCreated event onchain.
 issuer.post("/create", async (req, res) => {
     const { chain } = req;
 
