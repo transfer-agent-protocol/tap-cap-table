@@ -4,7 +4,7 @@ import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDec
 import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 
 async function startOnchainListeners(chain) {
-    console.log("🌐| Initiating on-chain event listeners... Stand by.");
+    console.log("🌐| Initiating on-chain event listeners...");
 
     const { contract, provider } = await getContractInstance(chain);
 
