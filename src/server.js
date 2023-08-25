@@ -22,7 +22,7 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-const PORT = 3000;
+const PORT = 8080;
 const CHAIN = "local"; // TODO change this to prod or env style variable
 
 // Middlewares
