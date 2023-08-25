@@ -7,8 +7,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    env_file:
+      - ./.env
     depends_on:
       - mongodb_container
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   mongodb_container:
     # This image automatically creates a replica set required for transactions
