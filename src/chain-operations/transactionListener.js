@@ -2,6 +2,7 @@ import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -10,6 +11,18 @@ async function startOnchainListeners(chain) {
 
     contract.on("error", (error) => {
         console.error("Error:", error);
+    });
+
+    // Only used during seeding the DB.
+    contract.on("IssuerCreated", async (id, _) => {
+        console.log("IssuerCreated Event Emitted!", id);
+
+        const incomingIssuerId = convertBytes16ToUUID(id);
+        const issuer = await readIssuerById(incomingIssuerId);
+
+        // Create Stakeholders and StockClasses Onchain
+        // Eventually this will be extended to create Transactions as well
+        // TODO: currently skipping this to implement createMany for Stakeholders and StockClasses
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
