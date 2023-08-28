@@ -4,7 +4,6 @@ import { exec as originalExec } from "child_process";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import deployCapTable from "../chain-operations/deployCapTable.js";
 import addNotPoetToDB from "../db/scripts/seed.js";
-import { readIssuerById } from "../db/operations/read.js";
 
 const exec = promisify(originalExec);
 
@@ -16,7 +15,7 @@ router.get("/", async (req, res) => {
 
 /// @dev: POC to onboard a cap table via manifest and API
 // this is hardcoded for Poet's manifest files living in /db/samples, will need to be extended.
-router.post("/add-poet-manifest-mint-cap-table", async (req, res) => {
+router.post("/mint-cap-table", async (req, res) => {
     const { chain } = req;
     // First: validate the manifest against OCF
 
