@@ -1,6 +1,13 @@
 # Transfer Agent Protocol (TAP) Specification for a compliant cap table onchain
 
-This scaffold is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance.
+This scaffold is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active developemnt, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
+
+<div align="center">
+  <a href="https://github.com/poet-network/tap-cap-table/blob/main/LICENSE">
+    <img alt="GitHub" src="https://img.shields.io/github/license/poet-network/tap-cap-table
+">
+  </a>
+</div>
 
 ## Dependencies
 
@@ -92,15 +99,24 @@ anvil
 
 ## Seeding the cap table with sample data
 
-We provide sample data to test the cap table. You can inspect and change it in [/src/db/samples/notPoet](./src/db/samples/notPoet/). We provide you with a [Manifest.ocf.json](./src/db/samples/notPoet/Manifest.ocf.json) file with [Poet's](https://poet.network) actual cap table (some data is obviously fake). You can change it to your own startup if you want to test it.
+We provide sample data to test deploying the cap table onchain. You can inspect and change it in [/src/db/samples/notPoet](./src/db/samples/notPoet/), which contains [Manifest.ocf.json](./src/db/samples/notPoet/Manifest.ocf.json) file with [Poet's](https://poet.network) actual cap table, and some partial data in primary objects (stakeholders, stock classes, vesting terms, valuation, etc).
 
-To seed the database, you'll need to run [Postman](https://www.postman.com/downloads/) and POST to this route:
+You can change it to your own startup if you want to test it.
 
-```sh
-http://localhost:8080/add-poet-manifest-mint-cap-table
-```
+To seed the database, you'll need to
 
-If you ever need to deseed the database, we provide a script that leaves the models and wipes the data:
+1. Run [Postman](https://www.postman.com/downloads/)
+2. ZIP the [samples/notPoet](./src/db/samples/notPoet/) folder
+3. POST that ZIP file to the `http://localhost:8080/mint-cap-table` route in Postman as a form-data request with that file attached.
+
+This operation will perform several checks. If everything is in order, it will deploy the cap table onchain, and seed the database with the sample data.
+
+1. Check if the cap table is already deployed onchain. If it is, it will return an error
+2. Validate schema against [OCF](../ocf/schema/objects/), returned an error if it isn't valid
+3. Check if the cap table is already in the database. If it is, it will return an error
+4. Mint the cap table onchain if all checks pass, then save it to the Mongo DB instance.
+
+In developemnt and testing, you will need to deseed the database before you can seed it again. To do that, run:
 
 ```sh
 yarn deseed
