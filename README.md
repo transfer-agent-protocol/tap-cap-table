@@ -87,7 +87,7 @@ mongodb://tap:tap@localhost:27017/mongo?authSource=admin&retryWrites=true&w=majo
 
 ## Running Anvil
 
-This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to run the local blockchain and deploy our cap table smart contracts. At all times, you should have a local node running alongside Docker and nodemon.
+This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to run the local blockchain and deploy our cap table smart contracts. At all times, you should have Anvil running alongside Docker and nodemon.
 
 With the cap table instance running in Docker, and nodemon running the server, you can start Anvil.
 
