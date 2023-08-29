@@ -4,8 +4,7 @@ This scaffold is based on the [Open Cap Table Coalition](https://github.com/Open
 
 <div align="center">
   <a href="https://github.com/poet-network/tap-cap-table/blob/main/LICENSE">
-    <img alt="GitHub" src="https://img.shields.io/github/license/poet-network/tap-cap-table
-">
+    <img alt="License" src="https://img.shields.io/github/license/poet-network/tap-cap-table">
   </a>
 </div>
 
