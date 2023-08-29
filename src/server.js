@@ -9,6 +9,7 @@ import getContractInstance from "./chain-operations/getContractInstances.js";
 
 // Routes
 import mainRoutes from "./routes/index.js";
+import issuerRoutes from "./routes/issuer.js";
 import stakeholderRoutes from "./routes/stakeholder.js";
 import stockClassRoutes from "./routes/stockClass.js";
 import transactionRoutes from "./routes/transactions.js";
@@ -22,7 +23,7 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-const PORT = 3000;
+const PORT = 8080;
 const CHAIN = "local"; // TODO change this to prod or env style variable
 
 // Middlewares
@@ -43,6 +44,7 @@ app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
 
 app.use("/", chainMiddleware, mainRoutes);
+app.use("/issuer", chainMiddleware, contractMiddleware, issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
 // No middleware required since these are only created offchain

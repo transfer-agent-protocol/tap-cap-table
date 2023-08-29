@@ -11,13 +11,14 @@ async function getLocalContractInstance() {
     const CONTRACT_ADDRESS_LOCAL = "0x5fbdb2315678afecb367f032d93f642f64180aa3"; // fill in from capTableFactory
 
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
+    const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL;
 
     const customNetwork = {
         chainId: 31337,
         name: "local",
     };
 
-    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
+    const provider = new ethers.providers.JsonRpcProvider(LOCAL_RPC_URL, customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS_LOCAL, abi, wallet);
 
