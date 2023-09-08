@@ -46,6 +46,12 @@ async function startOnchainListeners(chain) {
     contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
+        // TODO: Victor to think about validation
+
+        // 1. convert all of the types into OCF types
+
+        // 2. Save the data into the database
+
         // const quantity = toDecimal(stock.quantity);
         // const sharePrice = toDecimal(stock.share_price);
 
