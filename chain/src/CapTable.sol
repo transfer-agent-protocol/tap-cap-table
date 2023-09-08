@@ -178,7 +178,7 @@ contract CapTable is Ownable {
         _transferStock(transfer);
 
         _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
-        _deleteActiveSecurityIdsByStockClass(stockClassId, transfereeStakeholderId);
+        _deleteActiveSecurityIdsByStockClass(stockClassId, transfereeStakeholderId, transferorSecurityId);
     }
 
     /// @notice Setter for walletsPerStakeholder mapping
@@ -271,7 +271,7 @@ contract CapTable is Ownable {
                 securities.pop();
             }
         }
-        
+
      }
 
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
