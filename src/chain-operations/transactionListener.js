@@ -3,6 +3,7 @@ import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 import { createStockIssuance } from "../db/operations/create.js";
+import { readStakeholderById } from "../db/operations/read.js";
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -45,7 +46,7 @@ async function startOnchainListeners(chain) {
     contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
-        // TODO(Victor): Think about data validation
+        // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
 
         const sharePriceOCF = {
             amount: toDecimal(stock.share_price).toString(),
@@ -53,13 +54,20 @@ async function startOnchainListeners(chain) {
         };
 
         const block = await provider.getBlock(event.blockNumber);
-        // Type represention of an ISO-8601 date, e.g. 2022-01-28
+        // Type represention of an ISO-8601 date, e.g. 2022-01-28.
+        // TODO: I think if we want to back date historial transactions we will need an option to either pass date or create new one from block
         const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
-        const costBasisOCF = { amount: toDecimal(stock.cost_basis).toString(), currency: "USD" }
-        const share_numbers_issuedOCF = [{
-            starting_share_number: toDecimal(stock.share_numbers_issued.starting_share_number).toString(),
-            ending_share_number: toDecimal(stock.share_numbers_issued.ending_share_number).toString()
-        }]
+        const costBasisOCF = { amount: toDecimal(stock.cost_basis).toString(), currency: "USD" };
+        const share_numbers_issuedOCF = [
+            {
+                starting_share_number: toDecimal(stock.share_numbers_issued.starting_share_number).toString(),
+                ending_share_number: toDecimal(stock.share_numbers_issued.ending_share_number).toString(),
+            },
+        ];
+
+        const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.stakeholder_id));
+
+        console.log("stakeholer ", stakeholder);
 
         const createdStockIssuance = await createStockIssuance({
             _id: convertBytes16ToUUID(stock.id),
@@ -76,12 +84,15 @@ async function startOnchainListeners(chain) {
             comments: stock.comments,
             security_id: convertBytes16ToUUID(stock.security_id),
             date: dateOCF,
-            custom_id: convertBytes16ToUUID(stock.custom_id), // is this uuid or custom id
-            stakeholder_id: convertBytes16ToUUID(stock.stakeholder_id),
+            custom_id: convertBytes16ToUUID(stock.custom_id), //TODO: is this uuid or custom id?
+            stakeholder_id: stakeholder._id,
             board_approval_date: stock.board_approval_date,
             stockholder_approval_date: stock.stockholder_approval_date,
             consideration_text: stock.consideration_text,
             security_law_exemptions: stock.security_law_exemptions,
+            // TAP Native Fields
+            issuer: stakeholder.issuer,
+            is_onchain_synced: true,
         });
 
         console.log("Stock created off-chain", createdStockIssuance);
