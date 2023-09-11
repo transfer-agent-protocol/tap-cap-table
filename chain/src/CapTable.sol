@@ -73,6 +73,78 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name);
     }
 
+    function transferStock(
+        bytes16 transferorStakeholderId,
+        bytes16 transfereeStakeholderId,
+        bytes16 stockClassId,
+        bool isBuyerVerified,
+        uint256 quantity,
+        uint256 share_price
+    ) external {
+        // Checks related to entities' existence
+        require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
+        require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        // Checks related to transaction validity
+        require(isBuyerVerified, "Buyer unverified");
+        require(quantity > 0, "Invalid quantity");
+        require(share_price > 0, "Invalid price");
+
+        require(activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId].length > 0, "No active security ids found");
+        bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId];
+
+        uint256 sum = 0;
+        uint256 numSecurityIds = 0;
+
+        for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
+            ActivePosition memory activePosition = activePositions[transferorStakeholderId][activeSecurityIDs[index]];
+            sum += activePosition.quantity;
+
+            if (sum >= quantity) {
+                numSecurityIds += 1;
+                break;
+            } else {
+                numSecurityIds += 1;
+            }
+        }
+
+        console.log("quantity ", quantity);
+        console.log("sum ", sum);
+
+        require(quantity > sum, "insufficient shares");
+
+        uint256 remainingQuantity = quantity; // This will keep track of the remaining quantity to be transferred
+
+        for (uint256 index = 0; index < numSecurityIds; index++) {
+            ActivePosition memory activePosition = activePositions[transferorStakeholderId][activeSecurityIDs[index]];
+
+            uint256 transferQuantity; // This will be the quantity to transfer in this iteration
+
+            if (activePosition.quantity <= remainingQuantity) {
+                transferQuantity = activePosition.quantity;
+            } else {
+                transferQuantity = remainingQuantity;
+            }
+
+            _transferSingleStock(
+                transferorStakeholderId,
+                transfereeStakeholderId,
+                stockClassId,
+                transferQuantity,
+                share_price,
+                activeSecurityIDs[index]
+            );
+
+            remainingQuantity -= transferQuantity; // Reduce the remaining quantity
+
+            // If there's no more quantity left to transfer, break out of the loop
+            if (remainingQuantity == 0) {
+                break;
+            }
+        }
+    }
+
     // can extend this to check that it's not issuing more than stock_class initial shares issued
     function issueStockByTA(
         bytes16 stockClassId,
@@ -119,68 +191,6 @@ contract CapTable is Ownable {
         );
     }
 
-    // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
-    function transferStockOwnership(
-        bytes16 transferorStakeholderId,
-        bytes16 transfereeStakeholderId,
-        bytes16 stockClassId,
-        bool isBuyerVerified,
-        uint256 quantity,
-        uint256 sharePrice
-    ) external onlyOwner {
-        // Checks related to entities' existence
-        require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
-        require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        // Checks related to transaction validity
-        require(isBuyerVerified, "Buyer unverified");
-        require(quantity > 0, "Invalid quantity");
-        require(sharePrice > 0, "Invalid price");
-
-        bytes16 transferorSecurityId = getFirstSecurityIdByStockClass(transferorStakeholderId, stockClassId);
-        ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
-
-        // Checks related to transfer feasibility
-        require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
-
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
-            transfereeStakeholderId,
-            quantity,
-            sharePrice,
-            stockClassId
-        );
-        _issueStock(transfereeIssuance);
-
-        uint256 remainingSharesForTransferor = transferorActivePosition.quantity - quantity;
-
-        bytes16 balance_security_id;
-
-        if (remainingSharesForTransferor > 0) {
-            StockIssuance memory transferorPostTransferIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                transferorStakeholderId,
-                remainingSharesForTransferor,
-                transferorActivePosition.share_price,
-                stockClassId
-            );
-            _issueStock(transferorPostTransferIssuance);
-            balance_security_id = transferorPostTransferIssuance.security_id;
-        } else {
-            balance_security_id = "";
-        }
-
-        StockTransfer memory transfer = TxHelper.createStockTransferStruct(
-            quantity,
-            transferorSecurityId,
-            transfereeIssuance.security_id,
-            balance_security_id
-        );
-        _transferStock(transfer);
-
-        _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
-        _deleteActiveSecurityIdsByStockClass(transferorStakeholderId , stockClassId, transferorSecurityId);
-    }
-
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
     function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
@@ -225,14 +235,6 @@ contract CapTable is Ownable {
         return walletsPerStakeholder[_wallet];
     }
 
-    function getFirstSecurityIdByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id) public view returns (bytes16 securityId) {
-        require(activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id].length > 0, "No active security ids found");
-        bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
-
-        // only getting first earliest active position for the stock class, for now.
-        return activeSecurityIDs[0];
-    }
-
     function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
         if (stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
@@ -262,16 +264,21 @@ contract CapTable is Ownable {
     function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
         delete activePositions[_stakeholder_id][_security_id];
     }
-        // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
+
+    // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
     function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
         bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
+        // TODO(Adam): reivew the following bug
+        // 1, (2), 3, 4 sId to remove is 2
+        // 1, 4, 3, 2
+        // 1, 4, 3
         for (uint256 index = 0; index < securities.length; index++) {
             if (_security_id == securities[index]) {
                 securities[index] = securities[securities.length - 1];
                 securities.pop();
             }
         }
-     }
+    }
 
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
         StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
@@ -297,5 +304,57 @@ contract CapTable is Ownable {
 
     function _safeNow() internal view returns (uint40) {
         return uint40(block.timestamp);
+    }
+
+    // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
+    function _transferSingleStock(
+        bytes16 transferorStakeholderId,
+        bytes16 transfereeStakeholderId,
+        bytes16 stockClassId,
+        uint256 quantity,
+        uint256 sharePrice,
+        bytes16 securityId
+    ) internal onlyOwner {
+        bytes16 transferorSecurityId = securityId;
+        ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
+
+        // Checks related to transfer feasibility
+        require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
+
+        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
+            transfereeStakeholderId,
+            quantity,
+            sharePrice,
+            stockClassId
+        );
+        _issueStock(transfereeIssuance);
+
+        uint256 remainingSharesForTransferor = transferorActivePosition.quantity - quantity;
+
+        bytes16 balance_security_id;
+
+        if (remainingSharesForTransferor > 0) {
+            StockIssuance memory transferorPostTransferIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                transferorStakeholderId,
+                remainingSharesForTransferor,
+                transferorActivePosition.share_price,
+                stockClassId
+            );
+            _issueStock(transferorPostTransferIssuance);
+            balance_security_id = transferorPostTransferIssuance.security_id;
+        } else {
+            balance_security_id = "";
+        }
+
+        StockTransfer memory transfer = TxHelper.createStockTransferStruct(
+            quantity,
+            transferorSecurityId,
+            transfereeIssuance.security_id,
+            balance_security_id
+        );
+        _transferStock(transfer);
+
+        _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
+        _deleteActiveSecurityIdsByStockClass(transferorStakeholderId, stockClassId, transferorSecurityId);
     }
 }
