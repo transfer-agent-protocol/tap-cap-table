@@ -26,6 +26,7 @@ const StockIssuanceSchema = new mongoose.Schema({
         type: String,
         ref: "Issuer",
     },
+    is_onchain_synced: { type: Boolean, default: false },
 });
 
 const StockIssuance = mongoose.model("StockIssuance", StockIssuanceSchema);
