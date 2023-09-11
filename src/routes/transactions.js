@@ -3,20 +3,24 @@ import { v4 as uuid } from "uuid";
 import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
 import { convertAndCreateIssuanceStockOnchain } from "../db/controllers/transactions/issuanceController.js";
 import { convertAndCreateTransferStockOnchain } from "../db/controllers/transactions/transferController.js";
+import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const transactions = Router();
 
 transactions.post("/issuance/stock", async (req, res) => {
     const { contract } = req;
+    const { issuerId, data } = req.body;
 
     try {
+        const issuer = await readIssuerById(issuerId);
+
         const incomingStockIssuance = {
             id: uuid(),
             security_id: uuid(),
             date: new Date().toISOString().slice(0, 10),
             object_type: "TX_STOCK_ISSUANCE",
-            ...req.body,
+            ...data,
         };
 
         await validateInputAgainstOCF(incomingStockIssuance, stockIssuanceSchema);
