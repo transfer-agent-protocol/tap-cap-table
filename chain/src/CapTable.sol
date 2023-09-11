@@ -58,7 +58,7 @@ contract CapTable is Ownable {
     // stakeholder_id -> stock_class_id -> security_ids
     mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
     // stakeholder_id -> security_id -> ActivePosition
-    mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions;
+    mapping(bytes16 => mapping(bytes16 => ActivePosition)) public activePositions;
     // wallet address => stakeholder_id
     mapping(address => bytes16) walletsPerStakeholder;
 
@@ -112,7 +112,7 @@ contract CapTable is Ownable {
         console.log("quantity ", quantity);
         console.log("sum ", sum);
 
-        require(quantity > sum, "insufficient shares");
+        require(quantity <= sum, "insufficient shares");
 
         uint256 remainingQuantity = quantity; // This will keep track of the remaining quantity to be transferred
 
