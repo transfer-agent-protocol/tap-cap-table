@@ -5,6 +5,7 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 
 export const createIssuer = (issuerData) => {
     const issuer = new Issuer(issuerData);
@@ -40,3 +41,8 @@ export const createVestingTerms = (vestingTermsData) => {
     const vestingTerms = new VestingTerms(vestingTermsData);
     return vestingTerms.save();
 };
+
+export const createStockIssuance = (stockIssuanceData) => {
+    const stockIssuance = new StockIssuance(stockIssuanceData);
+    return stockIssuance.save();
+}
