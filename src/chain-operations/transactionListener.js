@@ -37,8 +37,8 @@ async function startOnchainListeners(chain) {
     contract.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
+        // TODO(Adam): create stock transfer off chain
         // const quantity = toDecimal(stock.quantity);
-
         // console.log("quantity", quantity);
     });
 
