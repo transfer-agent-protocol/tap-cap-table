@@ -1,9 +1,13 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
-import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
+import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 import { createStockIssuance } from "../db/operations/create.js";
-import { readStakeholderById } from "../db/operations/read.js";
+import { readStakeholderById, getAllIssuerDataById} from "../db/operations/read.js";
+import { convertAndReflectStakeholderOnchain } from '../db/controllers/stakeholderController.js'
+import { convertAndReflectStockClassOnchain } from '../db/controllers/stockClassController.js'
+import { convertAndCreateIssuanceStockOnchain } from '../db/controllers/transactions/issuanceController.js'
+import { convertAndCreateTransferStockOnchain } from '../db/controllers/transactions/transferController.js'
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -12,6 +16,25 @@ async function startOnchainListeners(chain) {
 
     contract.on("error", (error) => {
         console.error("Error:", error);
+    });
+
+    contract.on("IssuerCreated", async (_id) => {
+        console.log("IssuerCreated Event Emitted!", id);
+        const {
+            stakeholders,
+            stockClasses,
+            stockIssuances,
+            stockTransfers
+        } = await getAllIssuerDataById(_id)
+
+        // iterate through stakholders, stock-classes stock issuance and transfers
+        /*
+        for(const stakeholder of stakeholders) await convertAndReflectStakeholderOnchain(stakeholder)
+        for(const stockClass of stockClasses) await convertAndReflectStockClassOnchain(stockClass)
+        for(const stockIssuance of stockIssuances) await convertAndCreateIssuanceStockOnchain (stockIssuance)
+        for(const stockTransfer of stockTransfers) await convertAndCreateTransferStockOnchain (stockTransfer)
+        */
+
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -66,6 +89,10 @@ async function startOnchainListeners(chain) {
         ];
 
         const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.stakeholder_id));
+        if(!stakeholder) {
+            console.log("stakeholder is null");
+            return;
+        }
 
         console.log("stakeholer ", stakeholder);
 
