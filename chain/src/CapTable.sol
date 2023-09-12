@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "openzeppelin-contracts/contracts/utils/Arrays.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
@@ -262,16 +263,15 @@ contract CapTable is Ownable {
     function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
         delete activePositions[_stakeholder_id][_security_id];
     }
-        // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
+
+    // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
     function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
         bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
-        for (uint256 index = 0; index < securities.length; index++) {
-            if (_security_id == securities[index]) {
-                securities[index] = securities[securities.length - 1];
-                securities.pop();
-            }
+        uint256 index = Arrays.indexOf(securities, _security_id);
+        if (index != uint256(-1)) {
+            Arrays.remove(securities, index);
         }
-     }
+    }
 
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
         StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
