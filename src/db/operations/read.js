@@ -5,6 +5,8 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
+import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
 
 // READ By ID
 export const readIssuerById = async (id) => {
@@ -77,3 +79,17 @@ export const countVestingTerms = async () => {
     const totalVestingTerms = await VestingTerms.countDocuments();
     return totalVestingTerms;
 };
+
+export const getAllIssuerDataById = async (issuerId) => {
+    const issuerStakeholders = await Stakeholder.find({ issuerId: issuerId });
+    const issuerStockClasses = await StockClass.find({ issuerId: issuerId });
+    const issuerStockIssuances = await StockIssuance.find({ issuerId: issuerId });
+    const issuerStockTransfers = await StockTransfer.find({ issuerId: issuerId });
+
+    return {
+        stakeholders: issuerStakeholders,
+        stockClasses: issuerStockClasses,
+        stockIssuances: issuerStockIssuances,
+        stockTransfers: issuerStockTransfers
+    };
+}
