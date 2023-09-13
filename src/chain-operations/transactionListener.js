@@ -4,6 +4,7 @@ import { updateStakeholderById, updateStockClassById } from "../db/operations/up
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import getContractInstance from "./getContractInstances.js";
+import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -37,6 +38,10 @@ async function startOnchainListeners(chain) {
     contract.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
+        const securityUUID = await convertBytes16ToUUID(stock.security_id);
+
+        const previousIssuance = await StockIssuance.find({ security_id: securityUUID });
+
         const createdStockTransfer = await createdStockTransfer({
             _id: convertBytes16ToUUID(stock.id),
             object_type: stock.object_type,
@@ -47,7 +52,7 @@ async function startOnchainListeners(chain) {
             balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
             resulting_security_ids: convertBytes16ToUUID(stock.resulting_security_ids),
             // TAP Native Fields
-            issuer: stakeholder.issuer, // TODO: how do we know the issuer?
+            issuer: previousIssuance.issuer,
             is_onchain_synced: true,
         });
 
