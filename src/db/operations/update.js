@@ -5,6 +5,7 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 
 export const updateIssuerById = async (id, updatedData) => {
     const issuer = await Issuer.findByIdAndUpdate(id, updatedData, { new: true });
@@ -39,4 +40,9 @@ export const updateValuationById = async (id, updatedData) => {
 export const updateVestingTermsById = async (id, updatedData) => {
     const vestingTerms = await VestingTerms.findByIdAndUpdate(id, updatedData, { new: true });
     return vestingTerms;
+};
+
+export const upsertStockIssuance= async (id, data) => {
+    const issuer = await StockIssuance.findByIdAndUpdate(id, data, { new: true });
+    return issuer;
 };
