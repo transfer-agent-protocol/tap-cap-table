@@ -1,5 +1,6 @@
 import { convertUUIDToBytes16 } from "../../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../../utils/convertToFixedPointDecimals.js";
+import { BigNumber } from "ethers";
 
 const checkIssuanceValues = (issuance) => {
     return {
@@ -43,7 +44,7 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
         consideration_text,
         security_law_exemptions,
     } = checkedValues;
-
+    console.log({ checkedValues });
     // First: convert OCF Types to Onchain Types
     const stakeholderIdBytes16 = convertUUIDToBytes16(stakeholder_id);
     const stockClassIdBytes16 = convertUUIDToBytes16(stock_class_id);
@@ -51,23 +52,28 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
     const stockPlanIdBytes16 = convertUUIDToBytes16(stock_plan_id);
     const quantityScaled = toScaledBigNumber(quantity);
     const sharePriceScaled = toScaledBigNumber(share_price.amount);
+    const costBasisScaled = toScaledBigNumber(cost_basis.amount);
+    const shareNumbersIssuedScaled = {
+        starting_share_number: toScaledBigNumber(0),
+        ending_share_number: toScaledBigNumber(0),
+    }
 
-    let StockLegendIdsBytes16 = [];
+    let stockLegendIdsBytes16 = [];
     for (const legendId of stock_legend_ids) {
         const legendIdBytes16 = convertUUIDToBytes16(legendId);
-        StockLegendIdsBytes16.push(legendIdBytes16);
+        stockLegendIdsBytes16.push(legendIdBytes16);
     }
 
     // Second: create issuance onchain
     const tx = await contract.issueStockByTA(
         stockClassIdBytes16,
         stockPlanIdBytes16,
-        share_numbers_issued, // not converted
+        shareNumbersIssuedScaled, // not converted
         sharePriceScaled,
         quantityScaled,
         vestingTermsBytes16,
-        cost_basis, // not converted
-        StockLegendIdsBytes16,
+        costBasisScaled , // not converted
+        stockLegendIdsBytes16,
         issuance_type,
         comments,
         custom_id,
