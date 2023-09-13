@@ -1,9 +1,9 @@
-import getContractInstance from "./getContractInstances.js";
-import { convertBytes16ToUUID } from "../utils/convertUUID.js";
-import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 import { createStockIssuance } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
+import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
+import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
+import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import getContractInstance from "./getContractInstances.js";
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -37,9 +37,21 @@ async function startOnchainListeners(chain) {
     contract.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
-        // const quantity = toDecimal(stock.quantity);
+        const createdStockTransfer = await createdStockTransfer({
+            _id: convertBytes16ToUUID(stock.id),
+            object_type: stock.object_type,
+            quantity: toDecimal(stock.quantity).toString(),
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            consideration_text: stock.consideration_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+            resulting_security_ids: convertBytes16ToUUID(stock.resulting_security_ids),
+            // TAP Native Fields
+            issuer: stakeholder.issuer, // TODO: how do we know the issuer?
+            is_onchain_synced: true,
+        });
 
-        // console.log("quantity", quantity);
+        console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
     });
 
     // @dev events return both an array and object, depending how you want to access. We're using objects
@@ -47,7 +59,6 @@ async function startOnchainListeners(chain) {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
         // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
-
         const sharePriceOCF = {
             amount: toDecimal(stock.share_price).toString(),
             currency: "USD",
@@ -66,8 +77,6 @@ async function startOnchainListeners(chain) {
         ];
 
         const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.stakeholder_id));
-
-        console.log("stakeholer ", stakeholder);
 
         const createdStockIssuance = await createStockIssuance({
             _id: convertBytes16ToUUID(stock.id),
@@ -95,7 +104,7 @@ async function startOnchainListeners(chain) {
             is_onchain_synced: true,
         });
 
-        console.log("Stock created off-chain", createdStockIssuance);
+        console.log("Stock Issuance reflected and validated offchain", createdStockIssuance);
     });
 }
 

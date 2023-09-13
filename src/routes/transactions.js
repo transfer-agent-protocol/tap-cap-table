@@ -37,19 +37,14 @@ transactions.post("/issuance/stock", async (req, res) => {
 // WIP
 transactions.post("/transfer/stock", async (req, res) => {
     const { contract } = req;
+    const { issuerId, data } = req.body;
 
     try {
-        const incomingStockTransfer = {
-            id: uuid(),
-            security_id: uuid(),
-            date: new Date().toISOString().slice(0, 10),
-            object_type: "TX_STOCK_TRANSFER",
-            ...req.body,
-        };
+        const issuer = await readIssuerById(issuerId);
 
         // Transfer Validation is not possible through schema because it validates that the transfer has occurred,at this stage it has not yet.
 
-        await convertAndCreateTransferStockOnchain(contract, req.body);
+        await convertAndCreateTransferStockOnchain(contract, data);
 
         res.status(200).send("success");
     } catch (error) {

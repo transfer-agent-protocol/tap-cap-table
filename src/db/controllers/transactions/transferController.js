@@ -12,7 +12,7 @@ export const convertAndCreateTransferStockOnchain = async (contract, transfer) =
     const quantityScaled = toScaledBigNumber(quantity);
     const sharePriceScaled = toScaledBigNumber(sharePrice);
 
-    const tx = await contract.transferStockOwnership(
+    const tx = await contract.transferStock(
         transferorIdBytes16,
         transfereeIdBytes16,
         stockClassIdBytes16,
