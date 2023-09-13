@@ -81,10 +81,10 @@ export const countVestingTerms = async () => {
 };
 
 export const getAllIssuerDataById = async (issuerId) => {
-    const issuerStakeholders = await Stakeholder.find({ issuerId: issuerId });
-    const issuerStockClasses = await StockClass.find({ issuerId: issuerId });
-    const issuerStockIssuances = await StockIssuance.find({ issuerId: issuerId });
-    const issuerStockTransfers = await StockTransfer.find({ issuerId: issuerId });
+    const issuerStakeholders = await Stakeholder.find({ issuer: issuerId });
+    const issuerStockClasses = await StockClass.find({ issuer: issuerId });
+    const issuerStockIssuances = await StockIssuance.find({ issuer: issuerId });
+    const issuerStockTransfers = await StockTransfer.find({ issuer: issuerId });
 
     return {
         stakeholders: issuerStakeholders,
