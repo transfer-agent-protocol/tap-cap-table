@@ -29,7 +29,6 @@ async function startOnchainListeners(chain) {
             stockTransfers,
         });
 
-        // iterate through stakeholders, stock-classes stock issuance and transfers
         for (const stakeholder of stakeholders) {
             stakeholder.id = stakeholder._id;
 
@@ -43,16 +42,28 @@ async function startOnchainListeners(chain) {
             stockClass.id = stockClass._id;
             await convertAndReflectStockClassOnchain(contract, stockClass);
         }
-        for (const stockIssuance of stockIssuances) {
+        // Extracting the security IDs from stockTransfers
+        const resultingSecurityIds = stockTransfers.map(transfer => transfer['resulting-security_ids']).flat();
+        const balanceSecurityIds = stockTransfers.map(transfer => transfer['balance_security_id']);
+
+        // Combining and deduplicating the security IDs
+        const allRelevantSecurityIds = [...new Set([...resultingSecurityIds, ...balanceSecurityIds])];
+
+        const filteredStockIssuances = stockIssuances.filter(issuance => !allRelevantSecurityIds.includes(issuance.security_id));
+        const other = stockIssuances.map(s => s.security_id).filter(issuance => allRelevantSecurityIds.includes(issuance.security_id));
+
+        console.log({filteredStockIssuances, other})
+        // Processing the filtered stockIssuances
+        for (const stockIssuance of filteredStockIssuances) {
             stockIssuance.id = stockIssuance._id;
+
+            console.log(`Creating stock Issuance ${stockIssuance.id} on-chain`)
             await convertAndCreateIssuanceStockOnchain(contract, stockIssuance);
         }
+
         for (const stockTransfer of stockTransfers) {
-            console.log('security_id', stockTransfer.security_id)
             const transferrorStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id})
-            const transfereeStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id})
-// this can cause problem if we have multiple transferee
-            console.log({ transferrorStockIssuance, transfereeStockIssuance })
+            const transfereeStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id}) // this can cause problem if we have multiple transferee
             const transfer = {
                 quantity: stockTransfer.quantity,
                 isBuyerVerified: true,
