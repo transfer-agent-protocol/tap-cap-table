@@ -1,8 +1,8 @@
-import ethers, { utils } from "ethers";
+import ethers, { BigNumber } from "ethers";
 
 // Convert a price to a BigNumber
 function toScaledBigNumber(price) {
-    return ethers.BigNumber.from(Math.round(price * 1e10).toString());
+    return BigNumber.from(Math.round(price * 1e10).toString());
 }
 
 // Convert a BigNumber back to a decimal price

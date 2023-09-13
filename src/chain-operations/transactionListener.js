@@ -1,13 +1,13 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
-import { createStockIssuance } from "../db/operations/create.js";
-import { readStakeholderById, getAllIssuerDataById} from "../db/operations/read.js";
-import { convertAndReflectStakeholderOnchain } from '../db/controllers/stakeholderController.js'
-import { convertAndReflectStockClassOnchain } from '../db/controllers/stockClassController.js'
-import { convertAndCreateIssuanceStockOnchain } from '../db/controllers/transactions/issuanceController.js'
-import { convertAndCreateTransferStockOnchain } from '../db/controllers/transactions/transferController.js'
+import { updateStakeholderById, updateStockClassById, upsertStockIssuance  } from "../db/operations/update.js";
+import { readStakeholderById, getAllIssuerDataById } from "../db/operations/read.js";
+import { convertAndReflectStakeholderOnchain } from "../db/controllers/stakeholderController.js";
+import { convertAndReflectStockClassOnchain } from "../db/controllers/stockClassController.js";
+import { convertAndCreateIssuanceStockOnchain } from "../db/controllers/transactions/issuanceController.js";
+import { convertAndCreateTransferStockOnchain } from "../db/controllers/transactions/transferController.js";
+import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -18,23 +18,53 @@ async function startOnchainListeners(chain) {
         console.error("Error:", error);
     });
 
-    contract.on("IssuerCreated", async (_id) => {
+    contract.on("IssuerCreated", async (id) => {
         console.log("IssuerCreated Event Emitted!", id);
-        const {
+        const uuid = convertBytes16ToUUID(id);
+        const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
+        console.log({
             stakeholders,
             stockClasses,
             stockIssuances,
-            stockTransfers
-        } = await getAllIssuerDataById(_id)
+            stockTransfers,
+        });
 
-        // iterate through stakholders, stock-classes stock issuance and transfers
-        /*
-        for(const stakeholder of stakeholders) await convertAndReflectStakeholderOnchain(stakeholder)
-        for(const stockClass of stockClasses) await convertAndReflectStockClassOnchain(stockClass)
-        for(const stockIssuance of stockIssuances) await convertAndCreateIssuanceStockOnchain (stockIssuance)
-        for(const stockTransfer of stockTransfers) await convertAndCreateTransferStockOnchain (stockTransfer)
-        */
+        // iterate through stakeholders, stock-classes stock issuance and transfers
+        for (const stakeholder of stakeholders) {
+            stakeholder.id = stakeholder._id;
 
+            // hacky way of setting current_relationship
+            if (!stakeholder.current_relationship) {
+                stakeholder.current_relationship = "";
+            }
+            await convertAndReflectStakeholderOnchain(contract, stakeholder);
+        }
+        for (const stockClass of stockClasses) {
+            stockClass.id = stockClass._id;
+            await convertAndReflectStockClassOnchain(contract, stockClass);
+        }
+        for (const stockIssuance of stockIssuances) {
+            stockIssuance.id = stockIssuance._id;
+            await convertAndCreateIssuanceStockOnchain(contract, stockIssuance);
+        }
+        for (const stockTransfer of stockTransfers) {
+            console.log('security_id', stockTransfer.security_id)
+            const transferrorStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id})
+            const transfereeStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id})
+// this can cause problem if we have multiple transferee
+            console.log({ transferrorStockIssuance, transfereeStockIssuance })
+            const transfer = {
+                quantity: stockTransfer.quantity,
+                isBuyerVerified: true,
+                transferorId: transferrorStockIssuance.stakeholder_id,
+                transfereeId: transfereeStockIssuance.stakeholder_id,
+                stockClassId: transferrorStockIssuance.stock_class_id,
+                sharePrice: transferrorStockIssuance.share_price.amount,
+            }
+
+            await convertAndCreateTransferStockOnchain(contract, transfer);
+        }
+        console.log(`Completed Seeding issuer ${uuid} on chain`)
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -89,14 +119,14 @@ async function startOnchainListeners(chain) {
         ];
 
         const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.stakeholder_id));
-        if(!stakeholder) {
+        if (!stakeholder) {
             console.log("stakeholder is null");
             return;
         }
 
         console.log("stakeholer ", stakeholder);
 
-        const createdStockIssuance = await createStockIssuance({
+        const createdStockIssuance = await upsertStockIssuance({
             _id: convertBytes16ToUUID(stock.id),
             object_type: stock.object_type,
             stock_class_id: convertBytes16ToUUID(stock.stock_class_id),
