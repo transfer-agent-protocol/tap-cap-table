@@ -1,7 +1,7 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { updateStakeholderById, updateStockClassById, upsertStockIssuance  } from "../db/operations/update.js";
+import { updateStakeholderById, updateStockClassById, upsertStockIssuanceBySecId  } from "../db/operations/update.js";
 import { readStakeholderById, getAllIssuerDataById } from "../db/operations/read.js";
 import { convertAndReflectStakeholderOnchain } from "../db/controllers/stakeholderController.js";
 import { convertAndReflectStockClassOnchain } from "../db/controllers/stockClassController.js";
@@ -43,27 +43,29 @@ async function startOnchainListeners(chain) {
             await convertAndReflectStockClassOnchain(contract, stockClass);
         }
         // Extracting the security IDs from stockTransfers
-        const resultingSecurityIds = stockTransfers.map(transfer => transfer['resulting-security_ids']).flat();
-        const balanceSecurityIds = stockTransfers.map(transfer => transfer['balance_security_id']);
+        const resultingSecurityIds = stockTransfers.map(transfer => transfer.resulting_security_ids[0])
+        const balanceSecurityIds = stockTransfers.map(transfer => transfer.balance_security_id);
 
         // Combining and deduplicating the security IDs
         const allRelevantSecurityIds = [...new Set([...resultingSecurityIds, ...balanceSecurityIds])];
 
         const filteredStockIssuances = stockIssuances.filter(issuance => !allRelevantSecurityIds.includes(issuance.security_id));
-        const other = stockIssuances.map(s => s.security_id).filter(issuance => allRelevantSecurityIds.includes(issuance.security_id));
 
-        console.log({filteredStockIssuances, other})
-        // Processing the filtered stockIssuances
+        console.log({
+            allRelevantSecurityIds: Array.from(allRelevantSecurityIds),
+            all:stockIssuances.map(i => i.security_id),
+            filter: filteredStockIssuances.map(i => i.security_id),
+            other:stockIssuances.map(i => i.security_id).filter(e => allRelevantSecurityIds.includes(e))
+        })
         for (const stockIssuance of filteredStockIssuances) {
             stockIssuance.id = stockIssuance._id;
 
-            console.log(`Creating stock Issuance ${stockIssuance.id} on-chain`)
             await convertAndCreateIssuanceStockOnchain(contract, stockIssuance);
         }
 
         for (const stockTransfer of stockTransfers) {
             const transferrorStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id})
-            const transfereeStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id}) // this can cause problem if we have multiple transferee
+            const transfereeStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.resulting_security_ids[0] })
             const transfer = {
                 quantity: stockTransfer.quantity,
                 isBuyerVerified: true,
@@ -137,7 +139,11 @@ async function startOnchainListeners(chain) {
 
         console.log("stakeholer ", stakeholder);
 
-        const createdStockIssuance = await upsertStockIssuance({
+        const security_id = convertBytes16ToUUID(stock.security_id)
+        // find stock issuance by security
+            // if exists update it
+            //  else create a new one
+        const createdStockIssuance = await upsertStockIssuanceBySecId(security_id, {
             _id: convertBytes16ToUUID(stock.id),
             object_type: stock.object_type,
             stock_class_id: convertBytes16ToUUID(stock.stock_class_id),
@@ -150,7 +156,7 @@ async function startOnchainListeners(chain) {
             stock_legend_ids: convertBytes16ToUUID(stock.stock_legend_ids),
             issuance_type: stock.issuance_type,
             comments: stock.comments,
-            security_id: convertBytes16ToUUID(stock.security_id),
+            security_id,
             date: dateOCF,
             custom_id: convertBytes16ToUUID(stock.custom_id), //TODO: is this uuid or custom id?
             stakeholder_id: stakeholder._id,
