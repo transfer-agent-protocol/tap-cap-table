@@ -59,6 +59,7 @@ library TxHelper {
             );
     }
 
+    // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
     function createStockIssuanceStructForTransfer(
         bytes16 stakeholderId,
         uint256 quantity,
