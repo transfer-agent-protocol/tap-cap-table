@@ -6,6 +6,7 @@ import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
 import "./lib/TxHelper.sol";
+import "./lib/Arrays.sol";
 
 import "forge-std/console.sol";
 
@@ -268,15 +269,10 @@ contract CapTable is Ownable {
     // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
     function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
         bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
-        // TODO(Adam): reivew the following bug
-        // 1, (2), 3, 4 sId to remove is 2
-        // 1, 4, 3, 2
-        // 1, 4, 3
-        for (uint256 index = 0; index < securities.length; index++) {
-            if (_security_id == securities[index]) {
-                securities[index] = securities[securities.length - 1];
-                securities.pop();
-            }
+        
+        uint256 index = Arrays.find(securities, _security_id);
+        if (index != type(uint256).max) {
+            Arrays.remove(securities, index);
         }
     }
 
