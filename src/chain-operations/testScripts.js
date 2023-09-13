@@ -7,7 +7,7 @@ import { convertAndCreateTransferStockOnchain } from "../db/controllers/transact
 const stakeholder1 = {
     id: "cce8f63e-8b20-4e50-ac68-ef8fd720cd8d",
     name: {
-        legal_name: "V Momen",
+        legal_name: "Adam Momen",
         first_name: "Adam",
         last_name: "Momen",
     },
@@ -20,9 +20,9 @@ const stakeholder1 = {
 const stakeholder2 = {
     id: "aceb81e6-2d19-4ef2-ac53-05ff210d3509",
     name: {
-        legal_name: "V Momen",
-        first_name: "Adam",
-        last_name: "Momen",
+        legal_name: "Victor Mimo",
+        first_name: "Victor",
+        last_name: "Mimo",
     },
     issuer_assigned_id: "",
     stakeholder_type: "INDIVIDUAL",
