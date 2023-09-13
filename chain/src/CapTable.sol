@@ -77,7 +77,7 @@ contract CapTable is Ownable {
     function transferStock(
         bytes16 transferorStakeholderId,
         bytes16 transfereeStakeholderId,
-        bytes16 stockClassId,
+        bytes16 stockClassId, // TODO: verify that we would have fong would have the stock class
         bool isBuyerVerified,
         uint256 quantity,
         uint256 share_price
@@ -269,7 +269,7 @@ contract CapTable is Ownable {
     // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
     function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
         bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
-        
+
         uint256 index = Arrays.find(securities, _security_id);
         if (index != type(uint256).max) {
             Arrays.remove(securities, index);
@@ -285,7 +285,7 @@ contract CapTable is Ownable {
             issuance.stock_class_id,
             issuance.quantity,
             issuance.share_price,
-            _safeNow()
+            _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
         );
 
         transactions.push(address(issuanceTx));
@@ -325,19 +325,19 @@ contract CapTable is Ownable {
         );
         _issueStock(transfereeIssuance);
 
-        uint256 remainingSharesForTransferor = transferorActivePosition.quantity - quantity;
+        uint256 balanceForTransferor = transferorActivePosition.quantity - quantity;
 
         bytes16 balance_security_id;
 
-        if (remainingSharesForTransferor > 0) {
-            StockIssuance memory transferorPostTransferIssuance = TxHelper.createStockIssuanceStructForTransfer(
+        if (balanceForTransferor > 0) {
+            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferorStakeholderId,
-                remainingSharesForTransferor,
+                balanceForTransferor,
                 transferorActivePosition.share_price,
                 stockClassId
             );
-            _issueStock(transferorPostTransferIssuance);
-            balance_security_id = transferorPostTransferIssuance.security_id;
+            _issueStock(transferorBalanceIssuance);
+            balance_security_id = transferorBalanceIssuance.security_id;
         } else {
             balance_security_id = "";
         }
