@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
-import { convertAndCreateIssuanceStockOnchain } from "../db/controllers/transactions/issuanceController.js";
-import { convertAndCreateTransferStockOnchain } from "../db/controllers/transactions/transferController.js";
+import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
+import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
