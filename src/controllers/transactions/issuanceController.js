@@ -1,5 +1,5 @@
-import { convertUUIDToBytes16 } from "../../../utils/convertUUID.js";
-import { toScaledBigNumber } from "../../../utils/convertToFixedPointDecimals.js";
+import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
+import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
 const checkIssuanceValues = (issuance) => {
     return {
