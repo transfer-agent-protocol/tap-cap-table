@@ -92,6 +92,7 @@ const getActivePositions = async (contract) => {
 (async () => {
     const { contract, provider } = await getContractInstance("local");
 
+    // TODO: missing issuer linking.
     await convertAndReflectStakeholderOnchain(contract, stakeholder1);
     await convertAndReflectStakeholderOnchain(contract, stakeholder2);
     await convertAndReflectStockClassOnchain(contract, stockClass);
