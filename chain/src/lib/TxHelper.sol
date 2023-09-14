@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import { StockIssuance, StockTransfer, ShareNumbersIssued } from "./Structs.sol";
 
 library TxHelper {
-    function generateDeterministicUniqueID(bytes16 stakeholderId) public view returns (bytes16) {
-        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao)));
+    function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 salt) public view returns (bytes16) {
+        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, salt)));
         return deterministicValue;
     }
 
@@ -32,8 +32,8 @@ library TxHelper {
         string memory considerationText,
         string[] memory securityLawExemptions
     ) internal view returns (StockIssuance memory issuance) {
-        bytes16 id = generateDeterministicUniqueID(stakeholderId);
-        bytes16 secId = generateDeterministicUniqueID(stockClassId);
+        bytes16 id = generateDeterministicUniqueID(stakeholderId, quantity);
+        bytes16 secId = generateDeterministicUniqueID(stockClassId, quantity);
 
         return
             StockIssuance(
@@ -69,8 +69,8 @@ library TxHelper {
         ShareNumbersIssued memory share_numbers_issued; // if not instatiated it defaults to 0 for both values
 
         // Temporary placeholders for UUIDs
-        bytes16 id = generateDeterministicUniqueID(stakeholderId);
-        bytes16 securityId = generateDeterministicUniqueID(stockClassId);
+        bytes16 id = generateDeterministicUniqueID(stakeholderId, quantity);
+        bytes16 securityId = generateDeterministicUniqueID(stockClassId, quantity);
 
         return
             StockIssuance(
@@ -106,7 +106,7 @@ library TxHelper {
         resultingSecurityIds[0] = resulting_security_id;
 
         // bytes16 id = hex"f02b7c91e70947f9a748c2a2908af657";
-        bytes16 id = generateDeterministicUniqueID(security_id);
+        bytes16 id = generateDeterministicUniqueID(security_id, quantity);
 
         return
             StockTransfer(
