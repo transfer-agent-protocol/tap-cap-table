@@ -5,6 +5,7 @@ import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import getContractInstance from "./getContractInstances.js";
 import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
+import { createStockTransfer } from "../db/operations/create.js";
 
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
@@ -42,7 +43,7 @@ async function startOnchainListeners(chain) {
 
         const previousIssuance = await StockIssuance.find({ security_id: securityUUID });
 
-        const createdStockTransfer = await createdStockTransfer({
+        const createdStockTransfer = await createStockTransfer({
             _id: convertBytes16ToUUID(stock.id),
             object_type: stock.object_type,
             quantity: toDecimal(stock.quantity).toString(),
