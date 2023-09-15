@@ -63,7 +63,12 @@ issuer.post("/create", async (req, res) => {
 
         // TODO: consider adding deployed to address to issuer object in DB
 
-        const issuer = await createIssuer(incomingIssuerToValidate);
+        const incomingIssuerForDB = {
+            ...incomingIssuerToValidate,
+            deployed_to: deployedTo,
+        };
+
+        const issuer = await createIssuer(incomingIssuerForDB);
 
         console.log("Issuer created offchain:", issuer);
 
