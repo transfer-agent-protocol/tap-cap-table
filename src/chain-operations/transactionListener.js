@@ -1,14 +1,9 @@
 import getContractInstance from "./getContractInstances.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { updateStakeholderById, updateStockClassById, upsertStockIssuanceBySecId  } from "../db/operations/update.js";
-import { readStakeholderById, getAllIssuerDataById } from "../db/operations/read.js";
-import { convertAndReflectStakeholderOnchain } from "../db/controllers/stakeholderController.js";
-import { convertAndReflectStockClassOnchain } from "../db/controllers/stockClassController.js";
-import { convertAndCreateIssuanceStockOnchain } from "../db/controllers/transactions/issuanceController.js";
-import { convertAndCreateTransferStockOnchain } from "../db/controllers/transactions/transferController.js";
-import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
-
+import { updateStakeholderById, updateStockClassById, upsertStockIssuanceBySecId } from "../db/operations/update.js";
+import { readStakeholderById, readIssuerById } from "../db/operations/read.js";
+import { initiateSeeding } from "./seed.js";
 async function startOnchainListeners(chain) {
     console.log("🌐| Initiating on-chain event listeners...");
 
@@ -21,62 +16,9 @@ async function startOnchainListeners(chain) {
     contract.on("IssuerCreated", async (id) => {
         console.log("IssuerCreated Event Emitted!", id);
         const uuid = convertBytes16ToUUID(id);
-        const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
-        console.log({
-            stakeholders,
-            stockClasses,
-            stockIssuances,
-            stockTransfers,
-        });
-
-        for (const stakeholder of stakeholders) {
-            stakeholder.id = stakeholder._id;
-
-            // hacky way of setting current_relationship
-            if (!stakeholder.current_relationship) {
-                stakeholder.current_relationship = "";
-            }
-            await convertAndReflectStakeholderOnchain(contract, stakeholder);
-        }
-        for (const stockClass of stockClasses) {
-            stockClass.id = stockClass._id;
-            await convertAndReflectStockClassOnchain(contract, stockClass);
-        }
-        // Extracting the security IDs from stockTransfers
-        const resultingSecurityIds = stockTransfers.map(transfer => transfer.resulting_security_ids[0])
-        const balanceSecurityIds = stockTransfers.map(transfer => transfer.balance_security_id);
-
-        // Combining and deduplicating the security IDs
-        const allRelevantSecurityIds = [...new Set([...resultingSecurityIds, ...balanceSecurityIds])];
-
-        const filteredStockIssuances = stockIssuances.filter(issuance => !allRelevantSecurityIds.includes(issuance.security_id));
-
-        console.log({
-            allRelevantSecurityIds: Array.from(allRelevantSecurityIds),
-            all:stockIssuances.map(i => i.security_id),
-            filter: filteredStockIssuances.map(i => i.security_id),
-            other:stockIssuances.map(i => i.security_id).filter(e => allRelevantSecurityIds.includes(e))
-        })
-        for (const stockIssuance of filteredStockIssuances) {
-            stockIssuance.id = stockIssuance._id;
-
-            await convertAndCreateIssuanceStockOnchain(contract, stockIssuance);
-        }
-
-        for (const stockTransfer of stockTransfers) {
-            const transferrorStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.security_id})
-            const transfereeStockIssuance = await StockIssuance.findOne({security_id: stockTransfer.resulting_security_ids[0] })
-            const transfer = {
-                quantity: stockTransfer.quantity,
-                isBuyerVerified: true,
-                transferorId: transferrorStockIssuance.stakeholder_id,
-                transfereeId: transfereeStockIssuance.stakeholder_id,
-                stockClassId: transferrorStockIssuance.stock_class_id,
-                sharePrice: transferrorStockIssuance.share_price.amount,
-            }
-
-            await convertAndCreateTransferStockOnchain(contract, transfer);
-        }
+        const issuer = await readIssuerById(uuid)
+        if (!issuer.is_manifest_created) return
+        await initiateSeeding(uuid)
         console.log(`Completed Seeding issuer ${uuid} on chain`)
     });
 
@@ -141,8 +83,8 @@ async function startOnchainListeners(chain) {
 
         const security_id = convertBytes16ToUUID(stock.security_id)
         // find stock issuance by security
-            // if exists update it
-            //  else create a new one
+        // if exists update it
+        //  else create a new one
         const createdStockIssuance = await upsertStockIssuanceBySecId(security_id, {
             _id: convertBytes16ToUUID(stock.id),
             object_type: stock.object_type,
