@@ -61,11 +61,13 @@ issuer.post("/create", async (req, res) => {
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         const deployedTo = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
 
+        // TODO: consider adding deployed to address to issuer object in DB
+
         const issuer = await createIssuer(incomingIssuerToValidate);
 
         console.log("Issuer created offchain:", issuer);
 
-        res.status(200).send({ to: deployedTo });
+        res.status(200).send({ issuer });
     } catch (error) {
         console.error(`error: ${error}`);
         res.status(500).send(`${error}`);
