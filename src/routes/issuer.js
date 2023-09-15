@@ -51,6 +51,7 @@ issuer.post("/create", async (req, res) => {
         const incomingIssuerToValidate = {
             id: uuid(),
             object_type: "ISSUER",
+            is_manifest_created: false,
             ...req.body,
         };
 

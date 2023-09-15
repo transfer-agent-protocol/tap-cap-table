@@ -16,6 +16,7 @@ const IssuerSchema = new mongoose.Schema({
     address: {},
     initial_shares_authorized: String,
     comments: [String],
+    is_manifest_created: { type: Boolean, default: true}
 });
 
 const Issuer = mongoose.model("Issuer", IssuerSchema);
