@@ -51,6 +51,9 @@ contract CapTable is Ownable {
     // @dev Transactions will be created on-chain then reflected off-chain.
     address[] public transactions;
 
+    // used to help generate deterministic UUIDs
+    uint256 private nonce;
+
     // O(1) search
     // id -> index
     mapping(bytes16 => uint256) stakeholderIndex;
@@ -70,6 +73,7 @@ contract CapTable is Ownable {
     event StockIssuanceCreated(StockIssuance issuance);
 
     constructor(bytes16 _id, string memory _name) {
+        nonce = 0;
         issuer = Issuer(_id, _name);
         emit IssuerCreated(_id, _name);
     }
@@ -170,8 +174,11 @@ contract CapTable is Ownable {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
+        nonce++;
+
         _issueStock(
             TxHelper.createStockIssuanceStructByTA(
+                nonce,
                 stockClassId,
                 stockPlanId,
                 shareNumbersIssued,
@@ -317,7 +324,9 @@ contract CapTable is Ownable {
         // Checks related to transfer feasibility
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
+        nonce++;
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
+            nonce,
             transfereeStakeholderId,
             quantity,
             sharePrice,
@@ -330,7 +339,9 @@ contract CapTable is Ownable {
         bytes16 balance_security_id;
 
         if (balanceForTransferor > 0) {
+            nonce++;
             StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                nonce,
                 transferorStakeholderId,
                 balanceForTransferor,
                 transferorActivePosition.share_price,
@@ -342,7 +353,9 @@ contract CapTable is Ownable {
             balance_security_id = "";
         }
 
+        nonce++;
         StockTransfer memory transfer = TxHelper.createStockTransferStruct(
+            nonce,
             quantity,
             transferorSecurityId,
             transfereeIssuance.security_id,

@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import { StockIssuance, StockTransfer, ShareNumbersIssued } from "./Structs.sol";
 
 library TxHelper {
-    function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 salt) public view returns (bytes16) {
-        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, salt)));
+    function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
+        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
         return deterministicValue;
     }
 
@@ -15,6 +15,7 @@ library TxHelper {
     */
 
     function createStockIssuanceStructByTA(
+        uint256 nonce,
         bytes16 stockClassId,
         bytes16 stockPlanId,
         ShareNumbersIssued memory shareNumbersIssued,
@@ -32,8 +33,8 @@ library TxHelper {
         string memory considerationText,
         string[] memory securityLawExemptions
     ) internal view returns (StockIssuance memory issuance) {
-        bytes16 id = generateDeterministicUniqueID(stakeholderId, quantity);
-        bytes16 secId = generateDeterministicUniqueID(stockClassId, quantity);
+        bytes16 id = generateDeterministicUniqueID(stakeholderId, nonce);
+        bytes16 secId = generateDeterministicUniqueID(stockClassId, nonce);
 
         return
             StockIssuance(
@@ -61,6 +62,7 @@ library TxHelper {
 
     // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
     function createStockIssuanceStructForTransfer(
+        uint256 nonce,
         bytes16 stakeholderId,
         uint256 quantity,
         uint256 sharePrice,
@@ -69,8 +71,8 @@ library TxHelper {
         ShareNumbersIssued memory share_numbers_issued; // if not instatiated it defaults to 0 for both values
 
         // Temporary placeholders for UUIDs
-        bytes16 id = generateDeterministicUniqueID(stakeholderId, quantity);
-        bytes16 securityId = generateDeterministicUniqueID(stockClassId, quantity);
+        bytes16 id = generateDeterministicUniqueID(stakeholderId, nonce);
+        bytes16 securityId = generateDeterministicUniqueID(stockClassId, nonce);
 
         return
             StockIssuance(
@@ -97,6 +99,7 @@ library TxHelper {
     }
 
     function createStockTransferStruct(
+        uint256 nonce,
         uint256 quantity,
         bytes16 security_id,
         bytes16 resulting_security_id,
@@ -106,7 +109,7 @@ library TxHelper {
         resultingSecurityIds[0] = resulting_security_id;
 
         // bytes16 id = hex"f02b7c91e70947f9a748c2a2908af657";
-        bytes16 id = generateDeterministicUniqueID(security_id, quantity);
+        bytes16 id = generateDeterministicUniqueID(security_id, nonce);
 
         return
             StockTransfer(
