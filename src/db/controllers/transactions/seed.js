@@ -67,6 +67,7 @@ export const convertAndSeedIssuanceStockOnchain = async (contract, issuance) => 
 
 export const convertAndSeedTransferStockOnchain = async (contract, transfer) => {
     const {
+        id,
         transferorId,
         transferorStockId,
         transferorSecId,
@@ -96,6 +97,7 @@ export const convertAndSeedTransferStockOnchain = async (contract, transfer) => 
     const sharePriceScaled = toScaledBigNumber(sharePrice);
 
     const tx = await contract.transferStockOwnershipFromSeed(
+        id,
         transferorIdBytes16,
         transferorStockIdBytes16,
         transfereeIdBytes16,
