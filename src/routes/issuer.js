@@ -16,11 +16,10 @@ issuer.get("/", async (req, res) => {
 
 //WIP get routes are currently fetching offchain.
 issuer.get("/id/:id", async (req, res) => {
-    const { contract } = req;
     const { id } = req.params;
 
     try {
-        const { issuerId, type, role } = await readIssuerById(contract, id);
+        const { issuerId, type, role } = await readIssuerById(id);
 
         res.status(200).send({ issuerId, type, role });
     } catch (error) {
@@ -30,10 +29,8 @@ issuer.get("/id/:id", async (req, res) => {
 });
 
 issuer.get("/total-number", async (req, res) => {
-    const { contract } = req;
-
     try {
-        const totalIssuers = await countIssuers(contract);
+        const totalIssuers = await countIssuers();
         res.status(200).send(totalIssuers);
     } catch (error) {
         console.error(`error: ${error}`);
@@ -60,8 +57,6 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         const deployedTo = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
-
-        // TODO: consider adding deployed to address to issuer object in DB
 
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,
