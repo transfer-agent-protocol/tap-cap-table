@@ -7,10 +7,8 @@ import getContractInstance from "./getContractInstances.js";
 import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 import { createStockTransfer } from "../db/operations/create.js";
 
-async function startOnchainListeners(chain) {
-    console.log("🌐| Initiating on-chain event listeners...");
-
-    const { contract, provider } = await getContractInstance(chain);
+async function startOnchainListeners(contract, provider) {
+    console.log("🌐| Initiating on-chain event listeners for ", contract.address);
 
     contract.on("error", (error) => {
         console.error("Error:", error);
