@@ -42,7 +42,7 @@ export const updateVestingTermsById = async (id, updatedData) => {
     return vestingTerms;
 };
 
-export const upsertStockIssuance= async (id, data) => {
-    const issuer = await StockIssuance.findByIdAndUpdate(id, data, { new: true, returnDocument: true });
-    return issuer;
+export const upsertStockIssuanceBySecId = async (id, data) => {
+    const stockIssuance = await StockIssuance.findByIdAndUpdate(id, data, { new: true, returnDocument: true });
+    return stockIssuance ;
 };
