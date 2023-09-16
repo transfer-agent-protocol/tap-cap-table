@@ -1,12 +1,10 @@
-import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { getAllIssuerDataById } from "../db/operations/read.js";
 import { convertAndReflectStakeholderOnchain } from "../db/controllers/stakeholderController.js";
 import { convertAndReflectStockClassOnchain } from "../db/controllers/stockClassController.js";
-import { convertAndSeedTransferStockOnchain } from "../db/controllers/transactions/seed.js";
+import { convertAndSeedTransferStockOnchain, convertAndSeedIssuanceStockOnchain } from "../db/controllers/transactions/seed.js";
 import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
-import {  getAllIssuerDataById } from "../db/operations/read.js";
 
-export const initiateSeeding = async (uuid) => {
+export const initiateSeeding = async (uuid, contract) => {
     console.log('Intiating Seeding...')
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
@@ -48,7 +46,7 @@ export const initiateSeeding = async (uuid) => {
 
     for (const stockIssuance of filteredStockIssuances) {
         stockIssuance.id = stockIssuance._id;
-        await convertAndCreateSeedStockOnchain(contract, stockIssuance);
+        await convertAndSeedIssuanceStockOnchain(contract, stockIssuance);
     }
 
     for (const stockTransfer of stockTransfers) {
@@ -64,6 +62,7 @@ export const initiateSeeding = async (uuid) => {
             security_id: transfereeSecId
         } = await StockIssuance.findOne({ security_id: stockTransfer.resulting_security_ids[0] })
         const transfer = {
+            id: stockTransfer.id,
             quantity: stockTransfer.quantity,
             isBuyerVerified: true,
             transferorId,

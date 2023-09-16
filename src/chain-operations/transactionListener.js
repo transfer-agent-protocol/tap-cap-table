@@ -18,7 +18,7 @@ async function startOnchainListeners(chain) {
         const uuid = convertBytes16ToUUID(id);
         const issuer = await readIssuerById(uuid)
         if (!issuer.is_manifest_created) return
-        await initiateSeeding(uuid)
+        await initiateSeeding(uuid, contract)
         console.log(`Completed Seeding issuer ${uuid} on chain`)
     });
 
