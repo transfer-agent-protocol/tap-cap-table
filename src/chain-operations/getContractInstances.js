@@ -33,7 +33,7 @@ async function getOptimismGoerliContractInstance(address) {
 
     const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, CAP_TABLE_ABI, wallet);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, abi, wallet);
 
     return { contract, provider };
 }
