@@ -8,8 +8,6 @@ const main = async () => {
 
     console.log("issuer response ", issuerResponse.data);
 
-    // const stakeholder1Data = stakeholder1(issuerResponse.data.issuer._id);
-
     console.log("..creating first stakeholder");
 
     // console.log("stakeholder1", stakeholder1);
