@@ -6,6 +6,7 @@ import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import getContractInstance from "./getContractInstances.js";
 import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 import { createStockTransfer } from "../db/operations/create.js";
+import { createHistoricalTransaction } from "../db/operations/create.js";
 
 async function startOnchainListeners(contract, provider) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.address);
@@ -56,6 +57,13 @@ async function startOnchainListeners(contract, provider) {
         });
 
         console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+
+        const createdHistoricalTransaction = await createHistoricalTransaction({
+            transaction_id: createdStockTransfer._id,
+            issuer: createdStockTransfer.issuer,
+        });
+
+        console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 
     // @dev events return both an array and object, depending how you want to access. We're using objects
@@ -109,6 +117,13 @@ async function startOnchainListeners(contract, provider) {
         });
 
         console.log("Stock Issuance reflected and validated offchain", createdStockIssuance);
+
+        const createdHistoricalTransaction = await createHistoricalTransaction({
+            transaction_id: createdStockIssuance._id,
+            issuer: createdStockIssuance.issuer,
+        });
+
+        console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 }
 
