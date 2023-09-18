@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockClassSchema from "../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
-import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../db/controllers/stockClassController.js";
+import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../controllers/stockClassController.js";
 import { createStockClass } from "../db/operations/create.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 import { readIssuerById } from "../db/operations/read.js";

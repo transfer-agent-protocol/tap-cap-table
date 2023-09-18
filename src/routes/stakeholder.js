@@ -6,7 +6,7 @@ import {
     getStakeholderById,
     getTotalNumberOfStakeholders,
     removeWalletFromStakeholder,
-} from "../db/controllers/stakeholderController.js"; // Importing the controller functions
+} from "../controllers/stakeholderController.js"; // Importing the controller functions
 
 import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
 import { createStakeholder } from "../db/operations/create.js";

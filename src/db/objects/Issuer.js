@@ -16,6 +16,7 @@ const IssuerSchema = new mongoose.Schema({
     address: {},
     initial_shares_authorized: String,
     comments: [String],
+    deployed_to: String,
 });
 
 const Issuer = mongoose.model("Issuer", IssuerSchema);

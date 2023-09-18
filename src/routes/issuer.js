@@ -8,6 +8,9 @@ import { countIssuers, readIssuerById } from "../db/operations/read.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
+import contractCache from "../utils/contractCache.js";
+import startOnchainListeners from "../chain-operations/transactionListener.js";
+
 const issuer = Router();
 
 issuer.get("/", async (req, res) => {
@@ -16,11 +19,10 @@ issuer.get("/", async (req, res) => {
 
 //WIP get routes are currently fetching offchain.
 issuer.get("/id/:id", async (req, res) => {
-    const { contract } = req;
     const { id } = req.params;
 
     try {
-        const { issuerId, type, role } = await readIssuerById(contract, id);
+        const { issuerId, type, role } = await readIssuerById(id);
 
         res.status(200).send({ issuerId, type, role });
     } catch (error) {
@@ -30,10 +32,8 @@ issuer.get("/id/:id", async (req, res) => {
 });
 
 issuer.get("/total-number", async (req, res) => {
-    const { contract } = req;
-
     try {
-        const totalIssuers = await countIssuers(contract);
+        const totalIssuers = await countIssuers();
         res.status(200).send(totalIssuers);
     } catch (error) {
         console.error(`error: ${error}`);
@@ -41,8 +41,6 @@ issuer.get("/total-number", async (req, res) => {
     }
 });
 
-/// @dev: TODO: Issuer does not have confirmation flag on the DB because it's used  to seed
-// unsure if this route should exist or we should only onboard issuers via manifest due to how we're using the IssuerCreated event onchain.
 issuer.post("/create", async (req, res) => {
     const { chain } = req;
 
@@ -59,13 +57,22 @@ issuer.post("/create", async (req, res) => {
         await validateInputAgainstOCF(incomingIssuerToValidate, issuerSchema);
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
-        const deployedTo = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
+        const { contract, provider, address } = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
 
-        const issuer = await createIssuer(incomingIssuerToValidate);
+        // add contract to the cache and start listener
+        contractCache[incomingIssuerToValidate.id] = { contract, provider };
+        startOnchainListeners(contract, provider, incomingIssuerToValidate.id);
+
+        const incomingIssuerForDB = {
+            ...incomingIssuerToValidate,
+            deployed_to: address,
+        };
+
+        const issuer = await createIssuer(incomingIssuerForDB);
 
         console.log("Issuer created offchain:", issuer);
 
-        res.status(200).send({ to: deployedTo });
+        res.status(200).send({ issuer });
     } catch (error) {
         console.error(`error: ${error}`);
         res.status(500).send(`${error}`);

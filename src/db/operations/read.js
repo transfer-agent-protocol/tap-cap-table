@@ -5,6 +5,7 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 
 // READ By ID
 export const readIssuerById = async (id) => {
@@ -40,6 +41,11 @@ export const readValuationById = async (id) => {
 export const readVestingTermsById = async (id) => {
     const vestingTerms = await VestingTerms.findById(id);
     return vestingTerms;
+};
+
+export const readHistoricalTransactionByIssuerId = async (issuerId) => {
+    const historicalTransactions = await HistoricalTransaction.find({ issuer: issuerId }).populate("transaction");
+    return historicalTransactions;
 };
 
 // COUNT

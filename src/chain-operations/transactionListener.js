@@ -1,14 +1,24 @@
-import getContractInstance from "./getContractInstances.js";
-import { convertBytes16ToUUID } from "../utils/convertUUID.js";
-import { convertManyToDecimal, toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
 import { createStockIssuance } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
+import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
+import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
+import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import getContractInstance from "./getContractInstances.js";
+import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
+import { createStockTransfer } from "../db/operations/create.js";
+import { createHistoricalTransaction } from "../db/operations/create.js";
 
-async function startOnchainListeners(chain) {
-    console.log("🌐| Initiating on-chain event listeners...");
+const options = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+};
 
-    const { contract, provider } = await getContractInstance(chain);
+async function startOnchainListeners(contract, provider, issuerId) {
+    console.log("🌐| Initiating on-chain event listeners for ", contract.address);
 
     contract.on("error", (error) => {
         console.error("Error:", error);
@@ -34,20 +44,13 @@ async function startOnchainListeners(chain) {
         console.log("✅ | StockClass confirmation onchain ", stockClass);
     });
 
-    contract.on("StockTransferCreated", async (stock, event) => {
-        console.log("StockTransferCreated Event Emitted!", stock.id);
-
-        // const quantity = toDecimal(stock.quantity);
-
-        // console.log("quantity", quantity);
-    });
-
     // @dev events return both an array and object, depending how you want to access. We're using objects
     contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
-        // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
+        // console.log(`Stock issuance with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
 
+        // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
         const sharePriceOCF = {
             amount: toDecimal(stock.share_price).toString(),
             currency: "USD",
@@ -66,8 +69,6 @@ async function startOnchainListeners(chain) {
         ];
 
         const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.stakeholder_id));
-
-        console.log("stakeholer ", stakeholder);
 
         const createdStockIssuance = await createStockIssuance({
             _id: convertBytes16ToUUID(stock.id),
@@ -91,11 +92,59 @@ async function startOnchainListeners(chain) {
             consideration_text: stock.consideration_text,
             security_law_exemptions: stock.security_law_exemptions,
             // TAP Native Fields
-            issuer: stakeholder.issuer,
+            issuer: issuerId,
             is_onchain_synced: true,
         });
 
-        console.log("Stock created off-chain", createdStockIssuance);
+        // console.log("Stock Issuance reflected and validated offchain", createdStockIssuance);
+
+        const createdHistoricalTransaction = await createHistoricalTransaction({
+            transaction: createdStockIssuance._id,
+            issuer: issuerId,
+            transactionType: "StockIssuance",
+        });
+
+        console.log(
+            `✅ | StockIssuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockIssuance
+        );
+
+        // console.log("Historical Transaction created", createdHistoricalTransaction);
+    });
+
+    contract.on("StockTransferCreated", async (stock, event) => {
+        console.log("StockTransferCreated Event Emitted!", stock.id);
+
+        // console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
+
+        const createdStockTransfer = await createStockTransfer({
+            _id: convertBytes16ToUUID(stock.id),
+            object_type: stock.object_type,
+            quantity: toDecimal(stock.quantity).toString(),
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            consideration_text: stock.consideration_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+            resulting_security_ids: convertBytes16ToUUID(stock.resulting_security_ids),
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        // console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+
+        const createdHistoricalTransaction = await createHistoricalTransaction({
+            transaction: createdStockTransfer._id,
+            issuer: createdStockTransfer.issuer,
+            transactionType: "StockTransfer",
+        });
+
+        console.log(
+            `✅ | StockTransfer confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockTransfer
+        );
+
+        // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 }
 
