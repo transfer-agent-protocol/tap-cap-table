@@ -17,6 +17,7 @@ import stockPlanRoutes from "./routes/stockPlan.js";
 import transactionRoutes from "./routes/transactions.js";
 import valuationRoutes from "./routes/valuation.js";
 import vestingTermsRoutes from "./routes/vestingTerms.js";
+import historicalTransactions from "./routes/historicalTransactions.js";
 
 import { readIssuerById } from "./db/operations/read.js";
 
@@ -78,6 +79,7 @@ app.use("/stock-legend", stockLegendRoutes);
 app.use("/stock-plan", stockPlanRoutes);
 app.use("/valuation", valuationRoutes);
 app.use("/vesting-terms", vestingTermsRoutes);
+app.use("/historical-transactions", historicalTransactions);
 
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
