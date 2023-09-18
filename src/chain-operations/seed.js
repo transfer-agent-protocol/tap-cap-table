@@ -8,12 +8,14 @@ export const initiateSeeding = async (uuid, contract) => {
     console.log('Intiating Seeding...')
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
+    /*
     console.log({
         stakeholders,
         stockClasses,
         stockIssuances,
         stockTransfers,
     });
+    */
 
     for (const stakeholder of stakeholders) {
         stakeholder.id = stakeholder._id;
@@ -61,6 +63,8 @@ export const initiateSeeding = async (uuid, contract) => {
             stakeholder_id: transfereeId,
             security_id: transfereeSecId
         } = await StockIssuance.findOne({ security_id: stockTransfer.resulting_security_ids[0] })
+
+        const remainingStockIssuance = await StockIssuance.findOne({ security_id: stockTransfer.balance_security_id })
         const transfer = {
             id: stockTransfer.id,
             quantity: stockTransfer.quantity,
@@ -72,8 +76,13 @@ export const initiateSeeding = async (uuid, contract) => {
             transfereeStockId,
             transfereeSecId,
             stockClassId,
-            sharePrice
+            sharePrice,
         }
+        if(remainingStockIssuance) {
+            transfer.balanceStockId = remainingStockIssuance.id
+            transfer.balanceSecId = remainingStockIssuance.security_id
+        }
+        console.log({transfer})
 
         await convertAndSeedTransferStockOnchain(contract, transfer);
     }

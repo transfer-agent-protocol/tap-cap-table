@@ -233,7 +233,6 @@ contract CapTable is Ownable {
     function transferStockOwnershipFromSeed(
         bytes16 id,
         bytes16 transferorStakeholderId,
-        bytes16 transferorStockId,
         bytes16 transferorSecurityId,
         bytes16 transfereeStakeholderId,
         bytes16 transfereeStockId,
@@ -241,7 +240,9 @@ contract CapTable is Ownable {
         bytes16 stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
-        uint256 sharePrice
+        uint256 sharePrice,
+        bytes16 balanceStockId,
+        bytes16 balanceSecId
     ) external onlyOwner {
         // Checks related to entities' existence
         require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
@@ -273,10 +274,11 @@ contract CapTable is Ownable {
 
         bytes16 balance_security_id;
 
+        // remaining quantity
         if (remainingSharesForTransferor > 0) {
             StockIssuance memory transferorPostTransferIssuance = TxHelper.seedStockIssuanceStructForTransfer(
-                transferorStockId,
-                transferorSecurityId,
+                balanceStockId,
+                balanceSecId,
                 transferorStakeholderId,
                 remainingSharesForTransferor,
                 transferorActivePosition.share_price,
