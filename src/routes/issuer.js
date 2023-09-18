@@ -8,6 +8,9 @@ import { countIssuers, readIssuerById } from "../db/operations/read.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
+import contractCache from "../utils/contractCache.js";
+import startOnchainListeners from "../chain-operations/transactionListener.js";
+
 const issuer = Router();
 
 issuer.get("/", async (req, res) => {
@@ -38,8 +41,6 @@ issuer.get("/total-number", async (req, res) => {
     }
 });
 
-/// @dev: TODO: Issuer does not have confirmation flag on the DB because it's used  to seed
-// unsure if this route should exist or we should only onboard issuers via manifest due to how we're using the IssuerCreated event onchain.
 issuer.post("/create", async (req, res) => {
     const { chain } = req;
 
@@ -56,11 +57,15 @@ issuer.post("/create", async (req, res) => {
         await validateInputAgainstOCF(incomingIssuerToValidate, issuerSchema);
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
-        const deployedTo = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
+        const { contract, provider, address } = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
+
+        // add contract to the cache and start listener
+        contractCache[incomingIssuerToValidate.id] = { contract, provider };
+        startOnchainListeners(contract, provider, incomingIssuerToValidate.id);
 
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,
-            deployed_to: deployedTo,
+            deployed_to: address,
         };
 
         const issuer = await createIssuer(incomingIssuerForDB);
