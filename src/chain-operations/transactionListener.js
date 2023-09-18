@@ -8,7 +8,16 @@ import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js"
 import { createStockTransfer } from "../db/operations/create.js";
 import { createHistoricalTransaction } from "../db/operations/create.js";
 
-async function startOnchainListeners(contract, provider) {
+const options = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+};
+
+async function startOnchainListeners(contract, provider, issuerId) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.address);
 
     contract.on("error", (error) => {
@@ -38,6 +47,8 @@ async function startOnchainListeners(contract, provider) {
     // @dev events return both an array and object, depending how you want to access. We're using objects
     contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
+
+        // console.log(`Stock issuance with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
 
         // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
         const sharePriceOCF = {
@@ -81,7 +92,7 @@ async function startOnchainListeners(contract, provider) {
             consideration_text: stock.consideration_text,
             security_law_exemptions: stock.security_law_exemptions,
             // TAP Native Fields
-            issuer: stakeholder.issuer,
+            issuer: issuerId,
             is_onchain_synced: true,
         });
 
@@ -89,9 +100,14 @@ async function startOnchainListeners(contract, provider) {
 
         const createdHistoricalTransaction = await createHistoricalTransaction({
             transaction: createdStockIssuance._id,
-            issuer: createdStockIssuance.issuer,
+            issuer: issuerId,
             transactionType: "StockIssuance",
         });
+
+        console.log(
+            `✅ | StockIssuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockIssuance
+        );
 
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
@@ -99,15 +115,7 @@ async function startOnchainListeners(contract, provider) {
     contract.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
-        const securityUUID = await convertBytes16ToUUID(stock.security_id);
-
-        const previousIssuance = await StockIssuance.find({ security_id: securityUUID });
-
-        // TODO: relying on previous issuance being created. Not fault-tolerant because they might come out of order
-        // should be able to get the issuer ID from the contract cache. Think about extending it.
-        // otherwise we need another method of getting issuerID
-        console.log("previousIssuance", previousIssuance);
-        const issuerId = previousIssuance[0]?.issuer || null;
+        // console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
 
         const createdStockTransfer = await createStockTransfer({
             _id: convertBytes16ToUUID(stock.id),
@@ -123,13 +131,18 @@ async function startOnchainListeners(contract, provider) {
             is_onchain_synced: true,
         });
 
-        console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+        // console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
 
         const createdHistoricalTransaction = await createHistoricalTransaction({
             transaction: createdStockTransfer._id,
             issuer: createdStockTransfer.issuer,
             transactionType: "StockTransfer",
         });
+
+        console.log(
+            `✅ | StockTransfer confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockTransfer
+        );
 
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
