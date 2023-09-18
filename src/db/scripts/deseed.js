@@ -8,6 +8,7 @@ import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import { typeToModelType } from "../operations/transactions.js"; // Import the typeToModelType object to delete all transactions
+import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 
 const deleteAllTransactions = async () => {
     for (const ModelType of Object.values(typeToModelType)) {
@@ -24,6 +25,7 @@ const deleteAll = async () => {
     await StockPlan.deleteMany({});
     await Valuation.deleteMany({});
     await VestingTerms.deleteMany({});
+    await HistoricalTransaction.deleteMany({});
     await deleteAllTransactions(); // Delete all transactions
 };
 
