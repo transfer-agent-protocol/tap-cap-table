@@ -40,6 +40,9 @@ const contractCache = {};
 console.log("contract cache", contractCache);
 
 // Middleware to get or create contract instance
+// TODO: walk fong through redundancy and resiliance
+// when does it start listening?
+// can we start listening right after the contract has been deployed?
 const contractMiddleware = async (req, res, next) => {
     if (!req.body.issuerId) {
         console.log("no issuer ID");
