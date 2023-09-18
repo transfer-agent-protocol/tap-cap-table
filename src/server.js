@@ -8,6 +8,7 @@ import getContractInstance from "./chain-operations/getContractInstances.js";
 import startOnchainListeners from "./chain-operations/transactionListener.js";
 
 // Routes
+import historicalTransactions from "./routes/historicalTransactions.js";
 import mainRoutes from "./routes/index.js";
 import issuerRoutes from "./routes/issuer.js";
 import stakeholderRoutes from "./routes/stakeholder.js";
@@ -17,9 +18,9 @@ import stockPlanRoutes from "./routes/stockPlan.js";
 import transactionRoutes from "./routes/transactions.js";
 import valuationRoutes from "./routes/valuation.js";
 import vestingTermsRoutes from "./routes/vestingTerms.js";
-import historicalTransactions from "./routes/historicalTransactions.js";
 
 import { readIssuerById } from "./db/operations/read.js";
+import contractCache from "./utils/contractCache.js";
 
 const app = express();
 
@@ -35,23 +36,15 @@ const chainMiddleware = (req, res, next) => {
     next();
 };
 
-// Centralized contract manager/cache
-const contractCache = {};
-
-console.log("contract cache", contractCache);
-
 // Middleware to get or create contract instance
-// TODO: walk fong through redundancy and resiliance
-// when does it start listening?
-// can we start listening right after the contract has been deployed?
-// what happens if we perform a transfer onchain without hitting this route.
+// the listener is first started on deployment, then here as a backup
 const contractMiddleware = async (req, res, next) => {
     if (!req.body.issuerId) {
         console.log("no issuer ID");
         res.status(400).send("issuerId required");
     }
 
-    console.log("issuer id in middleware ", req.body.issuerId);
+    // fetch issuer to ensure it exists
     const issuer = await readIssuerById(req.body.issuerId);
 
     // Check if contract instance already exists in cache
@@ -60,7 +53,7 @@ const contractMiddleware = async (req, res, next) => {
         contractCache[req.body.issuerId] = { contract, provider };
 
         // Initialize listener for this contract
-        startOnchainListeners(contract, provider);
+        startOnchainListeners(contract, provider, req.body.issuerId);
     }
 
     req.contract = contractCache[req.body.issuerId].contract;
