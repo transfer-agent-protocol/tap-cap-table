@@ -44,6 +44,7 @@ console.log("contract cache", contractCache);
 // TODO: walk fong through redundancy and resiliance
 // when does it start listening?
 // can we start listening right after the contract has been deployed?
+// what happens if we perform a transfer onchain without hitting this route.
 const contractMiddleware = async (req, res, next) => {
     if (!req.body.issuerId) {
         console.log("no issuer ID");
