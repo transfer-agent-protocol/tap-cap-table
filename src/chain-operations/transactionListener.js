@@ -35,37 +35,6 @@ async function startOnchainListeners(contract, provider) {
         console.log("✅ | StockClass confirmation onchain ", stockClass);
     });
 
-    contract.on("StockTransferCreated", async (stock, event) => {
-        console.log("StockTransferCreated Event Emitted!", stock.id);
-
-        const securityUUID = await convertBytes16ToUUID(stock.security_id);
-
-        const previousIssuance = await StockIssuance.find({ security_id: securityUUID });
-
-        const createdStockTransfer = await createStockTransfer({
-            _id: convertBytes16ToUUID(stock.id),
-            object_type: stock.object_type,
-            quantity: toDecimal(stock.quantity).toString(),
-            comments: stock.comments,
-            security_id: convertBytes16ToUUID(stock.security_id),
-            consideration_text: stock.consideration_text,
-            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
-            resulting_security_ids: convertBytes16ToUUID(stock.resulting_security_ids),
-            // TAP Native Fields
-            issuer: previousIssuance.issuer,
-            is_onchain_synced: true,
-        });
-
-        console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
-
-        const createdHistoricalTransaction = await createHistoricalTransaction({
-            transaction_id: createdStockTransfer._id,
-            issuer: createdStockTransfer.issuer,
-        });
-
-        console.log("Historical Transaction created", createdHistoricalTransaction);
-    });
-
     // @dev events return both an array and object, depending how you want to access. We're using objects
     contract.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
@@ -116,14 +85,53 @@ async function startOnchainListeners(contract, provider) {
             is_onchain_synced: true,
         });
 
-        console.log("Stock Issuance reflected and validated offchain", createdStockIssuance);
+        // console.log("Stock Issuance reflected and validated offchain", createdStockIssuance);
 
         const createdHistoricalTransaction = await createHistoricalTransaction({
-            transaction_id: createdStockIssuance._id,
+            transaction: createdStockIssuance._id,
             issuer: createdStockIssuance.issuer,
+            transactionType: "StockIssuance",
         });
 
-        console.log("Historical Transaction created", createdHistoricalTransaction);
+        // console.log("Historical Transaction created", createdHistoricalTransaction);
+    });
+
+    contract.on("StockTransferCreated", async (stock, event) => {
+        console.log("StockTransferCreated Event Emitted!", stock.id);
+
+        const securityUUID = await convertBytes16ToUUID(stock.security_id);
+
+        const previousIssuance = await StockIssuance.find({ security_id: securityUUID });
+
+        // TODO: relying on previous issuance being created. Not fault-tolerant because they might come out of order
+        // should be able to get the issuer ID from the contract cache. Think about extending it.
+        // otherwise we need another method of getting issuerID
+        console.log("previousIssuance", previousIssuance);
+        const issuerId = previousIssuance[0]?.issuer || null;
+
+        const createdStockTransfer = await createStockTransfer({
+            _id: convertBytes16ToUUID(stock.id),
+            object_type: stock.object_type,
+            quantity: toDecimal(stock.quantity).toString(),
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            consideration_text: stock.consideration_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+            resulting_security_ids: convertBytes16ToUUID(stock.resulting_security_ids),
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+
+        const createdHistoricalTransaction = await createHistoricalTransaction({
+            transaction: createdStockTransfer._id,
+            issuer: createdStockTransfer.issuer,
+            transactionType: "StockTransfer",
+        });
+
+        // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 }
 
