@@ -1,8 +1,15 @@
 import mongoose from "mongoose";
-import { v4 as uuid } from "uuid";
 
 const HistoricalTransactionSchema = new mongoose.Schema({
-    transaction_id: { type: String },
+    transaction: {
+        type: String,
+        refPath: "transactionType", // This will use the value of transactionType as the model name for population
+    },
+    transactionType: {
+        type: String,
+        enum: ["StockIssuance", "StockTransfer"], // List of possible models
+        required: true,
+    },
     issuer: {
         type: String,
         ref: "Issuer",
