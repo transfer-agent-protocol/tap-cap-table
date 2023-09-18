@@ -23,7 +23,7 @@ async function deployCapTableLocal(issuerId, issuerName) {
     await contract.deployed();
     console.log("Contract mined!");
 
-    return contract.address;
+    return { contract, provider, address: contract.address };
 }
 
 async function deployCapTableOptimismGoerli(issuerId, issuerName) {
@@ -39,40 +39,7 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     await contract.deployed();
     console.log("Contract mined!");
 
-    return contract.address;
-}
-
-const chainUrlMapper = (chain) => {
-    if (chain === "optimism-goerli") return "https://api.goerli-optimism.etherscan.io/api";
-};
-
-// Scaffold code to verify contracts programmatically, WIP and not used at the moment.
-async function verifyContractOnEtherscan(chain, address) {
-    const apiKey = process.env.ETHERSCAN_OPTIMISM_API_KEY;
-    const contractAddress = address;
-    const sourceCode = fs.readFileSync("path_to_flattened_contract.sol", "utf8");
-    const contractName = "CapTable";
-    const compilerVersion = "v0.8.20";
-    const optimizationUsed = 1; // 0 for no, 1 for yes
-    const runs = 200; // This is the default
-    const constructorArguments = ""; // If your contract has constructor arguments, they need to be ABI-encoded and provided here.
-
-    const apiUrl = chainUrlMapper(chain);
-
-    const response = await axios.post(apiUrl, {
-        apikey: apiKey,
-        module: "contract",
-        action: "verifysourcecode",
-        contractaddress: contractAddress,
-        sourceCode: sourceCode,
-        contractname: contractName,
-        compilerversion: compilerVersion,
-        optimizationUsed: optimizationUsed,
-        runs: runs,
-        constructorArguements: constructorArguments,
-    });
-
-    console.log("response", response);
+    return { contract, provider, address: contract.address };
 }
 
 async function deployCapTable(chain, issuerId, issuerName) {
