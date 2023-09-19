@@ -7,6 +7,7 @@ import getContractInstance from "./getContractInstances.js";
 import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 import { createStockTransfer } from "../db/operations/create.js";
 import { createHistoricalTransaction } from "../db/operations/create.js";
+import { preProcessorCache } from "../utils/caches.js";
 
 const options = {
     year: "numeric",
@@ -22,6 +23,14 @@ async function startOnchainListeners(contract, provider, issuerId) {
 
     contract.on("error", (error) => {
         console.error("Error:", error);
+    });
+
+    contract.on("IssuerCreated", async (id, _) => {
+        console.log("IssuerCreated Event Emitted!", id);
+        console.log("checking pre-processor cache ", preProcessorCache[issuerId]);
+
+        // Create Issuance and Transfer TXs
+        // Update ActivePositions
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
