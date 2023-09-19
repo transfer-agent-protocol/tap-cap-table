@@ -58,7 +58,9 @@ async function seedDB(manifestArr) {
     });
 
     await validateInputAgainstOCF(incomingIssuer, issuerSchema);
-    const issuer = await createIssuer(incomingIssuer);
+
+    const issuerWithFlag = { is_manifest_created: true, ...incomingIssuer };
+    const issuer = await createIssuer(issuerWithFlag);
 
     const issuerId = issuer._id;
 
