@@ -493,7 +493,6 @@ contract CapTable {
         _;
     }
 
-    // TODO: kent -- is there a more elegant way for the below? I hate boilerplate code bloat
     function addAdmin(address memory addr) external isAdmin {
         admins.add(addr);
     }
