@@ -1,4 +1,4 @@
-import ethers, { utils } from "ethers";
+import { ethers } from "ethers";
 
 // Convert a price to a BigNumber
 function toScaledBigNumber(price) {
