@@ -55,7 +55,7 @@ async function fetchAndAddExternalSchema(schemaOrUrl) {
         // If it's a URL, fetch the schema
         const response = await axios.get(schemaOrUrl);
         schema = response.data;
-        console.log("schema ", schema);
+        // console.log("schema ", schema);
     } else {
         // If it's a schema object, use it directly
         schema = schemaOrUrl;
