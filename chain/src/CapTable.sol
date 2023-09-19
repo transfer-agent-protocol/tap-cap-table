@@ -484,7 +484,6 @@ contract CapTable {
     /* RBAC */
 
     modifier isOperator() {
-        // TODO: should admins be operators?
         require(operators.has(msg.sender) || admins.has(msg.sender), "Does not have operator role");
         _;
     }
@@ -510,5 +509,4 @@ contract CapTable {
     function removeOperator(address memory addr) external isAdmin {
         operators.remove(addr);
     }
-
 }
