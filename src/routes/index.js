@@ -1,7 +1,7 @@
 import { Router } from "express";
 import deployCapTable from "../chain-operations/deployCapTable.js";
 import seedDB from "../db/scripts/seed.js";
-import contractCache from "../utils/contractCache.js";
+import { contractCache } from "../utils/caches.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import processManifest from "../utils/processManifest.js";
 
@@ -16,6 +16,7 @@ router.get("/", async (req, res) => {
 router.post("/mint-cap-table", async (req, res) => {
     try {
         const manifest = await processManifest(req);
+
         const issuer = await seedDB(manifest);
 
         const issuerIdBytes16 = convertUUIDToBytes16(issuer._id);
