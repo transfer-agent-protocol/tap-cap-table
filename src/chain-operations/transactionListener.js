@@ -18,11 +18,12 @@ const options = {
 };
 
 async function startOnchainListeners(contract, provider, issuerId) {
-    console.log("🌐| Initiating on-chain event listeners for ", contract.address);
+    console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
-    contract.on("error", (error) => {
-        console.error("Error:", error);
-    });
+    //
+    // contract.on("error", (error) => {
+    //     console.error("Error:", error);
+    // });
 
     contract.on("StakeholderCreated", async (id, _) => {
         console.log("StakeholderCreated Event Emitted!", id);
