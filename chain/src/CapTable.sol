@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "openzeppelin-contracts/contracts/access/Roles.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
@@ -10,7 +10,7 @@ import "./lib/Arrays.sol";
 
 import "forge-std/console.sol";
 
-contract CapTable is Ownable {
+contract CapTable {
     // @dev Issuer, Stakeholder and StockClass will be created off-chain then reflected on-chain to match IDs. Struct variables have underscore naming to match OCF naming.
     /* Objects kept intentionally off-chain unless they become useful
         - Stock Legend Template
@@ -44,6 +44,10 @@ contract CapTable is Ownable {
         uint256 share_price;
         uint40 timestamp;
     }
+    
+    // RBAC
+    Roles.Role private admins;
+    Roles.Role private operators;
 
     Issuer public issuer;
     Stakeholder[] public stakeholders;
@@ -75,6 +79,7 @@ contract CapTable is Ownable {
     constructor(bytes16 _id, string memory _name) {
         nonce = 0;
         issuer = Issuer(_id, _name);
+        addAdmin(msg.sender);
         emit IssuerCreated(_id, _name);
     }
 
@@ -196,7 +201,7 @@ contract CapTable is Ownable {
         string memory stockholderApprovalDate,
         string memory considerationText,
         string[] memory securityLawExemptions
-    ) external onlyOwner {
+    ) external isAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
         require(quantity > 0, "Invalid quantity");
@@ -270,7 +275,7 @@ contract CapTable is Ownable {
         string memory stockholderApprovalDate,
         string memory considerationText,
         string[] memory securityLawExemptions
-    ) external onlyOwner {
+    ) external isOperator {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
         require(quantity > 0, "Invalid quantity");
@@ -304,7 +309,7 @@ contract CapTable is Ownable {
 
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public isAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
@@ -313,7 +318,7 @@ contract CapTable is Ownable {
     }
 
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public isAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
@@ -321,14 +326,14 @@ contract CapTable is Ownable {
         delete walletsPerStakeholder[_wallet];
     }
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public isAdmin {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
 
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyOwner {
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public isAdmin {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
@@ -403,7 +408,7 @@ contract CapTable is Ownable {
         emit StockIssuanceCreated(issuance);
     }
 
-    function _transferStock(StockTransfer memory transfer) internal onlyOwner {
+    function _transferStock(StockTransfer memory transfer) internal {
         StockTransferTx transferTx = new StockTransferTx(transfer);
         transactions.push(address(transferTx));
         emit StockTransferCreated(transfer);
@@ -475,4 +480,35 @@ contract CapTable is Ownable {
         _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
         _deleteActiveSecurityIdsByStockClass(transferorStakeholderId, stockClassId, transferorSecurityId);
     }
+
+    /* RBAC */
+
+    modifier isOperator() {
+        // TODO: should admins be operators?
+        require(operators.has(msg.sender) || admins.has(msg.sender), "Does not have operator role");
+        _;
+    }
+
+    modifier isAdmin() {
+        require(admins.has(msg.sender), "Does not have admin role");
+        _;
+    }
+
+    // TODO: kent -- is there a more elegant way for the below? I hate boilerplate code bloat
+    function addAdmin(address memory addr) external isAdmin {
+        admins.add(addr);
+    }
+    
+    function removeAdmin(address memory addr) external isAdmin {
+        admins.remove(addr);
+    }
+    
+    function addOperator(address memory addr) external isAdmin {
+        operators.add(addr);
+    }
+
+    function removeOperator(address memory addr) external isAdmin {
+        operators.remove(addr);
+    }
+
 }
