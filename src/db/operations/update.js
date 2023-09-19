@@ -1,5 +1,7 @@
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
+import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
+import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockClass from "../objects/StockClass.js";
 import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
@@ -39,4 +41,15 @@ export const updateValuationById = async (id, updatedData) => {
 export const updateVestingTermsById = async (id, updatedData) => {
     const vestingTerms = await VestingTerms.findByIdAndUpdate(id, updatedData, { new: true });
     return vestingTerms;
+};
+
+export const upsertStockIssuanceById = async (id, updatedData) => {
+    const stockIssuance = await StockIssuance.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+    return stockIssuance;
+};
+
+export const upsertStockTransferById = async (id, updatedData) => {
+    const stockTransfer = await StockTransfer.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+    return stockTransfer;
+    k;
 };
