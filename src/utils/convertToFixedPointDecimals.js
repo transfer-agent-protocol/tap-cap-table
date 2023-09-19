@@ -1,17 +1,17 @@
-import { ethers } from "ethers";
+import { toBigInt } from "ethers";
 
-// Convert a price to a BigNumber
+// Convert a price to a BigInt
 function toScaledBigNumber(price) {
-    return ethers.BigNumber.from(Math.round(price * 1e10).toString());
+    return toBigInt(Math.round(price * 1e10).toString());
 }
 
-// Convert a BigNumber back to a decimal price
-function toDecimal(scaledPriceBigNumber) {
-    if (ethers.BigNumber.isBigNumber(scaledPriceBigNumber)) {
-        const numberString = scaledPriceBigNumber.toString();
+// Convert a BigInt back to a decimal price
+function toDecimal(scaledPriceBigInt) {
+    if (typeof scaledPriceBigInt === "bigint") {
+        const numberString = scaledPriceBigInt.toString();
         return parseFloat(numberString / 1e10).toString();
     } else {
-        return scaledPriceBigNumber;
+        return scaledPriceBigInt;
     }
 }
 
@@ -34,4 +34,4 @@ function convertManyToDecimal(input) {
     }
 }
 
-export { toScaledBigNumber, toDecimal, convertManyToDecimal };
+export { convertManyToDecimal, toDecimal, toScaledBigNumber };
