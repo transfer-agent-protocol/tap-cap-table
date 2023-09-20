@@ -34,4 +34,9 @@ function convertManyToDecimal(input) {
     }
 }
 
-export { toScaledBigNumber, toDecimal, convertManyToDecimal };
+const convertTimeStampToUint40 = (date) => {
+    const datetime = new Date(date);
+    return ethers.BigNumber.from(Math.floor(datetime.getTime() / 1000)).toNumber();
+};
+
+export { toScaledBigNumber, toDecimal, convertManyToDecimal, convertTimeStampToUint40 };
