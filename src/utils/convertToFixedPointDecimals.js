@@ -1,42 +1,24 @@
-import ethers, { utils } from "ethers";
+import { toBigInt } from "ethers";
 
-// Convert a price to a BigNumber
+// Convert a price to a BigInt
 function toScaledBigNumber(price) {
-    return ethers.BigNumber.from(Math.round(price * 1e10).toString());
+    return toBigInt(Math.round(price * 1e10).toString());
 }
 
-// Convert a BigNumber back to a decimal price
-function toDecimal(scaledPriceBigNumber) {
-    if (ethers.BigNumber.isBigNumber(scaledPriceBigNumber)) {
-        const numberString = scaledPriceBigNumber.toString();
+// TODO: might not be refactored correctly from ethers v5 to v6
+// Convert a BigInt back to a decimal price
+function toDecimal(scaledPriceBigInt) {
+    if (typeof scaledPriceBigInt === "bigint") {
+        const numberString = scaledPriceBigInt.toString();
         return parseFloat(numberString / 1e10).toString();
     } else {
-        return scaledPriceBigNumber;
-    }
-}
-
-// convert object to decimal
-// WIP, still not working fully properly
-function convertManyToDecimal(input) {
-    if (Array.isArray(input)) {
-        return input.map((item) => convertManyToDecimal(item));
-    } else if (typeof input === "object" && input !== null) {
-        if (input._isBigNumber) {
-            return toDecimal(input);
-        }
-        let newObj = {};
-        for (let key in input) {
-            newObj[key] = convertObjectToDecimal(input[key]);
-        }
-        return newObj;
-    } else {
-        return input;
+        return scaledPriceBigInt;
     }
 }
 
 const convertTimeStampToUint40 = (date) => {
     const datetime = new Date(date);
-    return ethers.BigNumber.from(Math.floor(datetime.getTime() / 1000)).toNumber();
+    return toBigInt(Math.floor(datetime.getTime() / 1000)).toNumber();
 };
 
-export { toScaledBigNumber, toDecimal, convertManyToDecimal, convertTimeStampToUint40 };
+export { toScaledBigNumber, toDecimal, convertTimeStampToUint40 };
