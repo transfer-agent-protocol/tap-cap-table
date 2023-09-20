@@ -4,8 +4,9 @@ import { updateStakeholderById, updateStockClassById, upsertStockTransferById, u
 import { preProcessorCache } from "../utils/caches.js";
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-import { initiateSeeding } from "./seed.js";
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds } from "./seed.js";
 
 const options = {
     year: "numeric",
@@ -31,8 +32,8 @@ async function startOnchainListeners(contract, provider, issuerId) {
 
         if (!issuer.is_manifest_created) return;
 
-        // Update ActivePositions and activeSecurityIds by stock Class.
-        // flatten the structure of activePositions
+        const arrays = extractArrays(preProcessorCache[issuerId]);
+        await seedActivePositionsAndActiveSecurityIds(arrays, contract);
 
         await initiateSeeding(uuid, contract);
         console.log(`Completed Seeding issuer ${uuid} on chain`);
