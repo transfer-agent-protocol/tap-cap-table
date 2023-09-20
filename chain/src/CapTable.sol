@@ -78,7 +78,7 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name);
     }
 
-    function setMultipleActivePositionsAndSecurityIdsFromSeed(
+    function seedMultipleActivePositionsAndSecurityIds(
         bytes16[] memory stakeholderIds,
         bytes16[] memory securityIds,
         bytes16[] memory stockClassIds,
