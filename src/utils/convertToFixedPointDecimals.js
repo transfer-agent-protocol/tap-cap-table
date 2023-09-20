@@ -16,9 +16,17 @@ function toDecimal(scaledPriceBigInt) {
     }
 }
 
+// const convertTimeStampToUint40 = (date) => {
+//     const datetime = new Date(date);
+//     return toBigInt(Math.floor(datetime.getTime() / 1000)).toNumber();
+// };
+
 const convertTimeStampToUint40 = (date) => {
     const datetime = new Date(date);
-    return toBigInt(Math.floor(datetime.getTime() / 1000)).toNumber();
+    if (isNaN(datetime.getTime())) {
+        throw new Error("Invalid date format provided.");
+    }
+    return toBigInt(Math.floor(datetime.getTime() / 1000));
 };
 
 export { toScaledBigNumber, toDecimal, convertTimeStampToUint40 };
