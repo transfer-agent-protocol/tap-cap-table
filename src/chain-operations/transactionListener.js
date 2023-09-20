@@ -5,6 +5,7 @@ import { preProcessorCache } from "../utils/caches.js";
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
+import getContractInstance from "./getContractInstances.js";
 
 import { initiateSeeding, seedActivePositionsAndActiveSecurityIds } from "./seed.js";
 
@@ -19,6 +20,38 @@ const options = {
 
 async function startOnchainListeners(contract, provider, issuerId) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
+
+    console.log("contract before initializing ", JSON.stringify(contract, null, 2));
+
+    // Query the last 100 blocks for any transfers
+    const filter = contract.filters.IssuerCreated;
+    const events = await contract.queryFilter(filter);
+
+    console.log("events test for issue created ", events);
+
+    if (events.length > 0) {
+        const id = events[0].args[0];
+        console.log("IssuerCreated Event Emitted!", id);
+
+        const uuid = convertBytes16ToUUID(id);
+        const issuer = await readIssuerById(uuid);
+
+        if (!issuer.is_manifest_created) return;
+
+        const arrays = extractArrays(preProcessorCache[issuerId]);
+        await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
+        await initiateSeeding(uuid, contract);
+        console.log(`Completed Seeding issuer ${uuid} on chain`);
+
+        console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
+    }
+
+    const stakeholderFilter = contract.filters.StakeholderCreated;
+    const eventsStakeholder = await contract.queryFilter(stakeholderFilter);
+
+    console.log("num events for stakeholder ", eventsStakeholder.length);
+    console.log(" events for stakeholders ", eventsStakeholder);
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
