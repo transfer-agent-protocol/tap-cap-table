@@ -1,12 +1,12 @@
-import { createStockIssuance } from "../db/operations/create.js";
-import { readStakeholderById } from "../db/operations/read.js";
-import { updateStakeholderById, updateStockClassById } from "../db/operations/update.js";
+import { createHistoricalTransaction, createStockIssuance, createStockTransfer } from "../db/operations/create.js";
+import { readStakeholderById, readIssuerById } from "../db/operations/read.js";
+import { updateStakeholderById, updateStockClassById, upsertStockTransferById, upsertStockIssuanceById } from "../db/operations/update.js";
+import { preProcessorCache } from "../utils/caches.js";
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
-import getContractInstance from "./getContractInstances.js";
-import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
-import { createStockTransfer } from "../db/operations/create.js";
-import { createHistoricalTransaction } from "../db/operations/create.js";
+import { extractArrays } from "../utils/flattenPreprocessorCache.js";
+
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds } from "./seed.js";
 
 const options = {
     year: "numeric",
@@ -22,6 +22,23 @@ async function startOnchainListeners(contract, provider, issuerId) {
 
     contract.on("error", (error) => {
         console.error("Error:", error);
+    });
+
+    contract.on("IssuerCreated", async (id, _) => {
+        console.log("IssuerCreated Event Emitted!", id);
+
+        const uuid = convertBytes16ToUUID(id);
+        const issuer = await readIssuerById(uuid);
+
+        if (!issuer.is_manifest_created) return;
+
+        const arrays = extractArrays(preProcessorCache[issuerId]);
+        await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
+        await initiateSeeding(uuid, contract);
+        console.log(`Completed Seeding issuer ${uuid} on chain`);
+
+        console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -70,8 +87,9 @@ async function startOnchainListeners(contract, provider, issuerId) {
 
         const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.stakeholder_id));
 
-        const createdStockIssuance = await createStockIssuance({
-            _id: convertBytes16ToUUID(stock.id),
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockIssuance = await upsertStockIssuanceById(id, {
+            _id: id,
             object_type: stock.object_type,
             stock_class_id: convertBytes16ToUUID(stock.stock_class_id),
             stock_plan_id: convertBytes16ToUUID(stock.stock_plan_id),
@@ -117,8 +135,9 @@ async function startOnchainListeners(contract, provider, issuerId) {
 
         // console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
 
-        const createdStockTransfer = await createStockTransfer({
-            _id: convertBytes16ToUUID(stock.id),
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockTransfer = await upsertStockTransferById(id, {
+            _id: id,
             object_type: stock.object_type,
             quantity: toDecimal(stock.quantity).toString(),
             comments: stock.comments,
@@ -131,7 +150,7 @@ async function startOnchainListeners(contract, provider, issuerId) {
             is_onchain_synced: true,
         });
 
-        // console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+        console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
 
         const createdHistoricalTransaction = await createHistoricalTransaction({
             transaction: createdStockTransfer._id,

@@ -62,7 +62,7 @@ contract CapTable is Ownable {
     // stakeholder_id -> stock_class_id -> security_ids
     mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
     // stakeholder_id -> security_id -> ActivePosition
-    mapping(bytes16 => mapping(bytes16 => ActivePosition)) public activePositions;
+    mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions;
     // wallet address => stakeholder_id
     mapping(address => bytes16) walletsPerStakeholder;
 
@@ -76,6 +76,32 @@ contract CapTable is Ownable {
         nonce = 0;
         issuer = Issuer(_id, _name);
         emit IssuerCreated(_id, _name);
+    }
+
+    function seedMultipleActivePositionsAndSecurityIds(
+        bytes16[] memory stakeholderIds,
+        bytes16[] memory securityIds,
+        bytes16[] memory stockClassIds,
+        uint256[] memory quantities,
+        uint256[] memory sharePrices,
+        uint40[] memory timestamps
+    ) external onlyOwner {
+        require(
+            stakeholderIds.length == securityIds.length &&
+                securityIds.length == stockClassIds.length &&
+                stockClassIds.length == quantities.length &&
+                quantities.length == sharePrices.length &&
+                sharePrices.length == timestamps.length,
+            "Input arrays must have the same length"
+        );
+
+        for (uint256 i = 0; i < stakeholderIds.length; i++) {
+            // Set activePositions
+            activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(stockClassIds[i], quantities[i], sharePrices[i], timestamps[i]);
+
+            // Set activeSecurityIdsByStockClass
+            activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
+        }
     }
 
     function transferStock(
@@ -151,6 +177,82 @@ contract CapTable is Ownable {
     }
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
+    function issueStockFromSeed(
+        bytes16 id,
+        bytes16 securityId,
+        bytes16 stockClassId,
+        bytes16 stockPlanId,
+        ShareNumbersIssued memory shareNumbersIssued,
+        uint256 sharePrice,
+        uint256 quantity,
+        bytes16 vestingTermsId,
+        uint256 costBasis,
+        bytes16[] memory stockLegendIds,
+        string memory issuanceType,
+        string[] memory comments,
+        string memory customId,
+        bytes16 stakeholderId,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate,
+        string memory considerationText,
+        string[] memory securityLawExemptions
+    ) external onlyOwner {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+        require(quantity > 0, "Invalid quantity");
+        require(sharePrice > 0, "Invalid price");
+
+        _issueStock(
+            TxHelper.createStockIssuanceStructFromSeed(
+                id,
+                securityId,
+                stockClassId,
+                stockPlanId,
+                shareNumbersIssued,
+                sharePrice,
+                quantity,
+                vestingTermsId,
+                costBasis,
+                stockLegendIds,
+                issuanceType,
+                comments,
+                customId,
+                stakeholderId,
+                boardApprovalDate,
+                stockholderApprovalDate,
+                considerationText,
+                securityLawExemptions
+            )
+        );
+    }
+
+    function transferStockFromSeed(
+        bytes16 id,
+        bytes16 security_id,
+        bytes16[] memory resulting_security_ids,
+        bytes16 balance_security_id,
+        uint256 quantity,
+        string[] memory comments,
+        string memory consideration_text
+    ) external onlyOwner {
+        require(quantity > 0, "Invalid quantity");
+        require(security_id != bytes16(0), "Invalid security id");
+        require(resulting_security_ids.length > 0, "Invalid resulting security ids");
+
+        _transferStock(
+            TxHelper.createStockTransferStructFromSeed(
+                id,
+                security_id,
+                resulting_security_ids,
+                balance_security_id,
+                quantity,
+                comments,
+                consideration_text
+            )
+        );
+    }
+
+    // can extend this to check that it's not issuing more than stock_class initial shares issued
     function issueStockByTA(
         bytes16 stockClassId,
         bytes16 stockPlanId,
@@ -176,27 +278,28 @@ contract CapTable is Ownable {
 
         nonce++;
 
-        _issueStock(
-            TxHelper.createStockIssuanceStructByTA(
-                nonce,
-                stockClassId,
-                stockPlanId,
-                shareNumbersIssued,
-                sharePrice,
-                quantity,
-                vestingTermsId,
-                costBasis,
-                stockLegendIds,
-                issuanceType,
-                comments,
-                customId,
-                stakeholderId,
-                boardApprovalDate,
-                stockholderApprovalDate,
-                considerationText,
-                securityLawExemptions
-            )
+        StockIssuance memory issuance = TxHelper.createStockIssuanceStructByTA(
+            nonce,
+            stockClassId,
+            stockPlanId,
+            shareNumbersIssued,
+            sharePrice,
+            quantity,
+            vestingTermsId,
+            costBasis,
+            stockLegendIds,
+            issuanceType,
+            comments,
+            customId,
+            stakeholderId,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            considerationText,
+            securityLawExemptions
         );
+
+        _issueStock(issuance);
+        _updateContext(issuance);
     }
 
     /// @notice Setter for walletsPerStakeholder mapping
@@ -283,9 +386,7 @@ contract CapTable is Ownable {
         }
     }
 
-    function _issueStock(StockIssuance memory issuance) internal onlyOwner {
-        StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
-
+    function _updateContext(StockIssuance memory issuance) internal onlyOwner {
         activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
 
         activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
@@ -294,7 +395,10 @@ contract CapTable is Ownable {
             issuance.share_price,
             _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
         );
+    }
 
+    function _issueStock(StockIssuance memory issuance) internal onlyOwner {
+        StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
         transactions.push(address(issuanceTx));
         emit StockIssuanceCreated(issuance);
     }
@@ -332,7 +436,9 @@ contract CapTable is Ownable {
             sharePrice,
             stockClassId
         );
+
         _issueStock(transfereeIssuance);
+        _updateContext(transfereeIssuance);
 
         uint256 balanceForTransferor = transferorActivePosition.quantity - quantity;
 
@@ -347,7 +453,10 @@ contract CapTable is Ownable {
                 transferorActivePosition.share_price,
                 stockClassId
             );
+
             _issueStock(transferorBalanceIssuance);
+            _updateContext(transfereeIssuance);
+
             balance_security_id = transferorBalanceIssuance.security_id;
         } else {
             balance_security_id = "";

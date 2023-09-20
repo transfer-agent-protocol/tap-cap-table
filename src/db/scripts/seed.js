@@ -17,6 +17,7 @@ import {
 import addTransactions from "../operations/transactions.js"; // Import addTransactions
 
 import validateInputAgainstOCF from "../../utils/validateInputAgainstSchema.js";
+import preProcessManifestTxs from "../../state-machines/process.js";
 
 async function processEntity(inputEntities, createEntityFunction, schema, issuerId) {
     console.log(`Adding ${createEntityFunction.name.replace("create", "")} to DB`);
@@ -57,7 +58,9 @@ async function seedDB(manifestArr) {
     });
 
     await validateInputAgainstOCF(incomingIssuer, issuerSchema);
-    const issuer = await createIssuer(incomingIssuer);
+
+    const issuerWithFlag = { is_manifest_created: true, ...incomingIssuer };
+    const issuer = await createIssuer(issuerWithFlag);
 
     const issuerId = issuer._id;
 
@@ -69,6 +72,8 @@ async function seedDB(manifestArr) {
     await processEntity(incomingVestingTerms, createVestingTerms, vestingTermsSchema, issuerId);
 
     // TRANSACTIONS
+    // TODO: Validate transactions through OCF
+    preProcessManifestTxs(issuerId, incomingTransactions);
     await addTransactions(incomingTransactions, issuerId);
 
     return issuer;
