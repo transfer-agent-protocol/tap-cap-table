@@ -3,7 +3,12 @@ import { parentMachine } from "./parent.js";
 
 import { preProcessorCache } from "../utils/caches.js";
 
+/*
+    @dev: Parent-Child machines are created to calculate current context then deleted.
+    if we ever need then, consider saving them to the DB.
+*/
 const preProcessManifestTxs = (issuerId, txs) => {
+    // 1 parent per issuer
     const parent = interpret(parentMachine);
 
     parent.start();
@@ -37,6 +42,7 @@ const preProcessManifestTxs = (issuerId, txs) => {
     preProcessorCache[issuerId] = {
         activePositions: parent._state.context.activePositions,
         activeSecurityIdsByStockClass: parent._state.context.activeSecurityIdsByStockClass,
+        transactions: parent._state.context.transactions,
     };
 };
 
