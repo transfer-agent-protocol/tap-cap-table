@@ -76,7 +76,7 @@ contract CapTable is AccessControlDefaultAdminRules  {
     event StockTransferCreated(StockTransfer transfer);
     event StockIssuanceCreated(StockIssuance issuance);
 
-    constructor(bytes16 _id, string memory _name) AccessControlDefaultAdminRules(0 seconds, msg.sender) {
+    constructor(bytes16 _id, string memory _name) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
