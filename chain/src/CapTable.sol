@@ -86,6 +86,7 @@ contract CapTable is Ownable {
         uint256[] memory sharePrices,
         uint40[] memory timestamps
     ) external onlyOwner {
+        //TODO: check stakeholders and stock classes exist
         require(
             stakeholderIds.length == securityIds.length &&
                 securityIds.length == stockClassIds.length &&
