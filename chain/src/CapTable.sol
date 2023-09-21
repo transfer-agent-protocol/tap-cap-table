@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { AccessControlDefaultAdminRules} from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import { AccessControlDefaultAdminRules} from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
@@ -10,6 +11,7 @@ import "./lib/Arrays.sol";
 
 import "forge-std/console.sol";
 
+contract CapTable is AccessControlDefaultAdminRules {
 contract CapTable is AccessControlDefaultAdminRules {
     // @dev Issuer, Stakeholder and StockClass will be created off-chain then reflected on-chain to match IDs. Struct variables have underscore naming to match OCF naming.
     /* Objects kept intentionally off-chain unless they become useful
@@ -44,6 +46,11 @@ contract CapTable is AccessControlDefaultAdminRules {
         uint256 share_price;
         uint40 timestamp;
     }
+    
+    // RBAC
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
+
     
     // RBAC
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
@@ -270,6 +277,8 @@ contract CapTable is AccessControlDefaultAdminRules {
         uint256 sharePrice
     ) external onlyOperator {
 
+    ) external onlyOperator {
+
         // Checks related to entities' existence
         require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
@@ -319,6 +328,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
     function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
@@ -328,6 +338,7 @@ contract CapTable is AccessControlDefaultAdminRules {
 
     /// @notice Removing wallet from walletsPerStakeholder mapping
     function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
@@ -336,12 +347,14 @@ contract CapTable is AccessControlDefaultAdminRules {
     }
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
 
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
@@ -417,6 +430,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         emit StockIssuanceCreated(issuance);
     }
 
+    function _transferStock(StockTransfer memory transfer) internal {
     function _transferStock(StockTransfer memory transfer) internal {
         StockTransferTx transferTx = new StockTransferTx(transfer);
         transactions.push(address(transferTx));
