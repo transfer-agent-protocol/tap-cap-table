@@ -62,7 +62,7 @@ export const stockMachine = createMachine(
 
 const updateContext = (context, _) => {
     // console.log("context inside of updateContext ", context);
-    const { stakeholder_id, stock_class_id, security_id, quantity, share_price, date } = context.value;
+    const { stakeholder_id, stock_class_id, security_id, quantity, share_price, date = new Date() } = context.value;
 
     //Update Active Positions
     // if active position is empty for this stakeholder, create it
