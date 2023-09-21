@@ -3,10 +3,10 @@ import { convertAndReflectStockClassOnchain } from "../controllers/stockClassCon
 import { convertAndSeedIssuanceStockOnchain, convertAndSeedTransferStockOnchain } from "../controllers/transactions/seed.js";
 import { getAllIssuerDataById } from "../db/operations/read.js";
 import { convertTimeStampToUint40, toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
-import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
+import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
-
 import { preProcessorCache } from "../utils/caches.js";
+import { readIssuerById } from "../db/operations/read.js";
 
 export const verifyIssuerAndSeed = async (contract, id) => {
     const uuid = convertBytes16ToUUID(id);
@@ -14,15 +14,15 @@ export const verifyIssuerAndSeed = async (contract, id) => {
 
     if (!issuer.is_manifest_created) return;
 
-    const arrays = extractArrays(preProcessorCache[issuerId]);
+    const arrays = extractArrays(preProcessorCache[uuid]);
     await seedActivePositionsAndActiveSecurityIds(arrays, contract);
 
     await initiateSeeding(uuid, contract);
     console.log(`Completed Seeding issuer ${uuid} on chain`);
 
-    console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
+    console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
 };
-const initiateSeeding = async (uuid, contract) => {
+export const initiateSeeding = async (uuid, contract) => {
     console.log("Initiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
@@ -51,7 +51,7 @@ const initiateSeeding = async (uuid, contract) => {
     }
 };
 
-const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
+export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
     console.log(" stakeholders ", stakeholders);
