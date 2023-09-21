@@ -5,8 +5,8 @@ import "./CapTable.t.sol";
 
 contract IssuerTests is CapTableTest {
     function testIssuerInitialization() public {
-        (bytes16 id, string memory legal_name) = capTable.issuer();
-        assertEq(id, ISSUER_USER);
-        assertEq(legal_name, "Winston, Inc.");
+        (bytes16 id, string memory legalName) = capTable.issuer();
+        assertEq(id, ISSUER_ID);
+        assertEq(legalName, "Winston, Inc.");
     }
 }
