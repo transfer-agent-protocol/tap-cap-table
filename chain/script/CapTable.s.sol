@@ -14,7 +14,7 @@ contract CapTableDeployLocalScript is Script {
 
         vm.startBroadcast(deployerPrivateKeyFakeAccount);
 
-        CapTable capTable = new CapTable(0xd3373e0a4dd9430f8a563281f2800e1e, "Winston Inc.");
+        new CapTable(0xd3373e0a4dd9430f8a563281f2800e1e, "Winston Inc.");
 
         vm.stopBroadcast();
     }
@@ -28,7 +28,7 @@ contract CapTableDeployOptimismGoerli is Script {
 
         vm.startBroadcast(deployerPrivateKeyPoetTest);
 
-        CapTable capTable = new CapTable(0xd3373e0a4dd9430f8a563281f2800e1e, "Winston Inc.");
+        new CapTable(0xd3373e0a4dd9430f8a563281f2800e1e, "Winston Inc.");
 
         vm.stopBroadcast();
     }
