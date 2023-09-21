@@ -87,16 +87,14 @@ const typeToModelType = {
 };
 
 const addTransactions = async (inputTransactions, issuerId) => {
-    if (inputTransactions.file_type === "OCF_TRANSACTIONS_FILE") {
-        for (let inputTransaction of inputTransactions.items) {
-            inputTransaction = { ...inputTransaction, issuer: issuerId };
-            const ModelType = typeToModelType[inputTransaction.object_type];
-            if (ModelType) {
-                const transaction = await new ModelType(inputTransaction).save();
-                console.log(`${inputTransaction.object_type} transaction added. Details:`, JSON.stringify(transaction, null, 2));
-            } else {
-                console.log(`Unknown object type for transaction:`, JSON.stringify(inputTransaction, null, 2));
-            }
+    for (let inputTransaction of inputTransactions.items) {
+        inputTransaction = { ...inputTransaction, issuer: issuerId };
+        const ModelType = typeToModelType[inputTransaction.object_type];
+        if (ModelType) {
+            const transaction = await new ModelType(inputTransaction).save();
+            console.log(`${inputTransaction.object_type} transaction added. Details:`, JSON.stringify(transaction, null, 2));
+        } else {
+            console.log(`Unknown object type for transaction:`, JSON.stringify(inputTransaction, null, 2));
         }
     }
 };

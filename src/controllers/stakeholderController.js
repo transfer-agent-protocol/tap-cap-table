@@ -1,4 +1,4 @@
-import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
+import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 
 /// @dev: controller handles conversion from OCF type to Onchain types and creates the stakeholder.
 export const convertAndReflectStakeholderOnchain = async (contract, stakeholder) => {

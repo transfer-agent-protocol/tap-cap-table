@@ -38,6 +38,7 @@
         "express": "^4.18.2",
         "mongoose": "^7.4.2",
         "solc": "^0.8.20",
+        "xstate": "^4.38.2",
         "yauzl": "^2.10.0"
     },
     "browserslist": [

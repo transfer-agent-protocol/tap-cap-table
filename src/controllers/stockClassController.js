@@ -1,5 +1,5 @@
-import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
-import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
+import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
+import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 
 /// @dev: controller handles conversion from OCF type to Onchain types and creates the stock class.
 export const convertAndReflectStockClassOnchain = async (contract, stockClass) => {
