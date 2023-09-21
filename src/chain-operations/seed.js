@@ -2,11 +2,28 @@ import { convertAndReflectStakeholderOnchain } from "../controllers/stakeholderC
 import { convertAndReflectStockClassOnchain } from "../controllers/stockClassController.js";
 import { convertAndSeedIssuanceStockOnchain, convertAndSeedTransferStockOnchain } from "../controllers/transactions/seed.js";
 import { getAllIssuerDataById } from "../db/operations/read.js";
+import { convertTimeStampToUint40, toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
-import { toScaledBigNumber, convertTimeStampToUint40 } from "../utils/convertToFixedPointDecimals.js";
+import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-export const initiateSeeding = async (uuid, contract) => {
-    console.log("Intiating Seeding...");
+import { preProcessorCache } from "../utils/caches.js";
+
+export const verifyIssuerAndSeed = async (contract, issuer) => {
+    const uuid = convertBytes16ToUUID(id);
+    const issuer = await readIssuerById(uuid);
+
+    if (!issuer.is_manifest_created) return;
+
+    const arrays = extractArrays(preProcessorCache[issuerId]);
+    await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
+    await initiateSeeding(uuid, contract);
+    console.log(`Completed Seeding issuer ${uuid} on chain`);
+
+    console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
+};
+const initiateSeeding = async (uuid, contract) => {
+    console.log("Initiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
     for (const stakeholder of stakeholders) {
@@ -34,7 +51,7 @@ export const initiateSeeding = async (uuid, contract) => {
     }
 };
 
-export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
+const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
     console.log(" stakeholders ", stakeholders);
@@ -65,4 +82,3 @@ export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) 
 
     console.log("Seeded Active Positions and Active Security Ids onchain");
 };
-//
