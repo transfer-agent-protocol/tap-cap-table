@@ -47,6 +47,7 @@ contract RolesTests is CapTableTest {
         if (asRando) {
             vm.prank(RANDO_ADDR);
         }
+        /// @dev this was chosen arbitrarily bc it is onlyOperator. The arguments are garbage and we expect it to throw
         capTable.transferStock(
             0x0000000000000000000000000000000a, 
             0x0000000000000000000000000000000b,
@@ -60,6 +61,7 @@ contract RolesTests is CapTableTest {
             vm.expectRevert("Does not have admin role");
         }
         vm.prank(RANDO_ADDR);
+        /// @dev this was chosen arbitrarily bc it is onlyAdmin. The arguments are garbage and we expect it to throw
         capTable.addWalletToStakeholder(0x0000000000000000000000000000000d, address(0));
     }
 }
