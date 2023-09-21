@@ -8,7 +8,7 @@ import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
 import { preProcessorCache } from "../utils/caches.js";
 
-export const verifyIssuerAndSeed = async (contract, issuer) => {
+export const verifyIssuerAndSeed = async (contract, id) => {
     const uuid = convertBytes16ToUUID(id);
     const issuer = await readIssuerById(uuid);
 
