@@ -8,6 +8,10 @@ import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 import { preProcessorCache } from "../utils/caches.js";
 import { readIssuerById } from "../db/operations/read.js";
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export const verifyIssuerAndSeed = async (contract, id) => {
     const uuid = convertBytes16ToUUID(id);
     const issuer = await readIssuerById(uuid);
@@ -26,6 +30,8 @@ export const initiateSeeding = async (uuid, contract) => {
     console.log("Initiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
+    await sleep(300);
+
     for (const stakeholder of stakeholders) {
         stakeholder.id = stakeholder._id;
 
@@ -35,10 +41,15 @@ export const initiateSeeding = async (uuid, contract) => {
 
         await convertAndReflectStakeholderOnchain(contract, stakeholder);
     }
+
+    await sleep(300);
+
     for (const stockClass of stockClasses) {
         stockClass.id = stockClass._id;
         await convertAndReflectStockClassOnchain(contract, stockClass);
     }
+
+    await sleep(300);
 
     for (const stockIssuance of stockIssuances) {
         stockIssuance.id = stockIssuance._id;
