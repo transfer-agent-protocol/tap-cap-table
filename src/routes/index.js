@@ -21,13 +21,12 @@ router.post("/mint-cap-table", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(issuer._id);
         const { contract, provider, address } = await deployCapTable(req.chain, issuerIdBytes16, issuer.legal_name);
-        console.log("Minted Cap Table to ", address);
 
         const savedIssuerWithDeployedTo = await updateIssuerById(issuer._id, { deployed_to: address });
 
         // add contract to the cache and start listener
         contractCache[issuer._id] = { contract, provider };
-        startOnchainListeners(contract, provider, issuer._id);
+        await startOnchainListeners(contract, provider, issuer._id);
 
         res.status(200).send({ issuer: savedIssuerWithDeployedTo });
     } catch (error) {
