@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { AccessControlDefaultAdminRules} from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
 import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
@@ -10,7 +10,7 @@ import "./lib/Arrays.sol";
 
 import "forge-std/console.sol";
 
-contract CapTable is AccessControlDefaultAdminRules  {
+contract CapTable is AccessControlDefaultAdminRules {
     // @dev Issuer, Stakeholder and StockClass will be created off-chain then reflected on-chain to match IDs. Struct variables have underscore naming to match OCF naming.
     /* Objects kept intentionally off-chain unless they become useful
         - Stock Legend Template
@@ -44,7 +44,7 @@ contract CapTable is AccessControlDefaultAdminRules  {
         uint256 share_price;
         uint40 timestamp;
     }
-    
+
     // RBAC
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
@@ -80,7 +80,7 @@ contract CapTable is AccessControlDefaultAdminRules  {
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
-    
+
         nonce = 0;
         issuer = Issuer(_id, _name);
         emit IssuerCreated(_id, _name);
@@ -242,7 +242,7 @@ contract CapTable is AccessControlDefaultAdminRules  {
         uint256 quantity,
         string[] memory comments,
         string memory consideration_text
-    ) external onlyOperator {
+    ) external onlyAdmin {
         require(quantity > 0, "Invalid quantity");
         require(security_id != bytes16(0), "Invalid security id");
         require(resulting_security_ids.length > 0, "Invalid resulting security ids");
@@ -506,11 +506,11 @@ contract CapTable is AccessControlDefaultAdminRules  {
     function addAdmin(address addr) external onlyAdmin {
         _grantRole(ADMIN_ROLE, addr);
     }
-    
+
     function removeAdmin(address addr) external onlyAdmin {
         _revokeRole(ADMIN_ROLE, addr);
     }
-    
+
     function addOperator(address addr) external onlyAdmin {
         _grantRole(OPERATOR_ROLE, addr);
     }
