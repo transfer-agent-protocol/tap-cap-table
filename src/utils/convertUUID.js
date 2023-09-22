@@ -35,15 +35,11 @@ function convertBytes16ToUUID(obj) {
 }
 
 function convertUUIDToBytes16(uuid) {
-    console.log("inside of convert uuid to bytes 16");
+    const bytes = getBytes("0x" + uuid.replace(/-/g, ""));
 
-    const previous = hexlify(getBytes("0x" + uuid.replace(/-/g, "")));
-    console.log("previous", previous);
-    console.log("type of prvious ", typeof previous);
+    const hex = hexlify(bytes);
 
-    // const converted = hexlify(getBytes(uuid.replace(/-/g, "")));
-
-    return previous;
+    return hex;
 }
 
 export { convertBytes16ToUUID, convertUUIDToBytes16 };
