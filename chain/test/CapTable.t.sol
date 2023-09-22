@@ -6,12 +6,10 @@ import "../src/CapTable.sol";
 
 contract CapTableTest is Test {
     CapTable public capTable;
-    address ISSUER_ADDR = address(0xd33);
-    bytes16 ISSUER_ID = 0xd3373e0a4dd9430f8a563281f2800e1e;
-    string ISSUER_NAME = "Winston, Inc.";
 
     function setUp() public {
-        capTable = new CapTable(ISSUER_ID, ISSUER_NAME);
+        bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
+        capTable = new CapTable(issuerId, "Winston, Inc.");
     }
 
     function createPranksterAndExpectRevert() public {
