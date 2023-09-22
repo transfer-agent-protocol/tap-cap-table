@@ -18,15 +18,16 @@ export const verifyIssuerAndSeed = async (contract, id) => {
 
     if (!issuer.is_manifest_created) return;
 
-    const arrays = extractArrays(preProcessorCache[uuid]);
-    await seedActivePositionsAndActiveSecurityIds(arrays, contract);
-
     await initiateSeeding(uuid, contract);
     console.log(`Completed Seeding issuer ${uuid} on chain`);
 
+    const arrays = extractArrays(preProcessorCache[uuid]);
+    await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
     console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
 };
-export const initiateSeeding = async (uuid, contract) => {
+
+const initiateSeeding = async (uuid, contract) => {
     console.log("Initiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
@@ -62,7 +63,7 @@ export const initiateSeeding = async (uuid, contract) => {
     }
 };
 
-export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
+const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
     console.log(" stakeholders ", stakeholders);
