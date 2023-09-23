@@ -2,36 +2,12 @@ import { convertAndReflectStakeholderOnchain } from "../controllers/stakeholderC
 import { convertAndReflectStockClassOnchain } from "../controllers/stockClassController.js";
 import { convertAndSeedIssuanceStockOnchain, convertAndSeedTransferStockOnchain } from "../controllers/transactions/seed.js";
 import { getAllIssuerDataById } from "../db/operations/read.js";
-import { convertTimeStampToUint40, toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
-import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID.js";
-import { extractArrays } from "../utils/flattenPreprocessorCache.js";
-import { preProcessorCache } from "../utils/caches.js";
-import { readIssuerById } from "../db/operations/read.js";
+import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
+import { toScaledBigNumber, convertTimeStampToUint40 } from "../utils/convertToFixedPointDecimals.js";
 
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export const verifyIssuerAndSeed = async (contract, id) => {
-    const uuid = convertBytes16ToUUID(id);
-    const issuer = await readIssuerById(uuid);
-
-    if (!issuer.is_manifest_created) return;
-
-    await initiateSeeding(uuid, contract);
-    console.log(`Completed Seeding issuer ${uuid} on chain`);
-
-    const arrays = extractArrays(preProcessorCache[uuid]);
-    await seedActivePositionsAndActiveSecurityIds(arrays, contract);
-
-    console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
-};
-
-const initiateSeeding = async (uuid, contract) => {
-    console.log("Initiating Seeding...");
+export const initiateSeeding = async (uuid, contract) => {
+    console.log("Intiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
-
-    await sleep(300);
 
     for (const stakeholder of stakeholders) {
         stakeholder.id = stakeholder._id;
@@ -42,15 +18,10 @@ const initiateSeeding = async (uuid, contract) => {
 
         await convertAndReflectStakeholderOnchain(contract, stakeholder);
     }
-
-    await sleep(300);
-
     for (const stockClass of stockClasses) {
         stockClass.id = stockClass._id;
         await convertAndReflectStockClassOnchain(contract, stockClass);
     }
-
-    await sleep(300);
 
     for (const stockIssuance of stockIssuances) {
         stockIssuance.id = stockIssuance._id;
@@ -63,7 +34,7 @@ const initiateSeeding = async (uuid, contract) => {
     }
 };
 
-const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
+export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
     console.log(" stakeholders ", stakeholders);
@@ -94,3 +65,4 @@ const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
 
     console.log("Seeded Active Positions and Active Security Ids onchain");
 };
+//
