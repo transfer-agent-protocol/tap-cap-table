@@ -52,6 +52,7 @@ contract CapTable is Ownable {
         emit IssuerCreated(_id, _name);
     }
 
+    // SKIPPING FOR NOW ⚠️
     function seedMultipleActivePositionsAndSecurityIds(
         bytes16[] memory stakeholderIds,
         bytes16[] memory securityIds,
@@ -79,6 +80,7 @@ contract CapTable is Ownable {
         }
     }
 
+    // DONE ✅
     function transferStock(
         bytes16 transferorStakeholderId,
         bytes16 transfereeStakeholderId,
@@ -149,6 +151,7 @@ contract CapTable is Ownable {
     }
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
+    // DONE ✅
     function issueStockByTA(
         bytes16 stockClassId,
         bytes16 stockPlanId,
@@ -198,64 +201,7 @@ contract CapTable is Ownable {
         _updateContext(issuance);
     }
 
-    /// @notice Setter for walletsPerStakeholder mapping
-    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
-        require(_wallet != address(0), "Invalid wallet");
-        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
-
-        walletsPerStakeholder[_wallet] = _stakeholder_id;
-    }
-
-    /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
-        require(_wallet != address(0), "Invalid wallet");
-        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
-
-        delete walletsPerStakeholder[_wallet];
-    }
-
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
-        require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
-        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
-        stakeholderIndex[_id] = stakeholders.length;
-        emit StakeholderCreated(_id);
-    }
-
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyOwner {
-        require(stockClassIndex[_id] == 0, "Stock class already exists");
-
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
-        stockClassIndex[_id] = stockClasses.length;
-        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
-    }
-
-    function getActivePositionBySecurityId(bytes16 _stakeholder_id, bytes16 _security_id) public view returns (ActivePosition memory activePosition) {
-        require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
-        return activePositions[_stakeholder_id][_security_id];
-    }
-
-    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
-        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
-        return walletsPerStakeholder[_wallet];
-    }
-
-    function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
-        delete activePositions[_stakeholder_id][_security_id];
-    }
-
-    // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
-    function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
-        bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
-
-        uint256 index = Arrays.find(securities, _security_id);
-        if (index != type(uint256).max) {
-            Arrays.remove(securities, index);
-        }
-    }
-
+    // DONE (for now) ✅
     function _updateContext(StockIssuance memory issuance) internal onlyOwner {
         activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
 
@@ -267,22 +213,92 @@ contract CapTable is Ownable {
         );
     }
 
+    // DONE (for now) ✅
     function _issueStock(StockIssuance memory issuance) internal onlyOwner {
         StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
         transactions.push(address(issuanceTx));
         emit StockIssuanceCreated(issuance);
     }
 
+    // SKIPPING ⚠️
+    /// @notice Setter for walletsPerStakeholder mapping
+    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
+
+        walletsPerStakeholder[_wallet] = _stakeholder_id;
+    }
+
+    // SKIPPING ⚠️
+    /// @notice Removing wallet from walletsPerStakeholder mapping
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
+
+        delete walletsPerStakeholder[_wallet];
+    }
+
+    // DONE ✅
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
+        require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
+        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
+        stakeholderIndex[_id] = stakeholders.length;
+        emit StakeholderCreated(_id);
+    }
+
+    // DONE ✅
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyOwner {
+        require(stockClassIndex[_id] == 0, "Stock class already exists");
+
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
+        stockClassIndex[_id] = stockClasses.length;
+        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
+    }
+
+    // NOT used anymore ❌
+    function getActivePositionBySecurityId(bytes16 _stakeholder_id, bytes16 _security_id) public view returns (ActivePosition memory activePosition) {
+        require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
+        return activePositions[_stakeholder_id][_security_id];
+    }
+
+    // SKIPPING ⚠️
+    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
+        return walletsPerStakeholder[_wallet];
+    }
+
+    // DONE ✅
+    function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
+        delete activePositions[_stakeholder_id][_security_id];
+    }
+
+    // DONE ✅
+    // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
+    function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
+        bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
+
+        uint256 index = Arrays.find(securities, _security_id);
+        if (index != type(uint256).max) {
+            Arrays.remove(securities, index);
+        }
+    }
+
+    // DONE ✅
     function _transferStock(StockTransfer memory transfer) internal onlyOwner {
         StockTransferTx transferTx = new StockTransferTx(transfer);
         transactions.push(address(transferTx));
         emit StockTransferCreated(transfer);
     }
 
+    // DONE ✅
     function _safeNow() internal view returns (uint40) {
         return uint40(block.timestamp);
     }
 
+    // DONE ✅
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function _transferSingleStock(
         bytes16 transferorStakeholderId,
