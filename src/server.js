@@ -49,11 +49,11 @@ const contractMiddleware = async (req, res, next) => {
 
     // Check if contract instance already exists in cache
     if (!contractCache[req.body.issuerId]) {
-        const { contract, provider } = await getContractInstance(CHAIN, issuer.deployed_to);
+        const { contract, provider, issuanceLib, transferLib } = await getContractInstance(CHAIN, issuer.deployed_to);
         contractCache[req.body.issuerId] = { contract, provider };
 
         // Initialize listener for this contract
-        startOnchainListeners(contract, provider, req.body.issuerId);
+        startOnchainListeners(contract, provider, req.body.issuerId, issuanceLib, transferLib);
     }
 
     req.contract = contractCache[req.body.issuerId].contract;
