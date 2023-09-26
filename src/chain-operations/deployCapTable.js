@@ -2,8 +2,14 @@ import { config } from "dotenv";
 import { ethers } from "ethers";
 config();
 
-import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+// import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import CAP_TABLE from "../../chain/out/CapTableLibs.sol/CapTableLibs.json" assert { type: "json" };
+import CAP_TABLE_ISSUANCE from "../../chain/out/CapTableLibs.sol/StockIssuanceLib.json" assert { type: "json" };
+import CAP_TABLE_TRANSFER from "../../chain/out/CapTableLibs.sol/StockTransferLib.json" assert { type: "json" };
+
 const { abi, bytecode } = CAP_TABLE;
+const { abi: abiIssuance, bytecode: bytecodeIssuance } = CAP_TABLE_ISSUANCE;
+const { abi: abiTransfer, bytecode: bytecodeTransfer } = CAP_TABLE_TRANSFER;
 
 async function deployCapTableLocal(issuerId, issuerName) {
     // Replace with your private key and provider endpoint
@@ -15,12 +21,19 @@ async function deployCapTableLocal(issuerId, issuerName) {
 
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
+    console.log("wallet address ", wallet.address);
+
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
+    console.log("issuer id inside of deployment ", issuerId, "and issuername inside of deployment ", issuerName);
+
     const contract = await factory.deploy(issuerId, issuerName);
 
     console.log("Contract Deployed to:", contract.target);
 
-    return { contract, provider, address: contract.target };
+    const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
+    const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
+
+    return { contract, provider, address: contract.target, issuanceLib, transferLib };
 }
 
 async function deployCapTableOptimismGoerli(issuerId, issuerName) {
@@ -33,7 +46,10 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
 
     console.log("Contract Deployed to:", contract.target);
 
-    return { contract, provider, address: contract.target };
+    const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
+    const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
+
+    return { contract, provider, address: contract.target, issuanceLib, transferLib };
 }
 
 async function deployCapTable(chain, issuerId, issuerName) {
