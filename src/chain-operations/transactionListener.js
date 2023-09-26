@@ -16,7 +16,7 @@ const options = {
     second: "2-digit",
 };
 
-async function startOnchainListeners(contract, provider, issuerId) {
+async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
     contract.on("IssuerCreated", async (id, _) => {
@@ -46,7 +46,7 @@ async function startOnchainListeners(contract, provider, issuerId) {
     });
 
     // @dev events return both an array and object, depending how you want to access. We're using objects
-    contract.on("StockIssuanceCreated", async (stock, event) => {
+    issuanceLib.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
         // console.log(`Stock issuance with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
@@ -114,7 +114,7 @@ async function startOnchainListeners(contract, provider, issuerId) {
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 
-    contract.on("StockTransferCreated", async (stock, event) => {
+    transferLib.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
         // console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
@@ -150,10 +150,10 @@ async function startOnchainListeners(contract, provider, issuerId) {
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 
-    const filter = contract.filters.IssuerCreated;
-    const events = await contract.queryFilter(filter);
+    const issuerCreatedFilter = contract.filters.IssuerCreated;
+    const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
 
-    if (events.length > 0) {
+    if (issuerEvents.length > 0) {
         const id = events[0].args[0];
         console.log("IssuerCreated Event Emitted!", id);
 
