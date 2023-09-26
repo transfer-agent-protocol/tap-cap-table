@@ -57,11 +57,16 @@ issuer.post("/create", async (req, res) => {
         await validateInputAgainstOCF(incomingIssuerToValidate, issuerSchema);
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
-        const { contract, provider, address } = await deployCapTable(chain, issuerIdBytes16, incomingIssuerToValidate.legal_name);
+        console.log("issuer id bytes16 ", issuerIdBytes16);
+        const { contract, provider, address, issuanceLib, transferLib } = await deployCapTable(
+            chain,
+            issuerIdBytes16,
+            incomingIssuerToValidate.legal_name
+        );
 
         // add contract to the cache and start listener
         contractCache[incomingIssuerToValidate.id] = { contract, provider };
-        startOnchainListeners(contract, provider, incomingIssuerToValidate.id);
+        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, issuanceLib, transferLib);
 
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,
