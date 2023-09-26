@@ -9,11 +9,6 @@ library TxHelper {
         return deterministicValue;
     }
 
-    /* It's likely we see two types of issuances, 
-        - one created during transfers (createStockIssuanceStructForTransfer) where less info is needed.
-        - one created one time by the TA for an major issuance event (createStockIssuanceStructByTA)  , like a new investor with the company or employee
-    */
-
     function createStockIssuanceStructByTA(
         uint256 nonce,
         bytes16 stockClassId,
