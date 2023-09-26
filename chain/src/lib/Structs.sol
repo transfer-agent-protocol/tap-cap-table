@@ -1,6 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+struct Issuer {
+    bytes16 id;
+    string legal_name;
+}
+
+struct Stakeholder {
+    bytes16 id;
+    string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
+    string current_relationship; // ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
+}
+
+// can be later extended to add things like seniority, conversion_rights, etc.
+struct StockClass {
+    bytes16 id;
+    string class_type; // ["COMMON", "PREFERRED"]
+    uint256 price_per_share; // Per-share price this stock class was issued for
+    uint256 initial_shares_authorized;
+}
+
+struct ActivePosition {
+    bytes16 stock_class_id;
+    uint256 quantity;
+    uint256 share_price;
+    uint40 timestamp;
+}
+
 struct ShareNumbersIssued {
     uint256 starting_share_number;
     uint256 ending_share_number;
