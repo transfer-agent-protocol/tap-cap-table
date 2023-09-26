@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
-import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
+import { StockIssuance, Issuer, Stakeholder, StockClass, ActivePosition, StockTransfer } from "./lib/Structs.sol";
 import "./lib/TxHelper.sol";
 import "./lib/Arrays.sol";
 
@@ -18,32 +18,6 @@ contract CapTable is Ownable {
         - Vesting Terms
         - Valuations
     */
-
-    struct Issuer {
-        bytes16 id;
-        string legal_name;
-    }
-
-    struct Stakeholder {
-        bytes16 id;
-        string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
-        string current_relationship; // ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
-    }
-
-    // can be later extended to add things like seniority, conversion_rights, etc.
-    struct StockClass {
-        bytes16 id;
-        string class_type; // ["COMMON", "PREFERRED"]
-        uint256 price_per_share; // Per-share price this stock class was issued for
-        uint256 initial_shares_authorized;
-    }
-
-    struct ActivePosition {
-        bytes16 stock_class_id;
-        uint256 quantity;
-        uint256 share_price;
-        uint40 timestamp;
-    }
 
     Issuer public issuer;
     Stakeholder[] public stakeholders;
@@ -141,9 +115,6 @@ contract CapTable is Ownable {
             }
         }
 
-        console.log("quantity ", quantity);
-        console.log("sum ", sum);
-
         require(quantity <= sum, "insufficient shares");
 
         uint256 remainingQuantity = quantity; // This will keep track of the remaining quantity to be transferred
@@ -175,82 +146,6 @@ contract CapTable is Ownable {
                 break;
             }
         }
-    }
-
-    // can extend this to check that it's not issuing more than stock_class initial shares issued
-    function issueStockFromSeed(
-        bytes16 id,
-        bytes16 securityId,
-        bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
-        uint256 sharePrice,
-        uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
-        string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
-        bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions
-    ) external onlyOwner {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-        require(quantity > 0, "Invalid quantity");
-        require(sharePrice > 0, "Invalid price");
-
-        _issueStock(
-            TxHelper.createStockIssuanceStructFromSeed(
-                id,
-                securityId,
-                stockClassId,
-                stockPlanId,
-                shareNumbersIssued,
-                sharePrice,
-                quantity,
-                vestingTermsId,
-                costBasis,
-                stockLegendIds,
-                issuanceType,
-                comments,
-                customId,
-                stakeholderId,
-                boardApprovalDate,
-                stockholderApprovalDate,
-                considerationText,
-                securityLawExemptions
-            )
-        );
-    }
-
-    function transferStockFromSeed(
-        bytes16 id,
-        bytes16 security_id,
-        bytes16[] memory resulting_security_ids,
-        bytes16 balance_security_id,
-        uint256 quantity,
-        string[] memory comments,
-        string memory consideration_text
-    ) external onlyOwner {
-        require(quantity > 0, "Invalid quantity");
-        require(security_id != bytes16(0), "Invalid security id");
-        require(resulting_security_ids.length > 0, "Invalid resulting security ids");
-
-        _transferStock(
-            TxHelper.createStockTransferStructFromSeed(
-                id,
-                security_id,
-                resulting_security_ids,
-                balance_security_id,
-                quantity,
-                comments,
-                consideration_text
-            )
-        );
     }
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
@@ -345,32 +240,6 @@ contract CapTable is Ownable {
     function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
         require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
         return walletsPerStakeholder[_wallet];
-    }
-
-    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
-        if (stakeholderIndex[_id] > 0) {
-            Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
-            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
-        } else {
-            return ("", "", "");
-        }
-    }
-
-    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
-        if (stockClassIndex[_id] > 0) {
-            StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
-        } else {
-            return ("", "", 0, 0);
-        }
-    }
-
-    function getTotalNumberOfStakeholders() public view returns (uint256) {
-        return stakeholders.length;
-    }
-
-    function getTotalNumberOfStockClasses() public view returns (uint256) {
-        return stockClasses.length;
     }
 
     function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
