@@ -154,7 +154,7 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
 
     if (issuerEvents.length > 0) {
-        const id = events[0].args[0];
+        const id = issuerEvents[0].args[0];
         console.log("IssuerCreated Event Emitted!", id);
 
         await verifyIssuerAndSeed(contract, id);
