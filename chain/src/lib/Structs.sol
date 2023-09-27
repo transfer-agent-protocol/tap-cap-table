@@ -32,6 +32,16 @@ struct ShareNumbersIssued {
     uint256 ending_share_number;
 }
 
+struct StockCancellation {
+    bytes16 id;
+    string object_type;
+    uint256 quantity;
+    string[] comments; // optional
+    bytes16 security_id;
+    string reason_text; // optional
+    bytes16 balance_security_id; // optional
+}
+
 // date fields are going to use block timestamp
 struct StockIssuance {
     bytes16 id;
