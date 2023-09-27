@@ -34,6 +34,13 @@ const preProcessManifestTxs = (issuerId, txs) => {
                     value: tx,
                 });
                 break;
+            case "TX_STOCK_CANCELLATION":
+                parent.send({
+                    type: "PRE_STOCK_CANCELLATION",
+                    id: tx.security_id,
+                    value: tx,
+                });
+                break;
         }
     });
 

@@ -27,7 +27,14 @@ export const stockMachine = createMachine(
                     TX_STOCK_TRANSFER: {
                         target: "Transferred",
                     },
+                    TX_STOCK_CANCELLATION: {
+                        target: "Cancelled",
+                    },
                 },
+            },
+            Cancelled: {
+                type: "final",
+                entry: ["stopChild"],
             },
             Transferred: {
                 type: "final",
