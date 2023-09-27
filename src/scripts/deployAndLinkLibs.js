@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { ethers } from "ethers";
-import CAP_TABLE_ISSUANCE from "../../chain/out/CapTableLibs.sol/StockIssuanceLib.json" assert { type: "json" };
-import CAP_TABLE_TRANSFER from "../../chain/out/CapTableLibs.sol/StockTransferLib.json" assert { type: "json" };
+import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
+import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
 import { spawn } from 'child_process';
 
 
@@ -34,7 +34,7 @@ const deployAndLinkLibs = async () => {
         Array(contractAddresses.length)
             .fill(null)
             .map((_, idx) =>
-                ["--libraries", `src/CapTableLib.sol:${contracts[idx]}:${contractAddresses[idx]}`]
+                ["--libraries", `src/transactions/${contracts[idx]}.sol:${contracts[idx]}:${contractAddresses[idx]}`]
             )
             .flat()
 
