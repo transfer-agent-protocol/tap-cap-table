@@ -8,6 +8,7 @@ import "./transactions/StockTransferTX.sol";
 import "./lib/Arrays.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
+import "./lib/transactions/StockCancellation.sol";
 
 contract CapTableLibs {
     Issuer public issuer;
@@ -55,6 +56,7 @@ contract CapTableLibs {
     }
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
+    // TODO: small syntax but change this to issueStock
     function issueStockByTA(
         bytes16 stockClassId,
         bytes16 stockPlanId,
@@ -96,6 +98,32 @@ contract CapTableLibs {
             stockholderApprovalDate,
             considerationText,
             securityLawExemptions,
+            positions,
+            activeSecs,
+            transactions
+        );
+    }
+
+    function cancelStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText,
+        uint256 quantity
+    ) external {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        // need a require for activePositions
+        StockCancellationLib.cancelStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            securityId,
+            comments,
+            reasonText,
+            quantity,
             positions,
             activeSecs,
             transactions
