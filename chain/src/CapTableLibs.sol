@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass} from "./lib/Structs.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } from "./lib/Structs.sol";
 import "./lib/TxHelper.sol";
 import "./transactions/StockIssuanceTX.sol";
 import "./transactions/StockTransferTX.sol";
@@ -31,9 +31,7 @@ contract CapTableLibs {
 
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
-    event StockClassCreated(
-        bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized
-    );
+    event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
 
     constructor(bytes16 _id, string memory _name) {
         nonce = 0;
@@ -41,21 +39,14 @@ contract CapTableLibs {
         emit IssuerCreated(_id, _name);
     }
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship)
-        public
-    {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
 
-    function createStockClass(
-        bytes16 _id,
-        string memory _class_type,
-        uint256 _price_per_share,
-        uint256 _initial_share_authorized
-    ) public {
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
