@@ -4,8 +4,8 @@ config();
 
 // import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE from "../../chain/out/CapTableLibs.sol/CapTableLibs.json" assert { type: "json" };
-import CAP_TABLE_ISSUANCE from "../../chain/out/CapTableLibs.sol/StockIssuanceLib.json" assert { type: "json" };
-import CAP_TABLE_TRANSFER from "../../chain/out/CapTableLibs.sol/StockTransferLib.json" assert { type: "json" };
+import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
+import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
 
 const { abi, bytecode } = CAP_TABLE;
 const { abi: abiIssuance, bytecode: bytecodeIssuance } = CAP_TABLE_ISSUANCE;
