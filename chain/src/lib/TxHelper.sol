@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, ShareNumbersIssued } from "./Structs.sol";
+import { StockIssuance, StockTransfer, ShareNumbersIssued, StockCancellation } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -56,6 +56,7 @@ library TxHelper {
     }
 
     // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
+    // I think we can extend this for all other types of balances
     function createStockIssuanceStructForTransfer(
         uint256 nonce,
         bytes16 stakeholderId,
@@ -92,50 +93,6 @@ library TxHelper {
             );
     }
 
-    function createStockIssuanceStructFromSeed(
-        bytes16 id,
-        bytes16 securityId,
-        bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
-        uint256 sharePrice,
-        uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
-        string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
-        bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions
-    ) internal pure returns (StockIssuance memory issuance) {
-        return
-            StockIssuance(
-                id,
-                "TX_STOCK_ISSUANCE",
-                stockClassId,
-                stockPlanId,
-                shareNumbersIssued,
-                sharePrice,
-                quantity,
-                vestingTermsId,
-                costBasis,
-                stockLegendIds,
-                issuanceType,
-                comments,
-                securityId,
-                customId,
-                stakeholderId,
-                boardApprovalDate,
-                stockholderApprovalDate,
-                considerationText,
-                securityLawExemptions
-            );
-    }
-
     function createStockTransferStruct(
         uint256 nonce,
         uint256 quantity,
@@ -161,16 +118,16 @@ library TxHelper {
             );
     }
 
-    function createStockTransferStructFromSeed(
-        bytes16 id,
-        bytes16 security_id,
-        bytes16[] memory resulting_security_ids,
-        bytes16 balance_security_id,
+    function createStockCancellationStruct(
+        uint256 nonce,
         uint256 quantity,
         string[] memory comments,
-        string memory consideration_text
-    ) internal pure returns (StockTransfer memory transfer) {
-        return
-            StockTransfer(id, "TX_STOCK_TRANSFER", quantity, comments, security_id, consideration_text, balance_security_id, resulting_security_ids);
+        bytes16 securityId,
+        string memory reasonText,
+        bytes16 balance_security_id
+    ) internal view returns (StockCancellation memory cancellation) {
+        bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+
+        return StockCancellation(id, "TX_STOCK_CANCELLATION", quantity, comments, securityId, reasonText, balance_security_id);
     }
 }
