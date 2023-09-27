@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer} from "../Structs.sol";
+import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockTransferTX.sol";
 import "../TxHelper.sol";
@@ -26,19 +26,14 @@ library StockTransferLib {
         require(quantity > 0, "Invalid quantity");
         require(share_price > 0, "Invalid price");
 
-        require(
-            activeSecs.activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId].length > 0,
-            "No active security ids found"
-        );
-        bytes16[] memory activeSecurityIDs =
-            activeSecs.activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId];
+        require(activeSecs.activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId].length > 0, "No active security ids found");
+        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId];
 
         uint256 sum = 0;
         uint256 numSecurityIds = 0;
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
-            ActivePosition memory activePosition =
-                positions.activePositions[transferorStakeholderId][activeSecurityIDs[index]];
+            ActivePosition memory activePosition = positions.activePositions[transferorStakeholderId][activeSecurityIDs[index]];
             sum += activePosition.quantity;
 
             if (sum >= quantity) {
@@ -54,8 +49,7 @@ library StockTransferLib {
         uint256 remainingQuantity = quantity; // This will keep track of the remaining quantity to be transferred
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
-            ActivePosition memory activePosition =
-                positions.activePositions[transferorStakeholderId][activeSecurityIDs[index]];
+            ActivePosition memory activePosition = positions.activePositions[transferorStakeholderId][activeSecurityIDs[index]];
 
             uint256 transferQuantity; // This will be the quantity to transfer in this iteration
 
@@ -101,14 +95,17 @@ library StockTransferLib {
         address[] storage transactions
     ) internal {
         bytes16 transferorSecurityId = securityId;
-        ActivePosition memory transferorActivePosition =
-            positions.activePositions[transferorStakeholderId][transferorSecurityId];
+        ActivePosition memory transferorActivePosition = positions.activePositions[transferorStakeholderId][transferorSecurityId];
 
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
         nonce++; // verify this is correct.
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
-            nonce, transfereeStakeholderId, quantity, sharePrice, stockClassId
+            nonce,
+            transfereeStakeholderId,
+            quantity,
+            sharePrice,
+            stockClassId
         );
 
         StockIssuanceLib._updateContext(transfereeIssuance, positions, activeSecs);
@@ -121,7 +118,11 @@ library StockTransferLib {
         if (balanceForTransferor > 0) {
             nonce++;
             StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                nonce, transferorStakeholderId, balanceForTransferor, transferorActivePosition.share_price, stockClassId
+                nonce,
+                transferorStakeholderId,
+                balanceForTransferor,
+                transferorActivePosition.share_price,
+                stockClassId
             );
 
             StockIssuanceLib._updateContext(transferorBalanceIssuance, positions, activeSecs);
@@ -134,7 +135,11 @@ library StockTransferLib {
 
         nonce++;
         StockTransfer memory transfer = TxHelper.createStockTransferStruct(
-            nonce, quantity, transferorSecurityId, transfereeIssuance.security_id, balance_security_id
+            nonce,
+            quantity,
+            transferorSecurityId,
+            transfereeIssuance.security_id,
+            balance_security_id
         );
         _transferStock(transfer, transactions);
 
@@ -142,9 +147,7 @@ library StockTransferLib {
         _deleteActiveSecurityIdsByStockClass(transferorStakeholderId, stockClassId, transferorSecurityId, activeSecs);
     }
 
-    function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id, ActivePositions storage positions)
-        internal
-    {
+    function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id, ActivePositions storage positions) internal {
         delete positions.activePositions[_stakeholder_id][_security_id];
     }
 

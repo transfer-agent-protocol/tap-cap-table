@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass} from "../Structs.sol";
+import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass } from "../Structs.sol";
 import "../../transactions/StockIssuanceTX.sol";
 
 library StockIssuanceLib {
     event StockIssuanceCreated(StockIssuance issuance);
 
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
-        bytes16 deterministicValue =
-            bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
+        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
         return deterministicValue;
     }
 
@@ -67,14 +66,8 @@ library StockIssuanceLib {
         _issueStock(issuance, transactions);
     }
 
-    function _updateContext(
-        StockIssuance memory issuance,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs
-    ) internal {
-        activeSecs.activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(
-            issuance.security_id
-        );
+    function _updateContext(StockIssuance memory issuance, ActivePositions storage positions, SecIdsStockClass storage activeSecs) internal {
+        activeSecs.activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
 
         positions.activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
             issuance.stock_class_id,
