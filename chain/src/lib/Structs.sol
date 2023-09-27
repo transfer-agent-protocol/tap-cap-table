@@ -66,3 +66,11 @@ struct StockTransfer {
     bytes16 balance_security_id; // optional
     bytes16[] resulting_security_ids;
 }
+
+struct ActivePositions {
+    mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions;
+}
+
+struct SecIdsStockClass {
+    mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
+}
