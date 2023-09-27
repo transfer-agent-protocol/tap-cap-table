@@ -68,6 +68,35 @@
             "date": "2023-08-23",
             "resulting_security_ids": ["b3ca1f15-320a-4068-a9d8-3a6690b66358"],
             "quantity": "4000000"
-        }
+        },
+        {
+            "object_type": "TX_STOCK_ISSUANCE",
+            "id": "needs_new_id",
+            "security_id": "need_new_sec_id",
+            "date": "2022-08-23",
+            "security_law_exemptions": [],
+            "stakeholder_id": "aceb81e6-2d19-4ef2-ac53-05ff210d3508",
+            "custom_id": "PA-2",
+            "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
+            "share_price": {
+                "amount": "0.0001000000",
+                "currency": "USD"
+            },
+            "quantity": "2000000",
+            "cost_basis": {
+                "amount": "0.0001000000",
+                "currency": "USD"
+            },
+            "stock_legend_ids": ["f04e7c40-0a64-4d2e-9208-8828098d73d5"]
+        },
+        {
+            "object_type": "TX_STOCK_CANCELLATION",
+            "id": "test-stock-cancellation-minimal",
+            "security_id": "551ca255-12ec-4a5d-9cb0-9e12f6d1f25c",
+            "balance_security_id": "need_new_sec_id",
+            "date": "2023-08-27",
+            "reason_text": "Cancel the securities",
+            "quantity": "2000000"
+          }
     ]
 }
