@@ -55,6 +55,17 @@ struct StockRetraction {
     string reason_text; // optional
 }
 
+struct StockRepurchase {
+    bytes16 id;
+    string object_type;
+    string[] comments; // optional
+    bytes16 security_id;
+    string consideration_text; // optional,
+    bytes16 balance_security_id; // optional
+    uint256 quantity;
+    uint256 price;
+}
+
 // date fields are going to use block timestamp
 struct StockIssuance {
     bytes16 id;
