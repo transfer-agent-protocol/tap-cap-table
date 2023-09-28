@@ -5,7 +5,6 @@ import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass } 
 import "./StockIssuance.sol";
 import "../../transactions/StockCancellationTX.sol";
 import "../TxHelper.sol";
-import "./StockIssuance.sol";
 import "../DeleteContext.sol";
 
 library StockCancellationLib {
