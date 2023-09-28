@@ -24,6 +24,8 @@ contract CapTableLibs {
     // id -> index
     mapping(bytes16 => uint256) stakeholderIndex;
     mapping(bytes16 => uint256) stockClassIndex;
+    // wallet address => stakeholder_id
+    mapping(address => bytes16) walletsPerStakeholder;
 
     // bit wonky but experimenting -> positions.activePositions
     ActivePositions positions;
@@ -77,6 +79,25 @@ contract CapTableLibs {
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
+    }
+
+    /// @notice Setter for walletsPerStakeholder mapping
+    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
+
+        walletsPerStakeholder[_wallet] = _stakeholder_id;
+    }
+
+    /// @notice Removing wallet from walletsPerStakeholder mapping
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
+
+        delete walletsPerStakeholder[_wallet];
     }
 
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
