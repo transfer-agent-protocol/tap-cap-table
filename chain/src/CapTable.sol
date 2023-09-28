@@ -2,10 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } from "./lib/Structs.sol";
-import "./lib/TxHelper.sol";
-import "./transactions/StockIssuanceTX.sol";
-import "./transactions/StockTransferTX.sol";
-import "./lib/Arrays.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
