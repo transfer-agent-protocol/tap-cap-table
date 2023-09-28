@@ -7,6 +7,7 @@ import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
 import "./lib/transactions/StockRetraction.sol";
+import "./lib/transactions/StockRepurchase.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
@@ -194,6 +195,33 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    function repurchaseStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16 securityId,
+        string[] memory comments,
+        string memory considerationText,
+        uint256 quantity,
+        uint256 price
+    ) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        StockRepurchaseLib.repurchaseStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            securityId,
+            comments,
+            considerationText,
+            quantity,
+            price,
+            positions,
+            activeSecs,
+            transactions
+        );
+    }
+
     function retractStockIssuance(
         bytes16 stakeholderId, // not OCF, but required to fetch activePositions
         bytes16 stockClassId, //  not OCF, but required to fetch activePositions
@@ -204,7 +232,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        nonce++;
         StockRetractionLib.retractStockIssuanceByTA(
             nonce,
             stakeholderId,
