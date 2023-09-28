@@ -2,15 +2,11 @@
 pragma solidity ^0.8.20;
 
 import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass } from "../Structs.sol";
+import "../DeterministicUUID.sol";
 import "../../transactions/StockIssuanceTX.sol";
 
 library StockIssuanceLib {
     event StockIssuanceCreated(StockIssuance issuance);
-
-    function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
-        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
-        return deterministicValue;
-    }
 
     function createStockIssuanceByTA(
         uint256 nonce,
@@ -37,8 +33,8 @@ library StockIssuanceLib {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
-        bytes16 id = generateDeterministicUniqueID(stakeholderId, nonce);
-        bytes16 secId = generateDeterministicUniqueID(stockClassId, nonce);
+        bytes16 id = DeterministicUUID.generateDeterministicUniqueID(stakeholderId, nonce);
+        bytes16 secId = DeterministicUUID.generateDeterministicUniqueID(stockClassId, nonce);
 
         StockIssuance memory issuance = StockIssuance(
             id,
