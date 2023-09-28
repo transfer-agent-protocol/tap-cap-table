@@ -40,6 +40,38 @@ contract CapTableLibs {
         emit IssuerCreated(_id, _name);
     }
 
+    function seedMultipleActivePositionsAndSecurityIds(
+        bytes16[] memory stakeholderIds,
+        bytes16[] memory securityIds,
+        bytes16[] memory stockClassIds,
+        uint256[] memory quantities,
+        uint256[] memory sharePrices,
+        uint40[] memory timestamps
+    ) external {
+        //TODO: check stakeholders and stock classes exist
+        require(
+            stakeholderIds.length == securityIds.length &&
+                securityIds.length == stockClassIds.length &&
+                stockClassIds.length == quantities.length &&
+                quantities.length == sharePrices.length &&
+                sharePrices.length == timestamps.length,
+            "Input arrays must have the same length"
+        );
+
+        for (uint256 i = 0; i < stakeholderIds.length; i++) {
+            // Set activePositions
+            positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
+                stockClassIds[i],
+                quantities[i],
+                sharePrices[i],
+                timestamps[i]
+            );
+
+            // Set activeSecurityIdsByStockClass
+            activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
+        }
+    }
+
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
