@@ -6,6 +6,7 @@ import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } fr
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
+import "./lib/transactions/StockRetraction.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
@@ -193,6 +194,32 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    function retractStockIssuance(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText
+    ) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        nonce++;
+        StockRetractionLib.retractStockIssuanceByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            securityId,
+            comments,
+            reasonText,
+            positions,
+            activeSecs,
+            transactions
+        );
+    }
+
+    // Missed date here. Make sure it's recorded where it needs to be (in the struct)
+    // TODO: dates seem to be missing in a handful of places, go back and recheck
     function cancelStock(
         bytes16 stakeholderId, // not OCF, but required to fetch activePositions
         bytes16 stockClassId, //  not OCF, but required to fetch activePositions
