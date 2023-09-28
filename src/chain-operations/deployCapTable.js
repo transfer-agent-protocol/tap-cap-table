@@ -2,8 +2,7 @@ import { config } from "dotenv";
 import { ethers } from "ethers";
 config();
 
-// import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-import CAP_TABLE from "../../chain/out/CapTableLibs.sol/CapTableLibs.json" assert { type: "json" };
+import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
 import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
 
