@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, ShareNumbersIssued, StockCancellation } from "./Structs.sol";
+import { StockIssuance, StockTransfer, ShareNumbersIssued, StockCancellation, StockRetraction } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -129,5 +129,16 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockCancellation(id, "TX_STOCK_CANCELLATION", quantity, comments, securityId, reasonText, balance_security_id);
+    }
+
+    function createStockRetractionStruct(
+        uint256 nonce,
+        string[] memory comments,
+        bytes16 securityId,
+        string memory reasonText
+    ) internal view returns (StockRetraction memory retraction) {
+        bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+
+        return StockRetraction(id, "TX_STOCK_RETRACTION", comments, securityId, reasonText);
     }
 }
