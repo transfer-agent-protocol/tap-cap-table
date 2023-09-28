@@ -100,12 +100,43 @@ contract CapTableLibs {
         delete walletsPerStakeholder[_wallet];
     }
 
+    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
+        return walletsPerStakeholder[_wallet];
+    }
+
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
+    }
+
+    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
+        if (stakeholderIndex[_id] > 0) {
+            Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
+            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
+        } else {
+            return ("", "", "");
+        }
+    }
+
+    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
+        if (stockClassIndex[_id] > 0) {
+            StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
+        } else {
+            return ("", "", 0, 0);
+        }
+    }
+
+    function getTotalNumberOfStakeholders() public view returns (uint256) {
+        return stakeholders.length;
+    }
+
+    function getTotalNumberOfStockClasses() public view returns (uint256) {
+        return stockClasses.length;
     }
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
