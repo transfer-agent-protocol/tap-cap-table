@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
 
-contract CapTable {
+contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
@@ -28,11 +29,19 @@ contract CapTable {
     // bit wonky but experimenting -> activeSecs.activeSecurityIdsByStockClass
     SecIdsStockClass activeSecs;
 
+    // RBAC
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
+
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
     event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
 
-    constructor(bytes16 _id, string memory _name) {
+    constructor(bytes16 _id, string memory _name) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
+        _grantRole(ADMIN_ROLE, _msgSender());
+        _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
+        _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
+
         nonce = 0;
         issuer = Issuer(_id, _name);
         emit IssuerCreated(_id, _name);
@@ -45,7 +54,7 @@ contract CapTable {
         uint256[] memory quantities,
         uint256[] memory sharePrices,
         uint40[] memory timestamps
-    ) external {
+    ) external onlyAdmin {
         //TODO: check stakeholders and stock classes exist
         require(
             stakeholderIds.length == securityIds.length &&
@@ -70,7 +79,7 @@ contract CapTable {
         }
     }
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
@@ -79,7 +88,7 @@ contract CapTable {
 
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public {
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
@@ -88,7 +97,7 @@ contract CapTable {
     }
 
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
@@ -154,7 +163,7 @@ contract CapTable {
         string memory stockholderApprovalDate,
         string memory considerationText,
         string[] memory securityLawExemptions
-    ) external {
+    ) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -191,7 +200,7 @@ contract CapTable {
         string[] memory comments,
         string memory reasonText,
         uint256 quantity
-    ) external {
+    ) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -217,7 +226,7 @@ contract CapTable {
         bool isBuyerVerified,
         uint256 quantity,
         uint256 share_price
-    ) external {
+    ) external onlyOperator {
         require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
@@ -235,5 +244,40 @@ contract CapTable {
             activeSecs,
             transactions
         );
+    }
+
+    /* Role Based Access Control */
+
+    modifier onlyOperator() {
+        /// @notice Admins are also considered Operators
+        require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(_isAdmin(), "Does not have admin role");
+        _;
+    }
+
+    function _isAdmin() internal view returns (bool) {
+        return hasRole(ADMIN_ROLE, _msgSender());
+    }
+
+    //  External API for updating roles of addresses
+
+    function addAdmin(address addr) external onlyAdmin {
+        _grantRole(ADMIN_ROLE, addr);
+    }
+
+    function removeAdmin(address addr) external onlyAdmin {
+        _revokeRole(ADMIN_ROLE, addr);
+    }
+
+    function addOperator(address addr) external onlyAdmin {
+        _grantRole(OPERATOR_ROLE, addr);
+    }
+
+    function removeOperator(address addr) external onlyAdmin {
+        _revokeRole(OPERATOR_ROLE, addr);
     }
 }
