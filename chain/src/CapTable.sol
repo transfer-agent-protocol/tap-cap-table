@@ -238,6 +238,11 @@ contract CapTable is AccessControlDefaultAdminRules {
     ) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+        // check shares authorized for issuer and stock class
+        StockClass memory stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+
+        require(issuer.shares_authorized >= quantity, "Insufficient shares authorized");
+        require(stockClass.shares_authorized >= quantity, "Insufficient shares authorized");
 
         nonce++;
 
