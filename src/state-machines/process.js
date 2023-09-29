@@ -44,7 +44,7 @@ const preProcessManifestTxs = (issuerId, txs) => {
         }
     });
 
-    console.log("parent context ", parent._state.context);
+    console.log("parent context ", JSON.stringify(parent._state.context, null, 2));
 
     preProcessorCache[issuerId] = {
         activePositions: parent._state.context.activePositions,
@@ -52,5 +52,6 @@ const preProcessManifestTxs = (issuerId, txs) => {
         transactions: parent._state.context.transactions,
     };
 };
+
 
 export default preProcessManifestTxs;

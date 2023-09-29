@@ -58,41 +58,22 @@ export const parentMachine = createMachine(
                 };
             }),
             preCancel: assign((context, event) => {
-                const { balance_security_id, quantity: quantityToBeRemoved } = event.value;
-                const securityId = event.id;
-
-                // Adam: think about verification:
-                if (balance_security_id) {
-                    // spawn new security with the balance security id and the
-                }
+                const currentTransaction = event.value;
+                const { security_id } = currentTransaction
 
                 const securityActor = context.securities[security_id];
 
                 securityActor.send({
                     type: "TX_STOCK_CANCELLATION",
                     security_id,
-                    balance_security_id,
                 });
 
-                // spawn a new machine
-                // where can I get the remianing quantity
-                const cancelledTx = context.transactions.find((tx) => tx.security_id === securityId);
-                const remainingQuantity = cancelledTx.quantity - quantityToBeRemoved;
-                const value = {
-                    ...tx,
-                    quantity: remainingQuantity,
-                };
-                const newSecurity = spawn(stockMachine.withContext(value), balance_security_id);
                 return {
-                    securities: {
-                        ...context.securities,
-                        [securityId]: newSecurity,
-                    },
-                    transactions: [...context.transactions, value.value],
+                    transactions: [...context.transactions, currentTransaction],
                 };
             }),
             stopChild: assign((context, event) => {
-                const { security_id, resulting_security_ids, balance_security_id } = event.value;
+                const { security_id } = event.value;
 
                 const transferorIssuance = context.transactions.find((tx) => tx.security_id === security_id);
                 const { stakeholder_id, stock_class_id } = transferorIssuance;
@@ -101,11 +82,15 @@ export const parentMachine = createMachine(
 
                 delete context.activePositions[stakeholder_id][security_id];
 
-                context.activeSecurityIdsByStockClass[stakeholder_id][stock_class_id] = context.activeSecurityIdsByStockClass[stakeholder_id][
+                const activeSecuritesByStockClass = context.activeSecurityIdsByStockClass[stakeholder_id][
                     stock_class_id
                 ].filter((el) => el !== security_id);
 
-                delete context.activeSecurityIdsByStockClass[stakeholder_id][stock_class_id];
+                context.activeSecurityIdsByStockClass[stakeholder_id][stock_class_id] = activeSecuritesByStockClass
+
+                if (activeSecuritesByStockClass.length == 0) {
+                    delete context.activeSecurityIdsByStockClass[stakeholder_id][stock_class_id];
+                }
 
                 stop(security_id);
                 return { ...context };
