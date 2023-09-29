@@ -8,6 +8,7 @@ import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
 import "./lib/transactions/StockRetraction.sol";
 import "./lib/transactions/StockRepurchase.sol";
+import "./lib/transactions/Adjustment.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
@@ -39,13 +40,13 @@ contract CapTable is AccessControlDefaultAdminRules {
     event StakeholderCreated(bytes16 indexed id);
     event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
 
-    constructor(bytes16 _id, string memory _name) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
+    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
         nonce = 0;
-        issuer = Issuer(_id, _name);
+        issuer = Issuer(_id, _name, _initial_shares_authorized);
         emit IssuerCreated(_id, _name);
     }
 
@@ -112,6 +113,75 @@ contract CapTable is AccessControlDefaultAdminRules {
         return walletsPerStakeholder[_wallet];
     }
 
+    /*
+      "properties": {
+    "object_type": {
+      "const": "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT"
+    },
+    "id": {},
+    "comments": {},
+    "date": {},
+    "issuer_id": {},
+    "new_shares_authorized": {
+      "description": "The new number of shares authorized for this issuer as of the event of this transaction",
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
+    },
+    "board_approval_date": {
+      "description": "Date on which the board approved the change to the issuer",
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+    },
+    "stockholder_approval_date": {
+      "description": "Date on which the stockholders approved the change to the issuer",
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+    }
+  },
+
+    1. Create function here ✅
+    2. Create library function ✅
+    3. Create struct ✅ 
+    4. Create tx contract ✅
+    
+     */
+
+    function adjustIssuerAuthorizedShares(
+        uint256 newSharesAuthorized,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate
+    ) external onlyAdmin {
+        Adjustment.adjustIssuerAuthorizedShares(
+            nonce,
+            newSharesAuthorized,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            issuer,
+            transactions
+        );
+    }
+
+    function adjustStockClassAuthorizedShares(
+        bytes16 stockClassId,
+        uint256 newAuthorizedShares,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate
+    ) external onlyAdmin {
+        // get stock class
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+        require(stockClass.id == stockClassId, "Invalid stock class");
+
+        Adjustment.adjustStockClassAuthorizedShares(
+            nonce,
+            newAuthorizedShares,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            stockClass,
+            transactions
+        );
+    }
+
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
@@ -132,7 +202,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized);
         } else {
             return ("", "", 0, 0);
         }
@@ -147,7 +217,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     }
 
     // can extend this to check that it's not issuing more than stock_class initial shares issued
-    // TODO: small syntax but change this to issueStock
+    // TODO: small syntax but change this to issueStock=
     function issueStockByTA(
         bytes16 stockClassId,
         bytes16 stockPlanId,
@@ -244,6 +314,30 @@ contract CapTable is AccessControlDefaultAdminRules {
             transactions
         );
     }
+
+    /**
+    "properties": {
+    "object_type": {
+      "const": "TX_STOCK_REISSUANCE"
+    },
+    "id": {},
+    "comments": {},
+    "security_id": {},
+    "date": {},
+    "resulting_security_ids": {},
+    "split_transaction_id": {},
+    "reason_text": {}
+  },
+    
+     */
+
+    // function reissueStock(
+    //      bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+    //     bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+    //     bytes16 securityId,
+    //     string[] memory comments,
+    //     string memory reasonText,
+    // )
 
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck

@@ -9,6 +9,7 @@ pragma solidity ^0.8.20;
 struct Issuer {
     bytes16 id;
     string legal_name;
+    uint256 shares_authorized;
 }
 
 // can be later extended to add things like seniority, conversion_rights, etc.
@@ -16,7 +17,7 @@ struct StockClass {
     bytes16 id;
     string class_type; // ["COMMON", "PREFERRED"]
     uint256 price_per_share; // Per-share price this stock class was issued for
-    uint256 initial_shares_authorized;
+    uint256 shares_authorized;
 }
 
 struct Stakeholder {
@@ -64,6 +65,24 @@ struct StockRepurchase {
     bytes16 balance_security_id; // optional
     uint256 quantity;
     uint256 price;
+}
+
+struct IssuerAuthorizedSharesAdjustment {
+    bytes16 id;
+    string object_type;
+    uint256 new_shares_authorized;
+    string[] comments; // optional
+    string board_approval_date; // optional
+    string stockholder_approval_date; // optional
+}
+
+struct StockClassAuthorizedSharesAdjustment {
+    bytes16 id;
+    string object_type;
+    uint256 new_shares_authorized;
+    string[] comments; // optional
+    string board_approval_date; // optional
+    string stockholder_approval_date; // optional
 }
 
 // date fields are going to use block timestamp

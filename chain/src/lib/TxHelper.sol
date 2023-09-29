@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockCancellation, StockRetraction } from "./Structs.sol";
+import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockCancellation, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -154,5 +154,47 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockRepurchase(id, "TX_STOCK_REPURCHASE", comments, securityId, considerationText, balance_security_id, quantity, price);
+    }
+
+    function adjustIssuerAuthorizedShares(
+        uint256 nonce,
+        uint256 newSharesAuthorized,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate,
+        bytes16 issuerId
+    ) internal view returns (IssuerAuthorizedSharesAdjustment memory adjustment) {
+        bytes16 id = generateDeterministicUniqueID(issuerId, nonce);
+
+        return
+            IssuerAuthorizedSharesAdjustment(
+                id,
+                "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+                newSharesAuthorized,
+                comments,
+                boardApprovalDate,
+                stockholderApprovalDate
+            );
+    }
+
+    function adjustStockClassAuthorizedShares(
+        uint256 nonce,
+        uint256 newSharesAuthorized,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate,
+        bytes16 stockClassId
+    ) internal view returns (StockClassAuthorizedSharesAdjustment memory adjustment) {
+        bytes16 id = generateDeterministicUniqueID(stockClassId, nonce);
+
+        return
+            StockClassAuthorizedSharesAdjustment(
+                id,
+                "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+                newSharesAuthorized,
+                comments,
+                boardApprovalDate,
+                stockholderApprovalDate
+            );
     }
 }
