@@ -4,11 +4,10 @@ pragma solidity ^0.8.20;
 // My bet is that Issuer and Stock Class need to have a quanity field where the shares are added back for retractions or cancellations
 // On issuance, we must verify there are enough shares available to issue for that stock class
 
-// initial_shares_authorized for the issuer is not required.
-//uint256 shares_authorized;
 struct Issuer {
     bytes16 id;
     string legal_name;
+    uint256 shares_issued;
     uint256 shares_authorized;
 }
 
@@ -17,6 +16,7 @@ struct StockClass {
     bytes16 id;
     string class_type; // ["COMMON", "PREFERRED"]
     uint256 price_per_share; // Per-share price this stock class was issued for
+    uint256 shares_issued;
     uint256 shares_authorized;
 }
 
@@ -54,6 +54,16 @@ struct StockRetraction {
     string[] comments; // optional
     bytes16 security_id;
     string reason_text; // optional
+}
+
+struct StockReissuance {
+    bytes16 id;
+    string object_type;
+    string[] comments; // optional
+    bytes16 security_id;
+    bytes16[] resulting_securitty_ids;
+    bytes16 split_transaction_id;
+    string reason_text;
 }
 
 struct StockRepurchase {
