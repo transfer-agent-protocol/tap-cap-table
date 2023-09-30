@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockCancellation, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment } from "./Structs.sol";
+import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -196,5 +196,18 @@ library TxHelper {
                 boardApprovalDate,
                 stockholderApprovalDate
             );
+    }
+
+    function createStockReissuanceStruct(
+        uint256 nonce,
+        string[] memory comments,
+        bytes16 securityId,
+        bytes16[] memory resultingSecurityIds,
+        bytes16 splitTransactionId,
+        string memory reasonText
+    ) internal view returns (StockReissuance memory reissuance) {
+        bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+
+        return StockReissuance(id, "TX_STOCK_REISSUANCE", comments, securityId, resultingSecurityIds, splitTransactionId, reasonText);
     }
 }
