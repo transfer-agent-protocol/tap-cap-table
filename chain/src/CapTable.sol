@@ -27,9 +27,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     // wallet address => stakeholder_id
     mapping(address => bytes16) walletsPerStakeholder;
 
-    // bit wonky but experimenting -> positions.activePositions
     ActivePositions positions;
-    // bit wonky but experimenting -> activeSecs.activeSecurityIdsByStockClass
     SecIdsStockClass activeSecs;
 
     // RBAC
@@ -46,7 +44,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
         nonce = 0;
-        issuer = Issuer(_id, _name, _initial_shares_authorized);
+        issuer = Issuer(_id, _name, _initial_shares_authorized, 0);
         emit IssuerCreated(_id, _name);
     }
 
@@ -185,7 +183,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized, 0));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
@@ -241,6 +239,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         // check shares authorized for issuer and stock class
         StockClass memory stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
+        // TODO: should be quantity + all previous shares issued
         require(issuer.shares_authorized >= quantity, "Insufficient shares authorized");
         require(stockClass.shares_authorized >= quantity, "Insufficient shares authorized");
 
