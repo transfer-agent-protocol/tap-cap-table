@@ -154,3 +154,18 @@ export const stockTransfer = (issuerId, quantity, transferorId, transfereeId, st
         },
     };
 };
+
+export const stockCancel = (issuerId, quantity, stakeholderId, stockClassId,
+    security_id, reason_text, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            quantity,
+            security_id,
+            reason_text,
+            comments
+        },
+    };
+};
