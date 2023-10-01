@@ -9,6 +9,7 @@ import "./lib/transactions/StockCancellation.sol";
 import "./lib/transactions/StockRetraction.sol";
 import "./lib/transactions/StockRepurchase.sol";
 import "./lib/transactions/Adjustment.sol";
+import "./lib/transactions/StockAcceptance.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
@@ -112,27 +113,6 @@ contract CapTable is AccessControlDefaultAdminRules {
     }
 
     /*
-      "properties": {
-    "object_type": {
-      "const": "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT"
-    },
-    "id": {},
-    "comments": {},
-    "date": {},
-    "issuer_id": {},
-    "new_shares_authorized": {
-      "description": "The new number of shares authorized for this issuer as of the event of this transaction",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
-    },
-    "board_approval_date": {
-      "description": "Date on which the board approved the change to the issuer",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
-    },
-    "stockholder_approval_date": {
-      "description": "Date on which the stockholders approved the change to the issuer",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
-    }
-  },
 
     1. Create function here ✅
     2. Create library function ✅
@@ -140,6 +120,16 @@ contract CapTable is AccessControlDefaultAdminRules {
     4. Create tx contract ✅
     
      */
+
+    // Stock Acceptance does not currently impact an active position. It's only recorded.
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        // require active position to exist?
+
+        StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
+    }
 
     function adjustIssuerAuthorizedShares(
         uint256 newSharesAuthorized,

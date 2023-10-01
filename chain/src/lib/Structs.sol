@@ -77,6 +77,13 @@ struct StockRepurchase {
     uint256 price;
 }
 
+struct StockAcceptance {
+    bytes16 id;
+    string object_type;
+    bytes16 security_id;
+    string[] comments; // optional
+}
+
 struct IssuerAuthorizedSharesAdjustment {
     bytes16 id;
     string object_type;
