@@ -5,10 +5,12 @@ config();
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
 import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
+import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
 
 const { abi } = CAP_TABLE;
-const { abi: abiIssuance, bytecode: bytecodeIssuance } = CAP_TABLE_ISSUANCE;
-const { abi: abiTransfer, bytecode: bytecodeTransfer } = CAP_TABLE_TRANSFER;
+const { abi: abiIssuance } = CAP_TABLE_ISSUANCE;
+const { abi: abiTransfer } = CAP_TABLE_TRANSFER;
+const { abi: abiCancel } = CAP_TABLE_CANCELLATION;
 
 async function getLocalContractInstance(address) {
     const CONTRACT_ADDRESS_LOCAL = address;
@@ -27,8 +29,9 @@ async function getLocalContractInstance(address) {
 
     const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
     const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
+    const cancellationLib = new ethers.Contract(contract.target, abiCancel, wallet);
 
-    return { contract, provider, issuanceLib, transferLib };
+    return { contract, provider, issuanceLib, transferLib, cancellationLib };
 }
 
 async function getOptimismGoerliContractInstance(address) {
