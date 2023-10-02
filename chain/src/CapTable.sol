@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
-import "./lib/transactions/StockTransfer.sol";
-import "./lib/transactions/StockCancellation.sol";
+
+import "./lib/transactions/StockTransfer.sol"; import "./lib/transactions/StockCancellation.sol";
 import "./lib/transactions/StockRetraction.sol";
 import "./lib/transactions/StockRepurchase.sol";
 import "./lib/transactions/Adjustment.sol";
@@ -45,7 +45,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
         nonce = 0;
-        issuer = Issuer(_id, _name, _initial_shares_authorized, 0);
+        issuer = Issuer(_id, _name, 0, _initial_shares_authorized);
         emit IssuerCreated(_id, _name);
     }
 
@@ -116,9 +116,9 @@ contract CapTable is AccessControlDefaultAdminRules {
 
     1. Create function here ✅
     2. Create library function ✅
-    3. Create struct ✅ 
+    3. Create struct ✅
     4. Create tx contract ✅
-    
+
      */
 
     // Stock Acceptance does not currently impact an active position. It's only recorded.
@@ -173,7 +173,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized, 0));
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
@@ -324,7 +324,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     "split_transaction_id": {},
     "reason_text": {}
   },
-    
+
      */
 
     // function reissueStock(
