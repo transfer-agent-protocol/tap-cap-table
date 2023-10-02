@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
@@ -13,6 +14,8 @@ import "./lib/transactions/StockAcceptance.sol";
 import "./lib/transactions/StockReissuance.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
+    using SafeMath for uint256;
+
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
@@ -226,8 +229,8 @@ contract CapTable is AccessControlDefaultAdminRules {
 
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
-        require(issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued + quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+        require(issuer.shares_issued.add(quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued.add(quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
         StockIssuanceLib.createStockIssuanceByTA(
             nonce,
