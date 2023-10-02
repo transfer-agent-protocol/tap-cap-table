@@ -1,6 +1,7 @@
 export const issuer = {
     legal_name: "Dutch East India Company",
     formation_date: "2022-08-23",
+    initial_shares_authorized: "190000000",
     country_of_formation: "US",
     country_subdivision_of_formation: "DE",
     tax_ids: [

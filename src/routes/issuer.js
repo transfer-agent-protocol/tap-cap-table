@@ -46,11 +46,15 @@ issuer.post("/create", async (req, res) => {
 
     try {
         // OCF doesn't allow extra fields in their validation
+        const { shares_authorized, shares_issued } = req.body
         const incomingIssuerToValidate = {
             id: uuid(),
             object_type: "ISSUER",
             ...req.body,
         };
+
+        // TODO: Sync with Vic about pypassing intitial shares issuer & initial shares authorized for ocf
+        // what's the difference between *initial_shares_authorized* and *shares_authorized*
 
         console.log("issuer to validate", incomingIssuerToValidate);
 
@@ -58,15 +62,16 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("issuer id bytes16 ", issuerIdBytes16);
-        const { contract, provider, address, issuanceLib, transferLib } = await deployCapTable(
+        const { contract, provider, address, issuanceLib, transferLib, cancellationLib } = await deployCapTable(
             chain,
             issuerIdBytes16,
-            incomingIssuerToValidate.legal_name
+            incomingIssuerToValidate.legal_name,
+            incomingIssuerToValidate.initial_shares_authorized
         );
 
         // add contract to the cache and start listener
         contractCache[incomingIssuerToValidate.id] = { contract, provider };
-        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, issuanceLib, transferLib);
+        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, issuanceLib, transferLib, cancellationLib);
 
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,

@@ -6,20 +6,20 @@ import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
 import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
 import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
+import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 
 const { abi, bytecode } = CAP_TABLE;
 const { abi: abiIssuance } = CAP_TABLE_ISSUANCE;
 const { abi: abiTransfer } = CAP_TABLE_TRANSFER;
 const { abi: abiCancellation } = CAP_TABLE_CANCELLATION;
 
-async function deployCapTableLocal(issuerId, issuerName) {
+async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
     // Replace with your private key and provider endpoint
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
     const customNetwork = {
         chainId: 31337,
         name: "local",
     };
-
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     console.log("wallet address ", wallet.address);
@@ -27,7 +27,10 @@ async function deployCapTableLocal(issuerId, issuerName) {
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
     console.log("issuer id inside of deployment ", issuerId, "and issuername inside of deployment ", issuerName);
 
-    const contract = await factory.deploy(issuerId, issuerName);
+    const contract = await factory.deploy(issuerId,
+        issuerName,
+        toScaledBigNumber(initial_shares_authorized),
+    );
 
     console.log("Contract Deployed to:", contract.target);
 
@@ -62,9 +65,9 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     return { contract, provider, address: contract.target, issuanceLib, transferLib };
 }
 
-async function deployCapTable(chain, issuerId, issuerName) {
+async function deployCapTable(chain, issuerId, issuerName, initial_shares_authorized) {
     if (chain === "local") {
-        return deployCapTableLocal(issuerId, issuerName);
+        return deployCapTableLocal(issuerId, issuerName, initial_shares_authorized);
     } else if (chain === "optimism-goerli") {
         return deployCapTableOptimismGoerli(issuerId, issuerName);
     } else {
