@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import { ethers } from "ethers";
 config();
 
+import axios from "axios";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
 import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
@@ -32,7 +33,9 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
         toScaledBigNumber(initial_shares_authorized),
     );
 
-    console.log("Contract Deployed to:", contract.target);
+    console.log("Waiting for contract to be mined...");
+    await contract.deployed();
+    console.log("Contract mined!");
 
     const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
     const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
@@ -52,12 +55,15 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
 async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
-    const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
+    const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
+    const providerEtherscan = new ethers.providers.EtherscanProvider("optimism-goerli", process.env.ETHERSCAN_OPTIMISM_API_KEY);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName);
 
-    console.log("Contract Deployed to:", contract.target);
+    console.log("Waiting for contract to be mined...");
+    await contract.deployed();
+    console.log("Contract mined!");
 
     const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
     const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
