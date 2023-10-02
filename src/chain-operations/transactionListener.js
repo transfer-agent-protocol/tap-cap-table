@@ -1,3 +1,4 @@
+
 import { createHistoricalTransaction } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
 import {
@@ -10,8 +11,9 @@ import {
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-import { verifyIssuerAndSeed } from "./seed.js";
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds } from "./seed.js";
 
 const options = {
     year: "numeric",
@@ -21,6 +23,7 @@ const options = {
     minute: "2-digit",
     second: "2-digit",
 };
+
 
 async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
@@ -32,7 +35,18 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
 
-        await verifyIssuerAndSeed(contract, id);
+        const uuid = convertBytes16ToUUID(id);
+        const issuer = await readIssuerById(uuid);
+
+        if (!issuer.is_manifest_created) return;
+
+        const arrays = extractArrays(preProcessorCache[issuerId]);
+        await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
+        await initiateSeeding(uuid, contract);
+        console.log(`Completed Seeding issuer ${uuid} on chain`);
+
+        console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -198,6 +212,7 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
 
         await verifyIssuerAndSeed(contract, id);
     }
+
 }
 
 export default startOnchainListeners;
