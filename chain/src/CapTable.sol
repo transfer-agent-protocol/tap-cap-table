@@ -378,7 +378,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        nonce++;
         StockTransferLib.transferStock(
             transferorStakeholderId,
             transfereeStakeholderId,
@@ -389,7 +388,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             nonce,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 

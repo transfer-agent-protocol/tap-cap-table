@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer } from "../Structs.sol";
+import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockTransferTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
 library StockTransferLib {
+    using SafeMath for uint256;
+
     event StockTransferCreated(StockTransfer transfer);
 
     function transferStock(
@@ -20,7 +22,9 @@ library StockTransferLib {
         uint256 nonce,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions
+        address[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
     ) external {
         // Checks related to transaction validity
         require(isBuyerVerified, "Buyer unverified");
@@ -70,7 +74,9 @@ library StockTransferLib {
                 nonce,
                 positions,
                 activeSecs,
-                transactions
+                transactions,
+                issuer,
+                stockClass
             );
 
             remainingQuantity -= transferQuantity; // Reduce the remaining quantity
@@ -93,14 +99,16 @@ library StockTransferLib {
         uint256 nonce,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions
+        address[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
     ) internal {
         bytes16 transferorSecurityId = securityId;
         ActivePosition memory transferorActivePosition = positions.activePositions[transferorStakeholderId][transferorSecurityId];
 
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
-        nonce++; // verify this is correct.
+        nonce++;
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
             nonce,
             transfereeStakeholderId,
@@ -109,7 +117,7 @@ library StockTransferLib {
             stockClassId
         );
 
-        StockIssuanceLib._updateContext(transfereeIssuance, positions, activeSecs);
+        StockIssuanceLib._updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass);
         StockIssuanceLib._issueStock(transfereeIssuance, transactions);
 
         uint256 balanceForTransferor = transferorActivePosition.quantity - quantity;
@@ -126,7 +134,7 @@ library StockTransferLib {
                 stockClassId
             );
 
-            StockIssuanceLib._updateContext(transferorBalanceIssuance, positions, activeSecs);
+            StockIssuanceLib._updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(transferorBalanceIssuance, transactions);
 
             balance_security_id = transferorBalanceIssuance.security_id;
@@ -143,6 +151,9 @@ library StockTransferLib {
             balance_security_id
         );
         _transferStock(transfer, transactions);
+
+        issuer.shares_issued = issuer.shares_issued.sub(transferorActivePosition.quantity);
+        stockClass.shares_issued = stockClass.shares_issued.sub(transferorActivePosition.quantity);
 
         DeleteContext.deleteActivePosition(transferorStakeholderId, transferorSecurityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(transferorStakeholderId, stockClassId, transferorSecurityId, activeSecs);
