@@ -48,7 +48,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
         nonce = 0;
-        issuer = Issuer(_id, _name, _initial_shares_authorized, 0);
+        issuer = Issuer(_id, _name, 0, _initial_shares_authorized);
         emit IssuerCreated(_id, _name);
     }
 
