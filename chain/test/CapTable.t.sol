@@ -9,7 +9,7 @@ contract CapTableTest is Test {
 
     function setUp() public {
         bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
-        capTable = new CapTable(issuerId, "Winston, Inc.", 0, 10000000);
+        capTable = new CapTable(issuerId, "Winston, Inc.", 10000000);
     }
 
     function createPranksterAndExpectRevert() public {
