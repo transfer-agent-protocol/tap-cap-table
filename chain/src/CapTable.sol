@@ -226,14 +226,11 @@ contract CapTable is AccessControlDefaultAdminRules {
     ) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-        // check shares authorized for issuer and stock class
-        StockClass memory stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
-        // TODO: should be quantity + all previous shares issued
-        require(issuer.shares_authorized >= quantity, "Insufficient shares authorized");
-        require(stockClass.shares_authorized >= quantity, "Insufficient shares authorized");
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
-        nonce++;
+        require(issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued + quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
         StockIssuanceLib.createStockIssuanceByTA(
             nonce,
@@ -255,7 +252,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             securityLawExemptions,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClass
         );
     }
 
