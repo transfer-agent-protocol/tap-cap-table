@@ -62,7 +62,7 @@ struct StockReissuance {
     string[] comments; // optional
     bytes16 security_id;
     bytes16[] resulting_securitty_ids;
-    bytes16 split_transaction_id;
+    bytes16 split_transaction_id; // not used in MVP
     string reason_text;
 }
 
@@ -123,6 +123,27 @@ struct StockIssuance {
     string stockholder_approval_date; // Optional
     string consideration_text; // Optional
     string[] security_law_exemptions; // Unclear
+}
+
+/*
+ "properties": {
+    "object_type": {
+      "const": "STOCK_LEGEND_TEMPLATE"
+    },
+    "name": {
+      "description": "Name for the stock legend template",
+      "type": "string"
+    },
+    "text": {
+      "description": "The full text of the stock legend",
+      "type": "string"
+    },
+    "id": {},
+    "comments": {}
+  }, */
+
+struct StockLegendTemplate {
+    bytes16 id;
 }
 
 // date fields are going to use block timestamp

@@ -1,20 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } from "./lib/Structs.sol";
+import {AccessControlDefaultAdminRules} from
+    "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import {
+    Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate
+} from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
-
-import "./lib/transactions/StockTransfer.sol"; import "./lib/transactions/StockCancellation.sol";
+import "./lib/transactions/StockTransfer.sol";
+import "./lib/transactions/StockCancellation.sol";
 import "./lib/transactions/StockRetraction.sol";
 import "./lib/transactions/StockRepurchase.sol";
 import "./lib/transactions/Adjustment.sol";
 import "./lib/transactions/StockAcceptance.sol";
+import "./lib/transactions/StockReissuance.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
+    StockLegendTemplate[] public stockLegendTemplates;
+
     // @dev Transactions will be created on-chain then reflected off-chain.
     address[] public transactions;
 
@@ -37,9 +43,13 @@ contract CapTable is AccessControlDefaultAdminRules {
 
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
-    event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
+    event StockClassCreated(
+        bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized
+    );
 
-    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
+    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized)
+        AccessControlDefaultAdminRules(0 seconds, _msgSender())
+    {
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
@@ -59,29 +69,26 @@ contract CapTable is AccessControlDefaultAdminRules {
     ) external onlyAdmin {
         //TODO: check stakeholders and stock classes exist
         require(
-            stakeholderIds.length == securityIds.length &&
-                securityIds.length == stockClassIds.length &&
-                stockClassIds.length == quantities.length &&
-                quantities.length == sharePrices.length &&
-                sharePrices.length == timestamps.length,
+            stakeholderIds.length == securityIds.length && securityIds.length == stockClassIds.length
+                && stockClassIds.length == quantities.length && quantities.length == sharePrices.length
+                && sharePrices.length == timestamps.length,
             "Input arrays must have the same length"
         );
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
             // Set activePositions
-            positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
-                stockClassIds[i],
-                quantities[i],
-                sharePrices[i],
-                timestamps[i]
-            );
+            positions.activePositions[stakeholderIds[i]][securityIds[i]] =
+                ActivePosition(stockClassIds[i], quantities[i], sharePrices[i], timestamps[i]);
 
             // Set activeSecurityIdsByStockClass
             activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
         }
     }
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship)
+        public
+        onlyAdmin
+    {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
@@ -112,17 +119,11 @@ contract CapTable is AccessControlDefaultAdminRules {
         return walletsPerStakeholder[_wallet];
     }
 
-    /*
-
-    1. Create function here ✅
-    2. Create library function ✅
-    3. Create struct ✅
-    4. Create tx contract ✅
-
-     */
-
     // Stock Acceptance does not currently impact an active position. It's only recorded.
-    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments)
+        external
+        onlyAdmin
+    {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -138,13 +139,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         string memory stockholderApprovalDate
     ) external onlyAdmin {
         Adjustment.adjustIssuerAuthorizedShares(
-            nonce,
-            newSharesAuthorized,
-            comments,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            issuer,
-            transactions
+            nonce, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, issuer, transactions
         );
     }
 
@@ -155,22 +150,20 @@ contract CapTable is AccessControlDefaultAdminRules {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
     ) external onlyAdmin {
-        // get stock class
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         require(stockClass.id == stockClassId, "Invalid stock class");
 
         Adjustment.adjustStockClassAuthorizedShares(
-            nonce,
-            newAuthorizedShares,
-            comments,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            stockClass,
-            transactions
+            nonce, newAuthorizedShares, comments, boardApprovalDate, stockholderApprovalDate, stockClass, transactions
         );
     }
 
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
+    function createStockClass(
+        bytes16 _id,
+        string memory _class_type,
+        uint256 _price_per_share,
+        uint256 _initial_share_authorized
+    ) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
@@ -229,7 +222,10 @@ contract CapTable is AccessControlDefaultAdminRules {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
         require(issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued + quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+        require(
+            stockClass.shares_issued + quantity <= stockClass.shares_authorized,
+            "StockClass: Insufficient shares authorized"
+        );
 
         StockIssuanceLib.createStockIssuanceByTA(
             nonce,
@@ -311,29 +307,29 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
-    /**
-    "properties": {
-    "object_type": {
-      "const": "TX_STOCK_REISSUANCE"
-    },
-    "id": {},
-    "comments": {},
-    "security_id": {},
-    "date": {},
-    "resulting_security_ids": {},
-    "split_transaction_id": {},
-    "reason_text": {}
-  },
-
-     */
-
-    // function reissueStock(
-    //      bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-    //     bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-    //     bytes16 securityId,
-    //     string[] memory comments,
-    //     string memory reasonText,
-    // )
+    function reissueStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16[] memory resulting_security_ids,
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText
+    ) external {
+        StockReissuanceLib.reissueStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            comments,
+            securityId,
+            resulting_security_ids,
+            reasonText,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
+        );
+    }
 
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
