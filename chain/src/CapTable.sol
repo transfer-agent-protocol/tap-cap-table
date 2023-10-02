@@ -8,6 +8,8 @@ import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
 import "./lib/transactions/StockRetraction.sol";
 import "./lib/transactions/StockRepurchase.sol";
+import "./lib/transactions/Adjustment.sol";
+import "./lib/transactions/StockAcceptance.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
@@ -26,9 +28,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     // wallet address => stakeholder_id
     mapping(address => bytes16) walletsPerStakeholder;
 
-    // bit wonky but experimenting -> positions.activePositions
     ActivePositions positions;
-    // bit wonky but experimenting -> activeSecs.activeSecurityIdsByStockClass
     SecIdsStockClass activeSecs;
 
     // RBAC
@@ -39,13 +39,13 @@ contract CapTable is AccessControlDefaultAdminRules {
     event StakeholderCreated(bytes16 indexed id);
     event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
 
-    constructor(bytes16 _id, string memory _name) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
+    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
         nonce = 0;
-        issuer = Issuer(_id, _name);
+        issuer = Issuer(_id, _name, _initial_shares_authorized, 0);
         emit IssuerCreated(_id, _name);
     }
 
@@ -112,10 +112,68 @@ contract CapTable is AccessControlDefaultAdminRules {
         return walletsPerStakeholder[_wallet];
     }
 
+    /*
+
+    1. Create function here ✅
+    2. Create library function ✅
+    3. Create struct ✅ 
+    4. Create tx contract ✅
+    
+     */
+
+    // Stock Acceptance does not currently impact an active position. It's only recorded.
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        // require active position to exist?
+
+        StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
+    }
+
+    function adjustIssuerAuthorizedShares(
+        uint256 newSharesAuthorized,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate
+    ) external onlyAdmin {
+        Adjustment.adjustIssuerAuthorizedShares(
+            nonce,
+            newSharesAuthorized,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            issuer,
+            transactions
+        );
+    }
+
+    function adjustStockClassAuthorizedShares(
+        bytes16 stockClassId,
+        uint256 newAuthorizedShares,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate
+    ) external onlyAdmin {
+        // get stock class
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+        require(stockClass.id == stockClassId, "Invalid stock class");
+
+        Adjustment.adjustStockClassAuthorizedShares(
+            nonce,
+            newAuthorizedShares,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            stockClass,
+            transactions
+        );
+    }
+
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized, 0));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
@@ -132,7 +190,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized);
         } else {
             return ("", "", 0, 0);
         }
@@ -146,7 +204,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         return stockClasses.length;
     }
 
-    // can extend this to check that it's not issuing more than stock_class initial shares issued
     // TODO: small syntax but change this to issueStock
     function issueStockByTA(
         bytes16 stockClassId,
@@ -169,7 +226,10 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        nonce++;
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+
+        require(issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued + quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
         StockIssuanceLib.createStockIssuanceByTA(
             nonce,
@@ -191,7 +251,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             securityLawExemptions,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClass
         );
     }
 
@@ -218,7 +280,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             price,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 
@@ -241,9 +305,35 @@ contract CapTable is AccessControlDefaultAdminRules {
             reasonText,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
+
+    /**
+    "properties": {
+    "object_type": {
+      "const": "TX_STOCK_REISSUANCE"
+    },
+    "id": {},
+    "comments": {},
+    "security_id": {},
+    "date": {},
+    "resulting_security_ids": {},
+    "split_transaction_id": {},
+    "reason_text": {}
+  },
+    
+     */
+
+    // function reissueStock(
+    //      bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+    //     bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+    //     bytes16 securityId,
+    //     string[] memory comments,
+    //     string memory reasonText,
+    // )
 
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
@@ -259,6 +349,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
         // need a require for activePositions
+
         StockCancellationLib.cancelStockByTA(
             nonce,
             stakeholderId,
@@ -269,7 +360,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             quantity,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 
@@ -285,7 +378,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        nonce++;
         StockTransferLib.transferStock(
             transferorStakeholderId,
             transfereeStakeholderId,
@@ -296,7 +388,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             nonce,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 

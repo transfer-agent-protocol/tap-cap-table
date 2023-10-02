@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockCancellation, StockRetraction } from "./Structs.sol";
+import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -154,5 +154,70 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockRepurchase(id, "TX_STOCK_REPURCHASE", comments, securityId, considerationText, balance_security_id, quantity, price);
+    }
+
+    function adjustIssuerAuthorizedShares(
+        uint256 nonce,
+        uint256 newSharesAuthorized,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate,
+        bytes16 issuerId
+    ) internal view returns (IssuerAuthorizedSharesAdjustment memory adjustment) {
+        bytes16 id = generateDeterministicUniqueID(issuerId, nonce);
+
+        return
+            IssuerAuthorizedSharesAdjustment(
+                id,
+                "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+                newSharesAuthorized,
+                comments,
+                boardApprovalDate,
+                stockholderApprovalDate
+            );
+    }
+
+    function adjustStockClassAuthorizedShares(
+        uint256 nonce,
+        uint256 newSharesAuthorized,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate,
+        bytes16 stockClassId
+    ) internal view returns (StockClassAuthorizedSharesAdjustment memory adjustment) {
+        bytes16 id = generateDeterministicUniqueID(stockClassId, nonce);
+
+        return
+            StockClassAuthorizedSharesAdjustment(
+                id,
+                "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+                newSharesAuthorized,
+                comments,
+                boardApprovalDate,
+                stockholderApprovalDate
+            );
+    }
+
+    function createStockReissuanceStruct(
+        uint256 nonce,
+        string[] memory comments,
+        bytes16 securityId,
+        bytes16[] memory resultingSecurityIds,
+        bytes16 splitTransactionId,
+        string memory reasonText
+    ) internal view returns (StockReissuance memory reissuance) {
+        bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+
+        return StockReissuance(id, "TX_STOCK_REISSUANCE", comments, securityId, resultingSecurityIds, splitTransactionId, reasonText);
+    }
+
+    function createStockAcceptanceStruct(
+        uint256 nonce,
+        string[] memory comments,
+        bytes16 securityId
+    ) internal view returns (StockAcceptance memory acceptance) {
+        bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+
+        return StockAcceptance(id, "TX_STOCK_ACCEPTANCE", securityId, comments);
     }
 }

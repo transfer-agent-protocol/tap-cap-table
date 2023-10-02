@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 // My bet is that Issuer and Stock Class need to have a quanity field where the shares are added back for retractions or cancellations
 // On issuance, we must verify there are enough shares available to issue for that stock class
 
-// initial_shares_authorized for the issuer is not required.
-//uint256 shares_authorized;
 struct Issuer {
     bytes16 id;
     string legal_name;
+    uint256 shares_issued;
+    uint256 shares_authorized;
 }
 
 // can be later extended to add things like seniority, conversion_rights, etc.
@@ -16,7 +16,8 @@ struct StockClass {
     bytes16 id;
     string class_type; // ["COMMON", "PREFERRED"]
     uint256 price_per_share; // Per-share price this stock class was issued for
-    uint256 initial_shares_authorized;
+    uint256 shares_issued;
+    uint256 shares_authorized;
 }
 
 struct Stakeholder {
@@ -55,6 +56,16 @@ struct StockRetraction {
     string reason_text; // optional
 }
 
+struct StockReissuance {
+    bytes16 id;
+    string object_type;
+    string[] comments; // optional
+    bytes16 security_id;
+    bytes16[] resulting_securitty_ids;
+    bytes16 split_transaction_id;
+    string reason_text;
+}
+
 struct StockRepurchase {
     bytes16 id;
     string object_type;
@@ -64,6 +75,31 @@ struct StockRepurchase {
     bytes16 balance_security_id; // optional
     uint256 quantity;
     uint256 price;
+}
+
+struct StockAcceptance {
+    bytes16 id;
+    string object_type;
+    bytes16 security_id;
+    string[] comments; // optional
+}
+
+struct IssuerAuthorizedSharesAdjustment {
+    bytes16 id;
+    string object_type;
+    uint256 new_shares_authorized;
+    string[] comments; // optional
+    string board_approval_date; // optional
+    string stockholder_approval_date; // optional
+}
+
+struct StockClassAuthorizedSharesAdjustment {
+    bytes16 id;
+    string object_type;
+    uint256 new_shares_authorized;
+    string[] comments; // optional
+    string board_approval_date; // optional
+    string stockholder_approval_date; // optional
 }
 
 // date fields are going to use block timestamp
