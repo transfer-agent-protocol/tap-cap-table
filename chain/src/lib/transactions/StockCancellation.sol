@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockCancellationTX.sol";
@@ -8,6 +9,8 @@ import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
 library StockCancellationLib {
+    using SafeMath for uint256;
+
     event StockCancellationCreated(StockCancellation cancellation);
 
     function cancelStockByTA(
@@ -62,8 +65,8 @@ library StockCancellationLib {
         );
         _cancelStock(cancellation, transactions);
 
-        issuer.shares_issued -= quantity;
-        stockClass.shares_issued -= quantity;
+        issuer.shares_issued = issuer.shares_issued.sub(quantity);
+        stockClass.shares_issued = stockClass.shares_issued.sub(quantity);
 
         DeleteContext.deleteActivePosition(stakeholderId, securityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
