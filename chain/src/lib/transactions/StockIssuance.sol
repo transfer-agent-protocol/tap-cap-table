@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "../DeterministicUUID.sol";
 import "../../transactions/StockIssuanceTX.sol";
 
 library StockIssuanceLib {
+    using SafeMath for uint256;
+
     event StockIssuanceCreated(StockIssuance issuance);
 
     function createStockIssuanceByTA(
@@ -83,8 +86,8 @@ library StockIssuanceLib {
             _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
         );
 
-        issuer.shares_issued += issuance.quantity;
-        stockClass.shares_issued += issuance.quantity;
+        issuer.shares_issued = issuer.shares_issued.add(issuance.quantity);
+        stockClass.shares_issued = stockClass.shares_issued.add(issuance.quantity);
     }
 
     function _issueStock(StockIssuance memory issuance, address[] storage transactions) internal {
