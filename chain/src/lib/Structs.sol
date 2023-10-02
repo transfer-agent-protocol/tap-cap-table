@@ -62,7 +62,7 @@ struct StockReissuance {
     string[] comments; // optional
     bytes16 security_id;
     bytes16[] resulting_securitty_ids;
-    bytes16 split_transaction_id;
+    bytes16 split_transaction_id; // not used in MVP
     string reason_text;
 }
 

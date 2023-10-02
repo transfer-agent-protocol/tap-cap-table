@@ -10,6 +10,7 @@ import "./lib/transactions/StockRetraction.sol";
 import "./lib/transactions/StockRepurchase.sol";
 import "./lib/transactions/Adjustment.sol";
 import "./lib/transactions/StockAcceptance.sol";
+import "./lib/transactions/StockReissuance.sol";
 
 contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
@@ -112,15 +113,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         return walletsPerStakeholder[_wallet];
     }
 
-    /*
-
-    1. Create function here ✅
-    2. Create library function ✅
-    3. Create struct ✅ 
-    4. Create tx contract ✅
-    
-     */
-
     // Stock Acceptance does not currently impact an active position. It's only recorded.
     function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
@@ -155,7 +147,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
     ) external onlyAdmin {
-        // get stock class
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         require(stockClass.id == stockClassId, "Invalid stock class");
 
@@ -311,29 +302,29 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
-    /**
-    "properties": {
-    "object_type": {
-      "const": "TX_STOCK_REISSUANCE"
-    },
-    "id": {},
-    "comments": {},
-    "security_id": {},
-    "date": {},
-    "resulting_security_ids": {},
-    "split_transaction_id": {},
-    "reason_text": {}
-  },
-    
-     */
-
-    // function reissueStock(
-    //      bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-    //     bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-    //     bytes16 securityId,
-    //     string[] memory comments,
-    //     string memory reasonText,
-    // )
+    function reissueStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16[] memory resulting_security_ids,
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText
+    ) external {
+        StockReissuanceLib.reissueStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            comments,
+            securityId,
+            resulting_security_ids,
+            reasonText,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
+        );
+    }
 
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck

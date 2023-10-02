@@ -203,10 +203,10 @@ library TxHelper {
         string[] memory comments,
         bytes16 securityId,
         bytes16[] memory resultingSecurityIds,
-        bytes16 splitTransactionId,
         string memory reasonText
     ) internal view returns (StockReissuance memory reissuance) {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+        bytes16 splitTransactionId = bytes16(0); // Not used in MVP
 
         return StockReissuance(id, "TX_STOCK_REISSUANCE", comments, securityId, resultingSecurityIds, splitTransactionId, reasonText);
     }
