@@ -58,15 +58,16 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("issuer id bytes16 ", issuerIdBytes16);
-        const { contract, provider, address, issuanceLib, transferLib } = await deployCapTable(
+        const { contract, provider, address, issuanceLib, transferLib, cancellationLib } = await deployCapTable(
             chain,
             issuerIdBytes16,
-            incomingIssuerToValidate.legal_name
+            incomingIssuerToValidate.legal_name,
+            incomingIssuerToValidate.initial_shares_authorized
         );
 
         // add contract to the cache and start listener
-        contractCache[incomingIssuerToValidate.id] = { contract, provider };
-        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, issuanceLib, transferLib);
+        contractCache[incomingIssuerToValidate.id] = { contract, provider, issuanceLib, transferLib, cancellationLib };
+        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, issuanceLib, transferLib, cancellationLib);
 
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,
