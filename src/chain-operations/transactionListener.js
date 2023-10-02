@@ -1,7 +1,14 @@
-import { createHistoricalTransaction, createStockIssuance, createStockTransfer } from "../db/operations/create.js";
-import { readStakeholderById, readIssuerById } from "../db/operations/read.js";
-import { updateStakeholderById, updateStockClassById, upsertStockTransferById, upsertStockIssuanceById } from "../db/operations/update.js";
-import { preProcessorCache } from "../utils/caches.js";
+
+import { createHistoricalTransaction } from "../db/operations/create.js";
+import { readStakeholderById } from "../db/operations/read.js";
+import {
+    updateStakeholderById,
+    updateStockClassById,
+    upsertStockIssuanceById,
+    upsertStockTransferById,
+    upsertStockCancellationById,
+} from "../db/operations/update.js";
+
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
@@ -17,12 +24,13 @@ const options = {
     second: "2-digit",
 };
 
-async function startOnchainListeners(contract, provider, issuerId) {
-    console.log("🌐| Initiating on-chain event listeners for ", contract.address);
 
-    contract.on("error", (error) => {
-        console.error("Error:", error);
-    });
+async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
+    console.log("🌐| Initiating on-chain event listeners for ", contract.target);
+
+    console.log("issuance lib ", issuanceLib);
+    console.log("transfer lib ", transferLib);
+    console.log("cancellation lib ", cancellationLib);
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
@@ -62,7 +70,7 @@ async function startOnchainListeners(contract, provider, issuerId) {
     });
 
     // @dev events return both an array and object, depending how you want to access. We're using objects
-    contract.on("StockIssuanceCreated", async (stock, event) => {
+    issuanceLib.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
         // console.log(`Stock issuance with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
@@ -130,7 +138,7 @@ async function startOnchainListeners(contract, provider, issuerId) {
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 
-    contract.on("StockTransferCreated", async (stock, event) => {
+    transferLib.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
         // console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
@@ -165,6 +173,46 @@ async function startOnchainListeners(contract, provider, issuerId) {
 
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
+
+    cancellationLib.on("StockCancellationCreated", async (stock) => {
+        console.log("StockCancellationCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockCancellation = await upsertStockCancellationById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            quantity: toDecimal(stock.quantity).toString(),
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            // date: new Date(Date.now()), // why can't we pull it from stock?
+            reason_text: stock.reason_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        const createdHistoricalTransaction = await createHistoricalTransaction({
+            transaction: createdStockCancellation._id,
+            issuer: createdStockCancellation.issuer,
+            transactionType: "StockCancellation",
+        });
+        console.log(
+            `✅ | StockCancellation confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockCancellation
+        );
+    });
+
+    const issuerCreatedFilter = contract.filters.IssuerCreated;
+    const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
+
+    // TODO: should only be performed once.
+    if (issuerEvents.length > 0) {
+        const id = issuerEvents[0].args[0];
+        console.log("IssuerCreated Event Emitted!", id);
+
+        await verifyIssuerAndSeed(contract, id);
+    }
+
 }
 
 export default startOnchainListeners;

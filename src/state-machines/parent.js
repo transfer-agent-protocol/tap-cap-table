@@ -27,9 +27,11 @@ export const parentMachine = createMachine(
                     STOP_CHILD: {
                         actions: ["stopChild"],
                     },
-                    // Only supporting one transfer, not the 1100 problem. This will be a separate helper function because we need multiple issuances and we will aggregate them
                     PRE_STOCK_TRANSFER: {
                         actions: ["createChildTransfer"],
+                    },
+                    PRE_STOCK_CANCELLATION: {
+                        actions: ["preCancel"],
                     },
                 },
             },
@@ -53,6 +55,40 @@ export const parentMachine = createMachine(
 
                 return {
                     transactions: [...context.transactions, event.value],
+                };
+            }),
+            preCancel: assign((context, event) => {
+                const { balance_security_id, quantity: quantityToBeRemoved } = event.value;
+                const securityId = event.id;
+
+                // Adam: think about verification:
+                if (balance_security_id) {
+                    // spawn new security with the balance security id and the
+                }
+
+                const securityActor = context.securities[security_id];
+
+                securityActor.send({
+                    type: "TX_STOCK_CANCELLATION",
+                    security_id,
+                    balance_security_id,
+                });
+
+                // spawn a new machine
+                // where can I get the remianing quantity
+                const cancelledTx = context.transactions.find((tx) => tx.security_id === securityId);
+                const remainingQuantity = cancelledTx.quantity - quantityToBeRemoved;
+                const value = {
+                    ...tx,
+                    quantity: remainingQuantity,
+                };
+                const newSecurity = spawn(stockMachine.withContext(value), balance_security_id);
+                return {
+                    securities: {
+                        ...context.securities,
+                        [securityId]: newSecurity,
+                    },
+                    transactions: [...context.transactions, value.value],
                 };
             }),
             stopChild: assign((context, event) => {

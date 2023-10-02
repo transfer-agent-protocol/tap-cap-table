@@ -34,7 +34,6 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
         vesting_terms_id,
         cost_basis,
         stock_legend_ids,
-        security_id, // TODO: currently only created onchain. Need to create option to create here
         issuance_type,
         comments,
         custom_id,
