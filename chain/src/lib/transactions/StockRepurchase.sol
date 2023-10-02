@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockRepurchaseTX.sol";
@@ -8,6 +9,8 @@ import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
 library StockRepurchaseLib {
+    using SafeMath for uint256;
+
     event StockRepurchaseCreated(StockRepurchase repurchase);
 
     function repurchaseStockByTA(
@@ -21,7 +24,9 @@ library StockRepurchaseLib {
         uint256 price,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions
+        address[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
     ) external {
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
@@ -42,7 +47,7 @@ library StockRepurchaseLib {
                 stockClassId
             );
 
-            StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs);
+            StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(balanceIssuance, transactions);
 
             balance_security_id = balanceIssuance.security_id;
@@ -63,6 +68,9 @@ library StockRepurchaseLib {
 
         _repurchaseStock(repurchase, transactions);
 
+        issuer.shares_issued = issuer.shares_issued.sub(quantity);
+        stockClass.shares_issued = stockClass.shares_issued.sub(quantity);
+
         DeleteContext.deleteActivePosition(stakeholderId, securityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
     }
@@ -71,6 +79,5 @@ library StockRepurchaseLib {
         StockRepurchaseTx repurchaseTx = new StockRepurchaseTx(repurchase);
         transactions.push(address(repurchaseTx));
         emit StockRepurchaseCreated(repurchase);
-        (repurchase);
     }
 }

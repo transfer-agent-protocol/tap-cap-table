@@ -280,7 +280,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             price,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 
