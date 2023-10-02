@@ -166,7 +166,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized, 0));
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
