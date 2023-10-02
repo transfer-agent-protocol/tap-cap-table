@@ -16,9 +16,9 @@ transactions.post("/issuance/stock", async (req, res) => {
         const issuer = await readIssuerById(issuerId);
 
         const incomingStockIssuance = {
-            id: uuid(),
-            security_id: uuid(),
-            date: new Date().toISOString().slice(0, 10),
+            id: uuid(), // for OCF Validation
+            security_id: uuid(), // for OCF Validation
+            date: new Date().toISOString().slice(0, 10), // for OCF Validation
             object_type: "TX_STOCK_ISSUANCE",
             ...data,
         };
