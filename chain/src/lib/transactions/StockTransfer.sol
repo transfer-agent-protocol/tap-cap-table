@@ -7,6 +7,7 @@ import "../../transactions/StockTransferTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
+// TODO: use SafeMath
 library StockTransferLib {
     using SafeMath for uint256;
 
