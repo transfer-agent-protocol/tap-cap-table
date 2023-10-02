@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass } from "./lib/Structs.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
@@ -16,6 +16,8 @@ contract CapTable is AccessControlDefaultAdminRules {
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
+    StockLegendTemplate[] public stockLegendTemplates;
+
     // @dev Transactions will be created on-chain then reflected off-chain.
     address[] public transactions;
 
@@ -161,12 +163,17 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public {
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized, 0));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
+    }
+
+    // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
+    function createStockLegendTemplate(bytes16 _id) public onlyAdmin {
+        stockLegendTemplates.push(StockLegendTemplate(_id));
     }
 
     function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {

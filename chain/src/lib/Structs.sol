@@ -125,6 +125,27 @@ struct StockIssuance {
     string[] security_law_exemptions; // Unclear
 }
 
+/*
+ "properties": {
+    "object_type": {
+      "const": "STOCK_LEGEND_TEMPLATE"
+    },
+    "name": {
+      "description": "Name for the stock legend template",
+      "type": "string"
+    },
+    "text": {
+      "description": "The full text of the stock legend",
+      "type": "string"
+    },
+    "id": {},
+    "comments": {}
+  }, */
+
+struct StockLegendTemplate {
+    bytes16 id;
+}
+
 // date fields are going to use block timestamp
 struct StockTransfer {
     bytes16 id;
