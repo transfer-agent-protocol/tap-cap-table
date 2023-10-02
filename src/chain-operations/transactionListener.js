@@ -1,8 +1,13 @@
 import { createHistoricalTransaction, createStockIssuance, createStockTransfer } from "../db/operations/create.js";
 import { readStakeholderById, readIssuerById } from "../db/operations/read.js";
-import { updateStakeholderById, updateStockClassById, upsertStockTransferById, upsertStockIssuanceById, upsertStockCancellationById} from "../db/operations/update.js";
+import {
+    updateStakeholderById,
+    updateStockClassById,
+    upsertStockTransferById,
+    upsertStockIssuanceById,
+    upsertStockCancellationById,
+} from "../db/operations/update.js";
 import { preProcessorCache } from "../utils/caches.js";
->>>>>>> origin
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
@@ -19,7 +24,7 @@ const options = {
 };
 
 async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
-    console.log('cancellationLib\n ', cancellationLib);
+    console.log("cancellationLib\n ", cancellationLib);
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
     contract.on("IssuerCreated", async (id, _) => {
@@ -194,7 +199,7 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
             `✅ | StockCancellation confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
             createdStockCancellation
         );
-    })
+    });
 }
 
 export default startOnchainListeners;
