@@ -17,6 +17,7 @@ const options = {
 };
 
 async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
+    console.log('cancellationLib\n ', cancellationLib);
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
     contract.on("IssuerCreated", async (id, _) => {

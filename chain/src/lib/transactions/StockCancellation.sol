@@ -7,6 +7,8 @@ import "./StockIssuance.sol";
 import "../../transactions/StockCancellationTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
+import "forge-std/console.sol";
+
 
 library StockCancellationLib {
     using SafeMath for uint256;
@@ -27,9 +29,19 @@ library StockCancellationLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
+        console.logString("stakeholderId");
+        console.logBytes16(stakeholderId);
+        console.logString("securityId");
+        console.logBytes16(securityId);
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
+        console.logString("quantity");
+        console.logUint(quantity);
+
+        console.logString("ActivePosition.quantity");
+        console.logUint(activePosition.quantity);
         require(activePosition.quantity >= quantity, "Insufficient shares");
+
 
         uint256 remainingQuantity = activePosition.quantity - quantity;
         bytes16 balance_security_id;
