@@ -15,7 +15,7 @@
         "typecheck:app": "tsc --noEmit",
         "typecheck:cypress": "tsc --noEmit -p cypress/tsconfig.json",
         "prepare": "husky install",
-        "build": "node ./src/scripts/deployAndLinkLibs.js",
+        "build": "cd chain && node ../src/scripts/deployAndLinkLibs.js",
         "setup": "cd chain && foundryup && forge build --via-ir",
         "deseed": "node src/db/scripts/deseed.js",
         "validate-poet-files": "cd ocf && yarn validate-poet-files",
