@@ -345,6 +345,9 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
         // need a require for activePositions
+
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+
         StockCancellationLib.cancelStockByTA(
             nonce,
             stakeholderId,
@@ -355,7 +358,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             quantity,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClass
         );
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass } from "../Structs.sol";
+import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockCancellationTX.sol";
 import "../TxHelper.sol";
@@ -20,7 +20,9 @@ library StockCancellationLib {
         uint256 quantity,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions
+        address[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
     ) external {
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
@@ -41,7 +43,7 @@ library StockCancellationLib {
                 stockClassId
             );
 
-            StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs);
+            StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(balanceIssuance, transactions);
 
             balance_security_id = balanceIssuance.security_id;
@@ -59,6 +61,9 @@ library StockCancellationLib {
             balance_security_id
         );
         _cancelStock(cancellation, transactions);
+
+        issuer.shares_issued -= quantity;
+        stockClass.shares_issued -= quantity;
 
         DeleteContext.deleteActivePosition(stakeholderId, securityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
