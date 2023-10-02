@@ -2,6 +2,7 @@ import { createHistoricalTransaction, createStockIssuance, createStockTransfer }
 import { readStakeholderById, readIssuerById } from "../db/operations/read.js";
 import { updateStakeholderById, updateStockClassById, upsertStockTransferById, upsertStockIssuanceById, upsertStockCancellationById} from "../db/operations/update.js";
 import { preProcessorCache } from "../utils/caches.js";
+>>>>>>> origin
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
@@ -17,12 +18,9 @@ const options = {
     second: "2-digit",
 };
 
-async function startOnchainListeners(contract, provider, issuerId) {
-    console.log("🌐| Initiating on-chain event listeners for ", contract.address);
-
-    contract.on("error", (error) => {
-        console.error("Error:", error);
-    });
+async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
+    console.log('cancellationLib\n ', cancellationLib);
+    console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
