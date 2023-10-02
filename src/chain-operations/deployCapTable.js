@@ -5,10 +5,12 @@ config();
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
 import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
+import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
 
 const { abi, bytecode } = CAP_TABLE;
-const { abi: abiIssuance, bytecode: bytecodeIssuance } = CAP_TABLE_ISSUANCE;
-const { abi: abiTransfer, bytecode: bytecodeTransfer } = CAP_TABLE_TRANSFER;
+const { abi: abiIssuance } = CAP_TABLE_ISSUANCE;
+const { abi: abiTransfer } = CAP_TABLE_TRANSFER;
+const { abi: abiCancellation } = CAP_TABLE_CANCELLATION;
 
 async function deployCapTableLocal(issuerId, issuerName) {
     // Replace with your private key and provider endpoint
@@ -31,8 +33,17 @@ async function deployCapTableLocal(issuerId, issuerName) {
 
     const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
     const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
+    const cancellationLib = new ethers.Contract(contract.target, abiCancellation, wallet);
 
-    return { contract, provider, address: contract.target, issuanceLib, transferLib };
+    return {
+        contract,
+        provider,
+        address: contract.target,
+        issuanceLib,
+        transferLib,
+        cancellationLib
+        // TODO: add the reminaing Txs
+    };
 }
 
 async function deployCapTableOptimismGoerli(issuerId, issuerName) {

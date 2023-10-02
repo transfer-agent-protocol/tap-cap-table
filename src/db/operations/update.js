@@ -7,6 +7,7 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import StockCancellation from "../objects/transactions/cancellation/StockCancellation.js";
 
 export const updateIssuerById = async (id, updatedData) => {
     const issuer = await Issuer.findByIdAndUpdate(id, updatedData, { new: true });
@@ -51,5 +52,9 @@ export const upsertStockIssuanceById = async (id, updatedData) => {
 export const upsertStockTransferById = async (id, updatedData) => {
     const stockTransfer = await StockTransfer.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
     return stockTransfer;
-    k;
 };
+
+export const upsertStockCancellationById = async (id, updatedData) => {
+    const stockCancellation = await StockCancellation.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+    return stockCancellation;
+}

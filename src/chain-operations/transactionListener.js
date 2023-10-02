@@ -1,6 +1,6 @@
 import { createHistoricalTransaction } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
-import { updateStakeholderById, updateStockClassById, upsertStockIssuanceById, upsertStockTransferById } from "../db/operations/update.js";
+import { updateStakeholderById, updateStockClassById, upsertStockIssuanceById, upsertStockTransferById, upsertStockCancellationById } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
@@ -16,7 +16,7 @@ const options = {
     second: "2-digit",
 };
 
-async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib) {
+async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
     contract.on("IssuerCreated", async (id, _) => {
@@ -159,6 +159,28 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
 
         await verifyIssuerAndSeed(contract, id);
     }
+    // TODO: Add cancellation listener here
+    cancellationLib.on("StockCancellationCreated", async (stock) => {
+        console.log("StockCancellationCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockCancellation = await upsertStockCancellationById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            quantity: toDecimal(stock.quantity).toString(),
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            // date: new Date(Date.now()), // why can't we pull it from stock?
+            reason_text: stock.reason_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+        console.log(
+            `✅ | StockCancellation confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockCancellation
+        );
+    })
 }
 
 export default startOnchainListeners;
