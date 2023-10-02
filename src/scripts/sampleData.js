@@ -2,6 +2,7 @@ export const issuer = {
     legal_name: "Dutch East India Company",
     formation_date: "2022-08-23",
     country_of_formation: "US",
+    initial_shares_authorized: "9000000",
     country_subdivision_of_formation: "DE",
     tax_ids: [
         {
@@ -52,6 +53,20 @@ export const stakeholder1 = (issuerId) => {
             // },
             // "contact_info": {},
             comments: [],
+        },
+    };
+};
+
+export const stockCancel = (issuerId, quantity, stakeholderId, stockClassId, security_id, reason_text, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            quantity,
+            security_id,
+            reason_text,
+            comments,
         },
     };
 };
