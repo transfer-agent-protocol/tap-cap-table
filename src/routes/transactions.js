@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
+import stockCancellationSchema from "../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
 import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
 import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
+import { convertAndCreateCancellationStockOnchain } from "../controllers/transactions/cancellationController.js";
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
@@ -16,9 +18,9 @@ transactions.post("/issuance/stock", async (req, res) => {
         const issuer = await readIssuerById(issuerId);
 
         const incomingStockIssuance = {
-            id: uuid(),
-            security_id: uuid(),
-            date: new Date().toISOString().slice(0, 10),
+            id: uuid(), // for OCF Validation
+            security_id: uuid(), // for OCF Validation
+            date: new Date().toISOString().slice(0, 10), // for OCF Validation
             object_type: "TX_STOCK_ISSUANCE",
             ...data,
         };
@@ -48,6 +50,42 @@ transactions.post("/transfer/stock", async (req, res) => {
         res.status(200).send("success");
     } catch (error) {
         console.error(`error: ${error}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+transactions.post("/cancel/stock", async (req, res) => {
+    const { contract } = req;
+    const { issuerId, data } = req.body;
+
+    try {
+        await readIssuerById(issuerId);
+
+        const { stakeholderId, stockClassId } = data;
+        console.log({ data });
+        const incomingStockCancellation = {
+            id: uuid(),
+            security_id: uuid(),
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_STOCK_CANCELLATION",
+            ...data,
+        };
+        delete incomingStockCancellation.stakeholderId;
+        delete incomingStockCancellation.stockClassId;
+
+        // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
+
+        await validateInputAgainstOCF(incomingStockCancellation, stockCancellationSchema);
+
+        await convertAndCreateCancellationStockOnchain(contract, {
+            ...incomingStockCancellation,
+            stakeholderId,
+            stockClassId,
+        });
+
+        res.status(200).send({ stockCancellation: incomingStockCancellation });
+    } catch (error) {
+        console.error(`error: ${error.stack}`);
         res.status(500).send(`${error}`);
     }
 });

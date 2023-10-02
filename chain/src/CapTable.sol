@@ -1,53 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "./transactions/StockIssuanceTX.sol";
-import "./transactions/StockTransferTX.sol";
-import { StockIssuance, StockTransfer } from "./lib/Structs.sol";
-import "./lib/TxHelper.sol";
-import "./lib/Arrays.sol";
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate } from "./lib/Structs.sol";
+import "./lib/transactions/StockIssuance.sol";
+import "./lib/transactions/StockTransfer.sol";
+import "./lib/transactions/StockCancellation.sol";
+import "./lib/transactions/StockRetraction.sol";
+import "./lib/transactions/StockRepurchase.sol";
+import "./lib/transactions/Adjustment.sol";
+import "./lib/transactions/StockAcceptance.sol";
+import "./lib/transactions/StockReissuance.sol";
 
-import "forge-std/console.sol";
-
-contract CapTable is Ownable {
-    // @dev Issuer, Stakeholder and StockClass will be created off-chain then reflected on-chain to match IDs. Struct variables have underscore naming to match OCF naming.
-    /* Objects kept intentionally off-chain unless they become useful
-        - Stock Legend Template
-        - Stock Plan
-        - Vesting Terms
-        - Valuations
-    */
-
-    struct Issuer {
-        bytes16 id;
-        string legal_name;
-    }
-
-    struct Stakeholder {
-        bytes16 id;
-        string stakeholder_type; // ["INDIVIDUAL", "INSTITUTION"]
-        string current_relationship; // ["ADVISOR","BOARD_MEMBER","CONSULTANT","EMPLOYEE","EX_ADVISOR" "EX_CONSULTANT","EX_EMPLOYEE","EXECUTIVE","FOUNDER","INVESTOR","NON_US_EMPLOYEE","OFFICER","OTHER"]
-    }
-
-    // can be later extended to add things like seniority, conversion_rights, etc.
-    struct StockClass {
-        bytes16 id;
-        string class_type; // ["COMMON", "PREFERRED"]
-        uint256 price_per_share; // Per-share price this stock class was issued for
-        uint256 initial_shares_authorized;
-    }
-
-    struct ActivePosition {
-        bytes16 stock_class_id;
-        uint256 quantity;
-        uint256 share_price;
-        uint40 timestamp;
-    }
+contract CapTable is AccessControlDefaultAdminRules {
+    using SafeMath for uint256;
 
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
+    StockLegendTemplate[] public stockLegendTemplates;
+
     // @dev Transactions will be created on-chain then reflected off-chain.
     address[] public transactions;
 
@@ -58,23 +31,27 @@ contract CapTable is Ownable {
     // id -> index
     mapping(bytes16 => uint256) stakeholderIndex;
     mapping(bytes16 => uint256) stockClassIndex;
-
-    // stakeholder_id -> stock_class_id -> security_ids
-    mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
-    // stakeholder_id -> security_id -> ActivePosition
-    mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions;
     // wallet address => stakeholder_id
     mapping(address => bytes16) walletsPerStakeholder;
+
+    ActivePositions positions;
+    SecIdsStockClass activeSecs;
+
+    // RBAC
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
 
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
     event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
-    event StockTransferCreated(StockTransfer transfer);
-    event StockIssuanceCreated(StockIssuance issuance);
 
-    constructor(bytes16 _id, string memory _name) {
+    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
+        _grantRole(ADMIN_ROLE, _msgSender());
+        _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
+        _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
+
         nonce = 0;
-        issuer = Issuer(_id, _name);
+        issuer = Issuer(_id, _name, 0, _initial_shares_authorized);
         emit IssuerCreated(_id, _name);
     }
 
@@ -85,7 +62,7 @@ contract CapTable is Ownable {
         uint256[] memory quantities,
         uint256[] memory sharePrices,
         uint40[] memory timestamps
-    ) external onlyOwner {
+    ) external onlyAdmin {
         //TODO: check stakeholders and stock classes exist
         require(
             stakeholderIds.length == securityIds.length &&
@@ -98,162 +75,137 @@ contract CapTable is Ownable {
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
             // Set activePositions
-            activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(stockClassIds[i], quantities[i], sharePrices[i], timestamps[i]);
-
-            // Set activeSecurityIdsByStockClass
-            activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
-        }
-    }
-
-    function transferStock(
-        bytes16 transferorStakeholderId,
-        bytes16 transfereeStakeholderId,
-        bytes16 stockClassId, // TODO: verify that we would have fong would have the stock class
-        bool isBuyerVerified,
-        uint256 quantity,
-        uint256 share_price
-    ) external {
-        // Checks related to entities' existence
-        require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
-        require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        // Checks related to transaction validity
-        require(isBuyerVerified, "Buyer unverified");
-        require(quantity > 0, "Invalid quantity");
-        require(share_price > 0, "Invalid price");
-
-        require(activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId].length > 0, "No active security ids found");
-        bytes16[] memory activeSecurityIDs = activeSecurityIdsByStockClass[transferorStakeholderId][stockClassId];
-
-        uint256 sum = 0;
-        uint256 numSecurityIds = 0;
-
-        for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
-            ActivePosition memory activePosition = activePositions[transferorStakeholderId][activeSecurityIDs[index]];
-            sum += activePosition.quantity;
-
-            if (sum >= quantity) {
-                numSecurityIds += 1;
-                break;
-            } else {
-                numSecurityIds += 1;
-            }
-        }
-
-        console.log("quantity ", quantity);
-        console.log("sum ", sum);
-
-        require(quantity <= sum, "insufficient shares");
-
-        uint256 remainingQuantity = quantity; // This will keep track of the remaining quantity to be transferred
-
-        for (uint256 index = 0; index < numSecurityIds; index++) {
-            ActivePosition memory activePosition = activePositions[transferorStakeholderId][activeSecurityIDs[index]];
-
-            uint256 transferQuantity; // This will be the quantity to transfer in this iteration
-
-            if (activePosition.quantity <= remainingQuantity) {
-                transferQuantity = activePosition.quantity;
-            } else {
-                transferQuantity = remainingQuantity;
-            }
-
-            _transferSingleStock(
-                transferorStakeholderId,
-                transfereeStakeholderId,
-                stockClassId,
-                transferQuantity,
-                share_price,
-                activeSecurityIDs[index]
+            positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
+                stockClassIds[i],
+                quantities[i],
+                sharePrices[i],
+                timestamps[i]
             );
 
-            remainingQuantity -= transferQuantity; // Reduce the remaining quantity
-
-            // If there's no more quantity left to transfer, break out of the loop
-            if (remainingQuantity == 0) {
-                break;
-            }
+            // Set activeSecurityIdsByStockClass
+            activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
         }
     }
 
-    // can extend this to check that it's not issuing more than stock_class initial shares issued
-    function issueStockFromSeed(
-        bytes16 id,
-        bytes16 securityId,
-        bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
-        uint256 sharePrice,
-        uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
-        string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
-        bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions
-    ) external onlyOwner {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
+        require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
+        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
+        stakeholderIndex[_id] = stakeholders.length;
+        emit StakeholderCreated(_id);
+    }
+
+    /// @notice Setter for walletsPerStakeholder mapping
+    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
+
+        walletsPerStakeholder[_wallet] = _stakeholder_id;
+    }
+
+    /// @notice Removing wallet from walletsPerStakeholder mapping
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
+        require(_wallet != address(0), "Invalid wallet");
+        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
+
+        delete walletsPerStakeholder[_wallet];
+    }
+
+    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
+        return walletsPerStakeholder[_wallet];
+    }
+
+    // Stock Acceptance does not currently impact an active position. It's only recorded.
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-        require(quantity > 0, "Invalid quantity");
-        require(sharePrice > 0, "Invalid price");
 
-        _issueStock(
-            TxHelper.createStockIssuanceStructFromSeed(
-                id,
-                securityId,
-                stockClassId,
-                stockPlanId,
-                shareNumbersIssued,
-                sharePrice,
-                quantity,
-                vestingTermsId,
-                costBasis,
-                stockLegendIds,
-                issuanceType,
-                comments,
-                customId,
-                stakeholderId,
-                boardApprovalDate,
-                stockholderApprovalDate,
-                considerationText,
-                securityLawExemptions
-            )
-        );
+        // require active position to exist?
+
+        StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
     }
 
-    function transferStockFromSeed(
-        bytes16 id,
-        bytes16 security_id,
-        bytes16[] memory resulting_security_ids,
-        bytes16 balance_security_id,
-        uint256 quantity,
+    function adjustIssuerAuthorizedShares(
+        uint256 newSharesAuthorized,
         string[] memory comments,
-        string memory consideration_text
-    ) external onlyOwner {
-        require(quantity > 0, "Invalid quantity");
-        require(security_id != bytes16(0), "Invalid security id");
-        require(resulting_security_ids.length > 0, "Invalid resulting security ids");
-
-        _transferStock(
-            TxHelper.createStockTransferStructFromSeed(
-                id,
-                security_id,
-                resulting_security_ids,
-                balance_security_id,
-                quantity,
-                comments,
-                consideration_text
-            )
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate
+    ) external onlyAdmin {
+        Adjustment.adjustIssuerAuthorizedShares(
+            nonce,
+            newSharesAuthorized,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            issuer,
+            transactions
         );
     }
 
-    // can extend this to check that it's not issuing more than stock_class initial shares issued
+    function adjustStockClassAuthorizedShares(
+        bytes16 stockClassId,
+        uint256 newAuthorizedShares,
+        string[] memory comments,
+        string memory boardApprovalDate,
+        string memory stockholderApprovalDate
+    ) external onlyAdmin {
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+        require(stockClass.id == stockClassId, "Invalid stock class");
+
+        Adjustment.adjustStockClassAuthorizedShares(
+            nonce,
+            newAuthorizedShares,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            stockClass,
+            transactions
+        );
+    }
+
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
+        require(stockClassIndex[_id] == 0, "Stock class already exists");
+
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
+        stockClassIndex[_id] = stockClasses.length;
+        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
+    }
+
+    // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
+    function createStockLegendTemplate(bytes16 _id) public onlyAdmin {
+        stockLegendTemplates.push(StockLegendTemplate(_id));
+    }
+
+    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
+        if (stakeholderIndex[_id] > 0) {
+            Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
+            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
+        } else {
+            return ("", "", "");
+        }
+    }
+
+    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
+        if (stockClassIndex[_id] > 0) {
+            StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized);
+        } else {
+            return ("", "", 0, 0);
+        }
+    }
+
+    function getTotalNumberOfStakeholders() public view returns (uint256) {
+        return stakeholders.length;
+    }
+
+    function getTotalNumberOfStockClasses() public view returns (uint256) {
+        return stockClasses.length;
+    }
+
+    // TODO: small syntax but change this to issueStock
     function issueStockByTA(
         bytes16 stockClassId,
         bytes16 stockPlanId,
@@ -271,15 +223,16 @@ contract CapTable is Ownable {
         string memory stockholderApprovalDate,
         string memory considerationText,
         string[] memory securityLawExemptions
-    ) external onlyOwner {
+    ) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-        require(quantity > 0, "Invalid quantity");
-        require(sharePrice > 0, "Invalid price");
 
-        nonce++;
+        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
-        StockIssuance memory issuance = TxHelper.createStockIssuanceStructByTA(
+        require(issuer.shares_issued.add(quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued.add(quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+
+        StockIssuanceLib.createStockIssuanceByTA(
             nonce,
             stockClassId,
             stockPlanId,
@@ -296,184 +249,184 @@ contract CapTable is Ownable {
             boardApprovalDate,
             stockholderApprovalDate,
             considerationText,
-            securityLawExemptions
-        );
-
-        _issueStock(issuance);
-        _updateContext(issuance);
-    }
-
-    /// @notice Setter for walletsPerStakeholder mapping
-    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
-        require(_wallet != address(0), "Invalid wallet");
-        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
-
-        walletsPerStakeholder[_wallet] = _stakeholder_id;
-    }
-
-    /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyOwner {
-        require(_wallet != address(0), "Invalid wallet");
-        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
-
-        delete walletsPerStakeholder[_wallet];
-    }
-
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyOwner {
-        require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
-        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
-        stakeholderIndex[_id] = stakeholders.length;
-        emit StakeholderCreated(_id);
-    }
-
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyOwner {
-        require(stockClassIndex[_id] == 0, "Stock class already exists");
-
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, _initial_share_authorized));
-        stockClassIndex[_id] = stockClasses.length;
-        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
-    }
-
-    function getActivePositionBySecurityId(bytes16 _stakeholder_id, bytes16 _security_id) public view returns (ActivePosition memory activePosition) {
-        require(activePositions[_stakeholder_id][_security_id].quantity > 0, "No active position found");
-        return activePositions[_stakeholder_id][_security_id];
-    }
-
-    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
-        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
-        return walletsPerStakeholder[_wallet];
-    }
-
-    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
-        if (stakeholderIndex[_id] > 0) {
-            Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
-            return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
-        } else {
-            return ("", "", "");
-        }
-    }
-
-    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
-        if (stockClassIndex[_id] > 0) {
-            StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.initial_shares_authorized);
-        } else {
-            return ("", "", 0, 0);
-        }
-    }
-
-    function getTotalNumberOfStakeholders() public view returns (uint256) {
-        return stakeholders.length;
-    }
-
-    function getTotalNumberOfStockClasses() public view returns (uint256) {
-        return stockClasses.length;
-    }
-
-    function _deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id) internal {
-        delete activePositions[_stakeholder_id][_security_id];
-    }
-
-    // Active Security IDs by Stock Class { "stakeholder_id": { "stock_class_id-1": ["sec-id-1", "sec-id-2"] } }
-    function _deleteActiveSecurityIdsByStockClass(bytes16 _stakeholder_id, bytes16 _stock_class_id, bytes16 _security_id) internal {
-        bytes16[] storage securities = activeSecurityIdsByStockClass[_stakeholder_id][_stock_class_id];
-
-        uint256 index = Arrays.find(securities, _security_id);
-        if (index != type(uint256).max) {
-            Arrays.remove(securities, index);
-        }
-    }
-
-    function _updateContext(StockIssuance memory issuance) internal onlyOwner {
-        activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
-
-        activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
-            issuance.stock_class_id,
-            issuance.quantity,
-            issuance.share_price,
-            _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
+            securityLawExemptions,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClass
         );
     }
 
-    function _issueStock(StockIssuance memory issuance) internal onlyOwner {
-        StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
-        transactions.push(address(issuanceTx));
-        emit StockIssuanceCreated(issuance);
+    function repurchaseStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16 securityId,
+        string[] memory comments,
+        string memory considerationText,
+        uint256 quantity,
+        uint256 price
+    ) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        StockRepurchaseLib.repurchaseStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            securityId,
+            comments,
+            considerationText,
+            quantity,
+            price,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
+        );
     }
 
-    function _transferStock(StockTransfer memory transfer) internal onlyOwner {
-        StockTransferTx transferTx = new StockTransferTx(transfer);
-        transactions.push(address(transferTx));
-        emit StockTransferCreated(transfer);
+    function retractStockIssuance(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText
+    ) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        StockRetractionLib.retractStockIssuanceByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            securityId,
+            comments,
+            reasonText,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
+        );
     }
 
-    function _safeNow() internal view returns (uint40) {
-        return uint40(block.timestamp);
+    function reissueStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16[] memory resulting_security_ids,
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText
+    ) external {
+        StockReissuanceLib.reissueStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            comments,
+            securityId,
+            resulting_security_ids,
+            reasonText,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
+        );
     }
 
-    // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
-    function _transferSingleStock(
+    // Missed date here. Make sure it's recorded where it needs to be (in the struct)
+    // TODO: dates seem to be missing in a handful of places, go back and recheck
+    function cancelStock(
+        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16 securityId,
+        string[] memory comments,
+        string memory reasonText,
+        uint256 quantity
+    ) external onlyAdmin {
+        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+
+        // need a require for activePositions
+
+        StockCancellationLib.cancelStockByTA(
+            nonce,
+            stakeholderId,
+            stockClassId,
+            securityId,
+            comments,
+            reasonText,
+            quantity,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
+        );
+    }
+
+    function transferStock(
         bytes16 transferorStakeholderId,
         bytes16 transfereeStakeholderId,
-        bytes16 stockClassId,
+        bytes16 stockClassId, // TODO: verify that we would have fong would have the stock class
+        bool isBuyerVerified,
         uint256 quantity,
-        uint256 sharePrice,
-        bytes16 securityId
-    ) internal onlyOwner {
-        bytes16 transferorSecurityId = securityId;
-        ActivePosition memory transferorActivePosition = getActivePositionBySecurityId(transferorStakeholderId, transferorSecurityId);
+        uint256 share_price
+    ) external onlyOperator {
+        require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
+        require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
+        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        // Checks related to transfer feasibility
-        require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
-
-        nonce++;
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
-            nonce,
+        StockTransferLib.transferStock(
+            transferorStakeholderId,
             transfereeStakeholderId,
+            stockClassId,
+            isBuyerVerified,
             quantity,
-            sharePrice,
-            stockClassId
-        );
-
-        _issueStock(transfereeIssuance);
-        _updateContext(transfereeIssuance);
-
-        uint256 balanceForTransferor = transferorActivePosition.quantity - quantity;
-
-        bytes16 balance_security_id;
-
-        if (balanceForTransferor > 0) {
-            nonce++;
-            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                nonce,
-                transferorStakeholderId,
-                balanceForTransferor,
-                transferorActivePosition.share_price,
-                stockClassId
-            );
-
-            _issueStock(transferorBalanceIssuance);
-            _updateContext(transfereeIssuance);
-
-            balance_security_id = transferorBalanceIssuance.security_id;
-        } else {
-            balance_security_id = "";
-        }
-
-        nonce++;
-        StockTransfer memory transfer = TxHelper.createStockTransferStruct(
+            share_price,
             nonce,
-            quantity,
-            transferorSecurityId,
-            transfereeIssuance.security_id,
-            balance_security_id
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
-        _transferStock(transfer);
+    }
 
-        _deleteActivePosition(transferorStakeholderId, transferorSecurityId);
-        _deleteActiveSecurityIdsByStockClass(transferorStakeholderId, stockClassId, transferorSecurityId);
+    /* Role Based Access Control */
+
+    modifier onlyOperator() {
+        /// @notice Admins are also considered Operators
+        require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(_isAdmin(), "Does not have admin role");
+        _;
+    }
+
+    function _isAdmin() internal view returns (bool) {
+        return hasRole(ADMIN_ROLE, _msgSender());
+    }
+
+    //  External API for updating roles of addresses
+
+    function addAdmin(address addr) external onlyAdmin {
+        _grantRole(ADMIN_ROLE, addr);
+    }
+
+    function removeAdmin(address addr) external onlyAdmin {
+        _revokeRole(ADMIN_ROLE, addr);
+    }
+
+    function addOperator(address addr) external onlyAdmin {
+        _grantRole(OPERATOR_ROLE, addr);
+    }
+
+    function removeOperator(address addr) external onlyAdmin {
+        _revokeRole(OPERATOR_ROLE, addr);
     }
 }

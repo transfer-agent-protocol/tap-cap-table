@@ -20,14 +20,17 @@ router.post("/mint-cap-table", async (req, res) => {
         const issuer = await seedDB(manifest);
 
         const issuerIdBytes16 = convertUUIDToBytes16(issuer._id);
-        const { contract, provider, address } = await deployCapTable(req.chain, issuerIdBytes16, issuer.legal_name);
-        console.log("Minted Cap Table to ", address);
+        const { contract, provider, address, issuanceLib, transferLib, cancellationLib } = await deployCapTable(
+            req.chain,
+            issuerIdBytes16,
+            issuer.legal_name
+        );
 
         const savedIssuerWithDeployedTo = await updateIssuerById(issuer._id, { deployed_to: address });
 
         // add contract to the cache and start listener
-        contractCache[issuer._id] = { contract, provider };
-        startOnchainListeners(contract, provider, issuer._id);
+        contractCache[issuer._id] = { contract, provider, issuanceLib, transferLib, cancellationLib };
+        await startOnchainListeners(contract, provider, issuer._id, issuanceLib, transferLib, cancellationLib);
 
         res.status(200).send({ issuer: savedIssuerWithDeployedTo });
     } catch (error) {

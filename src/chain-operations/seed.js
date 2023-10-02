@@ -22,16 +22,9 @@ export const initiateSeeding = async (uuid, contract) => {
         stockClass.id = stockClass._id;
         await convertAndReflectStockClassOnchain(contract, stockClass);
     }
+  
+    await sleep(300);
 
-    for (const stockIssuance of stockIssuances) {
-        stockIssuance.id = stockIssuance._id;
-        await convertAndSeedIssuanceStockOnchain(contract, stockIssuance);
-    }
-
-    for (const stockTransfer of stockTransfers) {
-        stockTransfer.id = stockTransfer._id;
-        await convertAndSeedTransferStockOnchain(contract, stockTransfer);
-    }
 };
 
 export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
