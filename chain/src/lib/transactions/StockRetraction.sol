@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockRetraction, ActivePositions, ActivePosition, SecIdsStockClass } from "../Structs.sol";
+import { StockRetraction, ActivePositions, ActivePosition, SecIdsStockClass, StockClass, Issuer } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockRetractionTX.sol";
 import "../TxHelper.sol";
