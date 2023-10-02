@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { Issuer, StockClass } from "../Structs.sol";
 import "../TxHelper.sol";
 import "../../transactions/IssuerAuthorizedSharesAdjustmentTX.sol";
 import "../../transactions/StockClassAuthorizedSharesAdjustmentTX.sol";
 
 library Adjustment {
+    using SafeMath for uint256;
     // combine both
     // 1. Issuer authorized shares adjustment
     // 2. Stock Class authorized shares adjustment
@@ -24,9 +26,6 @@ library Adjustment {
         Issuer storage issuer,
         address[] storage transactions
     ) external {
-        uint256 newShares = newSharesAuthorized + issuer.shares_authorized;
-        issuer.shares_authorized = newShares;
-
         nonce++;
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustIssuerAuthorizedShares(
             nonce,
@@ -36,6 +35,8 @@ library Adjustment {
             stockholderApprovalDate,
             issuer.id
         );
+
+        issuer.shares_authorized = newSharesAuthorized.add(issuer.shares_authorized);
 
         IssuerAuthorizedSharesAdjustmentTx issuerAuthorizedSharesAdjustmentTx = new IssuerAuthorizedSharesAdjustmentTx(adjustment);
         transactions.push(address(issuerAuthorizedSharesAdjustmentTx));
