@@ -303,7 +303,9 @@ contract CapTable is AccessControlDefaultAdminRules {
             reasonText,
             positions,
             activeSecs,
-            transactions
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 
@@ -346,8 +348,6 @@ contract CapTable is AccessControlDefaultAdminRules {
 
         // need a require for activePositions
 
-        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
-
         StockCancellationLib.cancelStockByTA(
             nonce,
             stakeholderId,
@@ -360,7 +360,7 @@ contract CapTable is AccessControlDefaultAdminRules {
             activeSecs,
             transactions,
             issuer,
-            stockClass
+            stockClasses[stockClassIndex[stockClassId] - 1]
         );
     }
 
