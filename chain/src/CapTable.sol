@@ -204,8 +204,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         return stockClasses.length;
     }
 
-    // can extend this to check that it's not issuing more than stock_class initial shares issued
-    // TODO: small syntax but change this to issueStock=
+    // TODO: small syntax but change this to issueStock
     function issueStockByTA(
         bytes16 stockClassId,
         bytes16 stockPlanId,
