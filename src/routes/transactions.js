@@ -2,9 +2,11 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
 import stockCancellationSchema from "../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
+import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
 import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
 import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
 import { convertAndCreateCancellationStockOnchain } from "../controllers/transactions/cancellationController.js";
+import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
@@ -84,6 +86,40 @@ transactions.post("/cancel/stock", async (req, res) => {
         });
 
         res.status(200).send({ stockCancellation: incomingStockCancellation });
+    } catch (error) {
+        console.error(`error: ${error.stack}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+transactions.post("/retract/stock", async (req, res) => {
+    const { contract } = req;
+    const { data } = req.body;
+
+    try {
+        const { stakeholderId, stockClassId } = data;
+        console.log({ data });
+        const incomingStockRetraction = {
+            id: uuid(), // placeholder
+            security_id: uuid(), // placeholder
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_STOCK_RETRACTION",
+            ...data,
+        };
+
+        delete incomingStockRetraction.stakeholderId;
+        delete incomingStockRetraction.stockClassId;
+
+        // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
+        await validateInputAgainstOCF(incomingStockRetraction, stockRetractionSchema);
+
+        await convertAndCreateRetractionStockOnchain(contract, {
+            ...incomingStockRetraction,
+            stakeholderId,
+            stockClassId,
+        });
+
+        res.status(200).send({ stockRetraction: incomingStockRetraction });
     } catch (error) {
         console.error(`error: ${error.stack}`);
         res.status(500).send(`${error}`);

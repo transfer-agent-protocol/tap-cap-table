@@ -57,6 +57,20 @@ export const stakeholder1 = (issuerId) => {
     };
 };
 
+export const stockRetract = (issuerId, date, stakeholderId, stockClassId, security_id, reason_text, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            date,
+            security_id,
+            reason_text,
+            comments,
+        },
+    };
+};
+
 export const stockCancel = (issuerId, quantity, stakeholderId, stockClassId, security_id, reason_text, comments) => {
     return {
         issuerId,
