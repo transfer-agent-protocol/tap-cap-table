@@ -14,6 +14,4 @@ export const convertAndCreateRetractionStockOnchain = async (
 
     const tx = await contract.retractStockIssuance(stakeHolderIdBytes16, stockClassIdBytes16, secIdBytes16, comments, reason_text);
     await tx.wait();
-
-    console.log(`Cancellation Completed: quantity affected: ${quantity}`);
 };
