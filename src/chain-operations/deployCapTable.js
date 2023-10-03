@@ -1,17 +1,21 @@
 import { config } from "dotenv";
 import { ethers } from "ethers";
+
 config();
 
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
 import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
+import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
+import CAP_TABLE_RETRACTION from "../../chain/out/StockRetraction.sol/StockRetractionLib.json" assert { type: "json" };
+
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 
 const { abi, bytecode } = CAP_TABLE;
 const { abi: abiIssuance } = CAP_TABLE_ISSUANCE;
 const { abi: abiTransfer } = CAP_TABLE_TRANSFER;
 const { abi: abiCancellation } = CAP_TABLE_CANCELLATION;
+const { abi: abiRetraction } = CAP_TABLE_RETRACTION;
 
 async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
     // Replace with your private key and provider endpoint
@@ -38,18 +42,19 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
 
     console.log("Waiting for contract to be mined...");
 
-    const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
-    const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
-    const cancellationLib = new ethers.Contract(contract.target, abiCancellation, wallet);
+    const libraries = {
+        issuance: new ethers.Contract(contract.target, abiIssuance, wallet),
+        transfer: new ethers.Contract(contract.target, abiTransfer, wallet),
+        cancellation: new ethers.Contract(contract.target, abiCancellation, wallet),
+        cancellation: new ethers.Contract(contract.target, abiCancellation, wallet),
+        retraction: new ethers.Contract(contract.target, abiRetraction, wallet),
+    };
 
     return {
         contract,
         provider,
         address: contract.target,
-        issuanceLib,
-        transferLib,
-        cancellationLib,
-        // TODO: add the reminaing Txs
+        libraries,
     };
 }
 
@@ -80,5 +85,4 @@ async function deployCapTable(chain, issuerId, issuerName, initial_shares_author
         throw new Error(`Unsupported chain: ${chain}`);
     }
 }
-
 export default deployCapTable;
