@@ -5,6 +5,10 @@ export const convertAndReflectStakeholderOnchain = async (contract, stakeholder)
     // First: convert OCF Types to Onchain Types
     const stakeholderIdBytes16 = convertUUIDToBytes16(stakeholder.id);
 
+    console.log("stakeholder", stakeholder);
+
+    console.log("stakeholder id for seeding ", stakeholderIdBytes16);
+
     // Second: create stakeholder onchain
     const tx = await contract.createStakeholder(stakeholderIdBytes16, stakeholder.stakeholder_type, stakeholder.current_relationship); // Pass all three values
     await tx.wait();
