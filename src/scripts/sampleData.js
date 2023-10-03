@@ -69,6 +69,19 @@ export const stockRetract = (issuerId,  stakeholderId, stockClassId, security_id
         },
     };
 };
+export const stockReissue = (issuerId,  stakeholderId, stockClassId, resulting_security_ids, security_id, reason_text, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            resulting_security_ids,
+            security_id,
+            reason_text,
+            comments,
+        },
+    };
+};
 
 export const stockCancel = (issuerId, quantity, stakeholderId, stockClassId, security_id, reason_text, comments) => {
     return {
