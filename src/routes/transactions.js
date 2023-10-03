@@ -98,10 +98,8 @@ transactions.post("/retract/stock", async (req, res) => {
 
     try {
         const { stakeholderId, stockClassId } = data;
-        console.log({ data });
         const incomingStockRetraction = {
             id: uuid(), // placeholder
-            security_id: uuid(), // placeholder
             date: new Date().toISOString().slice(0, 10),
             object_type: "TX_STOCK_RETRACTION",
             ...data,
