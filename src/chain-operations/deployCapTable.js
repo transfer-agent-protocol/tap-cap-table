@@ -2,7 +2,6 @@ import { config } from "dotenv";
 import { ethers } from "ethers";
 config();
 
-import axios from "axios";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
 import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
@@ -21,7 +20,6 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
         chainId: 31337,
         name: "local",
     };
-
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     console.log("wallet address ", wallet.address);
@@ -53,13 +51,12 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
         cancellationLib,
         // TODO: add the reminaing Txs
     };
-
+}
 
 async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
     const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
-
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName);
@@ -72,7 +69,6 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
 
     return { contract, provider, address: contract.target, issuanceLib, transferLib };
-
 }
 
 async function deployCapTable(chain, issuerId, issuerName, initial_shares_authorized) {

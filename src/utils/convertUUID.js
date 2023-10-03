@@ -1,4 +1,4 @@
-import { utils } from "ethers";
+import { hexlify, getBytes } from "ethers";
 
 function convertToUUID(uuidBytes16) {
     let uuidWithoutDashes = uuidBytes16.substring(2); // removes the '0x' prefix
@@ -35,7 +35,11 @@ function convertBytes16ToUUID(obj) {
 }
 
 function convertUUIDToBytes16(uuid) {
-    return utils.hexlify(utils.arrayify("0x" + uuid.replace(/-/g, "")));
+    const bytes = getBytes("0x" + uuid.replace(/-/g, ""));
+
+    const hex = hexlify(bytes);
+
+    return hex;
 }
 
 export { convertBytes16ToUUID, convertUUIDToBytes16 };

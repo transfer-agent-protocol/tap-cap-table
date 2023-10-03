@@ -103,7 +103,6 @@ library TxHelper {
         bytes16[] memory resultingSecurityIds = new bytes16[](1);
         resultingSecurityIds[0] = resulting_security_id;
 
-        // bytes16 id = hex"f02b7c91e70947f9a748c2a2908af657";
         bytes16 id = generateDeterministicUniqueID(security_id, nonce);
 
         return
