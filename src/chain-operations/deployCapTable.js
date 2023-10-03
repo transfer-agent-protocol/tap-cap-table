@@ -30,7 +30,7 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
 
     console.log("Waiting for contract to be mined...");
-    const libraries = getTXLibContracts()
+    const libraries = getTXLibContracts(contract.target, wallet)
 
 
     return {
