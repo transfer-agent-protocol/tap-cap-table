@@ -6,12 +6,14 @@ import {
     upsertStockIssuanceById,
     upsertStockTransferById,
     upsertStockCancellationById,
+     upsertStockRetractionById
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-import { verifyIssuerAndSeed } from "./seed.js";
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds } from "./seed.js";
 
 const options = {
     year: "numeric",
@@ -25,14 +27,23 @@ const options = {
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
-    console.log("issuance lib ", issuanceLib);
-    console.log("transfer lib ", transferLib);
-    console.log("cancellation lib ", cancellationLib);
+    console.log("libraries ", {...libraries});
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
 
-        await verifyIssuerAndSeed(contract, id);
+        const uuid = convertBytes16ToUUID(id);
+        const issuer = await readIssuerById(uuid);
+
+        if (!issuer.is_manifest_created) return;
+
+        const arrays = extractArrays(preProcessorCache[issuerId]);
+        await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
+        await initiateSeeding(uuid, contract);
+        console.log(`Completed Seeding issuer ${uuid} on chain`);
+
+        console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -196,14 +207,14 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             object_type: stock.object_type,
             comments: stock.comments,
             security_id: convertBytes16ToUUID(stock.security_id),
-            date: new Date(Date.now()), // why can't we pull it from stock?
+            date: new Date(Date.now()),
             reason_text: stock.reason_text,
             // TAP Native Fields
             issuer: issuerId,
             is_onchain_synced: true,
         });
 
-        const createdHistoricalTransaction = await createHistoricalTransaction({
+        await createHistoricalTransaction({
             transaction: createdStockRetraction._id,
             issuer: createdStockRetraction.issuer,
             transactionType: "StockRetraction",
