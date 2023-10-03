@@ -8,6 +8,7 @@ import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import StockCancellation from "../objects/transactions/cancellation/StockCancellation.js";
+import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
 
 export const updateIssuerById = async (id, updatedData) => {
     const issuer = await Issuer.findByIdAndUpdate(id, updatedData, { new: true });
@@ -58,3 +59,9 @@ export const upsertStockCancellationById = async (id, updatedData) => {
     const stockCancellation = await StockCancellation.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
     return stockCancellation;
 };
+
+export const upsertStockRetractionById = async (id, updatedData) => {
+    const stockRetraction = await StockRetraction.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+    return stockRetraction;
+};
+
