@@ -36,6 +36,10 @@ export const parentMachine = createMachine(
                     PRE_STOCK_RETRACTION: {
                         actions: ["preRetract"],
                     },
+
+                    PRE_STOCK_REISSUANCE: {
+                        actions: ["preReissuance"],
+                    },
                 },
             },
         },
@@ -76,7 +80,6 @@ export const parentMachine = createMachine(
                 };
             }),
             preRetract: assign((context, event) => {
-                console.log('here');
                 const currentTransaction = event.value;
                 const { security_id } = currentTransaction;
 
@@ -84,6 +87,22 @@ export const parentMachine = createMachine(
 
                 securityActor.send({
                     type: "TX_STOCK_RETRACTION",
+                    security_id,
+                });
+
+                return {
+                    transactions: [...context.transactions, currentTransaction],
+                };
+            }),
+            preReissuance: assign((context, event) => {
+                const currentTransaction = event.value;
+                const { security_id } = currentTransaction;
+
+                console.log({security_id})
+                const securityActor = context.securities[security_id];
+
+                securityActor.send({
+                    type: "TX_STOCK_REISSUANCE",
                     security_id,
                 });
 

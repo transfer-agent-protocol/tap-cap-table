@@ -33,6 +33,9 @@ export const stockMachine = createMachine(
                     TX_STOCK_RETRACTION: {
                         target: "Retracted",
                     },
+                    TX_STOCK_REISSUANCE: {
+                        target: "Reissued",
+                    },
                 },
             },
             Cancelled: {
@@ -40,6 +43,10 @@ export const stockMachine = createMachine(
                 entry: ["stopChild"],
             },
             Retracted: {
+                type: "final",
+                entry: ["stopChild"],
+            },
+            Reissued: {
                 type: "final",
                 entry: ["stopChild"],
             },

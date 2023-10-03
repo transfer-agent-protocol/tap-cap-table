@@ -68,16 +68,6 @@
                     ]
                 },
                 {
-                    "object_type": "TX_STOCK_TRANSFER",
-                    "id": "4ea56d95-f3c3-4637-9678-90d1e396b6f2",
-                    "security_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-                    "date": "2023-08-23",
-                    "resulting_security_ids": [
-                        "b3ca1f15-320a-4068-a9d8-3a6690b66358"
-                    ],
-                    "quantity": "4000000"
-                },
-                {
                     "object_type": "TX_STOCK_ISSUANCE",
                     "id": "f8b4c6a7-2e5b-4c3d-9f4e-7a8b9c0d3f20",
                     "security_id": "9a2b7c8d-5e6f-4b1a-8d9e-0a1b2c3d4e5f",
@@ -100,6 +90,82 @@
                     ]
                 },
                 {
+                    "object_type": "TX_STOCK_ISSUANCE",
+                    "id": "04a1a95c-ba67-4719-b5f9-0f9141015744",
+                    "security_id": "06fcd012-4a7f-446e-87ed-c7cc7cfbecec",
+                    "date": "2022-08-23",
+                    "security_law_exemptions": [],
+                    "stakeholder_id": "aceb81e6-2d19-4ef2-ac53-05ff210d3508",
+                    "custom_id": "PA-2",
+                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
+                    "share_price": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "quantity": "1000000",
+                    "cost_basis": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "stock_legend_ids": [
+                        "f04e7c40-0a64-4d2e-9208-8828098d73d5"
+                    ]
+                },
+                {
+                    "object_type": "TX_STOCK_ISSUANCE",
+                    "id": "reissuance-splitted-1",
+                    "security_id": "01a550ea-fe3b-4082-8de0-f2bf9edfc87b",
+                    "date": "2022-08-23",
+                    "security_law_exemptions": [],
+                    "stakeholder_id": "aceb81e6-2d19-4ef2-ac53-05ff210d3508",
+                    "custom_id": "PA-2",
+                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
+                    "share_price": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "quantity": "500000",
+                    "cost_basis": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "stock_legend_ids": [
+                        "f04e7c40-0a64-4d2e-9208-8828098d73d5"
+                    ]
+                },
+                {
+                    "object_type": "TX_STOCK_ISSUANCE",
+                    "id": "reissuance-splitted-2",
+                    "security_id": "0e6d0858-e9d5-48d2-ad9d-5e7c19b30118",
+                    "date": "2022-08-23",
+                    "security_law_exemptions": [],
+                    "stakeholder_id": "aceb81e6-2d19-4ef2-ac53-05ff210d3508",
+                    "custom_id": "PA-2",
+                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
+                    "share_price": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "quantity": "500000",
+                    "cost_basis": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "stock_legend_ids": [
+                        "f04e7c40-0a64-4d2e-9208-8828098d73d5"
+                    ]
+                },
+                {
+                    "object_type": "TX_STOCK_TRANSFER",
+                    "id": "4ea56d95-f3c3-4637-9678-90d1e396b6f2",
+                    "security_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                    "date": "2023-08-23",
+                    "resulting_security_ids": [
+                        "b3ca1f15-320a-4068-a9d8-3a6690b66358"
+                    ],
+                    "quantity": "4000000"
+                },
+                {
                     "object_type": "TX_STOCK_CANCELLATION",
                     "id": "test-stock-cancellation-minimal",
                     "security_id": "551ca255-12ec-4a5d-9cb0-9e12f6d1f25c",
@@ -114,6 +180,15 @@
                     "security_id": "b3ca1f15-320a-4068-a9d8-3a6690b66358",
                     "date": "2023-10-03",
                     "reason_text": "FRAUD DURING TRANSFER",
+                    "comments": []
+                },
+                {
+                    "object_type": "TX_STOCK_REISSUANCE",
+                    "id": "test-stock-reissuance-minimal",
+                    "security_id": "06fcd012-4a7f-446e-87ed-c7cc7cfbecec",
+                    "security_ids": ["01a550ea-fe3b-4082-8de0-f2bf9edfc87b", "0e6d0858-e9d5-48d2-ad9d-5e7c19b30118"],
+                    "date": "2023-10-03",
+                    "reason_text": "stock split",
                     "comments": []
                 }
             ]

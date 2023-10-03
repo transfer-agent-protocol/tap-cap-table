@@ -3,6 +3,7 @@ import ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" a
 import TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
 import CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
 import RETRACTION from "../../chain/out/StockRetraction.sol/StockRetractionLib.json" assert { type: "json" };
+import REISSUANCE from "../../chain/out/StockReissuance.sol/StockReissuanceLib.json" assert { type: "json" };
 
 const getTXLibContracts = (contractTarget, wallet) => {
     const libraries = {
@@ -10,6 +11,7 @@ const getTXLibContracts = (contractTarget, wallet) => {
         transfer: new ethers.Contract(contractTarget, TRANSFER.abi, wallet),
         cancellation: new ethers.Contract(contractTarget, CANCELLATION.abi, wallet),
         retraction: new ethers.Contract(contractTarget, RETRACTION.abi, wallet),
+        reissuance: new ethers.Contract(contractTarget, REISSUANCE.abi, wallet),
     };
     return libraries
 }
