@@ -57,7 +57,7 @@ export const stakeholder1 = (issuerId) => {
     };
 };
 
-export const stockRetract = (issuerId,  stakeholderId, stockClassId, security_id, reason_text, comments) => {
+export const stockRetract = (issuerId, stakeholderId, stockClassId, security_id, reason_text, comments) => {
     return {
         issuerId,
         data: {
@@ -69,15 +69,29 @@ export const stockRetract = (issuerId,  stakeholderId, stockClassId, security_id
         },
     };
 };
-export const stockReissue = (issuerId,  stakeholderId, stockClassId, resulting_security_ids, security_id, reason_text, comments) => {
+
+export const stockRepurchase = (issuerId, quantity, price, stakeholderId, stockClassId, security_id,  comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            security_id,
+            quantity,
+            comments,
+            price: {amount: price, currency: "USD"},
+        },
+    };
+};
+export const stockReissue = (issuerId, stakeholderId, stockClassId, security_id, resulting_security_ids, reason_text, comments) => {
     return {
         issuerId,
         data: {
             stakeholderId,
             stockClassId,
             resulting_security_ids,
-            security_id,
             reason_text,
+            security_id,
             comments,
         },
     };

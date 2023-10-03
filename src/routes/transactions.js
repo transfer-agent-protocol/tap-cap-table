@@ -4,11 +4,14 @@ import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/
 import stockCancellationSchema from "../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
 import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
 import stockReissuanceSchema from "../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
+import stockRepurchaseSchema from "../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
+
 import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
 import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
 import { convertAndCreateCancellationStockOnchain } from "../controllers/transactions/cancellationController.js";
 import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
 import { convertAndCreateReissuanceStockOnchain } from "../controllers/transactions/reissuanceController.js";
+import { convertAndCreateRepurchaseStockOnchain } from "../controllers/transactions/repurchaseController.js";
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
@@ -152,6 +155,39 @@ transactions.post("/reissue/stock", async (req, res) => {
         });
 
         res.status(200).send({ stockReissuance: incomingStockReissuance });
+    } catch (error) {
+        console.error(`error: ${error.stack}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+transactions.post("/repurchase/stock", async (req, res) => {
+    const { contract } = req;
+    const { data } = req.body;
+
+    try {
+        const { stakeholderId, stockClassId } = data;
+        const incomingStockRepurchase = {
+            id: uuid(), // placeholder
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_STOCK_REPURCHASE",
+            ...data,
+        };
+
+        delete incomingStockRepurchase.stakeholderId;
+        delete incomingStockRepurchase.stockClassId;
+
+        // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
+        await validateInputAgainstOCF(incomingStockRepurchase, stockRepurchaseSchema);
+
+        await convertAndCreateRepurchaseStockOnchain(contract, {
+            ...incomingStockRepurchase,
+            stakeholderId,
+            stockClassId,
+        });
+
+        console.log('here')
+        res.status(200).send({ stockRepurchase: incomingStockRepurchase });
     } catch (error) {
         console.error(`error: ${error.stack}`);
         res.status(500).send(`${error}`);

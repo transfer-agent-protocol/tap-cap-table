@@ -1,3 +1,4 @@
+import { toQuantity } from "ethers";
 import { createHistoricalTransaction } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
 import {
@@ -7,8 +8,8 @@ import {
     upsertStockTransferById,
     upsertStockCancellationById,
     upsertStockRetractionById,
-    upsertStockReissuanceById
-    // upsertStockRepurchaseById
+    upsertStockReissuanceById,
+    upsertStockRepurchaseById
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
@@ -253,6 +254,43 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             createdStockReissuance
         );
     });
+
+    libraries.repurchase.on("StockRepurchaseCreated", async (stock) => {
+        console.log("StockRepurchaseCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        console.log('stock price', stock.price)
+
+        const sharePriceOCF = {
+            amount: toDecimal(stock.price).toString(),
+            currency: "USD",
+        };
+        const createdStockRepurchase = await upsertStockRepurchaseById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: new Date(Date.now()),
+            price: sharePriceOCF,
+            quantity: toDecimal(stock.quantity).toString(),
+            consideration_text: stock.consideration_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockRepurchase._id,
+            issuer: createdStockRepurchase.issuer,
+            transactionType: "StockRepurchase",
+        });
+        console.log(
+            `✅ | StockRepurchase confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockRepurchase
+        );
+    });
+
 
 
     const issuerCreatedFilter = contract.filters.IssuerCreated;
