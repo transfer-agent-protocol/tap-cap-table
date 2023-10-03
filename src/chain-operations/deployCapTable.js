@@ -1,21 +1,10 @@
 import { config } from "dotenv";
 import { ethers } from "ethers";
+import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
+import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import getTXLibContracts from "../utils/getLibrariesContracts.js";
 
 config();
-
-import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-import CAP_TABLE_ISSUANCE from "../../chain/out/StockIssuance.sol/StockIssuanceLib.json" assert { type: "json" };
-import CAP_TABLE_TRANSFER from "../../chain/out/StockTransfer.sol/StockTransferLib.json" assert { type: "json" };
-import CAP_TABLE_CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellationLib.json" assert { type: "json" };
-import CAP_TABLE_RETRACTION from "../../chain/out/StockRetraction.sol/StockRetractionLib.json" assert { type: "json" };
-
-import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
-
-const { abi, bytecode } = CAP_TABLE;
-const { abi: abiIssuance } = CAP_TABLE_ISSUANCE;
-const { abi: abiTransfer } = CAP_TABLE_TRANSFER;
-const { abi: abiCancellation } = CAP_TABLE_CANCELLATION;
-const { abi: abiRetraction } = CAP_TABLE_RETRACTION;
 
 async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
     // Replace with your private key and provider endpoint
@@ -28,7 +17,7 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     console.log("wallet address ", wallet.address);
 
-    const factory = new ethers.ContractFactory(abi, bytecode, wallet);
+    const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
     console.log(
         "issuer id inside of deployment ",
         issuerId,
@@ -41,14 +30,8 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
 
     console.log("Waiting for contract to be mined...");
+    const libraries = getTXLibContracts()
 
-    const libraries = {
-        issuance: new ethers.Contract(contract.target, abiIssuance, wallet),
-        transfer: new ethers.Contract(contract.target, abiTransfer, wallet),
-        cancellation: new ethers.Contract(contract.target, abiCancellation, wallet),
-        cancellation: new ethers.Contract(contract.target, abiCancellation, wallet),
-        retraction: new ethers.Contract(contract.target, abiRetraction, wallet),
-    };
 
     return {
         contract,
