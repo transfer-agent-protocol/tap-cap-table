@@ -42,16 +42,11 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
 
     console.log("Waiting for contract to be mined...");
 
-<<<<<<< HEAD
-=======
-    const capTable = { contract, provider }
->>>>>>> 4ceffde (add: retraction abi)
     const libraries = {
         issuance: new ethers.Contract(contract.target, abiIssuance, wallet),
         transfer: new ethers.Contract(contract.target, abiTransfer, wallet),
         cancellation: new ethers.Contract(contract.target, abiCancellation, wallet),
         cancellation: new ethers.Contract(contract.target, abiCancellation, wallet),
-<<<<<<< HEAD
         retraction: new ethers.Contract(contract.target, abiRetraction, wallet),
     };
 
@@ -62,14 +57,6 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
         libraries,
     };
 }
-=======
-        retraction: new ethers.Contract(contract.target, abiRetraction, wallet)
-    }
-
-    return { capTable, libraries };
-}
-
->>>>>>> 4ceffde (add: retraction abi)
 
 async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
