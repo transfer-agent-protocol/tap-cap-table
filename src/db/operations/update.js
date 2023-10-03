@@ -11,6 +11,7 @@ import StockCancellation from "../objects/transactions/cancellation/StockCancell
 import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
 import StockReissuance from "../objects/transactions/reissuance/StockReissuance.js";
 import StockRepurchase from "../objects/transactions/repurchase/StockRepurchase.js";
+import StockAcceptance from "../objects/transactions/acceptance/StockAcceptance.js";
 
 export const updateIssuerById = async (id, updatedData) => {
     const issuer = await Issuer.findByIdAndUpdate(id, updatedData, { new: true });
@@ -75,4 +76,9 @@ export const upsertStockReissuanceById = async (id, updatedData) => {
 export const upsertStockRepurchaseById = async (id, updatedData) => {
     const stockRepurchase = await StockRepurchase.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
     return stockRepurchase;
+};
+
+export const upsertStockAcceptanceById = async (id, updatedData) => {
+    const stockAcceptance = await StockAcceptance.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+    return stockAcceptance;
 };

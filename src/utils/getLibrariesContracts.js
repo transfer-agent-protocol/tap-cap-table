@@ -5,6 +5,7 @@ import CANCELLATION from "../../chain/out/StockCancellation.sol/StockCancellatio
 import RETRACTION from "../../chain/out/StockRetraction.sol/StockRetractionLib.json" assert { type: "json" };
 import REISSUANCE from "../../chain/out/StockReissuance.sol/StockReissuanceLib.json" assert { type: "json" };
 import REPURCHASE from "../../chain/out/StockRepurchase.sol/StockRepurchaseLib.json" assert { type: "json" };
+import ACCEPTANCE from "../../chain/out/StockAcceptance.sol/StockAcceptanceLib.json" assert { type: "json" };
 
 const getTXLibContracts = (contractTarget, wallet) => {
     const libraries = {
@@ -14,6 +15,7 @@ const getTXLibContracts = (contractTarget, wallet) => {
         retraction: new ethers.Contract(contractTarget, RETRACTION.abi, wallet),
         reissuance: new ethers.Contract(contractTarget, REISSUANCE.abi, wallet),
         repurchase: new ethers.Contract(contractTarget, REPURCHASE.abi, wallet),
+        acceptance: new ethers.Contract(contractTarget, ACCEPTANCE.abi, wallet),
     };
     return libraries
 }

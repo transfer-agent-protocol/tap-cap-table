@@ -9,7 +9,8 @@ import {
     upsertStockCancellationById,
     upsertStockRetractionById,
     upsertStockReissuanceById,
-    upsertStockRepurchaseById
+    upsertStockRepurchaseById,
+     upsertStockAcceptanceById
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
@@ -288,6 +289,34 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
         console.log(
             `✅ | StockRepurchase confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
             createdStockRepurchase
+        );
+    });
+
+    libraries.acceptance.on("StockAcceptanceCreated", async (stock) => {
+        console.log("StockAcceptanceCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        console.log('stock price', stock.price)
+
+        const createdStockAcceptance = await upsertStockAcceptanceById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: new Date(Date.now()),
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockAcceptance._id,
+            issuer: createdStockAcceptance.issuer,
+            transactionType: "StockAcceptance",
+        });
+        console.log(
+            `✅ | StockAcceptance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockAcceptance
         );
     });
 

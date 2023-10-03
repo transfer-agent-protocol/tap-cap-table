@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
+
 import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
 import stockCancellationSchema from "../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
 import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
 import stockReissuanceSchema from "../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
 import stockRepurchaseSchema from "../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
+import stockAcceptanceSchema from "../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
 
 import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
 import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
@@ -12,6 +14,8 @@ import { convertAndCreateCancellationStockOnchain } from "../controllers/transac
 import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
 import { convertAndCreateReissuanceStockOnchain } from "../controllers/transactions/reissuanceController.js";
 import { convertAndCreateRepurchaseStockOnchain } from "../controllers/transactions/repurchaseController.js";
+import { convertAndCreateAcceptanceStockOnchain } from "../controllers/transactions/acceptanceController.js";
+
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
@@ -186,8 +190,39 @@ transactions.post("/repurchase/stock", async (req, res) => {
             stockClassId,
         });
 
-        console.log('here')
         res.status(200).send({ stockRepurchase: incomingStockRepurchase });
+    } catch (error) {
+        console.error(`error: ${error.stack}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+transactions.post("/accept/stock", async (req, res) => {
+    const { contract } = req;
+    const { data } = req.body;
+
+    try {
+        const { stakeholderId, stockClassId } = data;
+        const incomingStockAcceptance = {
+            id: uuid(), // placeholder
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_STOCK_ACCEPTANCE",
+            ...data,
+        };
+
+        delete incomingStockAcceptance.stakeholderId;
+        delete incomingStockAcceptance.stockClassId;
+
+        // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
+        await validateInputAgainstOCF(incomingStockAcceptance, stockAcceptanceSchema);
+
+        await convertAndCreateAcceptanceStockOnchain(contract, {
+            ...incomingStockAcceptance,
+            stakeholderId,
+            stockClassId,
+        });
+
+        res.status(200).send({ stockAcceptance: incomingStockAcceptance });
     } catch (error) {
         console.error(`error: ${error.stack}`);
         res.status(500).send(`${error}`);
