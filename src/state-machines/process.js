@@ -8,7 +8,6 @@ import { preProcessorCache } from "../utils/caches.js";
     if we ever need then, consider saving them to the DB.
 */
 const preProcessManifestTxs = (issuerId, txs) => {
-    // 1 parent per issuer
     const parent = interpret(parentMachine);
 
     parent.start();
@@ -41,10 +40,17 @@ const preProcessManifestTxs = (issuerId, txs) => {
                     value: tx,
                 });
                 break;
+            case "TX_STOCK_RETRACTION":
+                parent.send({
+                    type: "PRE_STOCK_RETRACTION",
+                    id: tx.security_id,
+                    value: tx,
+                });
+                break;
         }
     });
 
-    console.log("parent context ", parent._state.context);
+    console.log("parent context ", JSON.stringify(parent._state.context, null, 2))
 
     preProcessorCache[issuerId] = {
         activePositions: parent._state.context.activePositions,
