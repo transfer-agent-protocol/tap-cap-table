@@ -26,7 +26,7 @@ router.post("/mint-cap-table", async (req, res) => {
 
         // add contract to the cache and start listener
         contractCache[issuer._id] = { contract, provider, libraries };
-        await startOnchainListeners(capTable.contract, capTable.provider, issuer._id, libraries);
+        await startOnchainListeners(contract, provider, issuer._id, libraries);
 
         res.status(200).send({ issuer: savedIssuerWithDeployedTo });
     } catch (error) {
