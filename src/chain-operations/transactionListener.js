@@ -13,7 +13,7 @@ import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-import { initiateSeeding, seedActivePositionsAndActiveSecurityIds } from "./seed.js";
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds, verifyIssuerAndSeed} from "./seed.js";
 
 const options = {
     year: "numeric",
