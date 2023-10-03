@@ -6,14 +6,16 @@ import {
     upsertStockIssuanceById,
     upsertStockTransferById,
     upsertStockCancellationById,
-     upsertStockRetractionById
+    upsertStockRetractionById,
+    upsertStockReissuanceById
+    // upsertStockRepurchaseById
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-import { initiateSeeding, seedActivePositionsAndActiveSecurityIds, verifyIssuerAndSeed} from "./seed.js";
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds, verifyIssuerAndSeed } from "./seed.js";
 
 const options = {
     year: "numeric",
@@ -27,7 +29,7 @@ const options = {
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
-    console.log("libraries ", {...libraries});
+    console.log("libraries ", { ...libraries });
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
@@ -224,6 +226,34 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             createdStockRetraction
         );
     });
+
+    libraries.reissuance.on("StockReissuanceCreated", async (stock) => {
+        console.log("StockReissuanceCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockReissuance = await upsertStockReissuanceById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: new Date(Date.now()),
+            reason_text: stock.reason_text,
+            resulting_security_ids: stock.resulting_security_ids.map(sId => convertBytes16ToUUID(sId)),
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockReissuance._id,
+            issuer: createdStockReissuance.issuer,
+            transactionType: "StockReissuance",
+        });
+        console.log(
+            `✅ | StockReissuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockReissuance
+        );
+    });
+
 
     const issuerCreatedFilter = contract.filters.IssuerCreated;
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);

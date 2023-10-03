@@ -14,6 +14,6 @@ export const convertAndCreateReissuanceStockOnchain = async (
     const stockClassIdBytes16 = convertUUIDToBytes16(stockClassId);
     const resultingSecIds  = resulting_security_ids.map( sId => convertUUIDToBytes16(sId))
 
-    const tx = await contract.retractStockIssuance(stakeHolderIdBytes16, stockClassIdBytes16, resultingSecIds, secIdBytes16, comments, reason_text);
+    const tx = await contract.reissueStock(stakeHolderIdBytes16, stockClassIdBytes16, resultingSecIds, secIdBytes16, comments, reason_text);
     await tx.wait();
 };
