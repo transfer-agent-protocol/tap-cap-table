@@ -12,6 +12,9 @@ import StockRetraction from "../objects/transactions/retraction/StockRetraction.
 import StockReissuance from "../objects/transactions/reissuance/StockReissuance.js";
 import StockRepurchase from "../objects/transactions/repurchase/StockRepurchase.js";
 import StockAcceptance from "../objects/transactions/acceptance/StockAcceptance.js";
+import StockClassAuthorizedSharesAdjustment from "../objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.js";
+import IssuerAuthorizedSharesAdjustment from "../objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.js";
+
 
 export const updateIssuerById = async (id, updatedData) => {
     const issuer = await Issuer.findByIdAndUpdate(id, updatedData, { new: true });
@@ -82,3 +85,11 @@ export const upsertStockAcceptanceById = async (id, updatedData) => {
     const stockAcceptance = await StockAcceptance.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
     return stockAcceptance;
 };
+
+export const upsertStockClassAuthorizedSharesAdjustment = async (id, updatedData) => {
+    return await StockClassAuthorizedSharesAdjustment.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+};
+export const upsertIssuerAuthorizedSharesAdjustment = async (id, updatedData) => {
+    return await IssuerAuthorizedSharesAdjustment.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+
+}

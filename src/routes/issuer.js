@@ -2,6 +2,7 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 
 import issuerSchema from "../../ocf/schema/objects/Issuer.schema.json" assert { type: "json" };
+import issuerAuthorizedSharesAdjustment from "../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
 import deployCapTable from "../chain-operations/deployCapTable.js";
 import { createIssuer } from "../db/operations/create.js";
 import { countIssuers, readIssuerById } from "../db/operations/read.js";
@@ -10,6 +11,7 @@ import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 import { contractCache } from "../utils/caches.js";
 import startOnchainListeners from "../chain-operations/transactionListener.js";
+import { convertAndAdjustIssuerAuthorizedSharesOnChain } from "../controllers/issuerController.js"
 
 const issuer = Router();
 
@@ -58,7 +60,7 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("issuer id bytes16 ", issuerIdBytes16);
-        const { contract, provider, address, libraries} = await deployCapTable(
+        const { contract, provider, address, libraries } = await deployCapTable(
             chain,
             issuerIdBytes16,
             incomingIssuerToValidate.legal_name,
@@ -66,7 +68,7 @@ issuer.post("/create", async (req, res) => {
         );
 
         // add contract to the cache and start listener
-        contractCache[incomingIssuerToValidate.id] = { contract, provider, libraries};
+        contractCache[incomingIssuerToValidate.id] = { contract, provider, libraries };
         startOnchainListeners(contract, provider, incomingIssuerToValidate.id, libraries);
 
         const incomingIssuerForDB = {
@@ -79,6 +81,33 @@ issuer.post("/create", async (req, res) => {
         console.log("Issuer created offchain:", issuer);
 
         res.status(200).send({ issuer });
+    } catch (error) {
+        console.error(`error: ${error}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+issuer.post("/adjust", async (req, res) => {
+    const { contract } = req;
+
+    try {
+        // OCF doesn't allow extra fields in their validation
+        const issuerAutnorizedSharesAdj = {
+            id: uuid(),
+            date: new Date().toISOString().slice(0, 10),
+            object_type: 'ISSUER', // "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+            ...req.body,
+        };
+
+
+        await validateInputAgainstOCF(issuerAutnorizedSharesAdj,
+            issuerAuthorizedSharesAdjustment);
+
+        await convertAndAdjustIssuerAuthorizedSharesOnChain(contract,
+            ...issuerAutnorizedSharesAdj,
+        );
+
+        res.status(200).send({ issuerAutnorizedSharesAdj });
     } catch (error) {
         console.error(`error: ${error}`);
         res.status(500).send(`${error}`);

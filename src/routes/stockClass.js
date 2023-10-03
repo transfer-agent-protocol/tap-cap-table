@@ -2,6 +2,7 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockClassSchema from "../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
 import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../controllers/stockClassController.js";
+import { convertAndAdjustStockClassAuthorizedSharesOnchain } from "../controllers/stockClassController.js";
 import { createStockClass } from "../db/operations/create.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 import { readIssuerById } from "../db/operations/read.js";
@@ -66,6 +67,38 @@ stockClass.post("/create", async (req, res) => {
         res.status(200).send({ stockClass });
     } catch (error) {
         console.error(`error: ${error}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+stockClass.post("/adjust", async (req, res) => {
+    const { contract } = req;
+    const { data } = req.body;
+
+    try {
+        const { stockClassId } = data;
+        const stockClassAuthorizedSharesAdjustment = {
+            // id: uuid(), // placeholder
+            // security_id: uuid(),
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+            ...data,
+        };
+
+        // delete incomingStockClassAdjustment.stockClassId;
+
+        // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
+        await validateInputAgainstOCF(stockClassAuthorizedSharesAdjustment,
+            convertAndAdjustStockClassAuthorizedSharesOnchain );
+
+        await convertAndCreateAdjustmentStockOnchain(contract, {
+            ...stockClassAuthorizedSharesAdjustment,
+            stockClassId,
+        });
+
+        res.status(200).send({ stockClassAdjustment: stockClassAuthorizedSharesAdjustment });
+    } catch (error) {
+        console.error(`error: ${error.stack}`);
         res.status(500).send(`${error}`);
     }
 });

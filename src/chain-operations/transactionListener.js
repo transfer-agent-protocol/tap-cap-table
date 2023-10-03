@@ -10,7 +10,9 @@ import {
     upsertStockRetractionById,
     upsertStockReissuanceById,
     upsertStockRepurchaseById,
-     upsertStockAcceptanceById
+    upsertStockAcceptanceById,
+    upsertStockClassAuthorizedSharesAdjustment,
+    upsertIssuerAuthorizedSharesAdjustment
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
@@ -317,6 +319,70 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
         console.log(
             `✅ | StockAcceptance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
             createdStockAcceptance
+        );
+    });
+
+    libraries.adjustment.on("StockClassAuthorizedSharesAdjusted", async (stock) => {
+        console.log("StockClassAuthorizedSharesAdjusted Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        console.log('stock price', stock.price)
+
+        // this is getting heavy
+        const upsert = await upsertStockClassAuthorizedSharesAdjustment(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            issuer_id: convertBytes16ToUUID(stock.security_id),
+            date: new Date(Date.now()),
+            new_shares_authorized: stock.new_shares_authorized,
+            board_approval_date: stock.board_approval_date,
+            stockholder_approval_date: stock.stockholder_approval_date,
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: upsert._id,
+            issuer: issuerId,
+            transactionType: "StockClassAuthorizedSharesAdjustment",
+        });
+        console.log(
+            `✅ | StockClassAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            upsert
+        );
+    });
+
+    libraries.adjustment.on("IssuerAuthorizedSharesAdjusted", async (issuer) => {
+        console.log("IssuerAuthorizedSharesAdjusted Event Emitted!", issuer.id);
+        const id = convertBytes16ToUUID(issuer.id);
+        console.log('stock price', issuer.price)
+
+        // this is getting heavy
+        const upsert = await upsertIssuerAuthorizedSharesAdjustment(id, {
+            _id: id,
+            object_type: issuer.object_type,
+            comments: issuer.comments,
+            issuer_id: convertBytes16ToUUID(issuer.security_id),
+            date: new Date(Date.now()),
+            new_shares_authorized: issuer.new_shares_authorized,
+            board_approval_date: issuer.board_approval_date,
+            stockholder_approval_date: issuer.stockholder_approval_date,
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: upsert._id,
+            issuer: issuerId,
+            transactionType: "IssuerAuthorizedSharesAdjustment",
+        });
+        console.log(
+            `✅ | IssuerAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            upsert
         );
     });
 

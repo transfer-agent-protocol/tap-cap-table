@@ -38,3 +38,25 @@ export const getTotalNumberOfStockClasses = async (contract) => {
     console.log("Total number of stock classes:", totalStockClasses.toString());
     return totalStockClasses.toString();
 };
+
+export const convertAndAdjustStockClassAuthorizedSharesOnchain = async (
+    contract,
+    { stockClassId,
+        newAuthorizedShares,
+        boardApprovalDate,
+        stockHolderApprovalDate,
+        comments = []
+    }
+) => {
+    const stockClassIdBytes16 = convertUUIDToBytes16(stockClassId);
+    const newAutnorizedSharesScaled = toScaledBigNumber(newAuthorizedShares)
+
+    const tx = await contract.adjustStockClassAuthorizedShares(
+        stockClassIdBytes16,
+        newAutnorizedSharesScaled,
+        comments,
+        boardApprovalDate,
+        stockHolderApprovalDate
+    );
+    await tx.wait();
+};
