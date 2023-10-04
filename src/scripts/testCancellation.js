@@ -26,11 +26,11 @@ const main = async () => {
     const stockCancellation = await axios.post(
         "http://localhost:8080/transactions/cancel/stock",
         stockCancel(
-            "19392ee6-2cf4-48ce-95d5-2d560d66578a", // Issuer ID
-            "2000",
-            "fc24728e-1125-4e32-9716-43f8f73b6fc4", // Stakeholder ID
-            "91df2620-9dcc-45b3-8d7e-9bb0f477951f", // StockClass ID
-            "69c89411-4eee-1ddd-c6f9-fabf42c5968f", // Security ID
+            "11a17b3d-03d6-4d12-a0b8-c9130a907a8c", // Issuer ID
+            "1000",
+            "c88795f2-9451-4bf5-b4a6-551fe1a27605", // Stakeholder ID
+            "70388f9f-a707-47dd-b8db-67d61e85e6e6", // StockClass ID
+            "2b14be59-2f4c-5bf7-ce44-b315f68c2088", // Security ID
             "Diluted"
         )
     );

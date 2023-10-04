@@ -7,7 +7,11 @@ const HistoricalTransactionSchema = new mongoose.Schema({
     },
     transactionType: {
         type: String,
-        enum: ["StockIssuance", "StockTransfer", "StockCancellation"], // List of possible models
+        enum: ["StockIssuance", "StockTransfer", "StockCancellation",
+            "StockRetraction", "StockReissuance", "StockRepurchase",
+            "StockAcceptance", "IssuerAuthorizedSharesAdjustment",
+            "StockClassAuthorizedSharesAdjustment"
+        ], // List of possible models
         required: true,
     },
     issuer: {

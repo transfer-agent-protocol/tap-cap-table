@@ -1,3 +1,4 @@
+import { toQuantity } from "ethers";
 import { createHistoricalTransaction } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
 import {
@@ -6,12 +7,19 @@ import {
     upsertStockIssuanceById,
     upsertStockTransferById,
     upsertStockCancellationById,
+    upsertStockRetractionById,
+    upsertStockReissuanceById,
+    upsertStockRepurchaseById,
+    upsertStockAcceptanceById,
+    upsertStockClassAuthorizedSharesAdjustment,
+    upsertIssuerAuthorizedSharesAdjustment,
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
-import { convertBytes16ToUUID } from "../utils/convertUUID.js";
+import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID.js";
+import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 
-import { verifyIssuerAndSeed } from "./seed.js";
+import { initiateSeeding, seedActivePositionsAndActiveSecurityIds, verifyIssuerAndSeed } from "./seed.js";
 
 const options = {
     year: "numeric",
@@ -22,17 +30,26 @@ const options = {
     second: "2-digit",
 };
 
-async function startOnchainListeners(contract, provider, issuerId, issuanceLib, transferLib, cancellationLib) {
+async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
-    console.log("issuance lib ", issuanceLib);
-    console.log("transfer lib ", transferLib);
-    console.log("cancellation lib ", cancellationLib);
+    // console.log("libraries ", { ...libraries });
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
 
-        await verifyIssuerAndSeed(contract, id);
+        const uuid = convertBytes16ToUUID(id);
+        const issuer = await readIssuerById(uuid);
+
+        if (!issuer.is_manifest_created) return;
+
+        const arrays = extractArrays(preProcessorCache[issuerId]);
+        await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+
+        await initiateSeeding(uuid, contract);
+        console.log(`Completed Seeding issuer ${uuid} on chain`);
+
+        console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -56,7 +73,7 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
     });
 
     // @dev events return both an array and object, depending how you want to access. We're using objects
-    issuanceLib.on("StockIssuanceCreated", async (stock, event) => {
+    libraries.issuance.on("StockIssuanceCreated", async (stock, event) => {
         console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
         // console.log(`Stock issuance with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
@@ -124,7 +141,7 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 
-    transferLib.on("StockTransferCreated", async (stock, event) => {
+    libraries.transfer.on("StockTransferCreated", async (stock, event) => {
         console.log("StockTransferCreated Event Emitted!", stock.id);
 
         // console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
@@ -160,7 +177,7 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
         // console.log("Historical Transaction created", createdHistoricalTransaction);
     });
 
-    cancellationLib.on("StockCancellationCreated", async (stock) => {
+    libraries.cancellation.on("StockCancellationCreated", async (stock) => {
         console.log("StockCancellationCreated Event Emitted!", stock.id);
         const id = convertBytes16ToUUID(stock.id);
         const createdStockCancellation = await upsertStockCancellationById(id, {
@@ -185,6 +202,197 @@ async function startOnchainListeners(contract, provider, issuerId, issuanceLib, 
         console.log(
             `✅ | StockCancellation confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
             createdStockCancellation
+        );
+    });
+
+    libraries.retraction.on("StockRetractionCreated", async (stock) => {
+        console.log("StockRetractionCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockRetraction = await upsertStockRetractionById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: new Date(Date.now()),
+            reason_text: stock.reason_text,
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockRetraction._id,
+            issuer: createdStockRetraction.issuer,
+            transactionType: "StockRetraction",
+        });
+        console.log(
+            `✅ | StockRetraction confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockRetraction
+        );
+    });
+
+    libraries.reissuance.on("StockReissuanceCreated", async (stock) => {
+        console.log("StockReissuanceCreated Event Emitted!", stock.id);
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
+
+        const id = convertBytes16ToUUID(stock.id);
+        const createdStockReissuance = await upsertStockReissuanceById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: dateOCF,
+            reason_text: stock.reason_text,
+            resulting_security_ids: stock.resulting_security_ids.map((sId) => convertBytes16ToUUID(sId)),
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockReissuance._id,
+            issuer: createdStockReissuance.issuer,
+            transactionType: "StockReissuance",
+        });
+        console.log(
+            `✅ | StockReissuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockReissuance
+        );
+    });
+
+    libraries.repurchase.on("StockRepurchaseCreated", async (stock) => {
+        console.log("StockRepurchaseCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        console.log("stock price", stock.price);
+
+        const sharePriceOCF = {
+            amount: toDecimal(stock.price).toString(),
+            currency: "USD",
+        };
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
+
+        const createdStockRepurchase = await upsertStockRepurchaseById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: dateOCF,
+            price: sharePriceOCF,
+            quantity: toDecimal(stock.quantity).toString(),
+            consideration_text: stock.consideration_text,
+            balance_security_id: convertBytes16ToUUID(stock.balance_security_id),
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockRepurchase._id,
+            issuer: createdStockRepurchase.issuer,
+            transactionType: "StockRepurchase",
+        });
+        console.log(
+            `✅ | StockRepurchase confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockRepurchase
+        );
+    });
+
+    libraries.acceptance.on("StockAcceptanceCreated", async (stock) => {
+        console.log("StockAcceptanceCreated Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        console.log("stock price", stock.price);
+
+        const createdStockAcceptance = await upsertStockAcceptanceById(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            security_id: convertBytes16ToUUID(stock.security_id),
+            date: new Date(Date.now()),
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: createdStockAcceptance._id,
+            issuer: createdStockAcceptance.issuer,
+            transactionType: "StockAcceptance",
+        });
+        console.log(
+            `✅ | StockAcceptance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            createdStockAcceptance
+        );
+    });
+
+    libraries.adjustment.on("StockClassAuthorizedSharesAdjusted", async (stock) => {
+        console.log("StockClassAuthorizedSharesAdjusted Event Emitted!", stock.id);
+        const id = convertBytes16ToUUID(stock.id);
+        console.log("stock price", stock.price);
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
+
+        // this is getting heavy
+        const upsert = await upsertStockClassAuthorizedSharesAdjustment(id, {
+            _id: id,
+            object_type: stock.object_type,
+            comments: stock.comments,
+            issuer_id: convertBytes16ToUUID(stock.security_id),
+            date: dateOCF,
+            new_shares_authorized: stock.new_shares_authorized,
+            board_approval_date: stock.board_approval_date,
+            stockholder_approval_date: stock.stockholder_approval_date,
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: upsert._id,
+            issuer: issuerId,
+            transactionType: "StockClassAuthorizedSharesAdjustment",
+        });
+        console.log(
+            `✅ | StockClassAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            upsert
+        );
+    });
+
+    libraries.adjustment.on("IssuerAuthorizedSharesAdjusted", async (issuer) => {
+        console.log("IssuerAuthorizedSharesAdjusted Event Emitted!", issuer.id);
+        const id = convertBytes16ToUUID(issuer.id);
+        console.log("stock price", issuer.price);
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
+
+        // this is getting heavy
+        const upsert = await upsertIssuerAuthorizedSharesAdjustment(id, {
+            _id: id,
+            object_type: issuer.object_type,
+            comments: issuer.comments,
+            issuer_id: convertBytes16ToUUID(issuer.security_id),
+            date: dateOCF,
+            new_shares_authorized: issuer.new_shares_authorized,
+            board_approval_date: issuer.board_approval_date,
+            stockholder_approval_date: issuer.stockholder_approval_date,
+
+            // TAP Native Fields
+            issuer: issuerId,
+            is_onchain_synced: true,
+        });
+
+        await createHistoricalTransaction({
+            transaction: upsert._id,
+            issuer: issuerId,
+            transactionType: "IssuerAuthorizedSharesAdjustment",
+        });
+        console.log(
+            `✅ | IssuerAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
+            upsert
         );
     });
 
