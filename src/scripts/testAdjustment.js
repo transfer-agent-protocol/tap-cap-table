@@ -1,25 +1,28 @@
-import { issuer, stockClass, stockClassAuthorizedSharesAdjust } from "./sampleData.js";
+import { issuer, stockClass, stockClassAuthorizedSharesAdjust, issuerAuthorizedSharesAdjust } from "./sampleData.js";
 import axios from "axios";
 
-
 const main = async () => {
-    console.log("..creating issuer");
-    const issuerResponse = await axios.post("http://localhost:8080/issuer/create", issuer);
-    console.log("issuer response ", issuerResponse.data);
+    // const stockClassAdjResponse = await axios.post(
+    //     "http://localhost:8080/transactions/adjust/stock-class/authorized-shares",
+    //     stockClassAuthorizedSharesAdjust(
+    //         "11a17b3d-03d6-4d12-a0b8-c9130a907a8c", // Issuer ID
+    //         "70388f9f-a707-47dd-b8db-67d61e85e6e6", // Stock Class ID
+    //         "1000",
+    //         ["adjusting stock class authorized shares"]
+    //     )
+    // );
+    // console.log("stockClassResponse", stockClassAdjResponse.data);
 
-    console.log("..creating stock class");
-    const stockClassResponse = await axios.post("http://localhost:8080/stock-class/create", stockClass(issuerResponse.data.issuer._id));
-    console.log("stockClassResponse", stockClassResponse.data);
+    const issuerAdjustedResponse = await axios.post(
+        "http://localhost:8080/transactions/adjust/issuer/authorized-shares",
+        issuerAuthorizedSharesAdjust(
+            "11a17b3d-03d6-4d12-a0b8-c9130a907a8c", // Issuer ID
+            "1000",
+            ["adjusting issuer authorized shares"]
+        )
+    );
 
-    const stockClassAdjResponse = await axios.post("http://localhost:8080/stock-class/adjust",
-        stockClassAuthorizedSharesAdjust(
-            issuerResponse._id,
-            stockClassResponse._id,
-            "1000"
-        ))
-    console.log("stockClassResponse", stockClassAdjResponse .data);
-
-
+    console.log("issuer adjusted response", issuerAdjustedResponse.data);
 };
 
 main()

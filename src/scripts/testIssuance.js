@@ -39,7 +39,7 @@ const main = async () => {
             issuerResponse.data.issuer._id,
             stakeholder1Response.data.stakeholder._id,
             stockClassResponse.data.stockClass._id,
-            "3000",
+            "2000",
             "1.2"
         )
     );
