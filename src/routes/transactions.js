@@ -1,20 +1,24 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 
-import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
+import stockAcceptanceSchema from "../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
 import stockCancellationSchema from "../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
-import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
+import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
 import stockReissuanceSchema from "../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
 import stockRepurchaseSchema from "../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
-import stockAcceptanceSchema from "../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
+import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
+import stockClassAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
+import issuerAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
 
-import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
-import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
+import { convertAndAdjustIssuerAuthorizedSharesOnChain } from "../controllers/issuerController.js";
+import { convertAndAdjustStockClassAuthorizedSharesOnchain } from "../controllers/stockClassController.js";
+import { convertAndCreateAcceptanceStockOnchain } from "../controllers/transactions/acceptanceController.js";
 import { convertAndCreateCancellationStockOnchain } from "../controllers/transactions/cancellationController.js";
-import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
+import { convertAndCreateIssuanceStockOnchain } from "../controllers/transactions/issuanceController.js";
 import { convertAndCreateReissuanceStockOnchain } from "../controllers/transactions/reissuanceController.js";
 import { convertAndCreateRepurchaseStockOnchain } from "../controllers/transactions/repurchaseController.js";
-import { convertAndCreateAcceptanceStockOnchain } from "../controllers/transactions/acceptanceController.js";
+import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
+import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
 
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
@@ -223,6 +227,60 @@ transactions.post("/accept/stock", async (req, res) => {
         });
 
         res.status(200).send({ stockAcceptance: incomingStockAcceptance });
+    } catch (error) {
+        console.error(`error: ${error.stack}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+transactions.post("/adjust/issuer-authorized-shares", async (req, res) => {
+    const { contract } = req;
+
+    try {
+        // OCF doesn't allow extra fields in their validation
+        const issuerAutnorizedSharesAdj = {
+            id: uuid(),
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+            ...req.body,
+        };
+
+        await validateInputAgainstOCF(issuerAutnorizedSharesAdj, issuerAuthorizedSharesAdjustmentSchema);
+
+        await convertAndAdjustIssuerAuthorizedSharesOnChain(contract, ...issuerAutnorizedSharesAdj);
+
+        res.status(200).send({ issuerAutnorizedSharesAdj });
+    } catch (error) {
+        console.error(`error: ${error}`);
+        res.status(500).send(`${error}`);
+    }
+});
+
+transactions.post("/adjust/stock-class-authorized-shares", async (req, res) => {
+    const { contract } = req;
+    const { data } = req.body;
+
+    try {
+        const { stockClassId } = data;
+        const stockClassAuthorizedSharesAdjustment = {
+            // id: uuid(), // placeholder
+            // security_id: uuid(),
+            date: new Date().toISOString().slice(0, 10),
+            object_type: "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+            ...data,
+        };
+
+        // delete incomingStockClassAdjustment.stockClassId;
+
+        // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
+        await validateInputAgainstOCF(stockClassAuthorizedSharesAdjustment, stockClassAuthorizedSharesAdjustmentSchema);
+
+        await convertAndAdjustStockClassAuthorizedSharesOnchain(contract, {
+            ...stockClassAuthorizedSharesAdjustment,
+            stockClassId,
+        });
+
+        res.status(200).send({ stockClassAdjustment: stockClassAuthorizedSharesAdjustment });
     } catch (error) {
         console.error(`error: ${error.stack}`);
         res.status(500).send(`${error}`);
