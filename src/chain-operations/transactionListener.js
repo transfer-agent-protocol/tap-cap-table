@@ -12,7 +12,7 @@ import {
     upsertStockRepurchaseById,
     upsertStockAcceptanceById,
     upsertStockClassAuthorizedSharesAdjustment,
-    upsertIssuerAuthorizedSharesAdjustment
+    upsertIssuerAuthorizedSharesAdjustment,
 } from "../db/operations/update.js";
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
@@ -33,7 +33,7 @@ const options = {
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐| Initiating on-chain event listeners for ", contract.target);
 
-    console.log("libraries ", { ...libraries });
+    // console.log("libraries ", { ...libraries });
 
     contract.on("IssuerCreated", async (id, _) => {
         console.log("IssuerCreated Event Emitted!", id);
@@ -233,15 +233,18 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
 
     libraries.reissuance.on("StockReissuanceCreated", async (stock) => {
         console.log("StockReissuanceCreated Event Emitted!", stock.id);
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
+
         const id = convertBytes16ToUUID(stock.id);
         const createdStockReissuance = await upsertStockReissuanceById(id, {
             _id: id,
             object_type: stock.object_type,
             comments: stock.comments,
             security_id: convertBytes16ToUUID(stock.security_id),
-            date: new Date(Date.now()),
+            date: dateOCF,
             reason_text: stock.reason_text,
-            resulting_security_ids: stock.resulting_security_ids.map(sId => convertBytes16ToUUID(sId)),
+            resulting_security_ids: stock.resulting_security_ids.map((sId) => convertBytes16ToUUID(sId)),
             // TAP Native Fields
             issuer: issuerId,
             is_onchain_synced: true,
@@ -261,18 +264,21 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
     libraries.repurchase.on("StockRepurchaseCreated", async (stock) => {
         console.log("StockRepurchaseCreated Event Emitted!", stock.id);
         const id = convertBytes16ToUUID(stock.id);
-        console.log('stock price', stock.price)
+        console.log("stock price", stock.price);
 
         const sharePriceOCF = {
             amount: toDecimal(stock.price).toString(),
             currency: "USD",
         };
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
+
         const createdStockRepurchase = await upsertStockRepurchaseById(id, {
             _id: id,
             object_type: stock.object_type,
             comments: stock.comments,
             security_id: convertBytes16ToUUID(stock.security_id),
-            date: new Date(Date.now()),
+            date: dateOCF,
             price: sharePriceOCF,
             quantity: toDecimal(stock.quantity).toString(),
             consideration_text: stock.consideration_text,
@@ -297,7 +303,7 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
     libraries.acceptance.on("StockAcceptanceCreated", async (stock) => {
         console.log("StockAcceptanceCreated Event Emitted!", stock.id);
         const id = convertBytes16ToUUID(stock.id);
-        console.log('stock price', stock.price)
+        console.log("stock price", stock.price);
 
         const createdStockAcceptance = await upsertStockAcceptanceById(id, {
             _id: id,
@@ -325,7 +331,9 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
     libraries.adjustment.on("StockClassAuthorizedSharesAdjusted", async (stock) => {
         console.log("StockClassAuthorizedSharesAdjusted Event Emitted!", stock.id);
         const id = convertBytes16ToUUID(stock.id);
-        console.log('stock price', stock.price)
+        console.log("stock price", stock.price);
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
 
         // this is getting heavy
         const upsert = await upsertStockClassAuthorizedSharesAdjustment(id, {
@@ -333,7 +341,7 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             object_type: stock.object_type,
             comments: stock.comments,
             issuer_id: convertBytes16ToUUID(stock.security_id),
-            date: new Date(Date.now()),
+            date: dateOCF,
             new_shares_authorized: stock.new_shares_authorized,
             board_approval_date: stock.board_approval_date,
             stockholder_approval_date: stock.stockholder_approval_date,
@@ -357,7 +365,9 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
     libraries.adjustment.on("IssuerAuthorizedSharesAdjusted", async (issuer) => {
         console.log("IssuerAuthorizedSharesAdjusted Event Emitted!", issuer.id);
         const id = convertBytes16ToUUID(issuer.id);
-        console.log('stock price', issuer.price)
+        console.log("stock price", issuer.price);
+
+        const dateOCF = new Date(block.timestamp * 1000).toISOString().split("T")[0];
 
         // this is getting heavy
         const upsert = await upsertIssuerAuthorizedSharesAdjustment(id, {
@@ -365,7 +375,7 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             object_type: issuer.object_type,
             comments: issuer.comments,
             issuer_id: convertBytes16ToUUID(issuer.security_id),
-            date: new Date(Date.now()),
+            date: dateOCF,
             new_shares_authorized: issuer.new_shares_authorized,
             board_approval_date: issuer.board_approval_date,
             stockholder_approval_date: issuer.stockholder_approval_date,
@@ -385,8 +395,6 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             upsert
         );
     });
-
-
 
     const issuerCreatedFilter = contract.filters.IssuerCreated;
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
