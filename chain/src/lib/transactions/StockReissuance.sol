@@ -9,7 +9,7 @@ import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
 // In the MVP, reissuances are meant to fix issuance mistakes.
-// It's a manual process of 1. Creating a new issuance and 2. Passing the new issuance security ID.
+// It's a manual process of 1. Creating a new issuance and 2. Passing the new issuance security ID as a resulting security ID
 library StockReissuanceLib {
     using SafeMath for uint256;
 
