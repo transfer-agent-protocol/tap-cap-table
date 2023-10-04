@@ -41,22 +41,17 @@ export const getTotalNumberOfStockClasses = async (contract) => {
 
 export const convertAndAdjustStockClassAuthorizedSharesOnchain = async (
     contract,
-    { stockClassId,
-        newAuthorizedShares,
-        boardApprovalDate,
-        stockHolderApprovalDate,
-        comments = []
-    }
+    { stock_class_id, new_shares_authorized, board_approval_date = "", stakeholder_approval_date = "", comments = [] }
 ) => {
-    const stockClassIdBytes16 = convertUUIDToBytes16(stockClassId);
-    const newAutnorizedSharesScaled = toScaledBigNumber(newAuthorizedShares)
+    const stockClassIdBytes16 = convertUUIDToBytes16(stock_class_id);
+    const newSharesAuthorizedScaled = toScaledBigNumber(new_shares_authorized);
 
     const tx = await contract.adjustStockClassAuthorizedShares(
         stockClassIdBytes16,
-        newAutnorizedSharesScaled,
+        newSharesAuthorizedScaled,
         comments,
-        boardApprovalDate,
-        stockHolderApprovalDate
+        board_approval_date,
+        stakeholder_approval_date
     );
     await tx.wait();
 };
