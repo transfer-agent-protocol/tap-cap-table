@@ -233,7 +233,7 @@ transactions.post("/accept/stock", async (req, res) => {
     }
 });
 
-transactions.post("/adjust/issuer-authorized-shares", async (req, res) => {
+transactions.post("/adjust/issuer/authorized-shares", async (req, res) => {
     const { contract } = req;
 
     try {
@@ -256,19 +256,20 @@ transactions.post("/adjust/issuer-authorized-shares", async (req, res) => {
     }
 });
 
-transactions.post("/adjust/stock-class-authorized-shares", async (req, res) => {
+transactions.post("/adjust/stock-class/authorized-shares", async (req, res) => {
     const { contract } = req;
     const { data } = req.body;
 
     try {
         const { stockClassId } = data;
         const stockClassAuthorizedSharesAdjustment = {
-            // id: uuid(), // placeholder
-            // security_id: uuid(),
+            id: uuid(), // placeholder
             date: new Date().toISOString().slice(0, 10),
             object_type: "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
             ...data,
         };
+
+        console.log("stockClassAuthorizedSharesAdjustment", stockClassAuthorizedSharesAdjustment);
 
         // delete incomingStockClassAdjustment.stockClassId;
 
