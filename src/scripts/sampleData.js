@@ -57,12 +57,21 @@ export const stakeholder1 = (issuerId) => {
     };
 };
 
-export const stockClassAuthorizedSharesAdjust = (issuerId,  stockClassId, newSharesAuthorized, comments) => {
+export const stockClassAuthorizedSharesAdjust = (issuerId, stock_class_id, new_shares_authorized, comments) => {
     return {
         issuerId,
         data: {
-            stockClassId,
-            newSharesAuthorized,
+            new_shares_authorized,
+            comments,
+            stock_class_id,
+        },
+    };
+};
+export const issuerAuthorizedSharesAdjust = (issuerId, new_shares_authorized, comments) => {
+    return {
+        issuerId,
+        data: {
+            new_shares_authorized,
             comments,
         },
     };
@@ -101,7 +110,7 @@ export const stockRepurchase = (issuerId, quantity, price, stakeholderId, stockC
             security_id,
             quantity,
             comments,
-            price: {amount: price, currency: "USD"},
+            price: { amount: price, currency: "USD" },
         },
     };
 };
@@ -171,7 +180,7 @@ export const stockClass = (issuerId) => {
             name: "Series A Common",
             class_type: "COMMON",
             default_id_prefix: "CS-A",
-            initial_shares_authorized: "900",
+            initial_shares_authorized: "4000",
             // "board_approval_date": "", // IF NO DATE, then omit
             votes_per_share: "1",
             // "par_value": {}, // same as date
