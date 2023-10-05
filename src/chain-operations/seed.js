@@ -27,7 +27,7 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
 };
 
-const initiateSeeding = async (uuid, contract) => {
+export const initiateSeeding = async (uuid, contract) => {
     console.log("Initiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
@@ -53,7 +53,7 @@ const initiateSeeding = async (uuid, contract) => {
     await sleep(300);
 };
 
-const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
+export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
     console.log(" stakeholders ", stakeholders);

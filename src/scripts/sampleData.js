@@ -57,6 +57,77 @@ export const stakeholder1 = (issuerId) => {
     };
 };
 
+export const stockClassAuthorizedSharesAdjust = (issuerId, stock_class_id, new_shares_authorized, comments) => {
+    return {
+        issuerId,
+        data: {
+            new_shares_authorized,
+            comments,
+            stock_class_id,
+        },
+    };
+};
+export const issuerAuthorizedSharesAdjust = (issuerId, new_shares_authorized, comments) => {
+    return {
+        issuerId,
+        data: {
+            new_shares_authorized,
+            comments,
+        },
+    };
+};
+
+export const stockAccept = (issuerId, stakeholderId, stockClassId, security_id, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            security_id,
+            comments,
+        },
+    };
+};
+export const stockRetract = (issuerId, stakeholderId, stockClassId, security_id, reason_text, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            security_id,
+            reason_text,
+            comments,
+        },
+    };
+};
+
+export const stockRepurchase = (issuerId, quantity, price, stakeholderId, stockClassId, security_id, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            security_id,
+            quantity,
+            comments,
+            price: { amount: price, currency: "USD" },
+        },
+    };
+};
+export const stockReissue = (issuerId, stakeholderId, stockClassId, security_id, resulting_security_ids, reason_text, comments) => {
+    return {
+        issuerId,
+        data: {
+            stakeholderId,
+            stockClassId,
+            resulting_security_ids,
+            reason_text,
+            security_id,
+            comments,
+        },
+    };
+};
+
 export const stockCancel = (issuerId, quantity, stakeholderId, stockClassId, security_id, reason_text, comments) => {
     return {
         issuerId,
@@ -109,7 +180,7 @@ export const stockClass = (issuerId) => {
             name: "Series A Common",
             class_type: "COMMON",
             default_id_prefix: "CS-A",
-            initial_shares_authorized: "1000000",
+            initial_shares_authorized: "4000",
             // "board_approval_date": "", // IF NO DATE, then omit
             votes_per_share: "1",
             // "par_value": {}, // same as date

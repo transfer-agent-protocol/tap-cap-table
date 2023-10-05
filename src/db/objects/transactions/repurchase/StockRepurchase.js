@@ -7,7 +7,7 @@ const StockRepurchaseSchema = new mongoose.Schema({
     comments: [String],
     security_id: String,
     date: String,
-    price: { type: Map, of: String }, // or Json
+    price: {},
     quantity: String,
     consideration_text: String,
     balance_security_id: String,
