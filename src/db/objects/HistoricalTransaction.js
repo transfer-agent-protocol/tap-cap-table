@@ -18,7 +18,7 @@ const HistoricalTransactionSchema = new mongoose.Schema({
         type: String,
         ref: "Issuer",
     },
-});
+}, {timestamps: true});
 
 const HistoricalTransaction = mongoose.model("HistoricalTransaction", HistoricalTransactionSchema);
 
