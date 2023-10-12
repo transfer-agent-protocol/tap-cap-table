@@ -61,7 +61,7 @@ stockClass.post("/create", async (req, res) => {
 
         const stockClass = await createStockClass(incomingStockClassForDB);
 
-        console.log("Stock Class created offchain:", stockClass);
+        console.log("✅ | Stock Class created offchain:", stockClass);
 
         res.status(200).send({ stockClass });
     } catch (error) {

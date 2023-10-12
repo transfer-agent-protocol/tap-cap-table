@@ -10,7 +10,7 @@ const main = async () => {
   "stock_class_id": "be5b6236-a906-47ea-a5fd-c8d2152d5ccf",
 }
     */
-    console.log("..creating stock accept");
+    console.log("⏳ | Creating stock acceptance…");
     const stockAcceptanceResp = await axios.post(
         "http://localhost:8080/transactions/accept/stock",
         stockAccept(
@@ -22,7 +22,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockAcceptanceResponse", stockAcceptanceResp.data);
+    console.log("✅ | Stock acceptance response", stockAcceptanceResp.data);
 };
 
 main()

@@ -77,5 +77,5 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
         security_law_exemptions
     );
     await tx.wait();
-    console.log("Issued stock onchain, unconfirmed: ", issuance);
+    console.log("✅ | Issued stock onchain, unconfirmed: ", issuance);
 };

@@ -1,8 +1,7 @@
 export const issuer = {
-    legal_name: "Dutch East India Company",
+    legal_name: "Poet Network Inc.",
     formation_date: "2022-08-23",
     country_of_formation: "US",
-    initial_shares_authorized: "9000000",
     country_subdivision_of_formation: "DE",
     tax_ids: [
         {
@@ -30,23 +29,23 @@ export const stakeholder1 = (issuerId) => {
         issuerId,
         data: {
             name: {
-                legal_name: "Alex Fong",
+                legal_name: "Alex Palmer",
                 first_name: "Alex",
-                last_name: "Fong",
+                last_name: "Palmer",
             },
             issuer_assigned_id: "",
             stakeholder_type: "INDIVIDUAL",
             current_relationship: "EMPLOYEE",
             // "primary_contact": {
             //     "name": {
-            //         "legal_name": "Victor Mimo",
-            //         "first_name": "Victor",
-            //         "last_name": "Mimo"
+            //         "legal_name": "Alex Palmer",
+            //         "first_name": "Alex",
+            //         "last_name": "Palmer"
             //     },
             //     "emails": [
             //         {
             //             "email_type": "PERSONAL",
-            //             "email_address": "victormimoc@gmail.com"
+            //             "email_address": "alex@poet.network"
             //         }
             //     ],
             //     "phone_numbers": []
@@ -163,7 +162,7 @@ export const stakeholder2 = (issuerId) => {
             //     "emails": [
             //         {
             //             "email_type": "PERSONAL",
-            //             "email_address": "victormimoc@gmail.com"
+            //             "email_address": "victor@poet,network"
             //         }
             //     ],
             //     "phone_numbers": []

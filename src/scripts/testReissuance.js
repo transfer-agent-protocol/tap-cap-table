@@ -13,7 +13,7 @@ const main = async () => {
 
 
         */
-    console.log("..creating stock reissuance");
+    console.log("⏳ | Creating stock reissuance");
     const stockReissueResp = await axios.post(
         "http://localhost:8080/transactions/reissue/stock",
         stockReissue(
@@ -26,7 +26,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockReissueResponse", stockReissueResp.data);
+    console.log("✅ | stockReissueResponse", stockReissueResp.data);
 };
 
 main()

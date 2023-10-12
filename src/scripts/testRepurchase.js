@@ -9,7 +9,7 @@ const main = async () => {
       stock_class_id: '5c6a5284-53fd-40a0-ab66-d43942891075',
 
     */
-    console.log("..creating stock repurchase");
+    console.log("⏳ | Creating stock repurchase");
     const stockReissueResp = await axios.post(
         "http://localhost:8080/transactions/repurchase/stock",
         stockRepurchase(
@@ -23,7 +23,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockReissueResponse", stockReissueResp.data);
+    console.log("✅ | stockReissueResponse", stockReissueResp.data);
 };
 
 main()

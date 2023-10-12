@@ -2,7 +2,7 @@ import { stockRetract } from "./sampleData.js";
 import axios from "axios";
 
 const main = async () => {
-    console.log("..creating stock cancel");
+    console.log("⏳ | Creating stock retraction…");
     const stockRetraction = await axios.post(
         "http://localhost:8080/transactions/retract/stock",
         stockRetract(
@@ -14,7 +14,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockRetractionResponse", stockRetraction.data);
+    console.log("✅ | stockRetractionResponse", stockRetraction.data);
 };
 
 main()

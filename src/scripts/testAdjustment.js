@@ -22,7 +22,7 @@ const main = async () => {
         )
     );
 
-    console.log("issuer adjusted response", issuerAdjustedResponse.data);
+    console.log("✅ | Issuer adjusted response", issuerAdjustedResponse.data);
 };
 
 main()

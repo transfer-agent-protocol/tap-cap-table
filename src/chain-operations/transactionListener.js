@@ -31,7 +31,7 @@ const options = {
 };
 
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
-    console.log("🌐| Initiating on-chain event listeners for ", contract.target);
+    console.log("🌐 | Initiating on-chain event listeners for ", contract.target);
 
     // console.log("libraries ", { ...libraries });
 
@@ -47,9 +47,9 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
         await seedActivePositionsAndActiveSecurityIds(arrays, contract);
 
         await initiateSeeding(uuid, contract);
-        console.log(`Completed Seeding issuer ${uuid} on chain`);
+        console.log(`✅ | Completed seeding issuer ${uuid} on chain`);
 
-        console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
+        console.log("⏳ | Checking pre-processor cache ", JSON.stringify(preProcessorCache[issuerId], null, 2));
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
@@ -161,7 +161,7 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
             is_onchain_synced: true,
         });
 
-        console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+        console.log("✅ | Stock Transfer reflected and validated offchain", createdStockTransfer);
 
         const createdHistoricalTransaction = await createHistoricalTransaction({
             transaction: createdStockTransfer._id,

@@ -19,16 +19,16 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     if (!issuer.is_manifest_created) return;
 
     await initiateSeeding(uuid, contract);
-    console.log(`Completed Seeding issuer ${uuid} on chain`);
+    console.log(`✅ | Completed Seeding issuer ${uuid} on chain`);
 
     const arrays = extractArrays(preProcessorCache[uuid]);
     await seedActivePositionsAndActiveSecurityIds(arrays, contract);
 
-    console.log("checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
+    console.log("⏳ | Checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
 };
 
 export const initiateSeeding = async (uuid, contract) => {
-    console.log("Initiating Seeding...");
+    console.log("⏳ | Initiating Seeding...");
     const { stakeholders, stockClasses, stockIssuances, stockTransfers } = await getAllIssuerDataById(uuid);
 
     await sleep(300);
@@ -56,12 +56,12 @@ export const initiateSeeding = async (uuid, contract) => {
 export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
-    console.log(" stakeholders ", stakeholders);
-    console.log(" stockClasses ", stockClasses);
-    console.log(" quantities ", quantities);
-    console.log(" securityIds ", securityIds);
-    console.log(" sharePrices ", sharePrices);
-    console.log(" timestamps ", timestamps);
+    console.log("💾 | stakeholders ", stakeholders);
+    console.log("💾 | stockClasses ", stockClasses);
+    console.log("💾 | quantities ", quantities);
+    console.log("💾 | securityIds ", securityIds);
+    console.log("💾 | sharePrices ", sharePrices);
+    console.log("💾 | timestamps ", timestamps);
 
     // convert them.
     const stakeholderIdsBytes16 = stakeholders.map((stakeholder) => convertUUIDToBytes16(stakeholder));

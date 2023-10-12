@@ -149,7 +149,7 @@ const deployAndLinkLibs = async (libs) => {
         if (code !== 0) {
             new Error(`FinalBuild::child process exited with code ${code}`);
         } else {
-            console.log("Deployment completed");
+            console.log("✅ | Deployment completed");
         }
     });
 };
@@ -200,5 +200,5 @@ const allLibs = getAllLibraries(rootDirectory);
 const graph = buildGraph(allLibs);
 const sortedLibraries = convertNamesToIndices(topologicalSort(graph));
 
-console.log("sorted libraries", JSON.stringify(sortedLibraries, null, 2));
+console.log("Sorted libraries", JSON.stringify(sortedLibraries, null, 2));
 (async () => await deployAndLinkLibs(sortedLibraries))();

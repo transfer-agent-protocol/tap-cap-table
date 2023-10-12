@@ -22,7 +22,7 @@ export const convertAndCreateTransferStockOnchain = async (contract, transfer) =
     );
     await tx.wait();
 
-    console.log(`Transfer completed from transferee ID: ${transfereeId} to transferor ID: ${transferorId}`);
+    console.log(`✅ | Transfer completed from transferee ID: ${transfereeId} to transferor ID: ${transferorId}`);
     console.log(`Quantity transferred: ${quantity}`);
     console.log(`Price per share: ${sharePrice}`);
 };
