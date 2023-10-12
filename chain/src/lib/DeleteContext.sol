@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { ActivePositions, SecIdsStockClass } from "./Structs.sol";
 
 library DeleteContext {
+    using SafeMath for uint256;
+
     function deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id, ActivePositions storage positions) external {
         delete positions.activePositions[_stakeholder_id][_security_id];
     }
@@ -48,7 +51,7 @@ library DeleteContext {
         require(index < array.length, "Index out of bounds");
 
         for (uint256 i = index; i < array.length - 1; i++) {
-            array[i] = array[i + 1];
+            array[i] = array[i.add(1)];
         }
         array.pop();
     }

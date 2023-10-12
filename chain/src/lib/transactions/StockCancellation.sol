@@ -35,8 +35,7 @@ library StockCancellationLib {
         bytes16 balance_security_id;
 
         if (remainingQuantity > 0) {
-            // issue balance
-            nonce++;
+            nonce = nonce.add(1);
 
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 nonce,
@@ -54,7 +53,7 @@ library StockCancellationLib {
             balance_security_id = "";
         }
 
-        nonce++;
+        nonce = nonce.add(1);
         StockCancellation memory cancellation = TxHelper.createStockCancellationStruct(
             nonce,
             quantity,

@@ -1,5 +1,5 @@
 export const issuer = {
-    legal_name: "Dutch East India Company",
+    legal_name: "Poet Network",
     formation_date: "2022-08-23",
     country_of_formation: "US",
     initial_shares_authorized: "9000000",
@@ -180,8 +180,8 @@ export const stockClass = (issuerId) => {
             name: "Series A Common",
             class_type: "COMMON",
             default_id_prefix: "CS-A",
-            initial_shares_authorized: "4000",
-            // "board_approval_date": "", // IF NO DATE, then omit
+            initial_shares_authorized: "10000000",
+            // "board_approval_date": "",
             votes_per_share: "1",
             // "par_value": {}, // same as date
             price_per_share: {

@@ -31,7 +31,7 @@ library StockReissuanceLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
-        nonce++;
+        nonce = nonce.add(1);
         StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(nonce, comments, securityId, resulting_security_ids, reason_text);
 
         _reissueStock(reissuance, transactions);

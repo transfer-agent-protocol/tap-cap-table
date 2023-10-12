@@ -7,7 +7,7 @@ import "../../transactions/StockTransferTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
-// TODO: use SafeMath
+// isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
 library StockTransferLib {
     using SafeMath for uint256;
 
@@ -40,13 +40,13 @@ library StockTransferLib {
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
             ActivePosition memory activePosition = positions.activePositions[transferorStakeholderId][activeSecurityIDs[index]];
-            sum += activePosition.quantity;
+            sum = sum.add(activePosition.quantity);
 
             if (sum >= quantity) {
-                numSecurityIds += 1;
+                numSecurityIds = numSecurityIds.add(1);
                 break;
             } else {
-                numSecurityIds += 1;
+                numSecurityIds = numSecurityIds.add(1);
             }
         }
 
@@ -80,7 +80,7 @@ library StockTransferLib {
                 stockClass
             );
 
-            remainingQuantity -= transferQuantity; // Reduce the remaining quantity
+            remainingQuantity = remainingQuantity.sub(transferQuantity); // Reduce the remaining quantity
 
             // If there's no more quantity left to transfer, break out of the loop
             if (remainingQuantity == 0) {
@@ -89,7 +89,6 @@ library StockTransferLib {
         }
     }
 
-    // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function _transferSingleStock(
         bytes16 transferorStakeholderId,
         bytes16 transfereeStakeholderId,
@@ -109,7 +108,7 @@ library StockTransferLib {
 
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
-        nonce++;
+        nonce = nonce.add(1);
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
             nonce,
             transfereeStakeholderId,
@@ -126,7 +125,7 @@ library StockTransferLib {
         bytes16 balance_security_id;
 
         if (balanceForTransferor > 0) {
-            nonce++;
+            nonce = nonce.add(1);
             StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 nonce,
                 transferorStakeholderId,
@@ -143,7 +142,7 @@ library StockTransferLib {
             balance_security_id = "";
         }
 
-        nonce++;
+        nonce = nonce.add(1);
         StockTransfer memory transfer = TxHelper.createStockTransferStruct(
             nonce,
             quantity,

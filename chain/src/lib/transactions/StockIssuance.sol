@@ -38,9 +38,9 @@ library StockIssuanceLib {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
 
-        nonce++;
+        nonce = nonce.add(1);
         bytes16 id = DeterministicUUID.generateDeterministicUniqueID(stakeholderId, nonce);
-        nonce++;
+        nonce = nonce.add(1);
         bytes16 secId = DeterministicUUID.generateDeterministicUniqueID(stockClassId, nonce);
 
         //TODO: Move to TX helper

@@ -5,12 +5,14 @@ import { StockAcceptance, ActivePositions, ActivePosition, SecIdsStockClass } fr
 import "../../transactions/StockAcceptanceTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
+import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 library StockAcceptanceLib {
+    using SafeMath for uint256;
     event StockAcceptanceCreated(StockAcceptance acceptance);
 
     function acceptStockByTA(uint256 nonce, bytes16 securityId, string[] memory comments, address[] storage transactions) external {
-        nonce++;
+        nonce = nonce.add(1);
         StockAcceptance memory acceptance = TxHelper.createStockAcceptanceStruct(nonce, comments, securityId);
 
         _acceptStock(acceptance, transactions);

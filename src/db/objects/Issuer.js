@@ -18,6 +18,7 @@ const IssuerSchema = new mongoose.Schema({
     comments: [String],
     deployed_to: String,
     is_manifest_created: { type: Boolean, default: false },
+    is_onchain_synced: { type: Boolean, default: false },
 });
 
 const Issuer = mongoose.model("Issuer", IssuerSchema);

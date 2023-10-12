@@ -1,6 +1,6 @@
 import { toQuantity } from "ethers";
 import { createHistoricalTransaction } from "../db/operations/create.js";
-import { readStakeholderById } from "../db/operations/read.js";
+import { readStakeholderById, readIssuerById } from "../db/operations/read.js";
 import {
     updateStakeholderById,
     updateStockClassById,
@@ -399,9 +399,17 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
     const issuerCreatedFilter = contract.filters.IssuerCreated;
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
 
-    // TODO: should only be performed once.
+    // Used to seed.
+    // TODO: is_onchain_synced doesn't exist on issuer model, need to create.
     if (issuerEvents.length > 0) {
         const id = issuerEvents[0].args[0];
+        // check if issuer has been verified onchain
+        const issuer = await readIssuerById(id);
+        // if (issuer.is_onchain_synced) {
+        //     console.log("✅ | Issuer already verified onchain");
+        //     return;
+        // }
+
         console.log("IssuerCreated Event Emitted!", id);
 
         await verifyIssuerAndSeed(contract, id);

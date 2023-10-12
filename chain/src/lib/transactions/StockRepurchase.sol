@@ -36,8 +36,7 @@ library StockRepurchaseLib {
         bytes16 balance_security_id;
 
         if (remainingQuantity > 0) {
-            // issue balance
-            nonce++;
+            nonce = nonce.add(1);
 
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 nonce,
@@ -55,7 +54,7 @@ library StockRepurchaseLib {
             balance_security_id = "";
         }
 
-        nonce++;
+        nonce = nonce.add(1);
         StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(
             nonce,
             comments,

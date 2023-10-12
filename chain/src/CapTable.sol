@@ -63,7 +63,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         uint256[] memory sharePrices,
         uint40[] memory timestamps
     ) external onlyAdmin {
-        //TODO: check stakeholders and stock classes exist
         require(
             stakeholderIds.length == securityIds.length &&
                 securityIds.length == stockClassIds.length &&
@@ -74,6 +73,11 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
+            require(
+                stakeholderIndex[stakeholderIds[i]] > 0 && stockClassIndex[stockClassIds[i]] > 0,
+                "Seed Context: Invalid stakeholder or stock class"
+            );
+
             // Set activePositions
             positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
                 stockClassIds[i],
@@ -122,8 +126,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        // require active position to exist?
+        require(positions.activePositions[stakeholderId][securityId].quantity > 0, "No active position");
 
         StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
     }
@@ -396,7 +399,6 @@ contract CapTable is AccessControlDefaultAdminRules {
     }
 
     /* Role Based Access Control */
-
     modifier onlyOperator() {
         /// @notice Admins are also considered Operators
         require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");

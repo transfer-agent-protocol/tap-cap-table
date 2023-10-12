@@ -29,9 +29,9 @@ library StockRetractionLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
-        //TODO: require active position exists.
+        require(activePosition.quantity > 0, "Retract: No active position exists");
 
-        nonce++;
+        nonce = nonce.add(1);
         StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, comments, securityId, reasonText);
         _retractStock(retraction, transactions);
 

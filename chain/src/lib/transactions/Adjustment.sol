@@ -9,9 +9,6 @@ import "../../transactions/StockClassAuthorizedSharesAdjustmentTX.sol";
 
 library Adjustment {
     using SafeMath for uint256;
-    // combine both
-    // 1. Issuer authorized shares adjustment
-    // 2. Stock Class authorized shares adjustment
 
     event IssuerAuthorizedSharesAdjusted(IssuerAuthorizedSharesAdjustment adjustment);
 
@@ -26,7 +23,7 @@ library Adjustment {
         Issuer storage issuer,
         address[] storage transactions
     ) external {
-        nonce++;
+        nonce = nonce.add(1);
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustIssuerAuthorizedShares(
             nonce,
             newSharesAuthorized,
@@ -56,7 +53,7 @@ library Adjustment {
         uint256 newShares = newSharesAuthorized + stockClass.shares_authorized;
         stockClass.shares_authorized = newShares;
 
-        nonce++;
+        nonce = nonce.add(1);
         StockClassAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustStockClassAuthorizedShares(
             nonce,
             newSharesAuthorized,
