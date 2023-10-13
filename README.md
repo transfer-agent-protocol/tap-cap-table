@@ -1,6 +1,12 @@
 # Transfer Agent Protocol (TAP) Specification for a compliant cap table onchain
 
-This scaffold is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active developemnt, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
+Developed by:
+
+-   [Poet](https://poet.network/)
+-   [Plural Energy](https://www.pluralenergy.co/)
+-   [Fairmint](https://www.fairmint.com/)
+
+This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active developemnt, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
 
 <div align="center">
   <a href="https://github.com/poet-network/tap-cap-table/blob/main/LICENSE">
@@ -10,29 +16,28 @@ This scaffold is based on the [Open Cap Table Coalition](https://github.com/Open
 
 ## Dependencies
 
-- [Docker](https://docs.docker.com/get-docker/)
+-   [Docker](https://docs.docker.com/get-docker/)
 
-- [Foundry](https://getfoundry.sh/)
+-   [Foundry](https://getfoundry.sh/)
 
 ```sh
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-- [Mongo Compass](https://www.mongodb.com/try/download/compass)
+-   [Mongo Compass](https://www.mongodb.com/try/download/compass)
 
-- [Postman App](https://www.postman.com/downloads/)
+-   [Postman App](https://www.postman.com/downloads/)
 
-- [Node.js v18.16.0](https://nodejs.org/en/download/)
+-   [Node.js v18.16.0](https://nodejs.org/en/download/)
 
-- [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
-
+-   [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
 
 We're using the official [MongoDB Docker image](https://hub.docker.com/_/mongo) for the local development database. You can find the [Docker Compose file](./docker-compose.yml) in the root of this repository.
 
 ## Official links
 
-- [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
-- [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
+-   [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
+-   [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
 
 ## Getting started
 
@@ -96,7 +101,19 @@ In the `chain` directory, run:
 anvil
 ```
 
-## Seeding the cap table with sample data
+## Deploying external libraries
+
+In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met.
+
+In order to deploy these libraries, ensure you have the server and anvil running. Then `run yarn build` inside of the root directory.
+
+This might take a couple of minutes, since each library is being deployed one at a time using a dependency graph that's generated with the command.
+
+## Seeding and deploying the cap table with sample data
+
+There are two ways of seeding the cap table:
+
+### Using the manifest file
 
 We provide sample data to test deploying the cap table onchain. You can inspect and change it in [/src/db/samples/notPoet](./src/db/samples/notPoet/), which contains [Manifest.ocf.json](./src/db/samples/notPoet/Manifest.ocf.json) file with [Poet's](https://poet.network) actual cap table, and some partial data in primary objects (stakeholders, stock classes, vesting terms, valuation, etc).
 
@@ -115,15 +132,33 @@ This operation will perform several checks. If everything is in order, it will d
 3. Check if the cap table is already in the database. If it is, it will return an error
 4. Mint the cap table onchain if all checks pass, then save it to the Mongo DB instance.
 
-In developemnt and testing, you will need to deseed the database before you can seed it again. To do that, run:
+In development and testing, you will need to deseed the database before you can seed it again. To do that, run:
 
 ```sh
 yarn deseed
 ```
 
+### Using sample scripts that call our APIs
+
+In another terminal (ensuring you’re in the root directory) run `node src/scripts/testIssuance.js.` If you navigate to `/scripts` directory, you’ll be able to interact with the sample data.
+
+## Debugging Steps
+
+We're shipping code fast. If you run into an issue, particularly one that results in an onchain error of "could not estimate gas", it's likely that the forge build cache is out of sync.
+
+Inside of `/chain`:
+
+-   restart anvil
+-   run `forge clean`
+-   followed by `forge build --via-ir`
+-   move back to the root directory, then run `yarn build`
+
+After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to this project.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
