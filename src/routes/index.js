@@ -9,9 +9,6 @@ import startOnchainListeners from "../chain-operations/transactionListener.js";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-    res.send(`Hello world!`);
-});
 
 router.post("/mint-cap-table", async (req, res) => {
     try {
@@ -19,8 +16,9 @@ router.post("/mint-cap-table", async (req, res) => {
 
         const issuer = await seedDB(manifest);
 
+        console.log({issuer})
         const issuerIdBytes16 = convertUUIDToBytes16(issuer._id);
-        const { contract, provider, libraries } = await deployCapTable(req.chain, issuerIdBytes16, issuer.legal_name);
+        const { contract, address, provider, libraries } = await deployCapTable(req.chain, issuerIdBytes16, issuer.legal_name, issuer.initial_shares_authorized);
 
         const savedIssuerWithDeployedTo = await updateIssuerById(issuer._id, { deployed_to: address });
 
