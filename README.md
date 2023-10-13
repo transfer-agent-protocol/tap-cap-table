@@ -1,6 +1,12 @@
 # Transfer Agent Protocol (TAP) Specification for a compliant cap table onchain
 
-This scaffold is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active developemnt, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
+Developed by:
+
+-   [Poet](https://poet.network/)
+-   [Plural Energy](https://www.pluralenergy.co/)
+-   [Fairmint](https://www.fairmint.com/)
+
+This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active developemnt, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
 
 <div align="center">
   <a href="https://github.com/poet-network/tap-cap-table/blob/main/LICENSE">
