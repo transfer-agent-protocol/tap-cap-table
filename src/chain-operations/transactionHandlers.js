@@ -26,7 +26,6 @@ const options = {
     second: "2-digit",
 };
 export const handleStockIssuance = async (stock, issuerId, timestamp) => {
-    console.log('timestamp', timestamp)
     console.log("StockIssuanceCreated Event Emitted!", stock.id);
 
     // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
