@@ -162,7 +162,7 @@ export const stakeholder2 = (issuerId) => {
             //     "emails": [
             //         {
             //             "email_type": "PERSONAL",
-            //             "email_address": "victor@poet,network"
+            //             "email_address": "victor@poet.network"
             //         }
             //     ],
             //     "phone_numbers": []
