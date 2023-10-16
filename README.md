@@ -122,7 +122,7 @@ You can change it to your own startup if you want to test it.
 To seed the database, you'll need to
 
 1. Run [Postman](https://www.postman.com/downloads/)
-2. ZIP the [samples/notPoet](./src/db/samples/notPoet/) folder
+2. Run `yarn export-manifest` which will zip the sample manifest file inside of /samples and save it to your /Downloads directory.
 3. POST that ZIP file to the `http://localhost:8080/mint-cap-table` route in Postman as a form-data request with that file attached.
 
 This operation will perform several checks. If everything is in order, it will deploy the cap table onchain, and seed the database with the sample data.
