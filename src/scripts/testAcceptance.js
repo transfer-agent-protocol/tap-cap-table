@@ -5,11 +5,13 @@ import connectDB from "../db/config/mongoose.js";
 connectDB();
 
 const main = async () => {
+
+    console.log("⏳ | Creating stock acceptance…");
+
     const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity} = lastStockIssuance[0];
     console.log({ issuer, security_id, stakeholder_id, stock_class_id, quantity})
 
-    console.log("..creating stock accept");
     const stockAcceptanceResp = await axios.post(
         "http://localhost:8080/transactions/accept/stock",
         stockAccept(
@@ -21,7 +23,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockAcceptanceResponse", stockAcceptanceResp.data);
+    console.log("✅ | Stock acceptance response", stockAcceptanceResp.data);
 };
 
 main()

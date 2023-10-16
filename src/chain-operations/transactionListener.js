@@ -15,11 +15,13 @@ const eventQueue = []
 let issuerEventFired = false
 
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
-    console.log("🌐| Initiating on-chain event listeners for ", contract.target);
+    console.log("🌐 | Initiating on-chain event listeners for ", contract.target);
+
 
     libraries.issuance.on("StockIssuanceCreated", async (stock, event) => {
         const { timestamp } = await provider.getBlock(event.blockNumber)
         eventQueue.push({ type: "StockIssuanceCreated", data: stock, issuerId, timestamp });
+
     });
 
     libraries.transfer.on("StockTransferCreated", async (stock, event) => {

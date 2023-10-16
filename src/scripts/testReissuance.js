@@ -8,9 +8,9 @@ const main = async () => {
     const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
     console.log("lastStockIssuance", lastStockIssuance[0]);
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity} = lastStockIssuance[0];
-    console.log('issuer', issuer)
 
-    console.log("..creating stock reissuance");
+    console.log("⏳ | Creating stock reissuance");
+  
     const stockReissueResp = await axios.post(
         "http://localhost:8080/transactions/reissue/stock",
         stockReissue(
@@ -23,7 +23,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockReissueResponse", stockReissueResp.data);
+    console.log("✅ | stockReissueResponse", stockReissueResp.data);
 };
 
 main()

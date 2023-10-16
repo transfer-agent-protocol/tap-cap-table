@@ -71,7 +71,7 @@ stakeholder.post("/create", async (req, res) => {
 
         const stakeholder = await createStakeholder(incomingStakeholderForDB);
 
-        console.log("Stakeholder created offchain:", stakeholder);
+        console.log("✅ | Stakeholder created offchain:", stakeholder);
 
         res.status(200).send({ stakeholder });
     } catch (error) {

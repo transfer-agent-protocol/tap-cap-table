@@ -55,7 +55,7 @@ vestingTerms.post("/create", async (req, res) => {
         await validateInputAgainstOCF(incomingVestingTermsToValidate, vestingTermsSchema);
         const vestingTerms = await createVestingTerms(incomingVestingTermsForDB);
 
-        console.log("Created Vesting Terms in DB: ", vestingTerms);
+        console.log("✅ | Created Vesting Terms in DB: ", vestingTerms);
 
         res.status(200).send({ vestingTerms });
     } catch (error) {

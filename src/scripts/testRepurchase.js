@@ -5,10 +5,12 @@ import connectDB from "../db/config/mongoose.js";
 connectDB();
 
 const main = async () => {
+    console.log("⏳ | Creating stock repurchase");
+
     const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
     console.log("lastStockIssuance", lastStockIssuance[0]);
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity} = lastStockIssuance[0];
-    console.log("..creating stock repurchase");
+
     const stockReissueResp = await axios.post(
         "http://localhost:8080/transactions/repurchase/stock",
         stockRepurchase(
@@ -22,7 +24,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockReissueResponse", stockReissueResp.data);
+    console.log("✅ | stockReissueResponse", stockReissueResp.data);
 };
 
 main()

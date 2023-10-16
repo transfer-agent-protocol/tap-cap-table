@@ -52,12 +52,12 @@ issuer.post("/create", async (req, res) => {
             ...req.body,
         };
 
-        console.log("issuer to validate", incomingIssuerToValidate);
+        console.log("⏳ | Issuer to validate", incomingIssuerToValidate);
 
         await validateInputAgainstOCF(incomingIssuerToValidate, issuerSchema);
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
-        console.log("issuer id bytes16 ", issuerIdBytes16);
+        console.log("💾 | Issuer id in bytes16 ", issuerIdBytes16);
         const { contract, provider, address, libraries } = await deployCapTable(
             chain,
             issuerIdBytes16,
@@ -76,7 +76,7 @@ issuer.post("/create", async (req, res) => {
 
         const issuer = await createIssuer(incomingIssuerForDB);
 
-        console.log("Issuer created offchain:", issuer);
+        console.log("✅ | Issuer created offchain:", issuer);
 
         res.status(200).send({ issuer });
     } catch (error) {

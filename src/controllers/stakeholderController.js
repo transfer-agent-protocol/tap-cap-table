@@ -5,15 +5,15 @@ export const convertAndReflectStakeholderOnchain = async (contract, stakeholder)
     // First: convert OCF Types to Onchain Types
     const stakeholderIdBytes16 = convertUUIDToBytes16(stakeholder.id);
 
-    console.log("stakeholder", stakeholder);
+    console.log("Stakeholder", stakeholder);
 
-    console.log("stakeholder id for seeding ", stakeholderIdBytes16);
+    console.log("Stakeholder id for seeding ", stakeholderIdBytes16);
 
     // Second: create stakeholder onchain
     const tx = await contract.createStakeholder(stakeholderIdBytes16, stakeholder.stakeholder_type, stakeholder.current_relationship); // Pass all three values
     await tx.wait();
 
-    console.log("Stakeholder created  onchain");
+    console.log("✅ | Stakeholder created  onchain");
 };
 
 export const addWalletToStakeholder = async (contract, id, wallet) => {
@@ -23,7 +23,7 @@ export const addWalletToStakeholder = async (contract, id, wallet) => {
     const tx = await contract.addWalletToStakeholder(stakeholderIdBytes16, wallet);
     await tx.wait();
 
-    console.log("Wallet added to stakeholder onchain");
+    console.log("✅ | Wallet added to stakeholder onchain");
 };
 
 export const removeWalletFromStakeholder = async (contract, id, wallet) => {
@@ -33,7 +33,7 @@ export const removeWalletFromStakeholder = async (contract, id, wallet) => {
     const tx = await contract.removeWalletFromStakeholder(stakeholderIdBytes16, wallet);
     await tx.wait();
 
-    console.log("Wallet removed from stakeholder onchain");
+    console.log("✅ | Wallet removed from stakeholder onchain");
 };
 
 //TODO: to decide if we want to also return offchain data.
@@ -51,6 +51,6 @@ export const getStakeholderById = async (contract, id) => {
 
 export const getTotalNumberOfStakeholders = async (contract) => {
     const totalStakeholders = await contract.getTotalNumberOfStakeholders();
-    console.log("Total number of stakeholders:", totalStakeholders.toString());
+    console.log("＃ | Total number of stakeholders:", totalStakeholders.toString());
     return totalStakeholders.toString();
 };

@@ -40,8 +40,8 @@ const chainMiddleware = (req, res, next) => {
 // the listener is first started on deployment, then here as a backup
 const contractMiddleware = async (req, res, next) => {
     if (!req.body.issuerId) {
-        console.log("no issuer ID");
-        res.status(400).send("issuerId required");
+        console.log("❌ | No issuer ID");
+        res.status(400).send("issuerId is required");
     }
 
     // fetch issuer to ensure it exists
