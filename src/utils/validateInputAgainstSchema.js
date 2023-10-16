@@ -40,6 +40,7 @@ async function fetchRefsInSchema(schema) {
     // Handle $ref references inside "allOf", "anyOf", "oneOf", or "not" keywords
     for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
         if (schema[keyword]) {
+            console.log("schema[keyword] ", schema[keyword]);
             for (const subSchema of schema[keyword]) {
                 await fetchRefsInSchema(subSchema);
             }
@@ -117,8 +118,9 @@ async function validateInputAgainstOCF(input, schema) {
     const { isValid, errors } = await validateInputAgainstSchema(input, schema);
 
     if (isValid) {
-        console.log("Schema is valid ", isValid);
+        console.log("Check Against OCF Schema is valid ✅", isValid);
     } else {
+        console.log("Error validating OCF schema: ", JSON.stringify(errors, null, 2));
         throw new Error(JSON.stringify(errors, null, 2));
     }
 }

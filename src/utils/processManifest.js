@@ -6,7 +6,7 @@ const processManifest = (req) => {
         const arr = [];
         const busboy = Busboy({ headers: req.headers });
 
-        busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+        busboy.on("file", (_, file, filename) => {
             const chunks = [];
             file.on("data", (data) => {
                 chunks.push(data);
@@ -32,7 +32,11 @@ const processManifest = (req) => {
 
                                 readStream.on("end", () => {
                                     const fileData = Buffer.concat(chunks);
-                                    arr.push(JSON.parse(fileData.toString()));
+                                    if (fileData.length === 0) {
+                                        console.error("Empty file detected:", entry.fileName);
+                                    } else if (entry.fileName.endsWith('ocf.json')) {
+                                        arr.push(JSON.parse(fileData.toString()));
+                                    }
                                     zipfile.readEntry();
                                 });
 

@@ -46,6 +46,7 @@ const contractMiddleware = async (req, res, next) => {
 
     // fetch issuer to ensure it exists
     const issuer = await readIssuerById(req.body.issuerId);
+    if(!issuer) res.status(400).send("issuer not found ");
 
     // Check if contract instance already exists in cache
     if (!contractCache[req.body.issuerId]) {
