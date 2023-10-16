@@ -16,7 +16,6 @@ router.post("/mint-cap-table", async (req, res) => {
 
         const issuer = await seedDB(manifest);
 
-        console.log({issuer})
         const issuerIdBytes16 = convertUUIDToBytes16(issuer._id);
         const { contract, address, provider, libraries } = await deployCapTable(req.chain, issuerIdBytes16, issuer.legal_name, issuer.initial_shares_authorized);
 
