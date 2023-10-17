@@ -51,7 +51,6 @@ async function fetchRefsInSchema(schema) {
     // Handle $ref references inside "allOf", "anyOf", "oneOf", or "not" keywords
     for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
         if (schema[keyword]) {
-            // console.log("schema[keyword] ", schema[keyword]);
             for (const subSchema of schema[keyword]) {
                 await fetchRefsInSchema(subSchema);
             }
