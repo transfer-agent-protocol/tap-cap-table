@@ -7,10 +7,7 @@ import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
 import { preProcessorCache } from "../utils/caches.js";
 import { readIssuerById } from "../db/operations/read.js";
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import sleep from "../utils/sleep.js";
 
 export const verifyIssuerAndSeed = async (contract, id) => {
     const uuid = convertBytes16ToUUID(id);
