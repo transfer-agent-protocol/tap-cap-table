@@ -1,13 +1,10 @@
-import { config } from "dotenv";
 import { spawn } from "child_process";
+import { config } from "dotenv";
 import fs from "fs";
 import path from "path";
+import sleep from "../utils/sleep.js";
 
 config();
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const privateKey = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 
@@ -149,7 +146,7 @@ const deployAndLinkLibs = async (libs) => {
         if (code !== 0) {
             new Error(`FinalBuild::child process exited with code ${code}`);
         } else {
-            console.log("Deployment completed");
+            console.log("✅ | Deployment completed");
         }
     });
 };
@@ -200,5 +197,5 @@ const allLibs = getAllLibraries(rootDirectory);
 const graph = buildGraph(allLibs);
 const sortedLibraries = convertNamesToIndices(topologicalSort(graph));
 
-console.log("sorted libraries", JSON.stringify(sortedLibraries, null, 2));
+console.log("Sorted libraries", JSON.stringify(sortedLibraries, null, 2));
 (async () => await deployAndLinkLibs(sortedLibraries))();

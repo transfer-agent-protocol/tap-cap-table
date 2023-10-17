@@ -8,14 +8,14 @@ export const convertAndReflectStockClassOnchain = async (contract, stockClass) =
     const scaledSharePrice = toScaledBigNumber(stockClass.price_per_share.amount);
     const scaledShares = toScaledBigNumber(stockClass.initial_shares_authorized);
 
-    console.log("Stock Class ID offchain", stockClass.id);
-    console.log("Stock Class ID converted to bytes16", stockClassIdBytes16);
+    console.log("✅ | Stock Class ID offchain", stockClass.id);
+    console.log("✅ | Stock Class ID converted to bytes16", stockClassIdBytes16);
 
     // Second: create stock class onchain
     const tx = await contract.createStockClass(stockClassIdBytes16, stockClass.class_type, scaledSharePrice, scaledShares);
     await tx.wait();
 
-    console.log("Stock Class created  onchain");
+    console.log("✅ | Stock Class created  onchain");
 };
 
 //TODO: to decide if we want to also return offchain data.
@@ -35,7 +35,7 @@ export const getStockClassById = async (contract, id) => {
 
 export const getTotalNumberOfStockClasses = async (contract) => {
     const totalStockClasses = await contract.getTotalNumberOfStockClasses();
-    console.log("Total number of stock classes:", totalStockClasses.toString());
+    console.log("＃ | Total number of stock classes:", totalStockClasses.toString());
     return totalStockClasses.toString();
 };
 

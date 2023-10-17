@@ -35,7 +35,7 @@ export const convertAndSeedTransferStockOnchain = async (contract, transfer) => 
     );
 
     await tx.wait();
-    console.log("Transferred stock onchain, unconfirmed: ", transfer);
+    console.log("✅ | Transferred stock onchain, unconfirmed: ", transfer);
 };
 
 export const convertAndSeedIssuanceStockOnchain = async (contract, issuance) => {
@@ -101,5 +101,5 @@ export const convertAndSeedIssuanceStockOnchain = async (contract, issuance) => 
         security_law_exemptions
     );
     await tx.wait();
-    console.log("Issued stock onchain, unconfirmed: ", issuance);
+    console.log("✅ | Issued stock onchain, unconfirmed: ", issuance);
 };

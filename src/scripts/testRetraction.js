@@ -1,20 +1,31 @@
+import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 import { stockRetract } from "./sampleData.js";
 import axios from "axios";
+import connectDB from "../db/config/mongoose.js";
+//
+// Connect to MongoDB
+connectDB();
 
 const main = async () => {
-    console.log("..creating stock cancel");
+    console.log("⏳ | Creating stock retraction…");
+
+    // latest StockIssuance record inserted
+    const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1)
+    console.log("lastStockIssuance", lastStockIssuance[0]);
+   const  { issuer, security_id, stakeholder_id, stock_class_id }  = lastStockIssuance[0]
+
     const stockRetraction = await axios.post(
         "http://localhost:8080/transactions/retract/stock",
         stockRetract(
-            "3526b591-72e6-40c7-b212-ec2f9cefe775", // Issuer ID
-            "9dcfc2eb-1fde-49fa-9e88-2f7c4167ca5d", // Stakeholder ID
-            "67aa9223-7a6f-4765-aa7e-66cdfb2cd6f5", // StockClass ID
-            "b7da52f5-e77b-1bd3-9f82-af167d99eabc", // Security ID
+            issuer, // Issuer ID
+            stakeholder_id, // Stakeholder ID
+            stock_class_id, // StockClass ID
+            security_id, // Security ID
             "Diluted"
         )
     );
 
-    console.log("stockRetractionResponse", stockRetraction.data);
+    console.log("✅ | stockRetractionResponse", stockRetraction.data);
 };
 
 main()

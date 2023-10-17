@@ -15,23 +15,19 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     };
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    console.log("wallet address ", wallet.address);
+    console.log("🗽 | Wallet address ", wallet.address);
 
     const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
     console.log(
-        "issuer id inside of deployment ",
-        issuerId,
-        "and issuername inside of deployment ",
-        issuerName,
-        "with initial shares ",
-        initial_shares_authorized
+        `✅ | Issuer id inside of deployment: ${issuerId},
+		✅ | Issuer name inside of deployment: ${issuerName},
+		✅ | With initial shares: ${initial_shares_authorized}`
     );
 
     const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
 
-    console.log("Waiting for contract to be mined...");
-    const libraries = getTXLibContracts(contract.target, wallet)
-
+    console.log("⏳ | Waiting for contract to be deployed...");
+    const libraries = getTXLibContracts(contract.target, wallet);
 
     return {
         contract,
@@ -49,9 +45,9 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName) {
     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName);
 
-    console.log("Waiting for contract to be mined...");
+    console.log("⏳ | Waiting for contract to be deployed...");
     await contract.deployed();
-    console.log("Contract mined!");
+    console.log("✅ | Contract deployed!");
 
     const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
     const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
@@ -65,7 +61,7 @@ async function deployCapTable(chain, issuerId, issuerName, initial_shares_author
     } else if (chain === "optimism-goerli") {
         return deployCapTableOptimismGoerli(issuerId, issuerName);
     } else {
-        throw new Error(`Unsupported chain: ${chain}`);
+        throw new Error(`❌ | Unsupported chain: ${chain}`);
     }
 }
 export default deployCapTable;

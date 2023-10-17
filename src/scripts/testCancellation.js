@@ -22,7 +22,7 @@ import axios from "axios";
 */
 
 const main = async () => {
-    console.log("..creating stock cancel");
+    console.log("⏳ | Creating stock cancellation…");
     const stockCancellation = await axios.post(
         "http://localhost:8080/transactions/cancel/stock",
         stockCancel(
@@ -35,7 +35,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockCancellationResponse", stockCancellation.data);
+    console.log("✅ | Stock cancellation response", stockCancellation.data);
 
     // console.log("..creating stock transfer");
     // // create stockTransfer

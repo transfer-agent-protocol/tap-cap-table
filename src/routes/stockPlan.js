@@ -54,7 +54,7 @@ stockPlan.post("/create", async (req, res) => {
         await validateInputAgainstOCF(incomingStockPlanToValidate, stockPlanSchema);
         const stockPlan = await createStockPlan(incomingStockPlanForDB);
 
-        console.log("Created Stock Plan in DB: ", stockPlan);
+        console.log("✅ | Created Stock Plan in DB: ", stockPlan);
 
         res.status(200).send({ stockPlan });
     } catch (error) {

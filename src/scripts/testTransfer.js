@@ -1,12 +1,15 @@
 import axios from "axios";
 import { issuer, stakeholder1, stakeholder2, stockClass, stockIssuance, stockTransfer } from "./sampleData.js";
+import sleep from "../utils/sleep.js";
 
 const main = async () => {
-    console.log("..creating issuer");
+    console.log("⏳ | Creating issuer…");
     // create issuer
     const issuerResponse = await axios.post("http://localhost:8080/issuer/create", issuer);
 
-    console.log("issuer response ", issuerResponse.data);
+    console.log("✅ | Issuer response ", issuerResponse.data);
+
+    await sleep(3000);
 
     console.log("..creating first stakeholder");
 
@@ -14,23 +17,29 @@ const main = async () => {
     // create two stakeholders
     const stakeholder1Response = await axios.post("http://localhost:8080/stakeholder/create", stakeholder1(issuerResponse.data.issuer._id));
 
-    console.log("stakeholder1Response", stakeholder1Response.data);
-    console.log("finished");
+    console.log("✅ | stakeholder1Response", stakeholder1Response.data);
+    console.log("✅ | Finished");
 
-    console.log("..creating second stakeholder");
+    await sleep(3000);
+
+    console.log("⏳ | Creating second stakeholder…");
 
     const stakeholder2Response = await axios.post("http://localhost:8080/stakeholder/create", stakeholder2(issuerResponse.data.issuer._id));
 
-    console.log("stakeholder2Response", stakeholder2Response.data);
+    console.log("✅ | stakeholder2Response", stakeholder2Response.data);
 
-    console.log("..creating stock class");
+    await sleep(3000);
+
+    console.log("⏳ | Creating stock class…");
 
     // create stockClass
     const stockClassResponse = await axios.post("http://localhost:8080/stock-class/create", stockClass(issuerResponse.data.issuer._id));
 
-    console.log("stockClassResponse", stockClassResponse.data);
+    console.log("✅ | stockClassResponse", stockClassResponse.data);
 
-    console.log("..creating stock issuance");
+    await sleep(3000);
+
+    console.log("⏳ | Creating stock issuance…");
 
     // create stockIssuance
     const stockIssuanceResponse = await axios.post(
@@ -44,7 +53,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockIssuanceResponse1", stockIssuanceResponse.data);
+    console.log("✅ | stockIssuanceResponse1", stockIssuanceResponse.data);
 
     // const stockIssuanceResponse2 = await axios.post(
     //     "http://localhost:8080/transactions/issuance/stock",
@@ -72,7 +81,7 @@ const main = async () => {
 
     // console.log("stockIssuanceResponse3", stockIssuanceResponse.data);
 
-    console.log("..creating stock transfer");
+    console.log("⏳ | Creating stock transfer…");
 
     // create stockTransfer
     const stockTransferResponse = await axios.post(
@@ -87,7 +96,7 @@ const main = async () => {
         )
     );
 
-    console.log("stockTransferResponse", stockTransferResponse.data);
+    console.log("✅ | stockTransferResponse", stockTransferResponse.data);
 };
 
 main()

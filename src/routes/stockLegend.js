@@ -54,7 +54,7 @@ stockLegend.post("/create", async (req, res) => {
         await validateInputAgainstOCF(incomingStockLegendToValidate, stockLegendSchema);
         const stockLegend = await createStockLegendTemplate(incomingStockLegendForDB);
 
-        console.log("Created Stock Legend in DB: ", stockLegend);
+        console.log("✅ | Created Stock Legend in DB: ", stockLegend);
 
         res.status(200).send({ stockLegend });
     } catch (error) {
