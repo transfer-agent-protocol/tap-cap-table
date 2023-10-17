@@ -186,7 +186,7 @@
                     "object_type": "TX_STOCK_REISSUANCE",
                     "id": "test-stock-reissuance-minimal",
                     "security_id": "06fcd012-4a7f-446e-87ed-c7cc7cfbecec",
-                    "security_ids": ["01a550ea-fe3b-4082-8de0-f2bf9edfc87b", "0e6d0858-e9d5-48d2-ad9d-5e7c19b30118"],
+                    "resulting_security_ids": ["01a550ea-fe3b-4082-8de0-f2bf9edfc87b", "0e6d0858-e9d5-48d2-ad9d-5e7c19b30118"],
                     "date": "2023-10-03",
                     "reason_text": "stock split",
                     "comments": []
