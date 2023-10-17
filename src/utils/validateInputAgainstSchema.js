@@ -1,9 +1,20 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import axios from "axios";
+import fs from "fs";
+import path from "path";
 
 const ajv = new Ajv();
 addFormats(ajv); // To support formats like date-time
+
+const schemaDirPath = path.join("__dirname", "../../ocf/schema");
+
+function replaceRemoteUrlLocally(remoteUrl) {
+    const formattedUrl = remoteUrl.replace(
+        "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema",
+        schemaDirPath
+    );
+    return path.join("__dirname", formattedUrl);
+}
 
 async function fetchRefsInSchema(schema) {
     // If the schema has its own $ref references, fetch and add those first
@@ -40,7 +51,7 @@ async function fetchRefsInSchema(schema) {
     // Handle $ref references inside "allOf", "anyOf", "oneOf", or "not" keywords
     for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
         if (schema[keyword]) {
-            console.log("schema[keyword] ", schema[keyword]);
+            // console.log("schema[keyword] ", schema[keyword]);
             for (const subSchema of schema[keyword]) {
                 await fetchRefsInSchema(subSchema);
             }
@@ -54,9 +65,11 @@ async function fetchAndAddExternalSchema(schemaOrUrl) {
     // Check if the argument is a URL or a schema object
     if (typeof schemaOrUrl === "string") {
         // If it's a URL, fetch the schema
-        const response = await axios.get(schemaOrUrl);
-        schema = response.data;
-        // console.log("schema ", schema);
+        let schemaPath = replaceRemoteUrlLocally(schemaOrUrl);
+        // console.log("schemaPath ", schemaPath);
+        const _schema = JSON.parse(fs.readFileSync(schemaPath, "utf-8"));
+        // console.log("_schema ", _schema);
+        schema = _schema;
     } else {
         // If it's a schema object, use it directly
         schema = schemaOrUrl;
@@ -118,7 +131,7 @@ async function validateInputAgainstOCF(input, schema) {
     const { isValid, errors } = await validateInputAgainstSchema(input, schema);
 
     if (isValid) {
-        console.log("Check Against OCF Schema is valid ✅", isValid);
+        console.log(`Check ${schema.title} Against OCF Schema is valid ✅`, isValid);
     } else {
         console.log("Error validating OCF schema: ", JSON.stringify(errors, null, 2));
         throw new Error(JSON.stringify(errors, null, 2));
