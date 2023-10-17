@@ -14,7 +14,15 @@ import {
     createValuation,
     createVestingTerms,
 } from "../operations/create.js";
-import addTransactions from "../operations/transactions.js"; // Import addTransactions
+import addTransactions from "../operations/transactions.js";
+
+import txStockIssuanceSchema from "../../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
+import txStockCancellationSchema from "../../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
+import txStockTransferSchema from "../../../ocf/schema/objects/transactions/transfer/StockTransfer.schema.json" assert { type: "json" };
+import txStockRetractionSchema from "../../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
+import txStockAcceptanceSchema from "../../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
+import txStockReissuanceSchema from "../../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
+import txStockRepurchaseSchema from "../../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
 
 import validateInputAgainstOCF from "../../utils/validateInputAgainstSchema.js";
 import preProcessManifestTxs from "../../state-machines/process.js";
@@ -26,6 +34,40 @@ async function processEntity(inputEntities, createEntityFunction, schema, issuer
         inputEntity = { ...inputEntity, issuer: issuerId };
         const entity = await createEntityFunction(inputEntity);
         console.log(`${createEntityFunction.name.replace("create", "")} added `, entity);
+    }
+}
+
+async function processTransactionEntity(txs) {
+    for (let tx of txs.items) {
+        let schema;
+        switch (tx.object_type) {
+            case "TX_STOCK_ISSUANCE":
+                schema = txStockIssuanceSchema;
+                break;
+            case "TX_STOCK_TRANSFER":
+                schema = txStockTransferSchema;
+                break;
+            case "TX_STOCK_CANCELLATION":
+                schema = txStockCancellationSchema;
+                break;
+            case "TX_STOCK_RETRACTION":
+                schema = txStockRetractionSchema;
+                break;
+            case "TX_STOCK_REISSUANCE":
+                schema = txStockReissuanceSchema;
+                break;
+            case "TX_STOCK_ACCEPTANCE":
+                schema = txStockAcceptanceSchema;
+                break;
+            case "TX_STOCK_REPURCHASE":
+                schema = txStockRepurchaseSchema;
+                break;
+            // Should we add adjustment here?
+            default:
+                throw new Error(`${tx.object_type} is not mapped - please add the transaction validation to the schema`);
+        }
+
+        await validateInputAgainstOCF(tx, schema);
     }
 }
 
@@ -70,9 +112,8 @@ async function seedDB(manifestArr) {
     await processEntity(incomingStockPlans, createStockPlan, stockPlanSchema, issuerId);
     await processEntity(incomingValuations, createValuation, valuationSchema, issuerId);
     await processEntity(incomingVestingTerms, createVestingTerms, vestingTermsSchema, issuerId);
+    await processTransactionEntity(incomingTransactions);
 
-    // TRANSACTIONS
-    // TODO: Validate transactions through OCF
     preProcessManifestTxs(issuerId, incomingTransactions);
     await addTransactions(incomingTransactions, issuerId);
 
