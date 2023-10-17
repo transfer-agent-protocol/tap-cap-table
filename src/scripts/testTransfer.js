@@ -1,5 +1,6 @@
 import axios from "axios";
 import { issuer, stakeholder1, stakeholder2, stockClass, stockIssuance, stockTransfer } from "./sampleData.js";
+import sleep from "../utils/sleep.js";
 
 const main = async () => {
     console.log("⏳ | Creating issuer…");
@@ -7,6 +8,8 @@ const main = async () => {
     const issuerResponse = await axios.post("http://localhost:8080/issuer/create", issuer);
 
     console.log("✅ | Issuer response ", issuerResponse.data);
+
+    await sleep(3000);
 
     console.log("..creating first stakeholder");
 
@@ -17,11 +20,15 @@ const main = async () => {
     console.log("✅ | stakeholder1Response", stakeholder1Response.data);
     console.log("✅ | Finished");
 
+    await sleep(3000);
+
     console.log("⏳ | Creating second stakeholder…");
 
     const stakeholder2Response = await axios.post("http://localhost:8080/stakeholder/create", stakeholder2(issuerResponse.data.issuer._id));
 
     console.log("✅ | stakeholder2Response", stakeholder2Response.data);
+
+    await sleep(3000);
 
     console.log("⏳ | Creating stock class…");
 
@@ -29,6 +36,8 @@ const main = async () => {
     const stockClassResponse = await axios.post("http://localhost:8080/stock-class/create", stockClass(issuerResponse.data.issuer._id));
 
     console.log("✅ | stockClassResponse", stockClassResponse.data);
+
+    await sleep(3000);
 
     console.log("⏳ | Creating stock issuance…");
 

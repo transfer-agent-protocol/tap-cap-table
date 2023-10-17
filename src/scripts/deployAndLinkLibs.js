@@ -1,13 +1,10 @@
-import { config } from "dotenv";
 import { spawn } from "child_process";
+import { config } from "dotenv";
 import fs from "fs";
 import path from "path";
+import sleep from "../utils/sleep.js";
 
 config();
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const privateKey = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
 

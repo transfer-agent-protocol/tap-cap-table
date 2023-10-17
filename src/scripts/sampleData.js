@@ -13,6 +13,7 @@ export const issuer = {
         email_address: "concierge@poet.network",
         email_type: "BUSINESS",
     },
+    initial_shares_authorized: "1000000000",
     address: {
         address_type: "LEGAL",
         street_suite: "447 Broadway\n2nd Fl #713",
