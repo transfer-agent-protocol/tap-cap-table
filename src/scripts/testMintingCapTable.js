@@ -1,8 +1,6 @@
 import axios from "axios";
 import sleep from "../utils/sleep.js";
 import { issuer, stakeholder1, stakeholder2, stockClass, stockIssuance } from "./sampleData.js";
-import connectDB from "../db/config/mongoose.js";
-connectDB();
 
 const main = async () => {
     console.log("⏳ | Creating issuer…");
@@ -11,7 +9,7 @@ const main = async () => {
 
     console.log("✅ | Issuer response ", issuerResponse.data);
 
-    await sleep(1000);
+    await sleep(3000);
 
     console.log("⏳ | Creating first stakeholder");
 
@@ -21,7 +19,7 @@ const main = async () => {
     console.log("✅ | stakeholder1Response", stakeholder1Response.data);
     console.log("✅ | finished");
 
-    await sleep(1000);
+    await sleep(3000);
 
     console.log("⏳ | Creating second stakeholder…");
 
@@ -29,7 +27,7 @@ const main = async () => {
 
     console.log("✅ | stakeholder2Response", stakeholder2Response.data);
 
-    await sleep(1000);
+    await sleep(3000);
 
     console.log("⏳| Creating stock class");
 
@@ -37,8 +35,6 @@ const main = async () => {
     const stockClassResponse = await axios.post("http://localhost:8080/stock-class/create", stockClass(issuerResponse.data.issuer._id));
 
     console.log("✅ | stockClassResponse", stockClassResponse.data);
-
-    await sleep(1000);
 };
 
 main()
