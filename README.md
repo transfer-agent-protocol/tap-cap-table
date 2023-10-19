@@ -75,7 +75,7 @@ This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to
 
 With the mongo DB running on Docker you can start Anvil.
 
-In the `chain` directory, run:
+In the `/chain` directory, run:
 
 ```sh
 anvil
@@ -93,7 +93,7 @@ In our architecture, each transaction is mapped to an external library, which en
 
 To deploy these libraries:
 
-1. Ensure you have Anvil running in the /chain directory
+1. Ensure you have Anvil running in the `/chain` directory
 2. Then, inside of the root directory run `yarn build`
 
 This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
@@ -132,7 +132,7 @@ To seed the database, you'll need to
 This operation will perform several checks. If everything is in order, it will deploy the cap table onchain, and seed the database with the sample data.
 
 1. Check if the cap table is already deployed onchain. If it is, it will return an error
-2. Validate schema against [OCF](../ocf/schema/objects/), returned an error if it isn't valid
+2. Validate schema against [OCF](../ocf/schema/objects/). If it isn't, it will return an error
 3. Check if the cap table is already in the database. If it is, it will return an error
 4. Mint the cap table onchain if all checks pass, then save it to the Mongo DB instance.
 
@@ -152,9 +152,9 @@ We're shipping code fast. If you run into an issue, particularly one that result
 
 Inside of `/chain`:
 
-- restart anvil
-- run `forge clean`
-- move back to the root directory, then run `yarn build`
+- Restart anvil
+- Run `forge clean`
+- Move back to the root directory, then run `yarn build`
 
 After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
 
