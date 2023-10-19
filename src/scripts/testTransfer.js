@@ -13,7 +13,6 @@ const main = async () => {
 
     console.log("..creating first stakeholder");
 
-    // console.log("stakeholder1", stakeholder1);
     // create two stakeholders
     const stakeholder1Response = await axios.post("http://localhost:8080/stakeholder/create", stakeholder1(issuerResponse.data.issuer._id));
 
@@ -52,37 +51,9 @@ const main = async () => {
             "1.2"
         )
     );
-
     console.log("✅ | stockIssuanceResponse1", stockIssuanceResponse.data);
 
-    // const stockIssuanceResponse2 = await axios.post(
-    //     "http://localhost:8080/transactions/issuance/stock",
-    //     stockIssuance(
-    //         issuerResponse.data.issuer._id,
-    //         stakeholder1Response.data.stakeholder._id,
-    //         stockClassResponse.data.stockClass._id,
-    //         "4000",
-    //         "1.3"
-    //     )
-    // );
-
-    // console.log("stockIssuanceResponse2", stockIssuanceResponse.data);
-
-    // const stockIssuanceResponse3 = await axios.post(
-    //     "http://localhost:8080/transactions/issuance/stock",
-    //     stockIssuance(
-    //         issuerResponse.data.issuer._id,
-    //         stakeholder1Response.data.stakeholder._id,
-    //         stockClassResponse.data.stockClass._id,
-    //         "1000",
-    //         "1.4"
-    //     )
-    // );
-
-    // console.log("stockIssuanceResponse3", stockIssuanceResponse.data);
-
     console.log("⏳ | Creating stock transfer…");
-
     // create stockTransfer
     const stockTransferResponse = await axios.post(
         "http://localhost:8080/transactions/transfer/stock",
