@@ -1,85 +1,31 @@
+import Issuer from "../db/objects/Issuer.js";
+import Stakeholder from "../db/objects/Stakeholder.js";
+import StockClass from "../db/objects/StockClass.js";
 import axios from "axios";
-import sleep from "../utils/sleep.js";
-import { issuer, stakeholder1, stakeholder2, stockClass, stockIssuance } from "./sampleData.js";
+import { stockIssuance } from "./sampleData.js";
+import connectDB from "../db/config/mongoose.js";
+connectDB();
 
 const main = async () => {
-    console.log("⏳ | Creating issuer…");
-    // create issuer
-    const issuerResponse = await axios.post("http://localhost:8080/issuer/create", issuer);
-
-    console.log("✅ | Issuer response ", issuerResponse.data);
-
-    await sleep(3000);
-
-    console.log("⏳ | Creating first stakeholder");
-
-    // console.log("stakeholder1", stakeholder1);
-    // create two stakeholders
-    const stakeholder1Response = await axios.post("http://localhost:8080/stakeholder/create", stakeholder1(issuerResponse.data.issuer._id));
-
-    console.log("✅ | stakeholder1Response", stakeholder1Response.data);
-    console.log("✅ | finished");
-
-    await sleep(3000);
-
-    console.log("⏳ | Creating second stakeholder…");
-
-    const stakeholder2Response = await axios.post("http://localhost:8080/stakeholder/create", stakeholder2(issuerResponse.data.issuer._id));
-
-    console.log("✅ | stakeholder2Response", stakeholder2Response.data);
-
-    await sleep(3000);
-
-    console.log("⏳| Creating stock class");
-
-    // create stockClass
-    const stockClassResponse = await axios.post("http://localhost:8080/stock-class/create", stockClass(issuerResponse.data.issuer._id));
-
-    console.log("✅ | stockClassResponse", stockClassResponse.data);
-
-    await sleep(3000);
-
     console.log("⏳ | Creating stock issuance");
+
+    const lastIssuer = await Issuer.find().sort({ _id: -1 }).limit(1);
+    const { _id: issuerId } = lastIssuer[0];
+
+    const lastStakeholder = await Stakeholder.find().sort({ _id: -1 }).limit(1);
+    const { _id: stakeholderId } = lastStakeholder[0];
+
+    const lastStockClass = await StockClass.find().sort({ _id: -1 }).limit(1);
+    const { _id: stockClassId } = lastStockClass[0];
+    console.log({ issuerId, stakeholderId, stockClassId });
 
     // create stockIssuance
     const stockIssuanceResponse = await axios.post(
         "http://localhost:8080/transactions/issuance/stock",
-        stockIssuance(
-            issuerResponse.data.issuer._id,
-            stakeholder1Response.data.stakeholder._id,
-            stockClassResponse.data.stockClass._id,
-            "2000",
-            "1.2"
-        )
+        stockIssuance(issuerId, stakeholderId, stockClassId, "2000", "1.2")
     );
 
     console.log("✅ | stockIssuanceResponse1", stockIssuanceResponse.data);
-
-    // const stockIssuanceResponse2 = await axios.post(
-    //     "http://localhost:8080/transactions/issuance/stock",
-    //     stockIssuance(
-    //         issuerResponse.data.issuer._id,
-    //         stakeholder1Response.data.stakeholder._id,
-    //         stockClassResponse.data.stockClass._id,
-    //         "4000",
-    //         "1.3"
-    //     )
-    // );
-
-    // console.log("stockIssuanceResponse2", stockIssuanceResponse.data);
-
-    // const stockIssuanceResponse3 = await axios.post(
-    //     "http://localhost:8080/transactions/issuance/stock",
-    //     stockIssuance(
-    //         issuerResponse.data.issuer._id,
-    //         stakeholder1Response.data.stakeholder._id,
-    //         stockClassResponse.data.stockClass._id,
-    //         "1000",
-    //         "1.4"
-    //     )
-    // );
-
-    // console.log("stockIssuanceResponse3", stockIssuanceResponse.data);
 };
 
 main()
