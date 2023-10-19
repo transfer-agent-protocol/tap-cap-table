@@ -140,7 +140,7 @@ yarn deseed
 
 ### Using sample scripts that call our APIs
 
-In another terminal (ensuring you’re in the root directory) run `node src/scripts/testIssuance.js.` If you navigate to `/scripts` directory, you’ll be able to interact with the sample data.
+In another terminal (ensuring you're in the root directory) run `node src/scripts/testIssuance.js.` If you navigate to `/scripts` directory, you'll be able to interact with the sample data.
 
 ## Debugging Steps
 
