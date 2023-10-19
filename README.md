@@ -2,11 +2,11 @@
 
 Developed by:
 
--   [Poet](https://poet.network/)
--   [Plural Energy](https://www.pluralenergy.co/)
--   [Fairmint](https://www.fairmint.com/)
+- [Poet](https://poet.network/)
+- [Plural Energy](https://www.pluralenergy.co/)
+- [Fairmint](https://www.fairmint.com/)
 
-This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active developemnt, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
+This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active development, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
 
 <div align="center">
   <a href="https://github.com/poet-network/tap-cap-table/blob/main/LICENSE">
@@ -16,28 +16,28 @@ This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap
 
 ## Dependencies
 
--   [Docker](https://docs.docker.com/get-docker/)
+- [Docker](https://docs.docker.com/get-docker/)
 
--   [Foundry](https://getfoundry.sh/)
+- [Foundry](https://getfoundry.sh/)
 
 ```sh
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
--   [Mongo Compass](https://www.mongodb.com/try/download/compass)
+- [Mongo Compass](https://www.mongodb.com/try/download/compass)
 
--   [Postman App](https://www.postman.com/downloads/)
+- [Postman App](https://www.postman.com/downloads/)
 
--   [Node.js v18.16.0](https://nodejs.org/en/download/)
+- [Node.js v18.16.0](https://nodejs.org/en/download/)
 
--   [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
+- [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
 
 We're using the official [MongoDB Docker image](https://hub.docker.com/_/mongo) for the local development database. You can find the [Docker Compose file](./docker-compose.yml) in the root of this repository.
 
 ## Official links
 
--   [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
--   [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
+- [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
+- [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
 
 ## Getting started
 
@@ -91,26 +91,23 @@ yarn install && yarn setup
 
 In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met.
 
-In order to deploy these libraries, ensure you have the server and anvil running. Then `run yarn build` inside of the root directory.
+In order to deploy these libraries, ensure you have anvil running. Then `run yarn build` inside of the root directory.
 
 This might take a couple of minutes, since each library is being deployed one at a time using a dependency graph that's generated with the command.
 
+## Running the cap table server
 
-## Running the cap table
-
-Docker compose should have started the database. Once that's running, start the server with nodemon:
+After the deployment script is completed, start the server with nodemon:
 
 ```sh
 yarn start
 ```
 
-Innspect the database with Mongo Compass. To connect to it, use the same string that we provided in the `.env` file:
+Inspect the database with Mongo Compass. To connect to it, use the same string that we provided in the `.env` file:
 
 ```sh
 mongodb://tap:tap@localhost:27017/mongo?authSource=admin&retryWrites=true&w=majority
 ```
-
-
 
 ## Seeding and deploying the cap table with sample data
 
@@ -151,10 +148,10 @@ We're shipping code fast. If you run into an issue, particularly one that result
 
 Inside of `/chain`:
 
--   restart anvil
--   run `forge clean`
--   followed by `forge build --via-ir`
--   move back to the root directory, then run `yarn build`
+- restart anvil
+- run `forge clean`
+- followed by `forge build --via-ir`
+- move back to the root directory, then run `yarn build`
 
 After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
 
