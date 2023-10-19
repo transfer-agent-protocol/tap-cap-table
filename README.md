@@ -91,9 +91,12 @@ yarn install && yarn setup
 
 In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met.
 
-In order to deploy these libraries, ensure you have anvil running. Then `run yarn build` inside of the root directory.
+To deploy these libraries:
 
-This might take a couple of minutes, since each library is being deployed one at a time using a dependency graph that's generated with the command.
+1. Ensure you have Anvil running in the /chain directory
+2. Then, inside of the root directory run `yarn build`
+
+This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
 
 ## Running the cap table server
 
