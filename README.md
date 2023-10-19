@@ -73,7 +73,7 @@ docker compose up
 
 This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to run the local blockchain and deploy our cap table smart contracts. At all times, you should have Anvil running alongside Docker and nodemon.
 
-With the cap table instance running in Docker, and nodemon running the server, you can start Anvil.
+With the mongo DB running on Docker you can start Anvil.
 
 In the `chain` directory, run:
 
@@ -94,6 +94,7 @@ In our architecture, each transaction is mapped to an external library, which en
 In order to deploy these libraries, ensure you have anvil running. Then `run yarn build` inside of the root directory.
 
 This might take a couple of minutes, since each library is being deployed one at a time using a dependency graph that's generated with the command.
+
 
 ## Running the cap table server
 
@@ -140,7 +141,7 @@ yarn deseed
 
 ### Using sample scripts that call our APIs
 
-In another terminal (ensuring you’re in the root directory) run `node src/scripts/testIssuance.js.` If you navigate to `/scripts` directory, you’ll be able to interact with the sample data.
+In another terminal (ensuring you’re in the root directory) run `node src/scripts/testMintingCapTable.js.` If you navigate to `/scripts` directory, you’ll be able to interact with the sample data.
 
 ## Debugging Steps
 
@@ -150,7 +151,6 @@ Inside of `/chain`:
 
 - restart anvil
 - run `forge clean`
-- followed by `forge build --via-ir`
 - move back to the root directory, then run `yarn build`
 
 After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
