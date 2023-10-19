@@ -12,7 +12,7 @@ const main = async () => {
         stockClassAuthorizedSharesAdjust(
             issuer, // Issuer ID
             stock_class_id, // Stock Class ID
-            "10000000000",
+            "11000000",
             [`Adjusting stock class authorized shares for ${stock_class_id} - issuer ${issuer}`]
         )
     );
