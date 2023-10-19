@@ -69,11 +69,32 @@ In the root folder, pull the official Mongo image, and run the local development
 docker compose up
 ```
 
+## Running Anvil
+
+This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to run the local blockchain and deploy our cap table smart contracts. At all times, you should have Anvil running alongside Docker and nodemon.
+
+With the cap table instance running in Docker, and nodemon running the server, you can start Anvil.
+
+In the `chain` directory, run:
+
+```sh
+anvil
+```
+
 Install dependencies and setup [Foundry](https://book.getfoundry.sh/) and `forge` with our setup script:
 
 ```sh
 yarn install && yarn setup
 ```
+
+## Deploying external libraries
+
+In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met.
+
+In order to deploy these libraries, ensure you have the server and anvil running. Then `run yarn build` inside of the root directory.
+
+This might take a couple of minutes, since each library is being deployed one at a time using a dependency graph that's generated with the command.
+
 
 ## Running the cap table
 
@@ -89,25 +110,7 @@ Innspect the database with Mongo Compass. To connect to it, use the same string 
 mongodb://tap:tap@localhost:27017/mongo?authSource=admin&retryWrites=true&w=majority
 ```
 
-## Running Anvil
 
-This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to run the local blockchain and deploy our cap table smart contracts. At all times, you should have Anvil running alongside Docker and nodemon.
-
-With the cap table instance running in Docker, and nodemon running the server, you can start Anvil.
-
-In the `chain` directory, run:
-
-```sh
-anvil
-```
-
-## Deploying external libraries
-
-In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met.
-
-In order to deploy these libraries, ensure you have the server and anvil running. Then `run yarn build` inside of the root directory.
-
-This might take a couple of minutes, since each library is being deployed one at a time using a dependency graph that's generated with the command.
 
 ## Seeding and deploying the cap table with sample data
 
