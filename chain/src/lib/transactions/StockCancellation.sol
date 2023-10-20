@@ -4,14 +4,13 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
-import "../../transactions/StockCancellationTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
 library StockCancellationLib {
     using SafeMath for uint256;
 
-    event StockCancellationCreated(StockCancellation cancellation);
+    event StockCancellationCreated(bytes32 txHash);
 
     function cancelStockByTA(
         uint256 nonce,
@@ -23,7 +22,7 @@ library StockCancellationLib {
         uint256 quantity,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
@@ -72,9 +71,9 @@ library StockCancellationLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
     }
 
-    function _cancelStock(StockCancellation memory cancellation, address[] storage transactions) internal {
-        StockCancellationTx cancellationTx = new StockCancellationTx(cancellation);
-        transactions.push(address(cancellationTx));
-        emit StockCancellationCreated(cancellation);
+    function _cancelStock(StockCancellation memory cancellation, bytes32[] storage transactions) internal {
+        bytes32 txHash = keccak256(abi.encode(cancellation));
+        transactions.push(txHash);
+        emit StockCancellationCreated(txHash);
     }
 }

@@ -4,8 +4,6 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { Issuer, StockClass } from "../Structs.sol";
 import "../TxHelper.sol";
-import "../../transactions/IssuerAuthorizedSharesAdjustmentTX.sol";
-import "../../transactions/StockClassAuthorizedSharesAdjustmentTX.sol";
 
 library Adjustment {
     using SafeMath for uint256;
@@ -13,9 +11,9 @@ library Adjustment {
     // 1. Issuer authorized shares adjustment
     // 2. Stock Class authorized shares adjustment
 
-    event IssuerAuthorizedSharesAdjusted(IssuerAuthorizedSharesAdjustment adjustment);
+    event IssuerAuthorizedSharesAdjusted(bytes32 txHash);
 
-    event StockClassAuthorizedSharesAdjusted(StockClassAuthorizedSharesAdjustment adjustment);
+    event StockClassAuthorizedSharesAdjusted(bytes32 txHash);
 
     function adjustIssuerAuthorizedShares(
         uint256 nonce,
@@ -24,7 +22,7 @@ library Adjustment {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate,
         Issuer storage issuer,
-        address[] storage transactions
+        bytes32[] storage transactions
     ) external {
         nonce++;
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustIssuerAuthorizedShares(
@@ -37,10 +35,9 @@ library Adjustment {
         );
 
         issuer.shares_authorized = newSharesAuthorized.add(issuer.shares_authorized);
-
-        IssuerAuthorizedSharesAdjustmentTx issuerAuthorizedSharesAdjustmentTx = new IssuerAuthorizedSharesAdjustmentTx(adjustment);
-        transactions.push(address(issuerAuthorizedSharesAdjustmentTx));
-        emit IssuerAuthorizedSharesAdjusted(adjustment);
+        bytes32 txHash = keccak256(abi.encode(adjustment));
+        transactions.push(txHash);
+        emit IssuerAuthorizedSharesAdjusted(txHash);
     }
 
     // do the above for stock class
@@ -51,7 +48,7 @@ library Adjustment {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate,
         StockClass storage stockClass,
-        address[] storage transactions
+        bytes32[] storage transactions
     ) external {
         uint256 newShares = newSharesAuthorized + stockClass.shares_authorized;
         stockClass.shares_authorized = newShares;
@@ -65,9 +62,9 @@ library Adjustment {
             stockholderApprovalDate,
             stockClass.id
         );
-
-        StockClassAuthorizedSharesAdjustmentTx stockClassAuthorizedSharesAdjustmentTx = new StockClassAuthorizedSharesAdjustmentTx(adjustment);
-        transactions.push(address(stockClassAuthorizedSharesAdjustmentTx));
-        emit StockClassAuthorizedSharesAdjusted(adjustment);
+        
+        bytes32 txHash = keccak256(abi.encode(adjustment));
+        transactions.push(txHash);
+        emit StockClassAuthorizedSharesAdjusted(txHash);
     }
 }

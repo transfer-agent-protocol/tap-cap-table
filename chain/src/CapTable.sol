@@ -22,7 +22,7 @@ contract CapTable is AccessControlDefaultAdminRules {
     StockLegendTemplate[] public stockLegendTemplates;
 
     // @dev Transactions will be created on-chain then reflected off-chain.
-    address[] public transactions;
+    bytes32[] public transactions;
 
     // used to help generate deterministic UUIDs
     uint256 private nonce;

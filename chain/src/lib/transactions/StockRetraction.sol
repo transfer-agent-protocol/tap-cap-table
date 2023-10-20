@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockRetraction, ActivePositions, ActivePosition, SecIdsStockClass, StockClass, Issuer } from "../Structs.sol";
 import "./StockIssuance.sol";
-import "../../transactions/StockRetractionTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 import "./StockIssuance.sol";
@@ -23,7 +22,7 @@ library StockRetractionLib {
         string memory reasonText,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
@@ -42,9 +41,9 @@ library StockRetractionLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
     }
 
-    function _retractStock(StockRetraction memory retraction, address[] storage transactions) internal {
-        StockRetractionTx retractionTx = new StockRetractionTx(retraction);
-        transactions.push(address(retractionTx));
+    function _retractStock(StockRetraction memory retraction, bytes32[] storage transactions) internal {
+        bytes32 txHash = keccak256(abi.encode(retraction));
+        transactions.push(txHash);
         emit StockRetractionCreated(retraction);
     }
 }

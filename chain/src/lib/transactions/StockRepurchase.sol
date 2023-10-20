@@ -4,14 +4,13 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
-import "../../transactions/StockRepurchaseTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
 library StockRepurchaseLib {
     using SafeMath for uint256;
 
-    event StockRepurchaseCreated(StockRepurchase repurchase);
+    event StockRepurchaseCreated(bytes32 txHash);
 
     function repurchaseStockByTA(
         uint256 nonce,
@@ -24,7 +23,7 @@ library StockRepurchaseLib {
         uint256 price,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
@@ -75,9 +74,9 @@ library StockRepurchaseLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
     }
 
-    function _repurchaseStock(StockRepurchase memory repurchase, address[] storage transactions) internal {
-        StockRepurchaseTx repurchaseTx = new StockRepurchaseTx(repurchase);
-        transactions.push(address(repurchaseTx));
-        emit StockRepurchaseCreated(repurchase);
+    function _repurchaseStock(StockRepurchase memory repurchase, bytes32[] storage transactions) internal {
+        bytes32 txHash = keccak256(abi.encode(repurchase));
+        transactions.push(txHash);
+        emit StockRepurchaseCreated(txHash);
     }
 }

@@ -4,12 +4,11 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "../DeterministicUUID.sol";
-import "../../transactions/StockIssuanceTX.sol";
 
 library StockIssuanceLib {
     using SafeMath for uint256;
 
-    event StockIssuanceCreated(StockIssuance issuance);
+    event StockIssuanceCreated(bytes32 txHash);
 
     function createStockIssuanceByTA(
         uint256 nonce,
@@ -31,7 +30,7 @@ library StockIssuanceLib {
         string[] memory securityLawExemptions,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
@@ -90,10 +89,10 @@ library StockIssuanceLib {
         stockClass.shares_issued = stockClass.shares_issued.add(issuance.quantity);
     }
 
-    function _issueStock(StockIssuance memory issuance, address[] storage transactions) internal {
-        StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
-        transactions.push(address(issuanceTx));
-        emit StockIssuanceCreated(issuance);
+    function _issueStock(StockIssuance memory issuance, bytes32[] storage transactions) internal {
+        bytes32 txHash = keccak256(abi.encode(issuance));
+        transactions.push(txHash);
+        emit StockIssuanceCreated(txHash);
     }
 
     function _safeNow() internal view returns (uint40) {

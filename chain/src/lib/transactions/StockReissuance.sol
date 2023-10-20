@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
-import "../../transactions/StockReissuanceTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
@@ -13,7 +12,7 @@ import "../DeleteContext.sol";
 library StockReissuanceLib {
     using SafeMath for uint256;
 
-    event StockReissuanceCreated(StockReissuance reissuance);
+    event StockReissuanceCreated(bytes32 txHash);
 
     function reissueStockByTA(
         uint256 nonce,
@@ -25,7 +24,7 @@ library StockReissuanceLib {
         string memory reason_text,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
@@ -43,9 +42,9 @@ library StockReissuanceLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
     }
 
-    function _reissueStock(StockReissuance memory reissuance, address[] storage transactions) internal {
-        StockReissuanceTx reissuanceTx = new StockReissuanceTx(reissuance);
-        transactions.push(address(reissuanceTx));
-        emit StockReissuanceCreated(reissuance);
+    function _reissueStock(StockReissuance memory reissuance, bytes32[] storage transactions) internal {
+        bytes32 txHash = keccak256(abi.encode(reissuance));
+        transactions.push(txHash);
+        emit StockReissuanceCreated(txHash);
     }
 }

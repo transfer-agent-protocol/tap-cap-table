@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
-import "../../transactions/StockTransferTX.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
 
@@ -11,7 +10,7 @@ import "../DeleteContext.sol";
 library StockTransferLib {
     using SafeMath for uint256;
 
-    event StockTransferCreated(StockTransfer transfer);
+    event StockTransferCreated(bytes32 txHash);
 
     function transferStock(
         bytes16 transferorStakeholderId,
@@ -23,7 +22,7 @@ library StockTransferLib {
         uint256 nonce,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
@@ -100,7 +99,7 @@ library StockTransferLib {
         uint256 nonce,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
-        address[] storage transactions,
+        bytes32[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) internal {
@@ -160,9 +159,9 @@ library StockTransferLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(transferorStakeholderId, stockClassId, transferorSecurityId, activeSecs);
     }
 
-    function _transferStock(StockTransfer memory transfer, address[] storage transactions) internal {
-        StockTransferTx transferTx = new StockTransferTx(transfer);
-        transactions.push(address(transferTx));
-        emit StockTransferCreated(transfer);
+    function _transferStock(StockTransfer memory transfer, bytes32[] storage transactions) internal {
+        bytes32 txHash = keccak256(abi.encode(transfer));
+        transactions.push(txHash);
+        emit StockTransferCreated(txHash);
     }
 }

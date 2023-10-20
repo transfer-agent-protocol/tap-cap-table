@@ -13,3 +13,4 @@ enum StockClassType {
     COMMON,
     PREFERRED
 }
+
