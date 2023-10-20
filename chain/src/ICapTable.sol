@@ -6,22 +6,14 @@ import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts
 import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, ShareNumbersIssued } from "./lib/Structs.sol";
 
 interface ICapTable {
-    function issuer() external returns (Issuer memory);
-
-    function stakeholders(uint index) external returns (Stakeholder memory);
-
-    function stockClasses(uint index) external returns (StockClass memory);
-
-    function stockLegendTemplates(uint index) external returns (StockLegendTemplate memory);
-
     // @dev Transactions will be created on-chain then reflected off-chain.
-    function transactions(uint index) external returns (address);
+    function transactions(uint index) external view returns (address);
 
-    function stakeholderIndex(bytes16 index) external returns (uint);
+    function stakeholderIndex(bytes16 index) external view returns (uint);
 
-    function stockClassIndex(bytes16 index) external returns (uint);
+    function stockClassIndex(bytes16 index) external view returns (uint);
 
-    function walletsPerStakeholder(address wallet) external returns (bytes16);
+    function walletsPerStakeholder(address wallet) external view returns (bytes16);
 
     // RBAC
     function ADMIN_ROLE() external returns (bytes32);

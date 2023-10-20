@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import { ICapTable } from "./ICapTable.sol";
 import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
@@ -13,7 +14,7 @@ import "./lib/transactions/Adjustment.sol";
 import "./lib/transactions/StockAcceptance.sol";
 import "./lib/transactions/StockReissuance.sol";
 
-contract CapTable is AccessControlDefaultAdminRules {
+contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     using SafeMath for uint256;
 
     Issuer public issuer;
@@ -21,25 +22,32 @@ contract CapTable is AccessControlDefaultAdminRules {
     StockClass[] public stockClasses;
     StockLegendTemplate[] public stockLegendTemplates;
 
+    /// @inheritdoc ICapTable
     // @dev Transactions will be created on-chain then reflected off-chain.
-    address[] public transactions;
+    address[] public override transactions;
 
     // used to help generate deterministic UUIDs
     uint256 private nonce;
 
+    /// @inheritdoc ICapTable
     // O(1) search
     // id -> index
-    mapping(bytes16 => uint256) stakeholderIndex;
-    mapping(bytes16 => uint256) stockClassIndex;
+    mapping(bytes16 => uint256) public override stakeholderIndex;
+    /// @inheritdoc ICapTable
+    mapping(bytes16 => uint256) public override stockClassIndex;
+    /// @inheritdoc ICapTable
     // wallet address => stakeholder_id
-    mapping(address => bytes16) walletsPerStakeholder;
+    mapping(address => bytes16) public override walletsPerStakeholder;
 
     ActivePositions positions;
     SecIdsStockClass activeSecs;
 
     // RBAC
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
-    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
+
+    /// @inheritdoc ICapTable
+    bytes32 public constant override ADMIN_ROLE = keccak256("ADMIN");
+    /// @inheritdoc ICapTable
+    bytes32 public constant override OPERATOR_ROLE = keccak256("OPERATOR");
 
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
@@ -55,6 +63,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         emit IssuerCreated(_id, _name);
     }
 
+    /// @inheritdoc ICapTable
     function seedMultipleActivePositionsAndSecurityIds(
         bytes16[] memory stakeholderIds,
         bytes16[] memory securityIds,
@@ -62,7 +71,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         uint256[] memory quantities,
         uint256[] memory sharePrices,
         uint40[] memory timestamps
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         //TODO: check stakeholders and stock classes exist
         require(
             stakeholderIds.length == securityIds.length &&
@@ -87,16 +96,18 @@ contract CapTable is AccessControlDefaultAdminRules {
         }
     }
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
+    /// @inheritdoc ICapTable
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public override onlyAdmin {
         require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
 
+    /// @inheritdoc ICapTable
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public override onlyAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
@@ -104,8 +115,9 @@ contract CapTable is AccessControlDefaultAdminRules {
         walletsPerStakeholder[_wallet] = _stakeholder_id;
     }
 
+    /// @inheritdoc ICapTable
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public override onlyAdmin {
         require(_wallet != address(0), "Invalid wallet");
         require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
         require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
@@ -113,13 +125,15 @@ contract CapTable is AccessControlDefaultAdminRules {
         delete walletsPerStakeholder[_wallet];
     }
 
-    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
+    /// @inheritdoc ICapTable
+    function getStakeholderIdByWallet(address _wallet) public view override returns (bytes16 stakeholderId) {
         require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
         return walletsPerStakeholder[_wallet];
     }
 
+    /// @inheritdoc ICapTable
     // Stock Acceptance does not currently impact an active position. It's only recorded.
-    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external override onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -128,12 +142,13 @@ contract CapTable is AccessControlDefaultAdminRules {
         StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
     }
 
+    /// @inheritdoc ICapTable
     function adjustIssuerAuthorizedShares(
         uint256 newSharesAuthorized,
         string[] memory comments,
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         Adjustment.adjustIssuerAuthorizedShares(
             nonce,
             newSharesAuthorized,
@@ -145,13 +160,14 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     function adjustStockClassAuthorizedShares(
         bytes16 stockClassId,
         uint256 newAuthorizedShares,
         string[] memory comments,
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         require(stockClass.id == stockClassId, "Invalid stock class");
 
@@ -166,7 +182,13 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
+    /// @inheritdoc ICapTable
+    function createStockClass(
+        bytes16 _id,
+        string memory _class_type,
+        uint256 _price_per_share,
+        uint256 _initial_share_authorized
+    ) public override onlyAdmin {
         require(stockClassIndex[_id] == 0, "Stock class already exists");
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
@@ -174,12 +196,14 @@ contract CapTable is AccessControlDefaultAdminRules {
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
 
+    /// @inheritdoc ICapTable
     // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
-    function createStockLegendTemplate(bytes16 _id) public onlyAdmin {
+    function createStockLegendTemplate(bytes16 _id) public override onlyAdmin {
         stockLegendTemplates.push(StockLegendTemplate(_id));
     }
 
-    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
+    /// @inheritdoc ICapTable
+    function getStakeholderById(bytes16 _id) public view override returns (bytes16, string memory, string memory) {
         if (stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
             return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
@@ -188,7 +212,8 @@ contract CapTable is AccessControlDefaultAdminRules {
         }
     }
 
-    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
+    /// @inheritdoc ICapTable
+    function getStockClassById(bytes16 _id) public view override returns (bytes16, string memory, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
             return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized);
@@ -197,14 +222,17 @@ contract CapTable is AccessControlDefaultAdminRules {
         }
     }
 
-    function getTotalNumberOfStakeholders() public view returns (uint256) {
+    /// @inheritdoc ICapTable
+    function getTotalNumberOfStakeholders() public view override returns (uint256) {
         return stakeholders.length;
     }
 
-    function getTotalNumberOfStockClasses() public view returns (uint256) {
+    /// @inheritdoc ICapTable
+    function getTotalNumberOfStockClasses() public view override returns (uint256) {
         return stockClasses.length;
     }
 
+    /// @inheritdoc ICapTable
     // TODO: small syntax but change this to issueStock
     function issueStockByTA(
         bytes16 stockClassId,
@@ -223,7 +251,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         string memory stockholderApprovalDate,
         string memory considerationText,
         string[] memory securityLawExemptions
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -258,6 +286,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     function repurchaseStock(
         bytes16 stakeholderId, // not OCF, but required to fetch activePositions
         bytes16 stockClassId, //  not OCF, but required to fetch activePositions
@@ -266,7 +295,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         string memory considerationText,
         uint256 quantity,
         uint256 price
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -287,13 +316,14 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     function retractStockIssuance(
         bytes16 stakeholderId, // not OCF, but required to fetch activePositions
         bytes16 stockClassId, //  not OCF, but required to fetch activePositions
         bytes16 securityId,
         string[] memory comments,
         string memory reasonText
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -312,6 +342,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     function reissueStock(
         bytes16 stakeholderId, // not OCF, but required to fetch activePositions
         bytes16 stockClassId, //  not OCF, but required to fetch activePositions
@@ -319,7 +350,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         bytes16 securityId,
         string[] memory comments,
         string memory reasonText
-    ) external {
+    ) external override {
         StockReissuanceLib.reissueStockByTA(
             nonce,
             stakeholderId,
@@ -336,6 +367,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
     function cancelStock(
@@ -345,7 +377,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         string[] memory comments,
         string memory reasonText,
         uint256 quantity
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -367,6 +399,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     function transferStock(
         bytes16 transferorStakeholderId,
         bytes16 transfereeStakeholderId,
@@ -374,7 +407,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         bool isBuyerVerified,
         uint256 quantity,
         uint256 share_price
-    ) external onlyOperator {
+    ) external override onlyOperator {
         require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
@@ -414,19 +447,23 @@ contract CapTable is AccessControlDefaultAdminRules {
 
     //  External API for updating roles of addresses
 
-    function addAdmin(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function addAdmin(address addr) external override onlyAdmin {
         _grantRole(ADMIN_ROLE, addr);
     }
 
-    function removeAdmin(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function removeAdmin(address addr) external override onlyAdmin {
         _revokeRole(ADMIN_ROLE, addr);
     }
 
-    function addOperator(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function addOperator(address addr) external override onlyAdmin {
         _grantRole(OPERATOR_ROLE, addr);
     }
 
-    function removeOperator(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function removeOperator(address addr) external override onlyAdmin {
         _revokeRole(OPERATOR_ROLE, addr);
     }
 }
