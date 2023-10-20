@@ -2,7 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
+import {
+    StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass
+} from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
@@ -38,11 +40,7 @@ library StockCancellationLib {
             nonce++;
 
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                nonce,
-                stakeholderId,
-                remainingQuantity,
-                activePosition.share_price,
-                stockClassId
+                nonce, stakeholderId, remainingQuantity, activePosition.share_price, stockClassId
             );
 
             StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
@@ -55,12 +53,7 @@ library StockCancellationLib {
 
         nonce++;
         StockCancellation memory cancellation = TxHelper.createStockCancellationStruct(
-            nonce,
-            quantity,
-            comments,
-            securityId,
-            reasonText,
-            balance_security_id
+            nonce, quantity, comments, securityId, reasonText, balance_security_id
         );
         _cancelStock(cancellation, transactions);
 

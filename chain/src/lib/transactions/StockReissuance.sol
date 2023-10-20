@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
+import {StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass} from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
@@ -31,7 +31,8 @@ library StockReissuanceLib {
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
         nonce++;
-        StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(nonce, comments, securityId, resulting_security_ids, reason_text);
+        StockReissuance memory reissuance =
+            TxHelper.createStockReissuanceStruct(nonce, comments, securityId, resulting_security_ids, reason_text);
 
         _reissueStock(reissuance, transactions);
 

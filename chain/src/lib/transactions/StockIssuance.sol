@@ -2,7 +2,15 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
+import {
+    StockIssuance,
+    ActivePosition,
+    ShareNumbersIssued,
+    ActivePositions,
+    SecIdsStockClass,
+    Issuer,
+    StockClass
+} from "../Structs.sol";
 import "../DeterministicUUID.sol";
 
 library StockIssuanceLib {
@@ -76,7 +84,9 @@ library StockIssuanceLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) internal {
-        activeSecs.activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(issuance.security_id);
+        activeSecs.activeSecurityIdsByStockClass[issuance.stakeholder_id][issuance.stock_class_id].push(
+            issuance.security_id
+        );
 
         positions.activePositions[issuance.stakeholder_id][issuance.security_id] = ActivePosition(
             issuance.stock_class_id,

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockRetraction, ActivePositions, ActivePosition, SecIdsStockClass, StockClass, Issuer } from "../Structs.sol";
+import {StockRetraction, ActivePositions, ActivePosition, SecIdsStockClass, StockClass, Issuer} from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
@@ -31,7 +31,8 @@ library StockRetractionLib {
         //TODO: require active position exists.
 
         nonce++;
-        StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, comments, securityId, reasonText);
+        StockRetraction memory retraction =
+            TxHelper.createStockRetractionStruct(nonce, comments, securityId, reasonText);
         _retractStock(retraction, transactions);
 
         issuer.shares_issued = issuer.shares_issued.sub(activePosition.quantity);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { Issuer, StockClass } from "../Structs.sol";
+import {Issuer, StockClass} from "../Structs.sol";
 import "../TxHelper.sol";
 
 library Adjustment {
@@ -26,12 +26,7 @@ library Adjustment {
     ) external {
         nonce++;
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustIssuerAuthorizedShares(
-            nonce,
-            newSharesAuthorized,
-            comments,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            issuer.id
+            nonce, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, issuer.id
         );
 
         issuer.shares_authorized = newSharesAuthorized.add(issuer.shares_authorized);
@@ -55,14 +50,9 @@ library Adjustment {
 
         nonce++;
         StockClassAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustStockClassAuthorizedShares(
-            nonce,
-            newSharesAuthorized,
-            comments,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            stockClass.id
+            nonce, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, stockClass.id
         );
-        
+
         bytes32 txHash = keccak256(abi.encode(adjustment));
         transactions.push(txHash);
         emit StockClassAuthorizedSharesAdjusted(txHash);

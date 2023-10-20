@@ -1,11 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment } from "./Structs.sol";
+import {
+    StockIssuance,
+    StockTransfer,
+    StockRepurchase,
+    ShareNumbersIssued,
+    StockAcceptance,
+    StockCancellation,
+    StockReissuance,
+    StockRetraction,
+    IssuerAuthorizedSharesAdjustment,
+    StockClassAuthorizedSharesAdjustment
+} from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
-        bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
+        bytes16 deterministicValue =
+            bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
         return deterministicValue;
     }
 
@@ -31,28 +43,27 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(stakeholderId, nonce);
         bytes16 secId = generateDeterministicUniqueID(stockClassId, nonce);
 
-        return
-            StockIssuance(
-                id,
-                "TX_STOCK_ISSUANCE",
-                stockClassId,
-                stockPlanId,
-                shareNumbersIssued,
-                sharePrice,
-                quantity,
-                vestingTermsId,
-                costBasis,
-                stockLegendIds,
-                issuanceType,
-                comments,
-                secId,
-                customId,
-                stakeholderId,
-                boardApprovalDate,
-                stockholderApprovalDate,
-                considerationText,
-                securityLawExemptions
-            );
+        return StockIssuance(
+            id,
+            "TX_STOCK_ISSUANCE",
+            stockClassId,
+            stockPlanId,
+            shareNumbersIssued,
+            sharePrice,
+            quantity,
+            vestingTermsId,
+            costBasis,
+            stockLegendIds,
+            issuanceType,
+            comments,
+            secId,
+            customId,
+            stakeholderId,
+            boardApprovalDate,
+            stockholderApprovalDate,
+            considerationText,
+            securityLawExemptions
+        );
     }
 
     // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
@@ -69,28 +80,27 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(stakeholderId, nonce);
         bytes16 securityId = generateDeterministicUniqueID(stockClassId, nonce);
 
-        return
-            StockIssuance(
-                id, // ID
-                "TX_STOCK_ISSUANCE", // Transaction type
-                stockClassId, // Stock class ID
-                "", // Stock plan ID (optional)
-                share_numbers_issued, // Share numbers issued (optional)
-                sharePrice, // Share price
-                quantity, // Quantity
-                "", // Vesting terms ID (optional)
-                0e10, // Cost basis (optional)
-                new bytes16[](0), // Stock legend IDs (optional)
-                "", // Issuance type (optional)
-                new string[](0), // Comments
-                securityId, // Security ID
-                "", // Custom ID (optional)
-                stakeholderId, // Stakeholder ID
-                "", // Board approval date (optional)
-                "", // Stockholder approval date (optional)
-                "", // Consideration text (optional)
-                new string[](0) // Security law exemptions (optional)
-            );
+        return StockIssuance(
+            id, // ID
+            "TX_STOCK_ISSUANCE", // Transaction type
+            stockClassId, // Stock class ID
+            "", // Stock plan ID (optional)
+            share_numbers_issued, // Share numbers issued (optional)
+            sharePrice, // Share price
+            quantity, // Quantity
+            "", // Vesting terms ID (optional)
+            0e10, // Cost basis (optional)
+            new bytes16[](0), // Stock legend IDs (optional)
+            "", // Issuance type (optional)
+            new string[](0), // Comments
+            securityId, // Security ID
+            "", // Custom ID (optional)
+            stakeholderId, // Stakeholder ID
+            "", // Board approval date (optional)
+            "", // Stockholder approval date (optional)
+            "", // Consideration text (optional)
+            new string[](0) // Security law exemptions (optional)
+        );
     }
 
     function createStockTransferStruct(
@@ -105,17 +115,16 @@ library TxHelper {
 
         bytes16 id = generateDeterministicUniqueID(security_id, nonce);
 
-        return
-            StockTransfer(
-                id,
-                "TX_STOCK_TRANSFER",
-                quantity,
-                new string[](0), // comments,
-                security_id,
-                "", // consideration text (optional) //TODO: should we include in cap table?
-                balance_security_id,
-                resultingSecurityIds
-            );
+        return StockTransfer(
+            id,
+            "TX_STOCK_TRANSFER",
+            quantity,
+            new string[](0), // comments,
+            security_id,
+            "", // consideration text (optional) //TODO: should we include in cap table?
+            balance_security_id,
+            resultingSecurityIds
+        );
     }
 
     function createStockCancellationStruct(
@@ -128,7 +137,9 @@ library TxHelper {
     ) internal view returns (StockCancellation memory cancellation) {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
-        return StockCancellation(id, "TX_STOCK_CANCELLATION", quantity, comments, securityId, reasonText, balance_security_id);
+        return StockCancellation(
+            id, "TX_STOCK_CANCELLATION", quantity, comments, securityId, reasonText, balance_security_id
+        );
     }
 
     function createStockRetractionStruct(
@@ -153,7 +164,9 @@ library TxHelper {
     ) internal view returns (StockRepurchase memory repurchase) {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
-        return StockRepurchase(id, "TX_STOCK_REPURCHASE", comments, securityId, considerationText, balance_security_id, quantity, price);
+        return StockRepurchase(
+            id, "TX_STOCK_REPURCHASE", comments, securityId, considerationText, balance_security_id, quantity, price
+        );
     }
 
     function adjustIssuerAuthorizedShares(
@@ -166,15 +179,14 @@ library TxHelper {
     ) internal view returns (IssuerAuthorizedSharesAdjustment memory adjustment) {
         bytes16 id = generateDeterministicUniqueID(issuerId, nonce);
 
-        return
-            IssuerAuthorizedSharesAdjustment(
-                id,
-                "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
-                newSharesAuthorized,
-                comments,
-                boardApprovalDate,
-                stockholderApprovalDate
-            );
+        return IssuerAuthorizedSharesAdjustment(
+            id,
+            "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+            newSharesAuthorized,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate
+        );
     }
 
     function adjustStockClassAuthorizedShares(
@@ -187,15 +199,14 @@ library TxHelper {
     ) internal view returns (StockClassAuthorizedSharesAdjustment memory adjustment) {
         bytes16 id = generateDeterministicUniqueID(stockClassId, nonce);
 
-        return
-            StockClassAuthorizedSharesAdjustment(
-                id,
-                "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
-                newSharesAuthorized,
-                comments,
-                boardApprovalDate,
-                stockholderApprovalDate
-            );
+        return StockClassAuthorizedSharesAdjustment(
+            id,
+            "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+            newSharesAuthorized,
+            comments,
+            boardApprovalDate,
+            stockholderApprovalDate
+        );
     }
 
     function createStockReissuanceStruct(
@@ -208,14 +219,16 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
         bytes16 splitTransactionId = bytes16(0); // Not used in MVP
 
-        return StockReissuance(id, "TX_STOCK_REISSUANCE", comments, securityId, resultingSecurityIds, splitTransactionId, reasonText);
+        return StockReissuance(
+            id, "TX_STOCK_REISSUANCE", comments, securityId, resultingSecurityIds, splitTransactionId, reasonText
+        );
     }
 
-    function createStockAcceptanceStruct(
-        uint256 nonce,
-        string[] memory comments,
-        bytes16 securityId
-    ) internal view returns (StockAcceptance memory acceptance) {
+    function createStockAcceptanceStruct(uint256 nonce, string[] memory comments, bytes16 securityId)
+        internal
+        view
+        returns (StockAcceptance memory acceptance)
+    {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockAcceptance(id, "TX_STOCK_ACCEPTANCE", securityId, comments);

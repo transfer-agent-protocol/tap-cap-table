@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
+import {StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass} from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../TxHelper.sol";
 import "../DeleteContext.sol";
@@ -39,11 +39,7 @@ library StockRepurchaseLib {
             nonce++;
 
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                nonce,
-                stakeholderId,
-                remainingQuantity,
-                activePosition.share_price,
-                stockClassId
+                nonce, stakeholderId, remainingQuantity, activePosition.share_price, stockClassId
             );
 
             StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
@@ -56,13 +52,7 @@ library StockRepurchaseLib {
 
         nonce++;
         StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(
-            nonce,
-            comments,
-            securityId,
-            considerationText,
-            balance_security_id,
-            quantity,
-            price
+            nonce, comments, securityId, considerationText, balance_security_id, quantity, price
         );
 
         _repurchaseStock(repurchase, transactions);

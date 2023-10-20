@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { ActivePositions, SecIdsStockClass } from "./Structs.sol";
+import {ActivePositions, SecIdsStockClass} from "./Structs.sol";
 
 library DeleteContext {
-    function deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id, ActivePositions storage positions) external {
+    function deleteActivePosition(bytes16 _stakeholder_id, bytes16 _security_id, ActivePositions storage positions)
+        external
+    {
         delete positions.activePositions[_stakeholder_id][_security_id];
     }
 
