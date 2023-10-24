@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import { ethers } from "ethers";
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import CAP_TABLE_DEMO from "../../chain/out/CapTableDemo.sol/CapTableDemo.json" assert { type: "json" };
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 
 config();
@@ -37,22 +38,40 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     };
 }
 
-async function deployCapTableOptimismGoerli(issuerId, issuerName) {
+async function deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
     const provider = new ethers.providers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const factory = new ethers.ContractFactory(abi, bytecode, wallet);
-    const contract = await factory.deploy(issuerId, issuerName);
+    const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
 
     console.log("⏳ | Waiting for contract to be deployed...");
-    await contract.deployed();
-    console.log("✅ | Contract deployed!");
+    const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
 
-    const issuanceLib = new ethers.Contract(contract.target, abiIssuance, wallet);
-    const transferLib = new ethers.Contract(contract.target, abiTransfer, wallet);
+    console.log("✅ | Contract deployed onto Optimism!");
 
-    return { contract, provider, address: contract.target, issuanceLib, transferLib };
+
+    const libraries = getTXLibContracts(contract.target, wallet);
+    return { contract, provider, address: contract.target, libraries }
+}
+
+export async function deployDemoCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized) {
+    console.log('inside deployDemoCapTableOptimismGoerli')
+    console.log(' initial_shares_authorized', initial_shares_authorized)
+    const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
+
+    console.log('OPTIMISM_GOERLI_RPC_URL', process.env.OPTIMISM_GOERLI_RPC_URL)
+    const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
+    console.log({ provider })
+    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
+    const factory = new ethers.ContractFactory(CAP_TABLE_DEMO.abi, CAP_TABLE_DEMO.bytecode, wallet);
+    console.log("⏳ | Waiting for contract to be deployed...");
+    const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
+
+    console.log("✅ | Contract deployed onto Optimism!");
+
+    const libraries = getTXLibContracts(contract.target, wallet);
+    return { contract, provider, address: contract.target, libraries }
 }
 
 async function deployCapTable(chain, issuerId, issuerName, initial_shares_authorized) {
