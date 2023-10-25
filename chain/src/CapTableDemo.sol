@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import {AccessControlDefaultAdminRules} from
     "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 
@@ -13,8 +12,6 @@ struct Issuer {
 }
 
 contract CapTableDemo is AccessControlDefaultAdminRules {
-    using SafeMath for uint256;
-
     Issuer public issuer;
     uint256 private nonce;
 
