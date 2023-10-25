@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, ShareNumbersIssued } from "./lib/Structs.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, ShareNumbersIssued, StockParams, StockParamsQuantity } from "./lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
@@ -68,57 +68,61 @@ interface ICapTable {
 
     function issueStockByTA(
         bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
+        // bytes16 stockPlanId,
+        // ShareNumbersIssued memory shareNumbersIssued,
         uint256 sharePrice,
         uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
+        // bytes16 vestingTermsId,
+        // uint256 costBasis,
+        // bytes16[] memory stockLegendIds,
         string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
-        bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions
+        // string[] memory comments,
+        // string memory customId,
+        bytes16 stakeholderId
+        // string memory boardApprovalDate,
+        // string memory stockholderApprovalDate,
+        // string memory considerationText,
+        // string[] memory securityLawExemptions
     ) external;
 
     function repurchaseStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory considerationText,
-        uint256 quantity,
+        StockParamsQuantity memory params,
+        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        // bytes16 securityId,
+        // string[] memory comments,
+        // string memory considerationText,
+        // uint256 quantity,
         uint256 price
     ) external;
 
     function retractStockIssuance(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText
+        StockParams memory params
+        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        // bytes16 securityId,
+        // string[] memory comments,
+        // string memory reasonText
     ) external;
 
     function reissueStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16[] memory resulting_security_ids,
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText
+        StockParams memory params,
+        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16[] memory resulting_security_ids
+        // bytes16 securityId,
+        // string[] memory comments,
+        // string memory reasonText
     ) external;
 
     function cancelStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText,
-        uint256 quantity
+        StockParamsQuantity memory paramsQuantity
+        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        // bytes16 securityId,
+        // string[] memory comments,
+        // string memory reasonText,
+        // uint256 quantity
     ) external;
 
     function transferStock(

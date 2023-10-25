@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
+import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockTransferTransferParams, StockParamsQuantity } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockRepurchaseTX.sol";
 import "../TxHelper.sol";
@@ -14,13 +14,14 @@ library StockRepurchaseLib {
     event StockRepurchaseCreated(StockRepurchase repurchase);
 
     function repurchaseStockByTA(
-        uint256 nonce,
-        bytes16 stakeholderId,
-        bytes16 stockClassId,
-        bytes16 securityId,
-        string[] memory comments,
-        string memory considerationText,
-        uint256 quantity,
+        StockParamsQuantity memory params,
+        // uint256 nonce,
+        // bytes16 stakeholderId,
+        // bytes16 stockClassId,
+        // bytes16 securityId,
+        // string[] memory comments,
+        // string memory considerationText,
+        // uint256 quantity,
         uint256 price,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
@@ -28,23 +29,34 @@ library StockRepurchaseLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholderId][params.securityId];
 
-        require(activePosition.quantity >= quantity, "Insufficient shares");
+        require(activePosition.quantity >= params.quantity, "Insufficient shares");
 
-        uint256 remainingQuantity = activePosition.quantity - quantity;
+        uint256 remainingQuantity = activePosition.quantity - params.quantity;
         bytes16 balance_security_id;
 
         if (remainingQuantity > 0) {
             // issue balance
-            nonce++;
+            params.nonce++;
 
-            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                nonce,
-                stakeholderId,
+            StockTransferTransferParams memory transferParams = StockTransferTransferParams(
+                params.stakeholderId,
+                bytes16(0),
+                params.stockClassId,
+                true,
                 remainingQuantity,
                 activePosition.share_price,
-                stockClassId
+                params.nonce
+            );
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                transferParams,
+                transferParams.stockClassId
+                // nonce,
+                // stakeholderId,
+                // remainingQuantity,
+                // activePosition.share_price,
+                // stockClassId
             );
 
             StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
@@ -55,24 +67,25 @@ library StockRepurchaseLib {
             balance_security_id = "";
         }
 
-        nonce++;
+        params.nonce++;
         StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(
-            nonce,
-            comments,
-            securityId,
-            considerationText,
+            params.nonce,
+            // comments,
+            params.securityId,
+            "",
+            // considerationText,
             balance_security_id,
-            quantity,
+            params.quantity,
             price
         );
 
         _repurchaseStock(repurchase, transactions);
 
-        issuer.shares_issued = issuer.shares_issued.sub(quantity);
-        stockClass.shares_issued = stockClass.shares_issued.sub(quantity);
+        issuer.shares_issued = issuer.shares_issued.sub(params.quantity);
+        stockClass.shares_issued = stockClass.shares_issued.sub(params.quantity);
 
-        DeleteContext.deleteActivePosition(stakeholderId, securityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholderId, params.securityId, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholderId, params.stockClassId, params.securityId, activeSecs);
     }
 
     function _repurchaseStock(StockRepurchase memory repurchase, address[] storage transactions) internal {

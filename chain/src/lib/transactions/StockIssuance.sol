@@ -11,24 +11,25 @@ library StockIssuanceLib {
 
     event StockIssuanceCreated(StockIssuance issuance);
 
+    // TODO: split this up into multiple functions? e.g. call the optionals in a different function to fill out the same struct
     function createStockIssuanceByTA(
         uint256 nonce,
         bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
+        // bytes16 stockPlanId,
+        // ShareNumbersIssued memory shareNumbersIssued,
         uint256 sharePrice,
         uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
+        // bytes16 vestingTermsId,
+        // uint256 costBasis,
+        // bytes16[] memory stockLegendIds,
         string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
+        // string[] memory comments,
+        // string memory customId,
         bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions,
+        // string memory boardApprovalDate,
+        // string memory stockholderApprovalDate,
+        // string memory considerationText,
+        // string[] memory securityLawExemptions,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,
@@ -37,35 +38,32 @@ library StockIssuanceLib {
     ) external {
         require(quantity > 0, "Invalid quantity");
         require(sharePrice > 0, "Invalid price");
-
         nonce++;
         bytes16 id = DeterministicUUID.generateDeterministicUniqueID(stakeholderId, nonce);
         nonce++;
         bytes16 secId = DeterministicUUID.generateDeterministicUniqueID(stockClassId, nonce);
-
         //TODO: Move to TX helper
         StockIssuance memory issuance = StockIssuance(
             id,
             "TX_STOCK_ISSUANCE",
             stockClassId,
-            stockPlanId,
-            shareNumbersIssued,
+            // stockPlanId,
+            // shareNumbersIssued,
             sharePrice,
             quantity,
-            vestingTermsId,
-            costBasis,
-            stockLegendIds,
+            // vestingTermsId,
+            // costBasis,
+            // stockLegendIds,
             issuanceType,
-            comments,
+            // comments,
             secId,
-            customId,
-            stakeholderId,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            considerationText,
-            securityLawExemptions
+            // customId,
+            stakeholderId
+            // boardApprovalDate,
+            // stockholderApprovalDate,
+            // considerationText,
+            // securityLawExemptions
         );
-
         _updateContext(issuance, positions, activeSecs, issuer, stockClass);
         _issueStock(issuance, transactions);
     }

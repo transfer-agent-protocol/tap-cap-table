@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate } from "./lib/Structs.sol";
+import { StockTransferTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
@@ -234,24 +234,24 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     // TODO: small syntax but change this to issueStock
+    // string memory boardApprovalDate,
+    // string memory stockholderApprovalDate,
+    // string memory considerationText,
+    // string[] memory securityLawExemptions
     function issueStockByTA(
         bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
+        // bytes16 stockPlanId,
+        // ShareNumbersIssued memory shareNumbersIssued,
         uint256 sharePrice,
         uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
+        // bytes16 vestingTermsId,
+        // uint256 costBasis,
+        // bytes16[] memory stockLegendIds,
         string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
-        bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions
-    ) external override onlyAdmin {
+        // string[] memory comments,
+        // string memory customId,
+        bytes16 stakeholderId
+    ) external onlyAdmin {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
@@ -263,21 +263,21 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         StockIssuanceLib.createStockIssuanceByTA(
             nonce,
             stockClassId,
-            stockPlanId,
-            shareNumbersIssued,
+            // stockPlanId,
+            // shareNumbersIssued,
             sharePrice,
             quantity,
-            vestingTermsId,
-            costBasis,
-            stockLegendIds,
+            // vestingTermsId,
+            // costBasis,
+            // stockLegendIds,
             issuanceType,
-            comments,
-            customId,
+            // comments,
+            // customId,
             stakeholderId,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            considerationText,
-            securityLawExemptions,
+            // boardApprovalDate,
+            // stockholderApprovalDate,
+            // considerationText,
+            // securityLawExemptions,
             positions,
             activeSecs,
             transactions,
@@ -288,114 +288,115 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     function repurchaseStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory considerationText,
-        uint256 quantity,
+        StockParamsQuantity memory params,
+        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        // bytes16 securityId,
+        // string[] memory comments,
+        // string memory considerationText,
+        // uint256 quantity,
         uint256 price
     ) external override onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
 
         StockRepurchaseLib.repurchaseStockByTA(
-            nonce,
-            stakeholderId,
-            stockClassId,
-            securityId,
-            comments,
-            considerationText,
-            quantity,
+            params,
+            // nonce,
+            // stakeholderId,
+            // stockClassId,
+            // securityId,
+            // comments,
+            // considerationText,
+            // quantity,
             price,
             positions,
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stockClassId] - 1]
         );
     }
 
     /// @inheritdoc ICapTable
-    function retractStockIssuance(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText
-    ) external override onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+    // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+    // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+    // bytes16 securityId,
+    // string[] memory comments,
+    // string memory reasonText
+    function retractStockIssuance(StockParams memory params) external override onlyAdmin {
+        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
 
         StockRetractionLib.retractStockIssuanceByTA(
+            params,
             nonce,
-            stakeholderId,
-            stockClassId,
-            securityId,
-            comments,
-            reasonText,
             positions,
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stockClassId] - 1]
         );
     }
 
     /// @inheritdoc ICapTable
+    // bytes16 securityId,
+    // string[] memory comments,
+    // string memory reasonText
     function reissueStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16[] memory resulting_security_ids,
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText
+        StockParams memory params,
+        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+        bytes16[] memory resulting_security_ids
     ) external override {
         StockReissuanceLib.reissueStockByTA(
+            params,
             nonce,
-            stakeholderId,
-            stockClassId,
-            comments,
-            securityId,
+            // stakeholderId,
+            // stockClassId,
+            // comments,
+            // securityId,
             resulting_security_ids,
-            reasonText,
+            // reasonText,
             positions,
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stockClassId] - 1]
         );
     }
 
     /// @inheritdoc ICapTable
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
-    function cancelStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText,
-        uint256 quantity
-    ) external override onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+    // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
+    // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
+    // bytes16 securityId,
+    // string[] memory comments,
+    // string memory reasonText,
+    // uint256 quantity
+    function cancelStock(StockParamsQuantity memory params) external override onlyAdmin {
+        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
 
         // need a require for activePositions
 
+        // StockParams memory params = StockParams(nonce, quantity, stakeholderId, stockClassId, securityId);
+        params.nonce = nonce;
         StockCancellationLib.cancelStockByTA(
-            nonce,
-            stakeholderId,
-            stockClassId,
-            securityId,
-            comments,
-            reasonText,
-            quantity,
+            params,
+            // nonce,
+            // stakeholderId,
+            // stockClassId,
+            // securityId,
+            // comments,
+            // reasonText,
+            // quantity,
             positions,
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stockClassId] - 1]
         );
     }
 
@@ -412,20 +413,17 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        StockTransferLib.transferStock(
+        StockTransferTransferParams memory params = StockTransferTransferParams(
             transferorStakeholderId,
             transfereeStakeholderId,
             stockClassId,
             isBuyerVerified,
             quantity,
             share_price,
-            nonce,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
+            nonce
         );
+
+        StockTransferLib.transferStock(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
     }
 
     /* Role Based Access Control */
