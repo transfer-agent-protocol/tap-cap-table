@@ -53,7 +53,7 @@ demo.post("/issuer/create", async (req, res) => {
         res.status(200).send({ issuer });
     } catch (error) {
         console.error(`error: ${error}`);
-        res.status(500).send(`${error}`);
+        res.status(400).send({error: error.message});
     }
 });
 
