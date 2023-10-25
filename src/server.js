@@ -18,7 +18,7 @@ import stockPlanRoutes from "./routes/stockPlan.js";
 import transactionRoutes from "./routes/transactions.js";
 import valuationRoutes from "./routes/valuation.js";
 import vestingTermsRoutes from "./routes/vestingTerms.js";
-import demo  from "./routes/demo.js";
+import demo from "./routes/demo.js";
 
 import { readIssuerById } from "./db/operations/read.js";
 import { contractCache } from "./utils/caches.js";
@@ -28,7 +28,7 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-const PORT = 8080;
+const PORT = process.env.PORT;
 const CHAIN = process.env.CHAIN;
 
 // Middlewares
@@ -47,7 +47,7 @@ const contractMiddleware = async (req, res, next) => {
 
     // fetch issuer to ensure it exists
     const issuer = await readIssuerById(req.body.issuerId);
-    if(!issuer) res.status(400).send("issuer not found ");
+    if (!issuer) res.status(400).send("issuer not found ");
 
     // Check if contract instance already exists in cache
     if (!contractCache[req.body.issuerId]) {
