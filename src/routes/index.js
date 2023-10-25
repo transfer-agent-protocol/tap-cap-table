@@ -10,6 +10,10 @@ import startOnchainListeners from "../chain-operations/transactionListener.js";
 const router = Router();
 
 
+router.post("/health", async (_, res) => {
+    res.status(200).send('ok');
+})
+
 router.post("/mint-cap-table", async (req, res) => {
     try {
         const manifest = await processManifest(req);
