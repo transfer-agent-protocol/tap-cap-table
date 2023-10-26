@@ -14,14 +14,15 @@ RUN apt-get update && apt-get install -y git
 # ENV PATH="/root/.foundry/bin:${PATH}"
 
 # Clone the git repository
-RUN git clone --recurse-submodules --depth 1 https://github.com/poet-network/tap-cap-table.git .
+# RUN git clone --recurse-submodules --depth 1 https://github.com/poet-network/tap-cap-table.git .
 # Navigate to the submodule directory and checkout the specific commit
-WORKDIR /app/ocf
-RUN git checkout 91ad013d
+# WORKDIR /app/ocf
+# RUN git checkout 91ad013d
 
 # Navigate back to the main app directory
 WORKDIR /app
-COPY ./chain/out ./chain/out
+# COPY ./chain/out ./chain/out
+COPY . .
 
 # Copy .env.example to .env inside of the chain folder
 # RUN cd chain && cp .env.example .env && cd ..
