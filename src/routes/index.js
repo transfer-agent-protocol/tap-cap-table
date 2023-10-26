@@ -10,7 +10,7 @@ import startOnchainListeners from "../chain-operations/transactionListener.js";
 const router = Router();
 
 router.get("/health", async (_, res) => {
-    res.status(200).send("ok");
+    res.status(200).send("✅ Poet Tap CapTable is Running");
 });
 
 router.post("/mint-cap-table", async (req, res) => {
