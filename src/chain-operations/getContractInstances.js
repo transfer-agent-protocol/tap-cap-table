@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { config } from "dotenv";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import CAP_TABLE_DEMO  from "../../chain/out/CapTableDemo.sol/CapTableDemo.json" assert { type: "json" };
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 
 config();
@@ -30,7 +31,7 @@ async function getOptimismGoerliContractInstance(address) {
 
     const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, abi, wallet);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, CAP_TABLE_DEMO.abi, wallet);
     const libraries = getTXLibContracts(contract.target, wallet)
 
 
