@@ -7,7 +7,7 @@ import getTXLibContracts from "../utils/getLibrariesContracts.js";
 
 config();
 
-async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
+export async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
     // Replace with your private key and provider endpoint
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
     const customNetwork = {
@@ -56,13 +56,9 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares
 }
 
 export async function deployDemoCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized) {
-    console.log('inside deployDemoCapTableOptimismGoerli')
-    console.log(' initial_shares_authorized', initial_shares_authorized)
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
-    console.log('OPTIMISM_GOERLI_RPC_URL', process.env.OPTIMISM_GOERLI_RPC_URL)
-    const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
-    console.log({ provider })
+    const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL, undefined, { batchStallTime: 1000 });
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const factory = new ethers.ContractFactory(CAP_TABLE_DEMO.abi, CAP_TABLE_DEMO.bytecode, wallet);
     console.log("⏳ | Waiting for contract to be deployed...");
