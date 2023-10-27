@@ -16,7 +16,7 @@ const StockPlanSchema = new mongoose.Schema({
         type: String,
         ref: "Issuer",
     },
-});
+}, { timestamps: true });
 
 const StockPlan = mongoose.model("StockPlan", StockPlanSchema);
 
