@@ -7,15 +7,8 @@ import {AccessControlDefaultAdminRules} from
 import {
     Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate
 } from "./lib/Structs.sol";
-import "./lib/transactions/StockIssuance.sol";
-import "./lib/transactions/StockTransfer.sol";
-import "./lib/transactions/StockCancellation.sol";
-import "./lib/transactions/StockRetraction.sol";
-import "./lib/transactions/StockRepurchase.sol";
+import "./lib/Stock.sol";
 import "./lib/transactions/Adjustment.sol";
-import "./lib/transactions/StockAcceptance.sol";
-import "./lib/transactions/StockReissuance.sol";
-
 contract CapTable is AccessControlDefaultAdminRules {
     using SafeMath for uint256;
 
@@ -26,9 +19,6 @@ contract CapTable is AccessControlDefaultAdminRules {
 
     // @dev Transactions will be created on-chain then reflected off-chain.
     bytes32[] public transactions;
-
-    // used to help generate deterministic UUIDs
-    uint256 private nonce;
 
     // O(1) search
     // id -> index
@@ -57,7 +47,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
-        nonce = 0;
         issuer = Issuer(_id, _name, 0, _initial_shares_authorized);
         emit IssuerCreated(_id, _name);
     }
@@ -132,7 +121,7 @@ contract CapTable is AccessControlDefaultAdminRules {
 
         // require active position to exist?
 
-        StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
+        StockLib.acceptByTA(securityId, comments, transactions);
     }
 
     function adjustIssuerAuthorizedShares(
@@ -142,7 +131,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         string memory stockholderApprovalDate
     ) external onlyAdmin {
         Adjustment.adjustIssuerAuthorizedShares(
-            nonce, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, issuer, transactions
+            newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, issuer, transactions
         );
     }
 
@@ -157,7 +146,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stockClass.id == stockClassId, "Invalid stock class");
 
         Adjustment.adjustStockClassAuthorizedShares(
-            nonce, newAuthorizedShares, comments, boardApprovalDate, stockholderApprovalDate, stockClass, transactions
+            newAuthorizedShares, comments, boardApprovalDate, stockholderApprovalDate, stockClass, transactions
         );
     }
 
@@ -237,8 +226,7 @@ contract CapTable is AccessControlDefaultAdminRules {
             "StockClass: Insufficient shares authorized"
         );
 
-        StockIssuanceLib.createStockIssuanceByTA(
-            nonce,
+        StockLib.createIssuanceByTA(
             stockClassId,
             stockPlanId,
             shareNumbersIssued,
@@ -275,8 +263,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        StockRepurchaseLib.repurchaseStockByTA(
-            nonce,
+        StockLib.repurchaseByTA(
             stakeholderId,
             stockClassId,
             securityId,
@@ -302,8 +289,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        StockRetractionLib.retractStockIssuanceByTA(
-            nonce,
+        StockLib.retractIssuanceByTA(
             stakeholderId,
             stockClassId,
             securityId,
@@ -325,8 +311,7 @@ contract CapTable is AccessControlDefaultAdminRules {
         string[] memory comments,
         string memory reasonText
     ) external {
-        StockReissuanceLib.reissueStockByTA(
-            nonce,
+        StockLib.reissueByTA(
             stakeholderId,
             stockClassId,
             comments,
@@ -356,8 +341,7 @@ contract CapTable is AccessControlDefaultAdminRules {
 
         // need a require for activePositions
 
-        StockCancellationLib.cancelStockByTA(
-            nonce,
+        StockLib.cancelByTA(
             stakeholderId,
             stockClassId,
             securityId,
@@ -384,14 +368,13 @@ contract CapTable is AccessControlDefaultAdminRules {
         require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
         require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
 
-        StockTransferLib.transferStock(
+        StockLib.transfer(
             transferorStakeholderId,
             transfereeStakeholderId,
             stockClassId,
             isBuyerVerified,
             quantity,
             share_price,
-            nonce,
             positions,
             activeSecs,
             transactions,

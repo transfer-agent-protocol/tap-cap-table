@@ -40,7 +40,6 @@ struct ShareNumbersIssued {
 
 struct StockCancellation {
     bytes16 id;
-    string object_type;
     uint256 quantity;
     string[] comments; // optional
     bytes16 security_id;
@@ -50,7 +49,6 @@ struct StockCancellation {
 
 struct StockRetraction {
     bytes16 id;
-    string object_type;
     string[] comments; // optional
     bytes16 security_id;
     string reason_text; // optional
@@ -58,7 +56,6 @@ struct StockRetraction {
 
 struct StockReissuance {
     bytes16 id;
-    string object_type;
     string[] comments; // optional
     bytes16 security_id;
     bytes16[] resulting_security_ids;
@@ -68,7 +65,6 @@ struct StockReissuance {
 
 struct StockRepurchase {
     bytes16 id;
-    string object_type;
     string[] comments; // optional
     bytes16 security_id;
     string consideration_text; // optional,
@@ -79,7 +75,6 @@ struct StockRepurchase {
 
 struct StockAcceptance {
     bytes16 id;
-    string object_type;
     bytes16 security_id;
     string[] comments; // optional
 }
@@ -95,7 +90,6 @@ struct IssuerAuthorizedSharesAdjustment {
 
 struct StockClassAuthorizedSharesAdjustment {
     bytes16 id;
-    string object_type;
     uint256 new_shares_authorized;
     string[] comments; // optional
     string board_approval_date; // optional
@@ -105,7 +99,6 @@ struct StockClassAuthorizedSharesAdjustment {
 // date fields are going to use block timestamp
 struct StockIssuance {
     bytes16 id;
-    string object_type;
     bytes16 stock_class_id;
     bytes16 stock_plan_id; // Optional
     ShareNumbersIssued share_numbers_issued; // Optional
@@ -149,7 +142,6 @@ struct StockLegendTemplate {
 // date fields are going to use block timestamp
 struct StockTransfer {
     bytes16 id;
-    string object_type;
     uint256 quantity;
     string[] comments; // optional
     bytes16 security_id;

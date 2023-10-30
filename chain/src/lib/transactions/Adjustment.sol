@@ -1,22 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import {Issuer, StockClass} from "../Structs.sol";
 import "../TxHelper.sol";
 
 library Adjustment {
-    using SafeMath for uint256;
-    // combine both
-    // 1. Issuer authorized shares adjustment
-    // 2. Stock Class authorized shares adjustment
-
-    event IssuerAuthorizedSharesAdjusted(bytes32 txHash);
-
-    event StockClassAuthorizedSharesAdjusted(bytes32 txHash);
-
     function adjustIssuerAuthorizedShares(
-        uint256 nonce,
         uint256 newSharesAuthorized,
         string[] memory comments,
         string memory boardApprovalDate,
@@ -24,20 +13,15 @@ library Adjustment {
         Issuer storage issuer,
         bytes32[] storage transactions
     ) external {
-        nonce++;
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustIssuerAuthorizedShares(
-            nonce, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, issuer.id
+            newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, issuer.id
         );
-
-        issuer.shares_authorized = newSharesAuthorized.add(issuer.shares_authorized);
-        bytes32 txHash = keccak256(abi.encode(adjustment));
-        transactions.push(txHash);
-        emit IssuerAuthorizedSharesAdjusted(txHash);
+        issuer.shares_authorized = newSharesAuthorized + issuer.shares_authorized; // no need to use SafeMath since 0.8.0
+        TxHelper.createTx(TxType.ISSUER_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
 
     // do the above for stock class
     function adjustStockClassAuthorizedShares(
-        uint256 nonce,
         uint256 newSharesAuthorized,
         string[] memory comments,
         string memory boardApprovalDate,
@@ -48,13 +32,9 @@ library Adjustment {
         uint256 newShares = newSharesAuthorized + stockClass.shares_authorized;
         stockClass.shares_authorized = newShares;
 
-        nonce++;
         StockClassAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustStockClassAuthorizedShares(
-            nonce, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, stockClass.id
+            newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate, stockClass.id
         );
-
-        bytes32 txHash = keccak256(abi.encode(adjustment));
-        transactions.push(txHash);
-        emit StockClassAuthorizedSharesAdjusted(txHash);
+        TxHelper.createTx(TxType.STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
 }
