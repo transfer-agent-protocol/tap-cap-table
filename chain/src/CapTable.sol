@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import {AccessControlDefaultAdminRules} from
-    "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import {AccessControlDefaultAdminRulesUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {
     Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate
 } from "./lib/Structs.sol";
 import "./lib/Stock.sol";
 import "./lib/transactions/Adjustment.sol";
-contract CapTable is AccessControlDefaultAdminRules {
-    using SafeMath for uint256;
+contract CapTable is AccessControlDefaultAdminRulesUpgradeable {
 
     Issuer public issuer;
     Stakeholder[] public stakeholders;
@@ -40,9 +38,12 @@ contract CapTable is AccessControlDefaultAdminRules {
         bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized
     );
 
-    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized)
-        AccessControlDefaultAdminRules(0 seconds, _msgSender())
-    {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) external initializer {
+        __AccessControlDefaultAdminRules_init(0 seconds, _msgSender());
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
@@ -219,10 +220,10 @@ contract CapTable is AccessControlDefaultAdminRules {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
         require(
-            issuer.shares_issued.add(quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized"
+            issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized"
         );
         require(
-            stockClass.shares_issued.add(quantity) <= stockClass.shares_authorized,
+            stockClass.shares_issued + quantity <= stockClass.shares_authorized,
             "StockClass: Insufficient shares authorized"
         );
 
