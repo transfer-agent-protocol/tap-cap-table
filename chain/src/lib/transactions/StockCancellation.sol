@@ -52,16 +52,12 @@ library StockCancellationLib {
         }
 
         params.nonce++;
-        string memory reason = new string(0);
-        string[] memory comments = new string[](0);
         StockCancellation memory cancellation = TxHelper.createStockCancellationStruct(
             params.nonce,
             params.quantity,
-            comments,
-            // comments,
+            params.comments,
             params.securityId,
-            reason,
-            // params.reasonText,
+            params.reasonText,
             balance_security_id
         );
         _cancelStock(cancellation, transactions);
