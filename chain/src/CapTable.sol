@@ -287,28 +287,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(
-        StockParamsQuantity memory params,
-        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory considerationText,
-        // uint256 quantity,
-        uint256 price
-    ) external override onlyAdmin {
+    function repurchaseStock(StockParamsQuantity memory params, uint256 price) external override onlyAdmin {
         require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
 
         StockRepurchaseLib.repurchaseStockByTA(
             params,
-            // nonce,
-            // stakeholderId,
-            // stockClassId,
-            // securityId,
-            // comments,
-            // considerationText,
-            // quantity,
             price,
             positions,
             activeSecs,
@@ -319,11 +303,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-    // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-    // bytes16 securityId,
-    // string[] memory comments,
-    // string memory reasonText
     function retractStockIssuance(StockParams memory params) external override onlyAdmin {
         require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
@@ -340,24 +319,14 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    // bytes16 securityId,
-    // string[] memory comments,
-    // string memory reasonText
     function reissueStock(
         StockParams memory params,
-        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
         bytes16[] memory resulting_security_ids
     ) external override {
         StockReissuanceLib.reissueStockByTA(
             params,
             nonce,
-            // stakeholderId,
-            // stockClassId,
-            // comments,
-            // securityId,
             resulting_security_ids,
-            // reasonText,
             positions,
             activeSecs,
             transactions,
@@ -369,29 +338,15 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
-    // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-    // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-    // bytes16 securityId,
-    // string[] memory comments,
-    // string memory reasonText,
-    // uint256 quantity
     function cancelStock(StockParamsQuantity memory params) external override onlyAdmin {
         require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
         require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
 
         // need a require for activePositions
 
-        // StockParams memory params = StockParams(nonce, quantity, stakeholderId, stockClassId, securityId);
         params.nonce = nonce;
         StockCancellationLib.cancelStockByTA(
             params,
-            // nonce,
-            // stakeholderId,
-            // stockClassId,
-            // securityId,
-            // comments,
-            // reasonText,
-            // quantity,
             positions,
             activeSecs,
             transactions,

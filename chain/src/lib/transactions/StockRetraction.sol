@@ -17,11 +17,6 @@ library StockRetractionLib {
     function retractStockIssuanceByTA(
         StockParams memory params,
         uint256 nonce,
-        // bytes16 stakeholderId,
-        // bytes16 stockClassId,
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory reasonText,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,

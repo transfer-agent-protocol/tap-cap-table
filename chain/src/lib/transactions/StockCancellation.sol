@@ -15,13 +15,6 @@ library StockCancellationLib {
 
     function cancelStockByTA(
         StockParamsQuantity memory params,
-        // uint256 nonce,
-        // uint256 quantity,
-        // bytes16 stakeholderId,
-        // bytes16 stockClassId,
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory reasonText,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,
@@ -48,15 +41,7 @@ library StockCancellationLib {
                 activePosition.share_price,
                 params.nonce
             );
-            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                transferParams,
-                transferParams.stockClassId
-                // nonce,
-                // stakeholderId,
-                // remainingQuantity,
-                // activePosition.share_price,
-                // stockClassId
-            );
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.stockClassId);
 
             StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(balanceIssuance, transactions);

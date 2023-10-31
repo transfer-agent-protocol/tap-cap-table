@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferTransferParams } from "./Structs.sol";
+import { StockIssuance, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferTransferParams, StockParamsQuantity } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -63,11 +63,6 @@ library TxHelper {
 
     // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
     // I think we can extend this for all other types of balances
-    // uint256 nonce,
-    // bytes16 stakeholderId,
-    // uint256 quantity,
-    // uint256 sharePrice,
-    // bytes16 stockClassId
     function createStockIssuanceStructForTransfer(
         StockTransferTransferParams memory transferParams,
         bytes16 stakeholderId
@@ -151,19 +146,21 @@ library TxHelper {
         return StockRetraction(id, "TX_STOCK_RETRACTION", comments, securityId, reasonText);
     }
 
-    function createStockRepurchaseStruct(
-        uint256 nonce,
-        // string[] memory comments,
-        bytes16 securityId,
-        string memory considerationText,
-        bytes16 balance_security_id,
-        uint256 quantity,
-        uint256 price
-    ) internal view returns (StockRepurchase memory repurchase) {
-        bytes16 id = generateDeterministicUniqueID(securityId, nonce);
+    function createStockRepurchaseStruct(StockParamsQuantity memory params, uint256 price) internal view returns (StockRepurchase memory repurchase) {
+        bytes16 id = generateDeterministicUniqueID(params.securityId, params.nonce);
 
-        string[] memory comments = new string[](0);
-        return StockRepurchase(id, "TX_STOCK_REPURCHASE", comments, securityId, considerationText, balance_security_id, quantity, price);
+        // Note: using stakeholderId to store balanceSecurityId
+        return
+            StockRepurchase(
+                id,
+                "TX_STOCK_REPURCHASE",
+                params.comments,
+                params.securityId,
+                params.reasonText,
+                params.stakeholderId,
+                params.quantity,
+                price
+            );
     }
 
     function adjustIssuerAuthorizedShares(

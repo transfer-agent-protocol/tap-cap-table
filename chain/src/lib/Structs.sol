@@ -167,7 +167,7 @@ struct StockParams {
 struct StockTransferTransferParams {
     bytes16 transferorStakeholderId;
     bytes16 transfereeStakeholderId;
-    bytes16 stockClassId; // TODO: verify that we would have fong would have the stock class
+    bytes16 stockClassId;
     bool isBuyerVerified;
     uint256 quantity;
     uint256 share_price;

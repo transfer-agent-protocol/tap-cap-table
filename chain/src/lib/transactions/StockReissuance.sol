@@ -18,12 +18,7 @@ library StockReissuanceLib {
     function reissueStockByTA(
         StockParams memory params,
         uint256 nonce,
-        // bytes16 stakeholderId,
-        // bytes16 stockClassId,
-        // string[] memory comments,
-        // bytes16 securityId,
         bytes16[] memory resulting_security_ids,
-        // string memory reason_text,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,

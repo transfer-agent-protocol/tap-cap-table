@@ -15,13 +15,6 @@ library StockRepurchaseLib {
 
     function repurchaseStockByTA(
         StockParamsQuantity memory params,
-        // uint256 nonce,
-        // bytes16 stakeholderId,
-        // bytes16 stockClassId,
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory considerationText,
-        // uint256 quantity,
         uint256 price,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
@@ -49,15 +42,7 @@ library StockRepurchaseLib {
                 activePosition.share_price,
                 params.nonce
             );
-            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                transferParams,
-                transferParams.stockClassId
-                // nonce,
-                // stakeholderId,
-                // remainingQuantity,
-                // activePosition.share_price,
-                // stockClassId
-            );
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.stockClassId);
 
             StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(balanceIssuance, transactions);
@@ -68,16 +53,7 @@ library StockRepurchaseLib {
         }
 
         params.nonce++;
-        StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(
-            params.nonce,
-            // comments,
-            params.securityId,
-            "",
-            // considerationText,
-            balance_security_id,
-            params.quantity,
-            price
-        );
+        StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(params, price);
 
         _repurchaseStock(repurchase, transactions);
 

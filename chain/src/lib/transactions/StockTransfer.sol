@@ -15,13 +15,6 @@ library StockTransferLib {
 
     function transferStock(
         StockTransferTransferParams memory params,
-        // bytes16 transferorStakeholderId,
-        // bytes16 transfereeStakeholderId,
-        // bytes16 stockClassId, // TODO: verify that we would have fong would have the stock class
-        // bool isBuyerVerified,
-        // uint256 quantity,
-        // uint256 share_price,
-        // uint256 nonce,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,
@@ -72,21 +65,7 @@ library StockTransferLib {
             StockTransferTransferParams memory newParams = params;
             newParams.quantity = transferQuantity;
 
-            _transferSingleStock(
-                newParams,
-                // transferorStakeholderId,
-                // transfereeStakeholderId,
-                // stockClassId,
-                // transferQuantity,
-                // share_price,
-                activeSecurityIDs[index],
-                // nonce,
-                positions,
-                activeSecs,
-                transactions,
-                issuer,
-                stockClass
-            );
+            _transferSingleStock(newParams, activeSecurityIDs[index], positions, activeSecs, transactions, issuer, stockClass);
 
             remainingQuantity -= transferQuantity; // Reduce the remaining quantity
 
@@ -100,13 +79,7 @@ library StockTransferLib {
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function _transferSingleStock(
         StockTransferTransferParams memory params,
-        // bytes16 transferorStakeholderId,
-        // bytes16 transfereeStakeholderId,
-        // bytes16 stockClassId,
-        // uint256 quantity,
-        // uint256 sharePrice,
         bytes16 securityId,
-        // uint256 nonce,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,
@@ -119,16 +92,7 @@ library StockTransferLib {
         require(transferorActivePosition.quantity >= params.quantity, "Insufficient shares");
 
         params.nonce++;
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
-            // params.nonce,
-            // params.transfereeStakeholderId,
-            // params.quantity,
-            // // sharePrice,
-            // params.share_price,
-            // params.stockClassId
-            params,
-            params.stockClassId
-        );
+        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.stockClassId);
 
         StockIssuanceLib._updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass);
         StockIssuanceLib._issueStock(transfereeIssuance, transactions);
@@ -141,15 +105,7 @@ library StockTransferLib {
         params.share_price = transferorActivePosition.share_price;
         if (balanceForTransferor > 0) {
             params.nonce++;
-            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
-                // params.nonce,
-                // params.transferorStakeholderId,
-                // balanceForTransferor,
-                // transferorActivePosition.share_price,
-                // params.stockClassId
-                params,
-                securityId
-            );
+            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(params, securityId);
 
             StockIssuanceLib._updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(transferorBalanceIssuance, transactions);

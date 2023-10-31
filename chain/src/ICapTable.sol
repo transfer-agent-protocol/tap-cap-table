@@ -85,45 +85,13 @@ interface ICapTable {
         // string[] memory securityLawExemptions
     ) external;
 
-    function repurchaseStock(
-        StockParamsQuantity memory params,
-        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory considerationText,
-        // uint256 quantity,
-        uint256 price
-    ) external;
+    function repurchaseStock(StockParamsQuantity memory params, uint256 price) external;
 
-    function retractStockIssuance(
-        StockParams memory params
-        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory reasonText
-    ) external;
+    function retractStockIssuance(StockParams memory params) external;
 
-    function reissueStock(
-        StockParams memory params,
-        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16[] memory resulting_security_ids
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory reasonText
-    ) external;
+    function reissueStock(StockParams memory params, bytes16[] memory resulting_security_ids) external;
 
-    function cancelStock(
-        StockParamsQuantity memory paramsQuantity
-        // bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        // bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        // bytes16 securityId,
-        // string[] memory comments,
-        // string memory reasonText,
-        // uint256 quantity
-    ) external;
+    function cancelStock(StockParamsQuantity memory paramsQuantity) external;
 
     function transferStock(
         bytes16 transferorStakeholderId,
