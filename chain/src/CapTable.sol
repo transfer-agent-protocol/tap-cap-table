@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
-import { StockTransferTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity } from "./lib/Structs.sol";
+import { StockTransferTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 import "./lib/transactions/StockIssuance.sol";
 import "./lib/transactions/StockTransfer.sol";
 import "./lib/transactions/StockCancellation.sol";
@@ -234,56 +234,16 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     // TODO: small syntax but change this to issueStock
-    // string memory boardApprovalDate,
-    // string memory stockholderApprovalDate,
-    // string memory considerationText,
-    // string[] memory securityLawExemptions
-    function issueStockByTA(
-        bytes16 stockClassId,
-        // bytes16 stockPlanId,
-        // ShareNumbersIssued memory shareNumbersIssued,
-        uint256 sharePrice,
-        uint256 quantity,
-        // bytes16 vestingTermsId,
-        // uint256 costBasis,
-        // bytes16[] memory stockLegendIds,
-        string memory issuanceType,
-        // string[] memory comments,
-        // string memory customId,
-        bytes16 stakeholderId
-    ) external onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+    function issueStockByTA(StockIssuanceParams memory params) external onlyAdmin {
+        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
+        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
 
-        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
+        StockClass storage stockClass = stockClasses[stockClassIndex[params.stockClassId] - 1];
 
-        require(issuer.shares_issued.add(quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued.add(quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+        require(issuer.shares_issued.add(params.quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued.add(params.quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
-        StockIssuanceLib.createStockIssuanceByTA(
-            nonce,
-            stockClassId,
-            // stockPlanId,
-            // shareNumbersIssued,
-            sharePrice,
-            quantity,
-            // vestingTermsId,
-            // costBasis,
-            // stockLegendIds,
-            issuanceType,
-            // comments,
-            // customId,
-            stakeholderId,
-            // boardApprovalDate,
-            // stockholderApprovalDate,
-            // considerationText,
-            // securityLawExemptions,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClass
-        );
+        StockIssuanceLib.createStockIssuanceByTA(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
     /// @inheritdoc ICapTable
@@ -319,10 +279,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function reissueStock(
-        StockParams memory params,
-        bytes16[] memory resulting_security_ids
-    ) external override {
+    function reissueStock(StockParams memory params, bytes16[] memory resulting_security_ids) external override {
         StockReissuanceLib.reissueStockByTA(
             params,
             nonce,

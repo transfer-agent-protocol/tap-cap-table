@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, ShareNumbersIssued, StockParams, StockParamsQuantity } from "./lib/Structs.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
@@ -66,24 +66,7 @@ interface ICapTable {
 
     function getTotalNumberOfStockClasses() external view returns (uint256);
 
-    function issueStockByTA(
-        bytes16 stockClassId,
-        // bytes16 stockPlanId,
-        // ShareNumbersIssued memory shareNumbersIssued,
-        uint256 sharePrice,
-        uint256 quantity,
-        // bytes16 vestingTermsId,
-        // uint256 costBasis,
-        // bytes16[] memory stockLegendIds,
-        string memory issuanceType,
-        // string[] memory comments,
-        // string memory customId,
-        bytes16 stakeholderId
-        // string memory boardApprovalDate,
-        // string memory stockholderApprovalDate,
-        // string memory considerationText,
-        // string[] memory securityLawExemptions
-    ) external;
+    function issueStockByTA(StockIssuanceParams memory params) external;
 
     function repurchaseStock(StockParamsQuantity memory params, uint256 price) external;
 
