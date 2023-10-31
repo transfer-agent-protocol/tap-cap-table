@@ -8,8 +8,8 @@ import {
 } from "./lib/Structs.sol";
 import "./lib/Stock.sol";
 import "./lib/transactions/Adjustment.sol";
-contract CapTable is AccessControlDefaultAdminRulesUpgradeable {
 
+contract CapTable is AccessControlDefaultAdminRulesUpgradeable {
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
@@ -219,9 +219,7 @@ contract CapTable is AccessControlDefaultAdminRulesUpgradeable {
 
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
 
-        require(
-            issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized"
-        );
+        require(issuer.shares_issued + quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
         require(
             stockClass.shares_issued + quantity <= stockClass.shares_authorized,
             "StockClass: Insufficient shares authorized"

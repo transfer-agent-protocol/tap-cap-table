@@ -6,7 +6,6 @@ import "./TxHelper.sol";
 import "./DeleteContext.sol";
 
 library StockLib {
-
     function retractIssuanceByTA(
         bytes16 stakeholderId,
         bytes16 stockClassId,
@@ -23,8 +22,7 @@ library StockLib {
 
         //TODO: require active position exists.
 
-        StockRetraction memory retraction =
-            TxHelper.createStockRetractionStruct(comments, securityId, reasonText);
+        StockRetraction memory retraction = TxHelper.createStockRetractionStruct(comments, securityId, reasonText);
 
         TxHelper.createTx(TxType.STOCK_RETRACTION, abi.encode(retraction), transactions);
 
@@ -81,7 +79,6 @@ library StockLib {
         DeleteContext.deleteActivePosition(stakeholderId, securityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
     }
-
 
     function reissueByTA(
         bytes16 stakeholderId,
@@ -152,7 +149,7 @@ library StockLib {
             stockholderApprovalDate,
             considerationText,
             securityLawExemptions
-            );
+        );
 
         _updateContext(issuance, positions, activeSecs, issuer, stockClass, transactions);
     }
@@ -185,11 +182,7 @@ library StockLib {
         return uint40(block.timestamp);
     }
 
-    function acceptByTA(
-        bytes16 securityId,
-        string[] memory comments,
-        bytes32[] storage transactions
-    ) external {
+    function acceptByTA(bytes16 securityId, string[] memory comments, bytes32[] storage transactions) external {
         StockAcceptance memory acceptance = TxHelper.createStockAcceptanceStruct(comments, securityId);
         TxHelper.createTx(TxType.STOCK_ACCEPTANCE, abi.encode(acceptance), transactions);
     }
@@ -228,9 +221,8 @@ library StockLib {
             balance_security_id = "";
         }
 
-        StockCancellation memory cancellation = TxHelper.createStockCancellationStruct(
-            quantity, comments, securityId, reasonText, balance_security_id
-        );
+        StockCancellation memory cancellation =
+            TxHelper.createStockCancellationStruct(quantity, comments, securityId, reasonText, balance_security_id);
         TxHelper.createTx(TxType.STOCK_CANCELLATION, abi.encode(cancellation), transactions);
 
         // no need to use SafeMath
@@ -341,9 +333,8 @@ library StockLib {
 
         require(transferorActivePosition.quantity >= quantity, "Insufficient shares");
 
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
-            transfereeStakeholderId, quantity, sharePrice, stockClassId
-        );
+        StockIssuance memory transfereeIssuance =
+            TxHelper.createStockIssuanceStructForTransfer(transfereeStakeholderId, quantity, sharePrice, stockClassId);
 
         _updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass, transactions);
 

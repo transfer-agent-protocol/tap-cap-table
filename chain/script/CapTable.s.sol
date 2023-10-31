@@ -17,7 +17,8 @@ contract CapTableDeployLocalScript is Script {
 
         CapTable implementation = new CapTable();
         CapTable(
-            address(new ERC1967Proxy(
+            address(
+                new ERC1967Proxy(
                 address(implementation),
                 abi.encodeWithSelector(
                     implementation.initialize.selector,
@@ -25,7 +26,8 @@ contract CapTableDeployLocalScript is Script {
                     "Winston, Inc.",
                     10000000
                 )
-            ))
+                )
+            )
         );
 
         vm.stopBroadcast();
@@ -39,10 +41,11 @@ contract CapTableDeployOptimismGoerli is Script {
         uint256 deployerPrivateKeyPoetTest = vm.envUint("PRIVATE_KEY_POET_TEST");
 
         vm.startBroadcast(deployerPrivateKeyPoetTest);
-        
+
         CapTable implementation = new CapTable();
         CapTable(
-            address(new ERC1967Proxy(
+            address(
+                new ERC1967Proxy(
                 address(implementation),
                 abi.encodeWithSelector(
                     implementation.initialize.selector,
@@ -50,7 +53,8 @@ contract CapTableDeployOptimismGoerli is Script {
                     "Winston, Inc.",
                     10000000
                 )
-            ))
+                )
+            )
         );
 
         vm.stopBroadcast();

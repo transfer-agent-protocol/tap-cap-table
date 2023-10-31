@@ -47,7 +47,6 @@ library TxHelper {
             bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao)));
         return deterministicValue;
     }
-    
 
     function createStockIssuanceStructByTA(
         bytes16 stockClassId,
@@ -158,16 +157,14 @@ library TxHelper {
     ) internal view returns (StockCancellation memory cancellation) {
         bytes16 id = generateDeterministicUniqueID(securityId);
 
-        return StockCancellation(
-            id, quantity, comments, securityId, reasonText, balance_security_id
-        );
+        return StockCancellation(id, quantity, comments, securityId, reasonText, balance_security_id);
     }
 
-    function createStockRetractionStruct(
-        string[] memory comments,
-        bytes16 securityId,
-        string memory reasonText
-    ) internal view returns (StockRetraction memory retraction) {
+    function createStockRetractionStruct(string[] memory comments, bytes16 securityId, string memory reasonText)
+        internal
+        view
+        returns (StockRetraction memory retraction)
+    {
         bytes16 id = generateDeterministicUniqueID(securityId);
 
         return StockRetraction(id, comments, securityId, reasonText);
@@ -183,9 +180,7 @@ library TxHelper {
     ) internal view returns (StockRepurchase memory repurchase) {
         bytes16 id = generateDeterministicUniqueID(securityId);
 
-        return StockRepurchase(
-            id, comments, securityId, considerationText, balance_security_id, quantity, price
-        );
+        return StockRepurchase(id, comments, securityId, considerationText, balance_security_id, quantity, price);
     }
 
     function adjustIssuerAuthorizedShares(
@@ -217,11 +212,7 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(stockClassId);
 
         return StockClassAuthorizedSharesAdjustment(
-            id,
-            newSharesAuthorized,
-            comments,
-            boardApprovalDate,
-            stockholderApprovalDate
+            id, newSharesAuthorized, comments, boardApprovalDate, stockholderApprovalDate
         );
     }
 
@@ -234,9 +225,7 @@ library TxHelper {
         bytes16 id = generateDeterministicUniqueID(securityId);
         bytes16 splitTransactionId = bytes16(0); // Not used in MVP
 
-        return StockReissuance(
-            id,  comments, securityId, resultingSecurityIds, splitTransactionId, reasonText
-        );
+        return StockReissuance(id, comments, securityId, resultingSecurityIds, splitTransactionId, reasonText);
     }
 
     function createStockAcceptanceStruct(string[] memory comments, bytes16 securityId)

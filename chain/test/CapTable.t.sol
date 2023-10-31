@@ -12,7 +12,8 @@ contract CapTableTest is Test {
         bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
         CapTable implementation = new CapTable();
         capTable = CapTable(
-            address(new ERC1967Proxy(
+            address(
+                new ERC1967Proxy(
                 address(implementation),
                 abi.encodeWithSelector(
                     implementation.initialize.selector,
@@ -20,7 +21,8 @@ contract CapTableTest is Test {
                     "Winston, Inc.",
                     10000000
                 )
-            ))
+                )
+            )
         );
     }
 
