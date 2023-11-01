@@ -161,21 +161,21 @@ struct StockTransferTransferParams {
 
 struct StockIssuanceParams {
     bytes16 stockClassId;
-    bytes16 stockPlanId;
-    ShareNumbersIssued shareNumbersIssued;
-    uint256 sharePrice;
-    uint256 quantity;
-    bytes16 vestingTermsId;
-    uint256 costBasis;
-    bytes16[] stockLegendIds;
-    string issuanceType;
-    string[] comments;
-    string customId;
+    bytes16 stockPlanId; // Optional
+    ShareNumbersIssued shareNumbersIssued; // Optional
+    uint256 sharePrice; // OCF Monetary (USD is all that matters). Amount is Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    uint256 quantity; // Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    bytes16 vestingTermsId; // Optional
+    uint256 costBasis; // Optional OCF Monetary (USD is all that matters). Amount is Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    bytes16[] stockLegendIds; // Optional
+    string issuanceType; // Optional for special types (["RSA", "FOUNDERS_STOCK"],)
+    string[] comments; // Optional
+    string customId; // Optional (eg R2-D2)
     bytes16 stakeholderId;
-    string boardApprovalDate;
-    string stockholderApprovalDate;
-    string considerationText;
-    string[] securityLawExemptions;
+    string boardApprovalDate; // Optional
+    string stockholderApprovalDate; // Optional
+    string considerationText; // Optional
+    string[] securityLawExemptions; // Unclear
 }
 
 // date fields are going to use block timestamp
