@@ -10,5 +10,6 @@ COPY . .
 # Install dependencies and setup
 RUN yarn install
 
+EXPOSE 8080
 # Specify the command to run on container start
-CMD ["yarn", "start"]
+CMD ["node", "src/server.js"]
