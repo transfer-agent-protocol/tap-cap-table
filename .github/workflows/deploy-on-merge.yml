@@ -23,5 +23,3 @@ jobs:
         chmod 600 private_key
         ssh -o StrictHostKeyChecking=no -i private_key poet@172.178.105.49 'cd /home/poet/tap-cap-table && git pull origin staging'
         rm -f private_key
-
-
