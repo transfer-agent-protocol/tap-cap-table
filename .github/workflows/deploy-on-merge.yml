@@ -1,4 +1,4 @@
-name: Deploy on PR Merge to Demo
+name: Deploy on PR Merge to Staging
 
 on:
   pull_request:
