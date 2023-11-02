@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass } from "../Structs.sol";
+import { StockRepurchase, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockParams } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockReissuanceTX.sol";
 import "../TxHelper.sol";
@@ -16,31 +16,33 @@ library StockReissuanceLib {
     event StockReissuanceCreated(StockReissuance reissuance);
 
     function reissueStockByTA(
+        StockParams memory params,
         uint256 nonce,
-        bytes16 stakeholderId,
-        bytes16 stockClassId,
-        string[] memory comments,
-        bytes16 securityId,
         bytes16[] memory resulting_security_ids,
-        string memory reason_text,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholderId][params.securityId];
 
         nonce++;
-        StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(nonce, comments, securityId, resulting_security_ids, reason_text);
+        StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(
+            nonce,
+            params.comments,
+            params.securityId,
+            resulting_security_ids,
+            params.reasonText
+        );
 
         _reissueStock(reissuance, transactions);
 
         issuer.shares_issued = issuer.shares_issued.sub(activePosition.quantity);
         stockClass.shares_issued = stockClass.shares_issued.sub(activePosition.quantity);
 
-        DeleteContext.deleteActivePosition(stakeholderId, securityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(stakeholderId, stockClassId, securityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholderId, params.securityId, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholderId, params.stockClassId, params.securityId, activeSecs);
     }
 
     function _reissueStock(StockReissuance memory reissuance, address[] storage transactions) internal {
