@@ -37,12 +37,12 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     };
 }
 
-async function deployCapTableOptimismGoerli(issuerId, issuerName) {
+async function deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
     const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-    const factory = new ethers.ContractFactory(abi, bytecode, wallet);
+    const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
 
     console.log("⏳ | Waiting for contract to be deployed...");
@@ -58,7 +58,7 @@ async function deployCapTable(chain, issuerId, issuerName, initial_shares_author
     if (chain === "local") {
         return deployCapTableLocal(issuerId, issuerName, initial_shares_authorized);
     } else if (chain === "optimism-goerli") {
-        return deployCapTableOptimismGoerli(issuerId, issuerName);
+        return deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized);
     } else {
         throw new Error(`❌ | Unsupported chain: ${chain}`);
     }
