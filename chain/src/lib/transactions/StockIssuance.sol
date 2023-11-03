@@ -22,11 +22,11 @@ library StockIssuanceLib {
         StockClass storage stockClass
     ) external {
         require(issuanceParams.quantity > 0, "Invalid quantity");
-        require(issuanceParams.sharePrice > 0, "Invalid price");
+        require(issuanceParams.share_price > 0, "Invalid price");
         nonce++;
-        bytes16 id = DeterministicUUID.generateDeterministicUniqueID(issuanceParams.stakeholderId, nonce);
+        bytes16 id = DeterministicUUID.generateDeterministicUniqueID(issuanceParams.stakeholder_id, nonce);
         nonce++;
-        bytes16 secId = DeterministicUUID.generateDeterministicUniqueID(issuanceParams.stockClassId, nonce);
+        bytes16 secId = DeterministicUUID.generateDeterministicUniqueID(issuanceParams.stock_class_id, nonce);
         //TODO: Move to TX helper
         StockIssuance memory issuance = StockIssuance(id, "TX_STOCK_ISSUANCE", secId, issuanceParams);
         _updateContext(issuance, positions, activeSecs, issuer, stockClass);
@@ -40,12 +40,12 @@ library StockIssuanceLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) internal {
-        activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholderId][issuance.params.stockClassId].push(issuance.security_id);
+        activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(issuance.security_id);
 
-        positions.activePositions[issuance.params.stakeholderId][issuance.security_id] = ActivePosition(
-            issuance.params.stockClassId,
+        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
+            issuance.params.stock_class_id,
             issuance.params.quantity,
-            issuance.params.sharePrice,
+            issuance.params.share_price,
             _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
         );
 

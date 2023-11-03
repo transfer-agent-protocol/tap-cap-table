@@ -22,7 +22,7 @@ library StockRepurchaseLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholderId][params.securityId];
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
         require(activePosition.quantity >= params.quantity, "Insufficient shares");
 
@@ -34,15 +34,15 @@ library StockRepurchaseLib {
             params.nonce++;
 
             StockTransferTransferParams memory transferParams = StockTransferTransferParams(
-                params.stakeholderId,
+                params.stakeholder_id,
                 bytes16(0),
-                params.stockClassId,
+                params.stock_class_id,
                 true,
                 remainingQuantity,
                 activePosition.share_price,
                 params.nonce
             );
-            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.stockClassId);
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.stock_class_id);
 
             StockIssuanceLib._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             StockIssuanceLib._issueStock(balanceIssuance, transactions);
@@ -60,8 +60,8 @@ library StockRepurchaseLib {
         issuer.shares_issued = issuer.shares_issued.sub(params.quantity);
         stockClass.shares_issued = stockClass.shares_issued.sub(params.quantity);
 
-        DeleteContext.deleteActivePosition(params.stakeholderId, params.securityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholderId, params.stockClassId, params.securityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
     function _repurchaseStock(StockRepurchase memory repurchase, address[] storage transactions) internal {

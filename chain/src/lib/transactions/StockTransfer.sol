@@ -22,21 +22,21 @@ library StockTransferLib {
         StockClass storage stockClass
     ) external {
         // Checks related to transaction validity
-        require(params.isBuyerVerified, "Buyer unverified");
+        require(params.is_buyer_verified, "Buyer unverified");
         require(params.quantity > 0, "Invalid quantity");
         require(params.share_price > 0, "Invalid price");
 
         require(
-            activeSecs.activeSecurityIdsByStockClass[params.transferorStakeholderId][params.stockClassId].length > 0,
+            activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
             "No active security ids found"
         );
-        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferorStakeholderId][params.stockClassId];
+        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
 
         uint256 sum = 0;
         uint256 numSecurityIds = 0;
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
-            ActivePosition memory activePosition = positions.activePositions[params.transferorStakeholderId][activeSecurityIDs[index]];
+            ActivePosition memory activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
             sum += activePosition.quantity;
 
             if (sum >= params.quantity) {
@@ -52,7 +52,7 @@ library StockTransferLib {
         uint256 remainingQuantity = params.quantity; // This will keep track of the remaining quantity to be transferred
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
-            ActivePosition memory activePosition = positions.activePositions[params.transferorStakeholderId][activeSecurityIDs[index]];
+            ActivePosition memory activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
 
             uint256 transferQuantity; // This will be the quantity to transfer in this iteration
 
@@ -87,12 +87,12 @@ library StockTransferLib {
         StockClass storage stockClass
     ) internal {
         bytes16 transferorSecurityId = securityId;
-        ActivePosition memory transferorActivePosition = positions.activePositions[params.transferorStakeholderId][transferorSecurityId];
+        ActivePosition memory transferorActivePosition = positions.activePositions[params.transferor_stakeholder_id][transferorSecurityId];
 
         require(transferorActivePosition.quantity >= params.quantity, "Insufficient shares");
 
         params.nonce++;
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.stockClassId);
+        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.stock_class_id);
 
         StockIssuanceLib._updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass);
         StockIssuanceLib._issueStock(transfereeIssuance, transactions);
@@ -128,8 +128,8 @@ library StockTransferLib {
         issuer.shares_issued = issuer.shares_issued.sub(transferorActivePosition.quantity);
         stockClass.shares_issued = stockClass.shares_issued.sub(transferorActivePosition.quantity);
 
-        DeleteContext.deleteActivePosition(params.transferorStakeholderId, transferorSecurityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.transferorStakeholderId, params.stockClassId, transferorSecurityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.transferor_stakeholder_id, transferorSecurityId, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.transferor_stakeholder_id, params.stock_class_id, transferorSecurityId, activeSecs);
     }
 
     function _transferStock(StockTransfer memory transfer, address[] storage transactions) internal {

@@ -235,10 +235,10 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     // TODO: small syntax but change this to issueStock
     function issueStockByTA(StockIssuanceParams memory params) external onlyAdmin {
-        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
+        require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
+        require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
-        StockClass storage stockClass = stockClasses[stockClassIndex[params.stockClassId] - 1];
+        StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
 
         require(issuer.shares_issued.add(params.quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
         require(stockClass.shares_issued.add(params.quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
@@ -248,8 +248,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     function repurchaseStock(StockParamsQuantity memory params, uint256 price) external override onlyAdmin {
-        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
+        require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
+        require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
         StockRepurchaseLib.repurchaseStockByTA(
             params,
@@ -258,14 +258,14 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[params.stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
         );
     }
 
     /// @inheritdoc ICapTable
     function retractStockIssuance(StockParams memory params) external override onlyAdmin {
-        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
+        require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
+        require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
         StockRetractionLib.retractStockIssuanceByTA(
             params,
@@ -274,7 +274,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[params.stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
         );
     }
 
@@ -288,7 +288,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[params.stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
         );
     }
 
@@ -296,8 +296,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
     function cancelStock(StockParamsQuantity memory params) external override onlyAdmin {
-        require(stakeholderIndex[params.stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[params.stockClassId] > 0, "Invalid stock class");
+        require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
+        require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
         // need a require for activePositions
 
@@ -308,7 +308,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             activeSecs,
             transactions,
             issuer,
-            stockClasses[stockClassIndex[params.stockClassId] - 1]
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
         );
     }
 
