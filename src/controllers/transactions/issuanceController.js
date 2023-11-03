@@ -57,25 +57,26 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
         StockLegendIdsBytes16.push(legendIdBytes16);
     }
 
-    // Second: create issuance onchain
-    const tx = await contract.issueStockByTA(
-        stockClassIdBytes16,
-        stockPlanIdBytes16,
-        share_numbers_issued, // not converted
-        sharePriceScaled,
-        quantityScaled,
-        vestingTermsBytes16,
-        cost_basis, // not converted
-        StockLegendIdsBytes16,
-        issuance_type,
+    const issuanceStruct = {
+        stockClassId: stockClassIdBytes16,
+        stockPlanId: stockPlanIdBytes16,
+        shareNumbersIssued: share_numbers_issued, // not converted
+        sharePrice: sharePriceScaled,
+        quantity: quantityScaled,
+        vestingTermsId: vestingTermsBytes16,
+        costBasis: cost_basis, // not converted
+        stockLegendIds: StockLegendIdsBytes16,
+        issuanceType: issuance_type,
         comments,
-        custom_id,
-        stakeholderIdBytes16,
-        board_approval_date,
-        stockholder_approval_date,
-        consideration_text,
-        security_law_exemptions
-    );
+        customId: custom_id,
+        stakeholderId: stakeholderIdBytes16,
+        boardApprovalDate: board_approval_date,
+        stockholderApprovalDate: stockholder_approval_date,
+        considerationText: consideration_text,
+        securityLawExemptions: security_law_exemptions,
+    };
+
+    const tx = await contract.issueStockByTA(issuanceStruct).catch((e) => console.error("Cannot create issuance ", e));
     await tx.wait();
     console.log("✅ | Issued stock onchain, unconfirmed: ", issuance);
 };
