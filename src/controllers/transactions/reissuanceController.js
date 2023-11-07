@@ -9,7 +9,7 @@ export const convertAndCreateReissuanceStockOnchain = async (
         reason_text,
         comments = [] }
 ) => {
-    const resulting_security_ids_b16 = resulting_security_ids.map(sId => convertUUIDToBytes16(sId)),
+    const resulting_security_ids_b16 = resulting_security_ids.map(sId => convertUUIDToBytes16(sId))
     const tx = await contract.reissueStock({
         stakeholder_id: convertUUIDToBytes16(stakeholderId),
         stock_class_id: convertUUIDToBytes16(stockClassId),
