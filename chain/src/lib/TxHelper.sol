@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockIssuanceParams, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferTransferParams, StockParamsQuantity } from "./Structs.sol";
+import { StockIssuance, StockIssuanceParams, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferParams, StockParamsQuantity } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -10,8 +10,8 @@ library TxHelper {
     }
 
     function createStockIssuanceStructByTA(uint256 nonce, StockIssuanceParams memory params) internal view returns (StockIssuance memory issuance) {
-        bytes16 id = generateDeterministicUniqueID(params.stakeholderId, nonce);
-        bytes16 secId = generateDeterministicUniqueID(params.stockClassId, nonce);
+        bytes16 id = generateDeterministicUniqueID(params.stakeholder_id, nonce);
+        bytes16 secId = generateDeterministicUniqueID(params.stock_class_id, nonce);
 
         return StockIssuance(id, "TX_STOCK_ISSUANCE", secId, params);
     }
@@ -19,16 +19,16 @@ library TxHelper {
     // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
     // I think we can extend this for all other types of balances
     function createStockIssuanceStructForTransfer(
-        StockTransferTransferParams memory transferParams,
+        StockTransferParams memory transferParams,
         bytes16 stakeholderId
     ) internal view returns (StockIssuance memory issuance) {
         ShareNumbersIssued memory share_numbers_issued; // if not instatiated it defaults to 0 for both values
 
         bytes16 id = generateDeterministicUniqueID(stakeholderId, transferParams.nonce);
-        bytes16 securityId = generateDeterministicUniqueID(transferParams.stockClassId, transferParams.nonce);
+        bytes16 securityId = generateDeterministicUniqueID(transferParams.stock_class_id, transferParams.nonce);
 
         StockIssuanceParams memory params = StockIssuanceParams(
-            transferParams.stockClassId, // Stock class ID
+            transferParams.stock_class_id, // Stock class ID
             "", // Stock plan ID (optional)
             share_numbers_issued, // Share numbers issued (optional)
             transferParams.share_price, // Share price
@@ -104,7 +104,7 @@ library TxHelper {
     }
 
     function createStockRepurchaseStruct(StockParamsQuantity memory params, uint256 price) internal view returns (StockRepurchase memory repurchase) {
-        bytes16 id = generateDeterministicUniqueID(params.securityId, params.nonce);
+        bytes16 id = generateDeterministicUniqueID(params.security_id, params.nonce);
 
         // Note: using stakeholderId to store balanceSecurityId
         return
@@ -112,9 +112,9 @@ library TxHelper {
                 id,
                 "TX_STOCK_REPURCHASE",
                 params.comments,
-                params.securityId,
-                params.reasonText,
-                params.stakeholderId,
+                params.security_id,
+                params.reason_text,
+                params.stakeholder_id,
                 params.quantity,
                 price
             );

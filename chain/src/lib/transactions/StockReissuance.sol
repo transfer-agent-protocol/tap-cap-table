@@ -25,15 +25,15 @@ library StockReissuanceLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholderId][params.securityId];
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
         nonce++;
         StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(
             nonce,
             params.comments,
-            params.securityId,
+            params.security_id,
             resulting_security_ids,
-            params.reasonText
+            params.reason_text
         );
 
         _reissueStock(reissuance, transactions);
@@ -41,8 +41,8 @@ library StockReissuanceLib {
         issuer.shares_issued = issuer.shares_issued.sub(activePosition.quantity);
         stockClass.shares_issued = stockClass.shares_issued.sub(activePosition.quantity);
 
-        DeleteContext.deleteActivePosition(params.stakeholderId, params.securityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholderId, params.stockClassId, params.securityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
     function _reissueStock(StockReissuance memory reissuance, address[] storage transactions) internal {

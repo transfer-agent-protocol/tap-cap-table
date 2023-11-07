@@ -23,19 +23,19 @@ library StockRetractionLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholderId][params.securityId];
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
         //TODO: require active position exists.
 
         nonce++;
-        StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, params.comments, params.securityId, params.reasonText);
+        StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, params.comments, params.security_id, params.reason_text);
         _retractStock(retraction, transactions);
 
         issuer.shares_issued = issuer.shares_issued.sub(activePosition.quantity);
         stockClass.shares_issued = stockClass.shares_issued.sub(activePosition.quantity);
 
-        DeleteContext.deleteActivePosition(params.stakeholderId, params.securityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholderId, params.stockClassId, params.securityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
     function _retractStock(StockRetraction memory retraction, address[] storage transactions) internal {
