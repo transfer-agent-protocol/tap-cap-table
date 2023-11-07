@@ -18,7 +18,7 @@ const IssuerSchema = new mongoose.Schema({
     comments: [String],
     deployed_to: String,
     is_manifest_created: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 const Issuer = mongoose.model("Issuer", IssuerSchema);
 
