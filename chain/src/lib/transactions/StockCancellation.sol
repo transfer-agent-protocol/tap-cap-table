@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockParamsQuantity, StockTransferTransferParams } from "../Structs.sol";
+import { StockCancellation, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockParamsQuantity, StockTransferParams } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockCancellationTX.sol";
 import "../TxHelper.sol";
@@ -32,7 +32,7 @@ library StockCancellationLib {
             // issue balance
             params.nonce++;
 
-            StockTransferTransferParams memory transferParams = StockTransferTransferParams(
+            StockTransferParams memory transferParams = StockTransferParams(
                 params.stakeholder_id,
                 bytes16(0),
                 params.stock_class_id,

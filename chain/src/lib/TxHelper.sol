@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockIssuanceParams, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferTransferParams, StockParamsQuantity } from "./Structs.sol";
+import { StockIssuance, StockIssuanceParams, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferParams, StockParamsQuantity } from "./Structs.sol";
 
 library TxHelper {
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
@@ -19,7 +19,7 @@ library TxHelper {
     // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
     // I think we can extend this for all other types of balances
     function createStockIssuanceStructForTransfer(
-        StockTransferTransferParams memory transferParams,
+        StockTransferParams memory transferParams,
         bytes16 stakeholderId
     ) internal view returns (StockIssuance memory issuance) {
         ShareNumbersIssued memory share_numbers_issued; // if not instatiated it defaults to 0 for both values

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockTransferTransferParams, StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer, Issuer, StockClass } from "../Structs.sol";
+import { StockTransferParams, StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, StockTransfer, Issuer, StockClass } from "../Structs.sol";
 import "./StockIssuance.sol";
 import "../../transactions/StockTransferTX.sol";
 import "../TxHelper.sol";
@@ -14,7 +14,7 @@ library StockTransferLib {
     event StockTransferCreated(StockTransfer transfer);
 
     function transferStock(
-        StockTransferTransferParams memory params,
+        StockTransferParams memory params,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         address[] storage transactions,
@@ -62,7 +62,7 @@ library StockTransferLib {
                 transferQuantity = remainingQuantity;
             }
 
-            StockTransferTransferParams memory newParams = params;
+            StockTransferParams memory newParams = params;
             newParams.quantity = transferQuantity;
 
             _transferSingleStock(newParams, activeSecurityIDs[index], positions, activeSecs, transactions, issuer, stockClass);
@@ -78,7 +78,7 @@ library StockTransferLib {
 
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity.
     function _transferSingleStock(
-        StockTransferTransferParams memory params,
+        StockTransferParams memory params,
         bytes16 securityId,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,

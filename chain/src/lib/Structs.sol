@@ -110,23 +110,6 @@ struct StockIssuance {
     StockIssuanceParams params;
 }
 
-/*
- "properties": {
-    "object_type": {
-      "const": "STOCK_LEGEND_TEMPLATE"
-    },
-    "name": {
-      "description": "Name for the stock legend template",
-      "type": "string"
-    },
-    "text": {
-      "description": "The full text of the stock legend",
-      "type": "string"
-    },
-    "id": {},
-    "comments": {}
-  }, */
-
 struct StockLegendTemplate {
     bytes16 id;
 }
@@ -149,7 +132,7 @@ struct StockParams {
     string reason_text;
 }
 
-struct StockTransferTransferParams {
+struct StockTransferParams {
     bytes16 transferor_stakeholder_id;
     bytes16 transferee_stakeholder_id;
     bytes16 stock_class_id;
