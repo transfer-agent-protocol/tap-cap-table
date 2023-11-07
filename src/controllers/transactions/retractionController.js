@@ -8,10 +8,13 @@ export const convertAndCreateRetractionStockOnchain = async (
         reason_text,
         comments = [] }
 ) => {
-    const secIdBytes16 = convertUUIDToBytes16(security_id);
-    const stakeHolderIdBytes16 = convertUUIDToBytes16(stakeholderId);
-    const stockClassIdBytes16 = convertUUIDToBytes16(stockClassId);
 
-    const tx = await contract.retractStockIssuance(stakeHolderIdBytes16, stockClassIdBytes16, secIdBytes16, comments, reason_text);
+    const tx = await contract.retractStockIssuance({
+        stakeholder_id: convertUUIDToBytes16(stakeholderId),
+        stock_class_id: convertUUIDToBytes16(stockClassId),
+        security_id: convertUUIDToBytes16(security_id),
+        comments,
+        reason_text
+    });
     await tx.wait();
 };
