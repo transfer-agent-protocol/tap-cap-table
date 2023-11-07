@@ -9,7 +9,7 @@ connectDB();
 const main = async () => {
     console.log("⏳ | Creating stock issuance");
 
-    const lastIssuer = await Issuer.find().sort({ _id: -1 }).limit(1);
+    const lastIssuer = await Issuer.find().sort({ _id: -1 }).limit(1); // finds the latest issuer
     const { _id: issuerId } = lastIssuer[0];
 
     const lastStakeholder = await Stakeholder.find().sort({ _id: -1 }).limit(1);

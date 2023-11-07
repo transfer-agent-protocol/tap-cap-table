@@ -1,7 +1,8 @@
 import axios from "axios";
 import sleep from "../utils/sleep.js";
-import { issuer, stakeholder1, stakeholder2, stockClass, stockIssuance } from "./sampleData.js";
+import { issuer, stakeholder1, stakeholder2, stockClass } from "./sampleData.js";
 
+// @dev this script needs to run first in order to run the others scripts in this file
 const main = async () => {
     console.log("⏳ | Creating issuer…");
     // create issuer
