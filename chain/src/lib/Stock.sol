@@ -115,7 +115,7 @@ library StockLib {
         require(activePosition.quantity >= params.quantity, "Insufficient shares");
 
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
-        bytes16 balance_security_id;
+        bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
             // issue balance
@@ -136,8 +136,6 @@ library StockLib {
             _issueStock(balanceIssuance, transactions);
 
             balance_security_id = balanceIssuance.security_id;
-        } else {
-            balance_security_id = "";
         }
 
         params.nonce++;
@@ -150,9 +148,7 @@ library StockLib {
             balance_security_id
         );
 
-        StockCancellationTx cancellationTx = new StockCancellationTx(cancellation);
-        transactions.push(address(cancellationTx));
-        emit StockCancellationCreated(cancellation);
+        _cancelStock(cancellation, transactions);
 
         issuer.shares_issued = issuer.shares_issued - params.quantity;
         stockClass.shares_issued = stockClass.shares_issued - params.quantity;
@@ -205,7 +201,7 @@ library StockLib {
         require(activePosition.quantity >= params.quantity, "Insufficient shares");
 
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
-        bytes16 balance_security_id;
+        bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
             // issue balance
@@ -226,8 +222,6 @@ library StockLib {
             _issueStock(balanceIssuance, transactions);
 
             balance_security_id = balanceIssuance.security_id;
-        } else {
-            balance_security_id = "";
         }
 
         params.nonce++;
@@ -294,7 +288,7 @@ library StockLib {
 
         uint256 balanceForTransferor = transferorActivePosition.quantity - params.quantity;
 
-        bytes16 balance_security_id;
+        bytes16 balance_security_id = "";
 
         params.quantity = balanceForTransferor;
         params.share_price = transferorActivePosition.share_price;
@@ -306,8 +300,6 @@ library StockLib {
             _issueStock(transferorBalanceIssuance, transactions);
 
             balance_security_id = transferorBalanceIssuance.security_id;
-        } else {
-            balance_security_id = "";
         }
 
         params.nonce++;
@@ -331,6 +323,12 @@ library StockLib {
         StockIssuanceTx issuanceTx = new StockIssuanceTx(issuance);
         transactions.push(address(issuanceTx));
         emit StockIssuanceCreated(issuance);
+    }
+
+    function _cancelStock(StockCancellation memory cancellation, address[] storage transactions) internal {
+        StockCancellationTx cancellationTx = new StockCancellationTx(cancellation);
+        transactions.push(address(cancellationTx));
+        emit StockCancellationCreated(cancellation);
     }
 
     function _transferStock(StockTransfer memory transfer, address[] storage transactions) internal {
