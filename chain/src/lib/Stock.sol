@@ -56,13 +56,13 @@ library StockLib {
             activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
             "No active security ids found"
         );
-        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
+        bytes16[] storage activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
 
         uint256 sum = 0;
         uint256 numSecurityIds = 0;
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
-            ActivePosition memory activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
+            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
             sum += activePosition.quantity;
 
             numSecurityIds += 1;
@@ -76,7 +76,7 @@ library StockLib {
         uint256 remainingQuantity = params.quantity; // This will keep track of the remaining quantity to be transferred
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
-            ActivePosition memory activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
+            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
 
             uint256 transferQuantity = remainingQuantity; // This will be the quantity to transfer in this iteration
 
