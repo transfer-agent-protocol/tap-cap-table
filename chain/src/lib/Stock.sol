@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams } from "./Structs.sol";
 import "./TxHelper.sol";
-import "./DeterministicUUID.sol"; // TOOD: migrate
 import "./DeleteContext.sol";
 import "../transactions/StockIssuanceTX.sol";
 import "../transactions/StockTransferTX.sol";
@@ -22,6 +21,10 @@ library StockLib {
     event StockRetractionCreated(StockRetraction retraction);
     event StockAcceptanceCreated(StockAcceptance acceptance);
 
+    error InsufficientShares(uint256 available, uint256 required);
+    error InvalidQuantityOrPrice(uint256 quantity, uint256 price);
+    error UnverifiedBuyer();
+
     function createStockIssuanceByTA(
         uint256 nonce,
         StockIssuanceParams memory issuanceParams,
@@ -31,8 +34,7 @@ library StockLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        require(issuanceParams.quantity > 0, "Invalid quantity");
-        require(issuanceParams.share_price > 0, "Invalid price");
+        _checkInvalidQuantityOrPrice(issuanceParams.quantity, issuanceParams.share_price);
 
         StockIssuance memory issuance = TxHelper.createStockIssuanceStruct(issuanceParams, nonce);
         TxHelper._updateContext(issuance, positions, activeSecs, issuer, stockClass);
@@ -47,10 +49,8 @@ library StockLib {
         Issuer storage issuer,
         StockClass storage stockClass
     ) external {
-        // Checks related to transaction validity
-        require(params.is_buyer_verified, "Buyer unverified");
-        require(params.quantity > 0, "Invalid quantity");
-        require(params.share_price > 0, "Invalid price");
+        _checkBuyerVerified(params.is_buyer_verified);
+        _checkInvalidQuantityOrPrice(params.quantity, params.share_price);
 
         require(
             activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
@@ -65,27 +65,23 @@ library StockLib {
             ActivePosition memory activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
             sum += activePosition.quantity;
 
+            numSecurityIds += 1;
             if (sum >= params.quantity) {
-                numSecurityIds += 1;
                 break;
-            } else {
-                numSecurityIds += 1;
             }
         }
 
-        require(params.quantity <= sum, "insufficient shares");
+        _checkInsuffientAmount(sum, params.quantity);
 
         uint256 remainingQuantity = params.quantity; // This will keep track of the remaining quantity to be transferred
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
             ActivePosition memory activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
 
-            uint256 transferQuantity; // This will be the quantity to transfer in this iteration
+            uint256 transferQuantity = remainingQuantity; // This will be the quantity to transfer in this iteration
 
             if (activePosition.quantity <= remainingQuantity) {
                 transferQuantity = activePosition.quantity;
-            } else {
-                transferQuantity = remainingQuantity;
             }
 
             StockTransferParams memory newParams = params;
@@ -112,8 +108,7 @@ library StockLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
-        require(activePosition.quantity >= params.quantity, "Insufficient shares");
-
+        _checkInsuffientAmount(activePosition.quantity, params.quantity);
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
         bytes16 balance_security_id = "";
 
@@ -198,7 +193,7 @@ library StockLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
-        require(activePosition.quantity >= params.quantity, "Insufficient shares");
+        _checkInsuffientAmount(activePosition.quantity, params.quantity);
 
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
         bytes16 balance_security_id = "";
@@ -278,7 +273,7 @@ library StockLib {
         bytes16 transferorSecurityId = securityId;
         ActivePosition memory transferorActivePosition = positions.activePositions[params.transferor_stakeholder_id][transferorSecurityId];
 
-        require(transferorActivePosition.quantity >= params.quantity, "Insufficient shares");
+        _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
 
         params.nonce++;
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.stock_class_id);
@@ -359,5 +354,23 @@ library StockLib {
         StockAcceptanceTx acceptanceTx = new StockAcceptanceTx(acceptance);
         transactions.push(address(acceptanceTx));
         emit StockAcceptanceCreated(acceptance);
+    }
+
+    function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
+        if (available < desired) {
+            revert InsufficientShares(available, desired);
+        }
+    }
+
+    function _checkInvalidQuantityOrPrice(uint256 quantity, uint256 price) internal pure {
+        if (quantity <= 0 || price <= 0) {
+            revert InvalidQuantityOrPrice(quantity, price);
+        }
+    }
+
+    function _checkBuyerVerified(bool isBuyerVerified) internal pure {
+        if (!isBuyerVerified) {
+            revert UnverifiedBuyer();
+        }
     }
 }
