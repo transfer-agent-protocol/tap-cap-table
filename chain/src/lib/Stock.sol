@@ -85,9 +85,10 @@ library StockLib {
             }
 
             StockTransferParams memory newParams = params;
-            newParams.quantity = transferQuantity;
+            params.quantity = transferQuantity;
 
-            _transferSingleStock(newParams, activeSecurityIDs[index], positions, activeSecs, transactions, issuer, stockClass);
+
+            _transferSingleStock(params, activeSecurityIDs[index], positions, activeSecs, transactions, issuer, stockClass);
 
             remainingQuantity -= transferQuantity; // Reduce the remaining quantity
 
