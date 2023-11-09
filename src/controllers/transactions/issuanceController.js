@@ -24,7 +24,7 @@ const checkIssuanceValues = (issuance) => {
 
 export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) => {
     const checkedValues = checkIssuanceValues(issuance);
-    const {
+    let {
         stakeholder_id,
         stock_class_id,
         quantity,
@@ -44,38 +44,39 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
     } = checkedValues;
 
     // First: convert OCF Types to Onchain Types
-    const stakeholderIdBytes16 = convertUUIDToBytes16(stakeholder_id);
-    const stockClassIdBytes16 = convertUUIDToBytes16(stock_class_id);
-    const vestingTermsBytes16 = convertUUIDToBytes16(vesting_terms_id);
-    const stockPlanIdBytes16 = convertUUIDToBytes16(stock_plan_id);
-    const quantityScaled = toScaledBigNumber(quantity);
-    const sharePriceScaled = toScaledBigNumber(share_price.amount);
+    stakeholder_id = convertUUIDToBytes16(stakeholder_id);
+    stock_class_id = convertUUIDToBytes16(stock_class_id);
+    vesting_terms_id = convertUUIDToBytes16(vesting_terms_id);
+    stock_plan_id = convertUUIDToBytes16(stock_plan_id);
+    quantity = toScaledBigNumber(quantity);
+    share_price = toScaledBigNumber(share_price.amount);
 
     let StockLegendIdsBytes16 = [];
     for (const legendId of stock_legend_ids) {
         const legendIdBytes16 = convertUUIDToBytes16(legendId);
         StockLegendIdsBytes16.push(legendIdBytes16);
     }
+    console.log({stakeholder_id})
 
     // Second: create issuance onchain
-    const tx = await contract.issueStockByTA(
-        stockClassIdBytes16,
-        stockPlanIdBytes16,
+    const tx = await contract.issueStockByTA({
+        stock_class_id,
+        stock_plan_id,
         share_numbers_issued, // not converted
-        sharePriceScaled,
-        quantityScaled,
-        vestingTermsBytes16,
+        share_price,
+        quantity,
+        vesting_terms_id,
         cost_basis, // not converted
-        StockLegendIdsBytes16,
+        stock_legend_ids,
         issuance_type,
         comments,
         custom_id,
-        stakeholderIdBytes16,
+        stakeholder_id,
         board_approval_date,
         stockholder_approval_date,
         consideration_text,
         security_law_exemptions
-    );
+    });
     await tx.wait();
     console.log("✅ | Issued stock onchain, unconfirmed: ", issuance);
 };

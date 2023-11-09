@@ -5,12 +5,15 @@ export const convertAndCreateCancellationStockOnchain = async (
     contract,
     { stakeholderId, stockClassId, quantity, security_id, reason_text, comments = [] }
 ) => {
-    const secIdBytes16 = convertUUIDToBytes16(security_id);
-    const stakeHolderIdBytes16 = convertUUIDToBytes16(stakeholderId);
-    const stockClassIdBytes16 = convertUUIDToBytes16(stockClassId);
-    const quantityScaled = toScaledBigNumber(quantity);
 
-    const tx = await contract.cancelStock(stakeHolderIdBytes16, stockClassIdBytes16, secIdBytes16, comments, reason_text, quantityScaled);
+    const tx = await contract.cancelStock({
+        stakeholder_id: convertUUIDToBytes16(stakeholderId),
+        stock_class_id: convertUUIDToBytes16(stockClassId),
+        security_id: convertUUIDToBytes16(security_id),
+        comments, reason_text,
+        quantity: toScaledBigNumber(quantity),
+        nonce: 0
+    });
     await tx.wait();
 
     console.log(`✅ | Cancellation Completed: quantity affected: ${quantity}`);

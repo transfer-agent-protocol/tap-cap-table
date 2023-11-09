@@ -6,25 +6,22 @@ export const convertAndCreateRepurchaseStockOnchain = async (
     { stakeholderId,
         stockClassId,
         security_id,
-        considertationText= "",
+        considertationText = "",
         quantity,
         price,
         comments = [] }
 ) => {
-    const secIdBytes16 = convertUUIDToBytes16(security_id);
-    const stakeHolderIdBytes16 = convertUUIDToBytes16(stakeholderId);
-    const stockClassIdBytes16 = convertUUIDToBytes16(stockClassId);
-    const scaledQuantity = toScaledBigNumber(quantity)
-    const scaledPrice =  toScaledBigNumber(price.amount)
+    const scaledPrice = toScaledBigNumber(price.amount)
 
-    const tx = await contract.repurchaseStock(
-        stakeHolderIdBytes16,
-        stockClassIdBytes16,
-        secIdBytes16,
+    const tx = await contract.repurchaseStock({
+        stakeholder_id: convertUUIDToBytes16(stakeholderId),
+        stock_class_id: convertUUIDToBytes16(stockClassId),
+        security_id: convertUUIDToBytes16(security_id),
+        quantity: toScaledBigNumber(quantity),
         comments,
-        considertationText,
-        scaledQuantity,
-        scaledPrice
-    );
+        nonce: 0, // needed because of StockParamsQuantity Struct
+        reason_text: considertationText // there is no consideration text in StockParamsQuantity Struct
+        // consideration_text: considertationText
+    }, scaledPrice);
     await tx.wait();
 };

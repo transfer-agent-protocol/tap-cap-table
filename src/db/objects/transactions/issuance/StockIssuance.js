@@ -27,7 +27,7 @@ const StockIssuanceSchema = new mongoose.Schema({
         ref: "Issuer",
     },
     is_onchain_synced: { type: Boolean, default: false },
-});
+}, {timestamps: true});
 
 const StockIssuance = mongoose.model("StockIssuance", StockIssuanceSchema);
 

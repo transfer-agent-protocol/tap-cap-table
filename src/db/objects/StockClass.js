@@ -23,7 +23,7 @@ const StockClassSchema = new mongoose.Schema({
         ref: "Issuer",
     },
     is_onchain_synced: { type: Boolean, default: false },
-});
+}, {timestamps: true});
 
 const Stockclass = mongoose.model("StockClass", StockClassSchema);
 
