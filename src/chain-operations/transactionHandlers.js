@@ -46,6 +46,9 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
     ];
 
     const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.params.stakeholder_id));
+    if (!stakeholder) {
+        throw Error("Stakeholder does not exist");
+    }
 
     const id = convertBytes16ToUUID(stock.id);
     const createdStockIssuance = await upsertStockIssuanceById(id, {
