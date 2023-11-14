@@ -84,7 +84,7 @@ library StockLib {
                 transferQuantity = activePosition.quantity;
             }
 
-            StockTransferParams memory newParams = params;
+            // StockTransferParams memory newParams = params;
             params.quantity = transferQuantity;
 
 
@@ -126,7 +126,7 @@ library StockLib {
                 activePosition.share_price,
                 params.nonce
             );
-            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.stock_class_id);
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.transferor_stakeholder_id);
 
             TxHelper._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             _issueStock(balanceIssuance, transactions);
@@ -212,7 +212,7 @@ library StockLib {
                 activePosition.share_price,
                 params.nonce
             );
-            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.stock_class_id);
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(transferParams, transferParams.transferor_stakeholder_id);
 
             TxHelper._updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass);
             _issueStock(balanceIssuance, transactions);
@@ -277,7 +277,7 @@ library StockLib {
         _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
 
         params.nonce++;
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.stock_class_id);
+        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.transferee_stakeholder_id);
 
         TxHelper._updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass);
         _issueStock(transfereeIssuance, transactions);
@@ -290,7 +290,7 @@ library StockLib {
         params.share_price = transferorActivePosition.share_price;
         if (balanceForTransferor > 0) {
             params.nonce++;
-            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(params, securityId);
+            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.transferor_stakeholder_id);
 
             TxHelper._updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass);
             _issueStock(transferorBalanceIssuance, transactions);
