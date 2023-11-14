@@ -120,9 +120,6 @@ export const handleStockTransfer = async (stock, issuerId) => {
         `✅ | StockTransfer confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockTransfer
     );
-
-    console.log(`Quantity transferred: ${quantity}`);
-    console.log(`Price per share: ${sharePrice}`);
 };
 export const handleStakeholder = async (id) => {
     console.log("StakeholderCreated Event Emitted!", id);
