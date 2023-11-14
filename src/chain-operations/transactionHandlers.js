@@ -87,18 +87,17 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
         `✅ | StockIssuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockIssuance
     );
-
-    return true
-}
+};
 
 export const handleStockTransfer = async (stock, issuerId) => {
     console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
 
     const id = convertBytes16ToUUID(stock.id);
+    const quantity = toDecimal(stock.quantity).toString()
     const createdStockTransfer = await upsertStockTransferById(id, {
         _id: id,
         object_type: stock.object_type,
-        quantity: toDecimal(stock.quantity).toString(),
+        quantity,
         comments: stock.comments,
         security_id: convertBytes16ToUUID(stock.security_id),
         consideration_text: stock.consideration_text,
@@ -109,7 +108,7 @@ export const handleStockTransfer = async (stock, issuerId) => {
         is_onchain_synced: true,
     });
 
-    console.log("Stock Transfer reflected and validated offchain", createdStockTransfer);
+    console.log("Stock Transfer reflected and validated off-chain", createdStockTransfer);
 
     await createHistoricalTransaction({
         transaction: createdStockTransfer._id,
@@ -121,24 +120,23 @@ export const handleStockTransfer = async (stock, issuerId) => {
         `✅ | StockTransfer confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockTransfer
     );
-    return true;
 
-}
+    console.log(`Quantity transferred: ${quantity}`);
+    console.log(`Price per share: ${sharePrice}`);
+};
 export const handleStakeholder = async (id) => {
     console.log("StakeholderCreated Event Emitted!", id);
     const incomingStakeholderId = convertBytes16ToUUID(id);
     const stakeholder = await updateStakeholderById(incomingStakeholderId, { is_onchain_synced: true });
     console.log("✅ | Stakeholder confirmation onchain ", stakeholder);
-}
+};
 
 export const handleStockClass = async (id) => {
     console.log("StockClassCreated Event Emitted!", id);
     const incomingStockClassId = convertBytes16ToUUID(id);
     const stockClass = await updateStockClassById(incomingStockClassId, { is_onchain_synced: true });
     console.log("✅ | StockClass confirmation onchain ", stockClass);
-}
-
-
+};
 
 export const handleStockCancellation = async (stock, issuerId, timestamp) => {
     console.log("StockCancellationCreated Event Emitted!", stock.id);
@@ -167,8 +165,7 @@ export const handleStockCancellation = async (stock, issuerId, timestamp) => {
         `✅ | StockCancellation confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockCancellation
     );
-
-}
+};
 
 export const handleStockRetraction = async (stock, issuerId, timestamp) => {
     console.log("StockRetractionCreated Event Emitted!", stock.id);
@@ -195,7 +192,7 @@ export const handleStockRetraction = async (stock, issuerId, timestamp) => {
         `✅ | StockRetraction confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockRetraction
     );
-}
+};
 
 export const handleStockReissuance = async (stock, issuerId, timestamp) => {
     console.log("StockReissuanceCreated Event Emitted!", stock.id);
@@ -223,7 +220,7 @@ export const handleStockReissuance = async (stock, issuerId, timestamp) => {
         `✅ | StockReissuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockReissuance
     );
-}
+};
 
 export const handleStockRepurchase = async (stock, issuerId, timestamp) => {
     console.log("StockRepurchaseCreated Event Emitted!", stock.id);
@@ -261,7 +258,7 @@ export const handleStockRepurchase = async (stock, issuerId, timestamp) => {
         `✅ | StockRepurchase confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockRepurchase
     );
-}
+};
 
 export const handleStockAcceptance = async (stock, issuerId, timestamp) => {
     console.log("StockAcceptanceCreated Event Emitted!", stock.id);
@@ -289,7 +286,7 @@ export const handleStockAcceptance = async (stock, issuerId, timestamp) => {
         `✅ | StockAcceptance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         createdStockAcceptance
     );
-}
+};
 
 export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, timestamp) => {
     console.log("StockClassAuthorizedSharesAdjusted Event Emitted!", stock.id);
@@ -322,7 +319,7 @@ export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, 
         `✅ | StockClassAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         upsert
     );
-}
+};
 
 export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, timestamp) => {
     console.log("IssuerAuthorizedSharesAdjusted Event Emitted!", issuer.id);
@@ -355,5 +352,4 @@ export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, tim
         `✅ | IssuerAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
         upsert
     );
-
-}
+};
