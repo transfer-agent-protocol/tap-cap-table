@@ -24,7 +24,7 @@ const checkIssuanceValues = (issuance) => {
 
 export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) => {
     const checkedValues = checkIssuanceValues(issuance);
-    let {
+    const {
         stakeholder_id,
         stock_class_id,
         quantity,
