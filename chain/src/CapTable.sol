@@ -5,14 +5,8 @@ import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
 import { StockTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
-import "./lib/transactions/StockIssuance.sol";
-import "./lib/transactions/StockTransfer.sol";
-import "./lib/transactions/StockCancellation.sol";
-import "./lib/transactions/StockRetraction.sol";
-import "./lib/transactions/StockRepurchase.sol";
 import "./lib/transactions/Adjustment.sol";
-import "./lib/transactions/StockAcceptance.sol";
-import "./lib/transactions/StockReissuance.sol";
+import "./lib/Stock.sol";
 
 contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     using SafeMath for uint256;
@@ -139,7 +133,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
         // require active position to exist?
 
-        StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
+        StockLib.acceptStockByTA(nonce, securityId, comments, transactions);
     }
 
     /// @inheritdoc ICapTable
@@ -243,7 +237,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         require(issuer.shares_issued.add(params.quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
         require(stockClass.shares_issued.add(params.quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
-        StockIssuanceLib.createStockIssuanceByTA(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
+        StockLib.createStockIssuanceByTA(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
     /// @inheritdoc ICapTable
@@ -251,7 +245,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
         require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
-        StockRepurchaseLib.repurchaseStockByTA(
+        StockLib.repurchaseStockByTA(
             params,
             price,
             positions,
@@ -267,7 +261,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
         require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
-        StockRetractionLib.retractStockIssuanceByTA(
+        StockLib.retractStockIssuanceByTA(
             params,
             nonce,
             positions,
@@ -280,7 +274,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     function reissueStock(StockParams memory params, bytes16[] memory resulting_security_ids) external override {
-        StockReissuanceLib.reissueStockByTA(
+        StockLib.reissueStockByTA(
             params,
             nonce,
             resulting_security_ids,
@@ -302,7 +296,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         // need a require for activePositions
 
         params.nonce = nonce;
-        StockCancellationLib.cancelStockByTA(
+        StockLib.cancelStockByTA(
             params,
             positions,
             activeSecs,
@@ -335,7 +329,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             nonce
         );
 
-        StockTransferLib.transferStock(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
+        StockLib.transferStock(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
     }
 
     /* Role Based Access Control */
