@@ -19,7 +19,7 @@ export const convertAndCreateRepurchaseStockOnchain = async (
         stock_class_id: convertUUIDToBytes16(stockClassId),
         security_id: convertUUIDToBytes16(security_id),
         comments,
-        reason_text: considerationText // there is no consideration text in StockParamsQuantity Struct
+        reason_text: considerationText // there is no consideration text in StockParams Struct
     }, scaledQuantity, scaledPrice);
     await tx.wait();
 };
