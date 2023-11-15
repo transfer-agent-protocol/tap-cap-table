@@ -68,13 +68,13 @@ interface ICapTable {
 
     function issueStockByTA(StockIssuanceParams memory params) external;
 
-    function repurchaseStock(StockParamsQuantity memory params, uint256 price) external;
+    function repurchaseStock(StockParams memory params, uint256 quantity, uint256 price) external;
 
     function retractStockIssuance(StockParams memory params) external;
 
     function reissueStock(StockParams memory params, bytes16[] memory resulting_security_ids) external;
 
-    function cancelStock(StockParamsQuantity memory paramsQuantity) external;
+    function cancelStock(StockParams memory params, uint256 quantity) external;
 
     function transferStock(
         bytes16 transferorStakeholderId,

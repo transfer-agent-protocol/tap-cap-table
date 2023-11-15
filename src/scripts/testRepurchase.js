@@ -7,7 +7,7 @@ connectDB();
 const main = async () => {
     console.log("⏳ | Creating stock repurchase");
 
-    const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
+    const lastStockIssuance = await StockIssuance.find().sort({ updatedAt: -1 }).limit(1);
     console.log("lastStockIssuance", lastStockIssuance[0]);
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity } = lastStockIssuance[0];
 
@@ -16,7 +16,7 @@ const main = async () => {
         stockRepurchase(
             issuer, // Issuer ID
             quantity,
-            "1.5",
+            "1.0",
             stakeholder_id, // Stakeholder ID
             stock_class_id, // StockClass ID
             security_id, // Security ID

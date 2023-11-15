@@ -7,7 +7,7 @@ connectDB();
 const main = async () => {
     console.log("⏳ | Creating stock acceptance…");
 
-    const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
+    const lastStockIssuance = await StockIssuance.find().sort({ updatedAt: -1 }).limit(1);
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity } = lastStockIssuance[0];
     console.log({ issuer, security_id, stakeholder_id, stock_class_id, quantity });
 

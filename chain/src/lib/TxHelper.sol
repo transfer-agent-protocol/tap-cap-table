@@ -1,9 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, StockIssuanceParams, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferParams, StockParamsQuantity } from "./Structs.sol";
+import { StockIssuance, StockIssuanceParams, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferParams, StockParamsQuantity, StockIssuanceParams } from "./Structs.sol";
 
 library TxHelper {
+    function _updateContext(
+        StockIssuance memory issuance,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) internal {
+        activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(issuance.security_id);
+
+        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
+            issuance.params.stock_class_id,
+            issuance.params.quantity,
+            issuance.params.share_price,
+            _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
+        );
+
+        issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
+        stockClass.shares_issued = stockClass.shares_issued + issuance.params.quantity;
+    }
+
+    function _safeNow() internal view returns (uint40) {
+        return uint40(block.timestamp);
+    }
+
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {
         bytes16 deterministicValue = bytes16(keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, nonce)));
         return deterministicValue;
@@ -54,6 +78,17 @@ library TxHelper {
             );
     }
 
+    function createStockIssuanceStruct(
+        StockIssuanceParams memory issuanceParams,
+        uint256 nonce
+    ) internal view returns (StockIssuance memory issuance) {
+        nonce++;
+        bytes16 id = generateDeterministicUniqueID(issuanceParams.stakeholder_id, nonce);
+        bytes16 secId = generateDeterministicUniqueID(issuanceParams.stock_class_id, nonce);
+
+        return StockIssuance(id, "TX_STOCK_ISSUANCE", secId, issuanceParams);
+    }
+
     function createStockTransferStruct(
         uint256 nonce,
         uint256 quantity,
@@ -98,6 +133,7 @@ library TxHelper {
         bytes16 securityId,
         string memory reasonText
     ) internal view returns (StockRetraction memory retraction) {
+        nonce++;
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockRetraction(id, "TX_STOCK_RETRACTION", comments, securityId, reasonText);
@@ -180,6 +216,7 @@ library TxHelper {
         string[] memory comments,
         bytes16 securityId
     ) internal view returns (StockAcceptance memory acceptance) {
+        nonce++;
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockAcceptance(id, "TX_STOCK_ACCEPTANCE", securityId, comments);
