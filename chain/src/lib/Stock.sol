@@ -84,7 +84,6 @@ library StockLib {
                 transferQuantity = activePosition.quantity;
             }
 
-            // StockTransferParams memory newParams = params;
             params.quantity = transferQuantity;
 
 

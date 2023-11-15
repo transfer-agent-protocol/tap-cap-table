@@ -241,12 +241,22 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(StockParamsQuantity memory params, uint256 price) external override onlyAdmin {
+    function repurchaseStock(StockParams memory params, uint256 quantity, uint256 price) external override onlyAdmin {
         require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
         require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
+        StockParamsQuantity memory repurchaseParams = StockParamsQuantity(
+            nonce,
+            quantity,
+            params.stakeholder_id,
+            params.stock_class_id,
+            params.security_id,
+            params.comments,
+            params.reason_text
+        );
+
         StockLib.repurchaseStockByTA(
-            params,
+            repurchaseParams,
             price,
             positions,
             activeSecs,
@@ -289,15 +299,24 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     // Missed date here. Make sure it's recorded where it needs to be (in the struct)
     // TODO: dates seem to be missing in a handful of places, go back and recheck
-    function cancelStock(StockParamsQuantity memory params) external override onlyAdmin {
+    function cancelStock(StockParams memory params, uint256 quantity) external override onlyAdmin {
         require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
         require(stockClassIndex[params.stock_class_id] > 0, "Invalid stock class");
 
         // need a require for activePositions
 
-        params.nonce = nonce;
+        StockParamsQuantity memory cancelParams = StockParamsQuantity(
+            nonce,
+            quantity,
+            params.stakeholder_id,
+            params.stock_class_id,
+            params.security_id,
+            params.comments,
+            params.reason_text
+        );
+
         StockLib.cancelStockByTA(
-            params,
+            cancelParams,
             positions,
             activeSecs,
             transactions,
