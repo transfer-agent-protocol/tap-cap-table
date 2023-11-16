@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTableTaek } from "./ICapTableTaek.sol";
-import { StockTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
+import { StockTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams, StorageParams } from "./lib/Structs.sol";
 import "./lib/transactions/AdjustmentTaek.sol";
 import "./lib/StockTaek.sol";
 
@@ -130,7 +130,7 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
 
         // require active position to exist?
 
-        StockLibTaek.acceptStockByTA(nonce, securityId, comments, transactions);
+        StockLibTaek.acceptStockByTA(nonce, securityId, comments, transactions, hashToTxEncodedData);
     }
 
     /// @inheritdoc ICapTableTaek
@@ -147,7 +147,8 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
             boardApprovalDate,
             stockholderApprovalDate,
             issuer,
-            transactions
+            transactions,
+            hashToTxEncodedData
         );
     }
 
@@ -169,7 +170,8 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
             boardApprovalDate,
             stockholderApprovalDate,
             stockClass,
-            transactions
+            transactions,
+            hashToTxEncodedData
         );
     }
 
@@ -234,7 +236,12 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
         require(issuer.shares_issued.add(params.quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
         require(stockClass.shares_issued.add(params.quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
-        StockLibTaek.createStockIssuanceByTA(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
+        StockLibTaek.createStockIssuanceByTA(
+            nonce,
+            params,
+            hashToTxEncodedData,
+            StorageParams(positions, activeSecs, transactions, issuer, stockClass)
+        );
     }
 
     /// @inheritdoc ICapTableTaek
@@ -255,11 +262,8 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
         StockLibTaek.repurchaseStockByTA(
             repurchaseParams,
             price,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+            hashToTxEncodedData,
+            StorageParams(positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[params.stock_class_id] - 1])
         );
     }
 
@@ -271,11 +275,8 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
         StockLibTaek.retractStockIssuanceByTA(
             params,
             nonce,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+            hashToTxEncodedData,
+            StorageParams(positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[params.stock_class_id] - 1])
         );
     }
 
@@ -285,11 +286,8 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
             params,
             nonce,
             resulting_security_ids,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+            hashToTxEncodedData,
+            StorageParams(positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[params.stock_class_id] - 1])
         );
     }
 
@@ -314,11 +312,8 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
 
         StockLibTaek.cancelStockByTA(
             cancelParams,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+            hashToTxEncodedData,
+            StorageParams(positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[params.stock_class_id] - 1])
         );
     }
 
@@ -345,7 +340,11 @@ contract CapTableTaek is ICapTableTaek, AccessControlDefaultAdminRules {
             nonce
         );
 
-        StockLibTaek.transferStock(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
+        StockLibTaek.transferStock(
+            params,
+            hashToTxEncodedData,
+            StorageParams(positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1])
+        );
     }
 
     /* Role Based Access Control */

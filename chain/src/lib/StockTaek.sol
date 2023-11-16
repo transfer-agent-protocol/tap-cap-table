@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams } from "./Structs.sol";
+import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams, StorageParams } from "./Structs.sol";
 import "./TxHelperTaek.sol";
 import "./DeleteContext.sol";
 
@@ -13,40 +13,38 @@ library StockLibTaek {
     function createStockIssuanceByTA(
         uint256 nonce,
         StockIssuanceParams memory issuanceParams,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) external {
         _checkInvalidQuantityOrPrice(issuanceParams.quantity, issuanceParams.share_price);
 
         StockIssuance memory issuance = TxHelperTaek.createStockIssuanceStruct(issuanceParams, nonce);
-        _updateContext(issuance, positions, activeSecs, issuer, stockClass, transactions);
+        _updateContext(issuance, hashToTxEncodedData, storageParams);
     }
 
     function transferStock(
         StockTransferParams memory params,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) external {
         _checkBuyerVerified(params.is_buyer_verified);
         _checkInvalidQuantityOrPrice(params.quantity, params.share_price);
 
         require(
-            activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
+            storageParams.activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
             "No active security ids found"
         );
-        bytes16[] storage activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
+        bytes16[] storage activeSecurityIDs = storageParams.activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][
+            params.stock_class_id
+        ];
 
         uint256 sum = 0;
         uint256 numSecurityIds = 0;
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
-            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
+            ActivePosition storage activePosition = storageParams.positions.activePositions[params.transferor_stakeholder_id][
+                activeSecurityIDs[index]
+            ];
             sum += activePosition.quantity;
 
             numSecurityIds += 1;
@@ -60,7 +58,9 @@ library StockLibTaek {
         uint256 remainingQuantity = params.quantity; // This will keep track of the remaining quantity to be transferred
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
-            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
+            ActivePosition storage activePosition = storageParams.positions.activePositions[params.transferor_stakeholder_id][
+                activeSecurityIDs[index]
+            ];
 
             uint256 transferQuantity = remainingQuantity; // This will be the quantity to transfer in this iteration
 
@@ -70,7 +70,7 @@ library StockLibTaek {
 
             params.quantity = transferQuantity;
 
-            _transferSingleStock(params, activeSecurityIDs[index], positions, activeSecs, transactions, issuer, stockClass);
+            _transferSingleStock(params, activeSecurityIDs[index], hashToTxEncodedData, storageParams);
 
             remainingQuantity -= transferQuantity; // Reduce the remaining quantity
 
@@ -83,13 +83,10 @@ library StockLibTaek {
 
     function cancelStockByTA(
         StockParamsQuantity memory params,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+        ActivePosition memory activePosition = storageParams.positions.activePositions[params.stakeholder_id][params.security_id];
 
         _checkInsuffientAmount(activePosition.quantity, params.quantity);
 
@@ -114,7 +111,7 @@ library StockLibTaek {
                 transferParams.transferor_stakeholder_id
             );
 
-            _updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
+            _updateContext(balanceIssuance, hashToTxEncodedData, storageParams);
 
             balance_security_id = balanceIssuance.security_id;
         }
@@ -129,26 +126,23 @@ library StockLibTaek {
             balance_security_id
         );
 
-        TxHelperTaek.createTx(TxType.STOCK_CANCELLATION, abi.encode(cancellation), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_CANCELLATION, abi.encode(cancellation), storageParams.transactions, hashToTxEncodedData);
 
-        issuer.shares_issued = issuer.shares_issued - params.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - params.quantity;
+        storageParams.issuer.shares_issued = storageParams.issuer.shares_issued - params.quantity;
+        storageParams.issuer.shares_issued = storageParams.stockClass.shares_issued - params.quantity;
 
-        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, storageParams.positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, storageParams.activeSecs);
     }
 
     function reissueStockByTA(
         StockParams memory params,
         uint256 nonce,
         bytes16[] memory resulting_security_ids,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+        ActivePosition memory activePosition = storageParams.positions.activePositions[params.stakeholder_id][params.security_id];
 
         nonce++;
         StockReissuance memory reissuance = TxHelperTaek.createStockReissuanceStruct(
@@ -159,25 +153,22 @@ library StockLibTaek {
             params.reason_text
         );
 
-        TxHelperTaek.createTx(TxType.STOCK_REISSUANCE, abi.encode(reissuance), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_REISSUANCE, abi.encode(reissuance), storageParams.transactions, hashToTxEncodedData);
 
-        issuer.shares_issued = issuer.shares_issued - activePosition.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - activePosition.quantity;
+        storageParams.issuer.shares_issued = storageParams.issuer.shares_issued - activePosition.quantity;
+        storageParams.stockClass.shares_issued = storageParams.stockClass.shares_issued - activePosition.quantity;
 
-        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, storageParams.positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, storageParams.activeSecs);
     }
 
     function repurchaseStockByTA(
         StockParamsQuantity memory params,
         uint256 price,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+        ActivePosition memory activePosition = storageParams.positions.activePositions[params.stakeholder_id][params.security_id];
 
         _checkInsuffientAmount(activePosition.quantity, params.quantity);
 
@@ -202,7 +193,7 @@ library StockLibTaek {
                 transferParams.transferor_stakeholder_id
             );
 
-            _updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
+            _updateContext(balanceIssuance, hashToTxEncodedData, storageParams);
 
             balance_security_id = balanceIssuance.security_id;
         }
@@ -210,64 +201,66 @@ library StockLibTaek {
         params.nonce++;
         StockRepurchase memory repurchase = TxHelperTaek.createStockRepurchaseStruct(params, price);
 
-        TxHelperTaek.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), storageParams.transactions, hashToTxEncodedData);
 
-        issuer.shares_issued = issuer.shares_issued - params.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - params.quantity;
+        storageParams.issuer.shares_issued = storageParams.issuer.shares_issued - params.quantity;
+        storageParams.stockClass.shares_issued = storageParams.stockClass.shares_issued - params.quantity;
 
-        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, storageParams.positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, storageParams.activeSecs);
     }
 
     function retractStockIssuanceByTA(
         StockParams memory params,
         uint256 nonce,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) external {
-        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+        ActivePosition memory activePosition = storageParams.positions.activePositions[params.stakeholder_id][params.security_id];
 
         //TODO: require active position exists.
 
         StockRetraction memory retraction = TxHelperTaek.createStockRetractionStruct(nonce, params.comments, params.security_id, params.reason_text);
-        TxHelperTaek.createTx(TxType.STOCK_RETRACTION, abi.encode(retraction), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_RETRACTION, abi.encode(retraction), storageParams.transactions, hashToTxEncodedData);
 
-        issuer.shares_issued = issuer.shares_issued - activePosition.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - activePosition.quantity;
+        storageParams.issuer.shares_issued = storageParams.issuer.shares_issued - activePosition.quantity;
+        storageParams.stockClass.shares_issued = storageParams.stockClass.shares_issued - activePosition.quantity;
 
-        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, storageParams.positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, storageParams.activeSecs);
     }
 
-    function acceptStockByTA(uint256 nonce, bytes16 securityId, string[] memory comments, bytes32[] storage transactions) external {
+    function acceptStockByTA(
+        uint256 nonce,
+        bytes16 securityId,
+        string[] memory comments,
+        bytes32[] storage transactions,
+        mapping(bytes32 => bytes) storage hashToTxEncodedData
+    ) external {
         StockAcceptance memory acceptance = TxHelperTaek.createStockAcceptanceStruct(nonce, comments, securityId);
 
-        TxHelperTaek.createTx(TxType.STOCK_ACCEPTANCE, abi.encode(acceptance), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_ACCEPTANCE, abi.encode(acceptance), transactions, hashToTxEncodedData);
     }
 
     function _updateContext(
         StockIssuance memory issuance,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        Issuer storage issuer,
-        StockClass storage stockClass,
-        bytes32[] storage transactions
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) internal {
-        activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(issuance.security_id);
+        storageParams.activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(
+            issuance.security_id
+        );
 
-        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
+        storageParams.positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
             issuance.params.stock_class_id,
             issuance.params.quantity,
             issuance.params.share_price,
             _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
         );
 
-        issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
-        stockClass.shares_issued = stockClass.shares_issued + issuance.params.quantity;
-        TxHelperTaek.createTx(TxType.STOCK_ISSUANCE, abi.encode(issuance), transactions);
+        storageParams.issuer.shares_issued = storageParams.issuer.shares_issued + issuance.params.quantity;
+        storageParams.stockClass.shares_issued = storageParams.stockClass.shares_issued + issuance.params.quantity;
+        TxHelperTaek.createTx(TxType.STOCK_ISSUANCE, abi.encode(issuance), storageParams.transactions, hashToTxEncodedData);
     }
 
     function _safeNow() internal view returns (uint40) {
@@ -278,21 +271,20 @@ library StockLibTaek {
     function _transferSingleStock(
         StockTransferParams memory params,
         bytes16 securityId,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        bytes32[] storage transactions,
-        Issuer storage issuer,
-        StockClass storage stockClass
+        mapping(bytes32 => bytes) storage hashToTxEncodedData,
+        StorageParams storage storageParams
     ) internal {
         bytes16 transferorSecurityId = securityId;
-        ActivePosition memory transferorActivePosition = positions.activePositions[params.transferor_stakeholder_id][transferorSecurityId];
+        ActivePosition memory transferorActivePosition = storageParams.positions.activePositions[params.transferor_stakeholder_id][
+            transferorSecurityId
+        ];
 
         _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
 
         params.nonce++;
         StockIssuance memory transfereeIssuance = TxHelperTaek.createStockIssuanceStructForTransfer(params, params.transferee_stakeholder_id);
 
-        _updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass, transactions);
+        _updateContext(transfereeIssuance, hashToTxEncodedData, storageParams);
 
         uint256 balanceForTransferor = transferorActivePosition.quantity - params.quantity;
 
@@ -307,7 +299,7 @@ library StockLibTaek {
                 params.transferor_stakeholder_id
             );
 
-            _updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
+            _updateContext(transferorBalanceIssuance, hashToTxEncodedData, storageParams);
 
             balance_security_id = transferorBalanceIssuance.security_id;
         }
@@ -321,13 +313,18 @@ library StockLibTaek {
             balance_security_id
         );
 
-        TxHelperTaek.createTx(TxType.STOCK_TRANSFER, abi.encode(transfer), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_TRANSFER, abi.encode(transfer), storageParams.transactions, hashToTxEncodedData);
 
-        issuer.shares_issued = issuer.shares_issued - transferorActivePosition.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - transferorActivePosition.quantity;
+        storageParams.issuer.shares_issued = storageParams.issuer.shares_issued - transferorActivePosition.quantity;
+        storageParams.stockClass.shares_issued = storageParams.stockClass.shares_issued - transferorActivePosition.quantity;
 
-        DeleteContext.deleteActivePosition(params.transferor_stakeholder_id, transferorSecurityId, positions);
-        DeleteContext.deleteActiveSecurityIdsByStockClass(params.transferor_stakeholder_id, params.stock_class_id, transferorSecurityId, activeSecs);
+        DeleteContext.deleteActivePosition(params.transferor_stakeholder_id, transferorSecurityId, storageParams.positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(
+            params.transferor_stakeholder_id,
+            params.stock_class_id,
+            transferorSecurityId,
+            storageParams.activeSecs
+        );
     }
 
     function _checkInvalidQuantityOrPrice(uint256 quantity, uint256 price) internal pure {

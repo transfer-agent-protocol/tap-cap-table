@@ -180,3 +180,13 @@ struct ActivePositions {
 struct SecIdsStockClass {
     mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass;
 }
+
+struct StorageParams {
+    ActivePositions positions;
+    SecIdsStockClass activeSecs;
+    bytes32[] transactions;
+    Issuer issuer;
+    StockClass stockClass;
+}
+
+//   mapping(bytes32 => bytes) hashToTxEncodedData;

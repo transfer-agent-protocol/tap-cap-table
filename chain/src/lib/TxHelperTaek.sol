@@ -24,14 +24,18 @@ struct Tx {
 library TxHelperTaek {
     event TxCreated(uint256 index, TxType txType, bytes txData);
 
-    function createTx(TxType txType, bytes memory txData, bytes32[] storage transactions) internal {
+    function createTx(
+        TxType txType,
+        bytes memory txData,
+        bytes32[] storage transactions,
+        mapping(bytes32 => bytes) storage hashToTxEncodedData
+    ) internal {
         bytes32 txHash = keccak256(abi.encodePacked(transactions.length, txData));
 
         emit TxCreated(transactions.length, txType, txData);
         transactions.push(txHash);
 
-        // TODO deal with txData
-        // save data in a mapping.
+        hashToTxEncodedData[txHash] = txData;
     }
 
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {

@@ -14,7 +14,8 @@ library AdjustmentTaek {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate,
         Issuer storage issuer,
-        bytes32[] storage transactions
+        bytes32[] storage transactions,
+        mapping(bytes32 => bytes) storage hashToTxEncodedData
     ) external {
         nonce++;
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelperTaek.adjustIssuerAuthorizedShares(
@@ -28,7 +29,7 @@ library AdjustmentTaek {
 
         issuer.shares_authorized = newSharesAuthorized + issuer.shares_authorized;
 
-        TxHelperTaek.createTx(TxType.ISSUER_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
+        TxHelperTaek.createTx(TxType.ISSUER_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions, hashToTxEncodedData);
     }
 
     function adjustStockClassAuthorizedShares(
@@ -38,7 +39,8 @@ library AdjustmentTaek {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate,
         StockClass storage stockClass,
-        bytes32[] storage transactions
+        bytes32[] storage transactions,
+        mapping(bytes32 => bytes) storage hashToTxEncodedData
     ) external {
         uint256 newShares = newSharesAuthorized + stockClass.shares_authorized;
         stockClass.shares_authorized = newShares;
@@ -53,6 +55,6 @@ library AdjustmentTaek {
             stockClass.id
         );
 
-        TxHelperTaek.createTx(TxType.STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
+        TxHelperTaek.createTx(TxType.STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions, hashToTxEncodedData);
     }
 }
