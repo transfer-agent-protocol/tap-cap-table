@@ -7,7 +7,7 @@ import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, Sto
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
-    function transactions(uint index) external view returns (address);
+    function transactions(uint index) external view returns (bytes memory);
 
     function stakeholderIndex(bytes16 index) external view returns (uint);
 

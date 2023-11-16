@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
 import { StockTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
@@ -9,34 +8,27 @@ import "./lib/transactions/Adjustment.sol";
 import "./lib/Stock.sol";
 
 contract CapTable is ICapTable, AccessControlDefaultAdminRules {
-    using SafeMath for uint256;
-
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
     StockLegendTemplate[] public stockLegendTemplates;
 
     /// @inheritdoc ICapTable
-    // @dev Transactions will be created on-chain then reflected off-chain.
-    address[] public override transactions;
+    bytes[] public override transactions;
 
-    // used to help generate deterministic UUIDs
+    // Used to help generate deterministic UUIDs
     uint256 private nonce;
 
     /// @inheritdoc ICapTable
-    // O(1) search
-    // id -> index
     mapping(bytes16 => uint256) public override stakeholderIndex;
     /// @inheritdoc ICapTable
     mapping(bytes16 => uint256) public override stockClassIndex;
     /// @inheritdoc ICapTable
-    // wallet address => stakeholder_id
     mapping(address => bytes16) public override walletsPerStakeholder;
 
+    // TODO: need a getter to fetch all active positions. These aren't defined in the interface.
     ActivePositions positions;
     SecIdsStockClass activeSecs;
-
-    // RBAC
 
     /// @inheritdoc ICapTable
     bytes32 public constant override ADMIN_ROLE = keccak256("ADMIN");
@@ -66,7 +58,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         uint256[] memory sharePrices,
         uint40[] memory timestamps
     ) external override onlyAdmin {
-        //TODO: check stakeholders and stock classes exist
         require(
             stakeholderIds.length == securityIds.length &&
                 securityIds.length == stockClassIds.length &&
@@ -234,8 +225,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
         StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
 
-        require(issuer.shares_issued.add(params.quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued.add(params.quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+        require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
         StockLib.createStockIssuanceByTA(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
@@ -315,14 +306,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             params.reason_text
         );
 
-        StockLib.cancelStockByTA(
-            cancelParams,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[params.stock_class_id] - 1]
-        );
+        StockLib.cancelStockByTA(cancelParams, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[params.stock_class_id] - 1]);
     }
 
     /// @inheritdoc ICapTable
