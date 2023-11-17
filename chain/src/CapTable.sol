@@ -95,7 +95,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public override onlyAdmin {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external override onlyAdmin {
         _checkStakeholderExists(_id);
 
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
@@ -109,7 +109,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         string memory _class_type,
         uint256 _price_per_share,
         uint256 _initial_share_authorized
-    ) public override onlyAdmin {
+    ) external override onlyAdmin {
         _checkStockClassExists(_id);
 
         stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
@@ -119,7 +119,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
-    function createStockLegendTemplate(bytes16 _id) public override onlyAdmin {
+    function createStockLegendTemplate(bytes16 _id) external override onlyAdmin {
         // add require
         stockLegendTemplates.push(StockLegendTemplate(_id));
     }
@@ -127,7 +127,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public override onlyAdmin {
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
         _checkWalletAlreadyExists(_wallet);
@@ -137,7 +137,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public override onlyAdmin {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
         // require(_wallet != address(0), "Invalid wallet");
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
@@ -147,7 +147,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function issueStock(StockIssuanceParams memory params) external onlyAdmin {
+    function issueStock(StockIssuanceParams calldata params) external override onlyAdmin {
         require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
@@ -161,7 +161,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(StockParams memory params, uint256 quantity, uint256 price) external override onlyAdmin {
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -187,7 +187,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function retractStockIssuance(StockParams memory params) external override onlyAdmin {
+    function retractStockIssuance(StockParams calldata params) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -203,7 +203,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function reissueStock(StockParams memory params, bytes16[] memory resulting_security_ids) external override {
+    function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
         _checkResultingSecurityIds(resulting_security_ids);
@@ -221,7 +221,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function cancelStock(StockParams memory params, uint256 quantity) external override onlyAdmin {
+    function cancelStock(StockParams calldata params, uint256 quantity) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -319,7 +319,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function getStakeholderById(bytes16 _id) public view override returns (bytes16, string memory, string memory) {
+    function getStakeholderById(bytes16 _id) external view override returns (bytes16, string memory, string memory) {
         if (stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
             return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
@@ -329,7 +329,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function getStockClassById(bytes16 _id) public view override returns (bytes16, string memory, uint256, uint256) {
+    function getStockClassById(bytes16 _id) external view override returns (bytes16, string memory, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
             return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized);
@@ -339,18 +339,18 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function getStakeholderIdByWallet(address _wallet) public view override returns (bytes16 stakeholderId) {
+    function getStakeholderIdByWallet(address _wallet) external view override returns (bytes16 stakeholderId) {
         require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
         return walletsPerStakeholder[_wallet];
     }
 
     /// @inheritdoc ICapTable
-    function getTotalNumberOfStakeholders() public view override returns (uint256) {
+    function getTotalNumberOfStakeholders() external view override returns (uint256) {
         return stakeholders.length;
     }
 
     /// @inheritdoc ICapTable
-    function getTotalNumberOfStockClasses() public view override returns (uint256) {
+    function getTotalNumberOfStockClasses() external view override returns (uint256) {
         return stockClasses.length;
     }
 
