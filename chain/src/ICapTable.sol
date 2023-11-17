@@ -66,7 +66,7 @@ interface ICapTable {
 
     function getTotalNumberOfStockClasses() external view returns (uint256);
 
-    function issueStockByTA(StockIssuanceParams memory params) external;
+    function issueStock(StockIssuanceParams memory params) external;
 
     function repurchaseStock(StockParams memory params, uint256 quantity, uint256 price) external;
 
