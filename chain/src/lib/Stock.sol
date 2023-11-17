@@ -129,8 +129,7 @@ library StockLib {
 
         TxHelper.createTx(TxType.STOCK_CANCELLATION, abi.encode(cancellation), transactions);
 
-        issuer.shares_issued = issuer.shares_issued - params.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - params.quantity;
+        _subtractSharesIssued(issuer, stockClass, params.quantity);
 
         DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
@@ -159,8 +158,7 @@ library StockLib {
 
         TxHelper.createTx(TxType.STOCK_REISSUANCE, abi.encode(reissuance), transactions);
 
-        issuer.shares_issued = issuer.shares_issued - activePosition.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - activePosition.quantity;
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
 
         DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
@@ -183,7 +181,6 @@ library StockLib {
         bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
-            // issue balance
             params.nonce++;
 
             StockTransferParams memory transferParams = StockTransferParams(
@@ -210,8 +207,7 @@ library StockLib {
 
         TxHelper.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), transactions);
 
-        issuer.shares_issued = issuer.shares_issued - params.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - params.quantity;
+        _subtractSharesIssued(issuer, stockClass, params.quantity);
 
         DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
@@ -228,13 +224,10 @@ library StockLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
-        //TODO: require active position exists.
-
         StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, params.comments, params.security_id, params.reason_text);
         TxHelper.createTx(TxType.STOCK_RETRACTION, abi.encode(retraction), transactions);
 
-        issuer.shares_issued = issuer.shares_issued - activePosition.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - activePosition.quantity;
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
 
         DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
@@ -265,11 +258,17 @@ library StockLib {
 
         issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
         stockClass.shares_issued = stockClass.shares_issued + issuance.params.quantity;
+
         TxHelper.createTx(TxType.STOCK_ISSUANCE, abi.encode(issuance), transactions);
     }
 
     function _safeNow() internal view returns (uint40) {
         return uint40(block.timestamp);
+    }
+
+    function _subtractSharesIssued(Issuer storage issuer, StockClass storage stockClass, uint256 quantity) internal {
+        issuer.shares_issued = issuer.shares_issued - quantity;
+        stockClass.shares_issued = stockClass.shares_issued - quantity;
     }
 
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. TODO: delete if not necessary
