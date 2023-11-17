@@ -10,7 +10,7 @@ library StockLib {
     error InvalidQuantityOrPrice(uint256 quantity, uint256 price);
     error UnverifiedBuyer();
 
-    function createStockIssuanceByTA(
+    function createIssuance(
         uint256 nonce,
         StockIssuanceParams memory issuanceParams,
         ActivePositions storage positions,
@@ -25,7 +25,7 @@ library StockLib {
         _updateContext(issuance, positions, activeSecs, issuer, stockClass, transactions);
     }
 
-    function transferStock(
+    function createTransfer(
         StockTransferParams memory params,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
@@ -57,12 +57,12 @@ library StockLib {
 
         _checkInsuffientAmount(sum, params.quantity);
 
-        uint256 remainingQuantity = params.quantity; // This will keep track of the remaining quantity to be transferred
+        uint256 remainingQuantity = params.quantity;
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
             ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
 
-            uint256 transferQuantity = remainingQuantity; // This will be the quantity to transfer in this iteration
+            uint256 transferQuantity = remainingQuantity;
 
             if (activePosition.quantity <= remainingQuantity) {
                 transferQuantity = activePosition.quantity;
@@ -74,14 +74,13 @@ library StockLib {
 
             remainingQuantity -= transferQuantity;
 
-            // If there's no more quantity left to transfer, break out of the loop
             if (remainingQuantity == 0) {
                 break;
             }
         }
     }
 
-    function cancelStockByTA(
+    function createCancellation(
         StockParamsQuantity memory params,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
@@ -97,7 +96,6 @@ library StockLib {
         bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
-            // issue balance
             params.nonce++;
 
             StockTransferParams memory transferParams = StockTransferParams(
@@ -138,7 +136,7 @@ library StockLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
-    function reissueStockByTA(
+    function createReissuance(
         StockParams memory params,
         uint256 nonce,
         bytes16[] memory resulting_security_ids,
@@ -168,7 +166,7 @@ library StockLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
-    function repurchaseStockByTA(
+    function createRepurchase(
         StockParamsQuantity memory params,
         uint256 price,
         ActivePositions storage positions,
@@ -219,7 +217,7 @@ library StockLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
-    function retractStockIssuanceByTA(
+    function createRetraction(
         StockParams memory params,
         uint256 nonce,
         ActivePositions storage positions,
@@ -242,7 +240,7 @@ library StockLib {
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
     }
 
-    function acceptStockByTA(uint256 nonce, bytes16 securityId, string[] memory comments, bytes[] storage transactions) external {
+    function createAcceptance(uint256 nonce, bytes16 securityId, string[] memory comments, bytes[] storage transactions) external {
         StockAcceptance memory acceptance = TxHelper.createStockAcceptanceStruct(nonce, comments, securityId);
 
         TxHelper.createTx(TxType.STOCK_ACCEPTANCE, abi.encode(acceptance), transactions);

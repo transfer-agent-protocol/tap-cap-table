@@ -157,7 +157,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
         require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
 
-        StockLib.createStockIssuanceByTA(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
+        StockLib.createIssuance(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
     /// @inheritdoc ICapTable
@@ -175,7 +175,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             params.reason_text
         );
 
-        StockLib.repurchaseStockByTA(
+        StockLib.createRepurchase(
             repurchaseParams,
             price,
             positions,
@@ -191,7 +191,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
-        StockLib.retractStockIssuanceByTA(
+        StockLib.createRetraction(
             params,
             nonce,
             positions,
@@ -208,7 +208,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkInvalidStockClass(params.stock_class_id);
         _checkResultingSecurityIds(resulting_security_ids);
 
-        StockLib.reissueStockByTA(
+        StockLib.createReissuance(
             params,
             nonce,
             resulting_security_ids,
@@ -235,7 +235,14 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             params.reason_text
         );
 
-        StockLib.cancelStockByTA(cancelParams, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[params.stock_class_id] - 1]);
+        StockLib.createCancellation(
+            cancelParams,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+        );
     }
 
     /// @inheritdoc ICapTable
@@ -261,7 +268,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             nonce
         );
 
-        StockLib.transferStock(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
+        StockLib.createTransfer(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
     }
 
     /// @inheritdoc ICapTable
@@ -270,12 +277,11 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(stakeholderId);
         _checkInvalidStockClass(stockClassId);
 
-        // require active position to exist?
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
         _checkActivePositionExists(activePosition);
 
-        StockLib.acceptStockByTA(nonce, securityId, comments, transactions);
+        StockLib.createAcceptance(nonce, securityId, comments, transactions);
     }
 
     /// @inheritdoc ICapTable
