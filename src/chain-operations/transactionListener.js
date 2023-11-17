@@ -19,6 +19,25 @@ let issuerEventFired = false;
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐 | Initiating on-chain event listeners for ", contract.target);
 
+    /*
+    I would like to create event listen for the following event and map it by txType accordingly,
+    function createTx(TxType txType, bytes memory txData, bytes[] storage transactions) internal {
+        transactions.push(txData);
+        emit TxCreated(transactions.length, txType, txData);
+    } */
+    libraries.txHelper.on("TxCreated", async (tx, event) => {
+        console.log("TxCreated event fired!", tx);
+        const { timestamp } = await provider.getBlock(event.blockNumber);
+        eventQueue.push({ type: tx.txType, data: tx.txData, issuerId, timestamp });
+    });
+    contract.on("StakeholderCreated", async (id, _) => {
+        eventQueue.push({ type: "StakeholderCreated", data: id });
+    });
+
+    contract.on("StockClassCreated", async (id, _) => {
+        eventQueue.push({ type: "StockClassCreated", data: id });
+    });
+    /*
     libraries.issuance.on("StockIssuanceCreated", async (stock, event) => {
         const { timestamp } = await provider.getBlock(event.blockNumber);
         eventQueue.push({ type: "StockIssuanceCreated", data: stock, issuerId, timestamp });
@@ -28,13 +47,7 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
         const { timestamp } = await provider.getBlock(event.blockNumber);
         eventQueue.push({ type: "StockTransferCreated", data: stock, issuerId, timestamp });
     });
-    contract.on("StakeholderCreated", async (id, _) => {
-        eventQueue.push({ type: "StakeholderCreated", data: id });
-    });
 
-    contract.on("StockClassCreated", async (id, _) => {
-        eventQueue.push({ type: "StockClassCreated", data: id });
-    });
 
     libraries.cancellation.on("StockCancellationCreated", async (stock, event) => {
         const { timestamp } = await provider.getBlock(event.blockNumber);
@@ -70,6 +83,7 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
         const { timestamp } = await provider.getBlock(event.blockNumber);
         eventQueue.push({ type: "IssuerAuthorizedSharesAdjusted", data: stock, issuerId, timestamp });
     });
+    */
 
     const issuerCreatedFilter = contract.filters.IssuerCreated;
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
@@ -96,32 +110,34 @@ async function processEventQueue() {
             case "StockClassCreated":
                 await handleStockClass(event.data);
                 break;
-            case "StockIssuanceCreated":
-                await handleStockIssuance(event.data, event.issuerId, event.timestamp);
+            case "INVALID":
                 break;
-            case "StockTransferCreated":
-                await handleStockTransfer(event.data, event.issuerId, event.timestamp);
-                break;
-            case "StockReissuanceCreated":
-                await handleStockReissuance(event.data, event.issuerId, event.timestamp);
-                break;
-            case "StockRepurchaseCreated":
-                await handleStockRepurchase(event.data, event.issuerId, event.timestamp);
-                break;
-            case "StockClassAuthorizedSharesAdjusted":
-                await handleStockClassAuthorizedSharesAdjusted(event.data, event.issuerId, event.timestamp);
-                break;
-            case "IssuerAuthorizedSharesAdjusted":
+            case "ISSUER_AUTHORIZED_SHARES_ADJUSTMENT":
                 await handleIssuerAuthorizedSharesAdjusted(event.data, event.issuerId, event.timestamp);
                 break;
-            case "StockCancellationCreated":
-                await handleStockCancellation(event.data, event.issuerId, event.timestamp);
+            case "STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT":
+                await handleStockClassAuthorizedSharesAdjusted(event.data, event.issuerId, event.timestamp);
                 break;
-            case "StockAcceptanceCreated":
+            case "STOCK_ACCEPTANCE":
                 await handleStockAcceptance(event.data, event.issuerId, event.timestamp);
                 break;
-            case "StockRetractionCreated":
+            case "STOCK_CANCELLATION":
+                await handleStockCancellation(event.data, event.issuerId, event.timestamp);
+                break;
+            case "STOCK_ISSUANCE":
+                await handleStockIssuance(event.data, event.issuerId, event.timestamp);
+                break;
+            case "STOCK_REISSUANCE":
+                await handleStockReissuance(event.data, event.issuerId, event.timestamp);
+                break;
+            case "STOCK_REPURCHASE":
+                await handleStockRepurchase(event.data, event.issuerId, event.timestamp);
+                break;
+            case "STOCK_RETRACTION":
                 await handleStockRetraction(event.data, event.issuerId, event.timestamp);
+                break;
+            case "STOCK_TRANSFER":
+                await handleStockTransfer(event.data, event.issuerId, event.timestamp);
                 break;
         }
         sortedEventQueue.shift();
