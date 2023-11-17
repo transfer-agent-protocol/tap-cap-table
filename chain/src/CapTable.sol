@@ -138,7 +138,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     /// @notice Removing wallet from walletsPerStakeholder mapping
     function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
-        // require(_wallet != address(0), "Invalid wallet");
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
         _checkWalletAlreadyExists(_wallet);
@@ -148,7 +147,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     function issueStock(StockIssuanceParams calldata params) external override onlyAdmin {
-        require(stakeholderIndex[params.stakeholder_id] > 0, "No stakeholder");
+        _checkStakeholderExists(params.stakeholder_id);
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -361,7 +360,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /* Role Based Access Control */
-
     modifier onlyOperator() {
         /// @notice Admins are also considered Operators
         require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
