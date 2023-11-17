@@ -38,9 +38,6 @@ library Adjustment {
         StockClass storage stockClass,
         bytes[] storage transactions
     ) external {
-        uint256 newShares = newSharesAuthorized + stockClass.shares_authorized;
-        stockClass.shares_authorized = newShares;
-
         nonce++;
         StockClassAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustStockClassAuthorizedShares(
             nonce,
@@ -50,6 +47,8 @@ library Adjustment {
             stockholderApprovalDate,
             stockClass.id
         );
+
+        stockClass.shares_authorized = newSharesAuthorized + stockClass.shares_authorized;
 
         TxHelper.createTx(TxType.STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
