@@ -12,24 +12,60 @@ import {
     handleStockTransfer,
     handleStockClassAuthorizedSharesAdjusted,
 } from "./transactionHandlers.js";
+import { ethers, AbiCoder } from "ethers";
 
+const abiCoder = new AbiCoder();
 const eventQueue = [];
 let issuerEventFired = false;
-
+// Enum equivalent in JavaScript
+const TxType = {
+    0: "INVALID",
+    1: "ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+    2: "STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+    3: "STOCK_ACCEPTANCE",
+    4: "STOCK_CANCELLATION",
+    5: "STOCK_ISSUANCE",
+    6: "STOCK_REISSUANCE",
+    7: "STOCK_REPURCHASE",
+    8: "STOCK_RETRACTION",
+    9: "STOCK_TRANSFER",
+};
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐 | Initiating on-chain event listeners for ", contract.target);
 
-    /*
-    I would like to create event listen for the following event and map it by txType accordingly,
-    function createTx(TxType txType, bytes memory txData, bytes[] storage transactions) internal {
-        transactions.push(txData);
-        emit TxCreated(transactions.length, txType, txData);
-    } */
-    libraries.txHelper.on("TxCreated", async (tx, event) => {
-        console.log("TxCreated event fired!", tx);
+    libraries.txHelper.on("TxCreated", async (_, txTypeIdx, txData, event) => {
+        // TODO: figure out how to decode txData
+        const decodedData = abiCoder.decode(
+            [
+                "bytes16",
+                "string",
+                "bytes16",
+                [
+                    "bytes16",
+                    "bytes16",
+                    ["uint256", "uint256"],
+                    "uint256",
+                    "uint256",
+                    "uint256",
+                    "bytes16",
+                    "uint256",
+                    ["bytes16"],
+                    "string",
+                    ["string"],
+                    "string",
+                    "bytes16",
+                    "string",
+                    "string",
+                    "string",
+                    "string",
+                ],
+            ],
+            txData
+        );
         const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: tx.txType, data: tx.txData, issuerId, timestamp });
+        eventQueue.push({ type: TxType[txTypeIdx], data: decodedData, issuerId, timestamp });
     });
+
     contract.on("StakeholderCreated", async (id, _) => {
         eventQueue.push({ type: "StakeholderCreated", data: id });
     });
@@ -37,53 +73,6 @@ async function startOnchainListeners(contract, provider, issuerId, libraries) {
     contract.on("StockClassCreated", async (id, _) => {
         eventQueue.push({ type: "StockClassCreated", data: id });
     });
-    /*
-    libraries.issuance.on("StockIssuanceCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockIssuanceCreated", data: stock, issuerId, timestamp });
-    });
-
-    libraries.transfer.on("StockTransferCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockTransferCreated", data: stock, issuerId, timestamp });
-    });
-
-
-    libraries.cancellation.on("StockCancellationCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockCancellationCreated", data: stock, issuerId, timestamp });
-    });
-
-    libraries.retraction.on("StockRetractionCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockRetractionCreated", data: stock, issuerId, timestamp });
-    });
-
-    libraries.reissuance.on("StockReissuanceCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockReissuanceCreated", data: stock, issuerId, timestamp });
-    });
-
-    libraries.repurchase.on("StockRepurchaseCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockRepurchaseCreated", data: stock, issuerId, timestamp });
-    });
-
-    libraries.acceptance.on("StockAcceptanceCreated", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockAcceptanceCreated", data: stock, issuerId, timestamp });
-    });
-
-    libraries.adjustment.on("StockClassAuthorizedSharesAdjusted", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "StockClassAuthorizedSharesAdjusted", data: stock, issuerId, timestamp });
-    });
-
-    libraries.adjustment.on("IssuerAuthorizedSharesAdjusted", async (stock, event) => {
-        const { timestamp } = await provider.getBlock(event.blockNumber);
-        eventQueue.push({ type: "IssuerAuthorizedSharesAdjusted", data: stock, issuerId, timestamp });
-    });
-    */
 
     const issuerCreatedFilter = contract.filters.IssuerCreated;
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
