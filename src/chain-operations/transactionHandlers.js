@@ -46,14 +46,12 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
         consideration_text,
         security_law_exemptions,
     } = params;
-    // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
     const sharePriceOCF = {
         amount: toDecimal(share_price).toString(),
         currency: "USD",
     };
 
     // Type represention of an ISO-8601 date, e.g. 2022-01-28.
-    // TODO: I think if we want to back date historial transactions we will need an option to either pass date or create new one from block
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
     const costBasisOCF = { amount: toDecimal(cost_basis).toString(), currency: "USD" };
     const share_numbers_issuedOCF = [
@@ -84,7 +82,7 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
         comments: comments,
         security_id: convertBytes16ToUUID(security_id),
         date: dateOCF,
-        custom_id: convertBytes16ToUUID(custom_id), //TODO: is this uuid or custom id?
+        custom_id, // Not UUID
         stakeholder_id: stakeholder._id,
         board_approval_date,
         stockholder_approval_date,
@@ -171,7 +169,7 @@ export const handleStockCancellation = async (stock, issuerId, timestamp) => {
         is_onchain_synced: true,
     });
 
-    const createdHistoricalTransaction = await createHistoricalTransaction({
+    await createHistoricalTransaction({
         transaction: createdStockCancellation._id,
         issuer: createdStockCancellation.issuer,
         transactionType: "StockCancellation",
