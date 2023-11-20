@@ -1,5 +1,3 @@
-import { ParamType } from "ethers";
-
 export const StockIssuance = {
     type: "tuple",
     baseType: "tuple",
