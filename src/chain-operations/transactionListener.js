@@ -29,47 +29,35 @@ const abiCoder = new AbiCoder();
 const eventQueue = [];
 let issuerEventFired = false;
 
-const txStructMapper = {
-    STOCK_CANCELLATION: [StockCancellation],
-    STOCK_RETRACTION: [StockRetraction],
-    STOCK_REISSUANCE: [StockReissuance],
-    STOCK_REPURCHASE: [StockRepurchase],
-    STOCK_ACCEPTANCE: [StockAcceptance],
-    ISSUER_AUTHORIZED_SHARES_ADJUSTMENT: [IssuerAuthorizedSharesAdjustment],
-    STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT: [StockClassAuthorizedSharesAdjustment],
-    STOCK_ISSUANCE: [StockIssuance],
-    STOCK_TRANSFER: [StockTransfer],
+const txMapper = {
+    0: ["INVALID"],
+    1: ["ISSUER_AUTHORIZED_SHARES_ADJUSTMENT", IssuerAuthorizedSharesAdjustment],
+    2: ["STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT", StockClassAuthorizedSharesAdjustment],
+    3: ["STOCK_ACCEPTANCE", StockAcceptance],
+    4: ["STOCK_CANCELLATION", StockCancellation],
+    5: ["STOCK_ISSUANCE", StockIssuance],
+    6: ["STOCK_REISSUANCE", StockReissuance],
+    7: ["STOCK_REPURCHASE", StockRepurchase],
+    8: ["STOCK_RETRACTION", StockRetraction],
+    9: ["STOCK_TRANSFER", StockTransfer],
 };
 
-const TxType = {
-    0: "INVALID",
-    1: "ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
-    2: "STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
-    3: "STOCK_ACCEPTANCE",
-    4: "STOCK_CANCELLATION",
-    5: "STOCK_ISSUANCE",
-    6: "STOCK_REISSUANCE",
-    7: "STOCK_REPURCHASE",
-    8: "STOCK_RETRACTION",
-    9: "STOCK_TRANSFER",
-};
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
     console.log("🌐 | Initiating on-chain event listeners for ", contract.target);
 
     libraries.txHelper.on("TxCreated", async (_, txTypeIdx, txData, event) => {
-        const type = TxType[txTypeIdx];
-        const structType = txStructMapper[type];
-        const decodedData = await abiCoder.decode(structType, txData);
+        const [type, structType] = txMapper[txTypeIdx];
+        const decodedData = abiCoder.decode([structType], txData);
         const { timestamp } = await provider.getBlock(event.blockNumber);
         eventQueue.push({ type, data: decodedData[0], issuerId, timestamp });
     });
 
     contract.on("StakeholderCreated", async (id, _) => {
-        eventQueue.push({ type: "StakeholderCreated", data: id });
+        eventQueue.push({ type: "STAKEHOLDER_CREATED", data: id });
     });
 
     contract.on("StockClassCreated", async (id, _) => {
-        eventQueue.push({ type: "StockClassCreated", data: id });
+        eventQueue.push({ type: "STOCK_CLASS_CREATED", data: id });
     });
 
     const issuerCreatedFilter = contract.filters.IssuerCreated;
@@ -91,13 +79,11 @@ async function processEventQueue() {
     while (sortedEventQueue.length > 0) {
         const event = eventQueue[0];
         switch (event.type) {
-            case "StakeholderCreated":
+            case "STAKEHOLDER_CREATED":
                 await handleStakeholder(event.data);
                 break;
-            case "StockClassCreated":
+            case "STOCK_CLASS_CREATED":
                 await handleStockClass(event.data);
-                break;
-            case "INVALID":
                 break;
             case "ISSUER_AUTHORIZED_SHARES_ADJUSTMENT":
                 await handleIssuerAuthorizedSharesAdjusted(event.data, event.issuerId, event.timestamp);
@@ -125,6 +111,9 @@ async function processEventQueue() {
                 break;
             case "STOCK_TRANSFER":
                 await handleStockTransfer(event.data, event.issuerId, event.timestamp);
+                break;
+            case "INVALID":
+                throw new Error("Invalid transaction type");
                 break;
         }
         sortedEventQueue.shift();
