@@ -26,52 +26,68 @@ const options = {
     second: "2-digit",
 };
 export const handleStockIssuance = async (stock, issuerId, timestamp) => {
-    console.log("StockIssuanceCreated Event Emitted!", stock.id);
-
-    // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
+    const { id, object_type, security_id, params } = stock;
+    console.log("StockIssuanceCreated Event Emitted!", id);
+    const {
+        stock_class_id,
+        stock_plan_id,
+        share_numbers_issued: { starting_share_number, ending_share_number },
+        share_price,
+        quantity,
+        vesting_terms_id,
+        cost_basis,
+        stock_legend_ids,
+        issuance_type,
+        comments,
+        custom_id,
+        stakeholder_id,
+        board_approval_date,
+        stockholder_approval_date,
+        consideration_text,
+        security_law_exemptions,
+    } = params;
     const sharePriceOCF = {
-        amount: toDecimal(stock.params.share_price).toString(),
+        amount: toDecimal(share_price).toString(),
         currency: "USD",
     };
 
     // Type represention of an ISO-8601 date, e.g. 2022-01-28.
-    // TODO: I think if we want to back date historial transactions we will need an option to either pass date or create new one from block
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
-    const costBasisOCF = { amount: toDecimal(stock.params.cost_basis).toString(), currency: "USD" };
+    const costBasisOCF = { amount: toDecimal(cost_basis).toString(), currency: "USD" };
     const share_numbers_issuedOCF = [
         {
-            starting_share_number: toDecimal(stock.params.share_numbers_issued.starting_share_number).toString(),
-            ending_share_number: toDecimal(stock.params.share_numbers_issued.ending_share_number).toString(),
+            starting_share_number: toDecimal(starting_share_number).toString(),
+            ending_share_number: toDecimal(ending_share_number).toString(),
         },
     ];
 
-    const stakeholder = await readStakeholderById(convertBytes16ToUUID(stock.params.stakeholder_id));
+    const stakeholder = await readStakeholderById(convertBytes16ToUUID(stakeholder_id));
     if (!stakeholder) {
         throw Error("Stakeholder does not exist");
     }
 
-    const id = convertBytes16ToUUID(stock.id);
-    const createdStockIssuance = await upsertStockIssuanceById(id, {
-        _id: id,
-        object_type: stock.object_type,
-        stock_class_id: convertBytes16ToUUID(stock.params.stock_class_id),
-        stock_plan_id: convertBytes16ToUUID(stock.params.stock_plan_id),
+    const _id = convertBytes16ToUUID(id);
+    const createdStockIssuance = await upsertStockIssuanceById(_id, {
+        _id,
+        object_type,
+        stock_class_id: convertBytes16ToUUID(stock_class_id),
+        stock_plan_id: convertBytes16ToUUID(stock_plan_id),
         share_numbers_issued: share_numbers_issuedOCF,
         share_price: sharePriceOCF,
-        quantity: toDecimal(stock.params.quantity).toString(),
-        vesting_terms_id: convertBytes16ToUUID(stock.params.vesting_terms_id),
+        quantity: toDecimal(quantity).toString(),
+        vesting_terms_id: convertBytes16ToUUID(vesting_terms_id),
         cost_basis: costBasisOCF,
-        stock_legend_ids: convertBytes16ToUUID(stock.params.stock_legend_ids),
-        issuance_type: stock.issuance_type,
-        comments: stock.comments,
-        security_id: convertBytes16ToUUID(stock.security_id),
+        stock_legend_ids: convertBytes16ToUUID(stock_legend_ids),
+        issuance_type: issuance_type,
+        comments: comments,
+        security_id: convertBytes16ToUUID(security_id),
         date: dateOCF,
-        custom_id: convertBytes16ToUUID(stock.params.custom_id), //TODO: is this uuid or custom id?
+        custom_id, // Not UUID
         stakeholder_id: stakeholder._id,
-        board_approval_date: stock.params.board_approval_date,
-        stockholder_approval_date: stock.params.stockholder_approval_date,
-        consideration_text: stock.params.consideration_text,
-        security_law_exemptions: stock.params.security_law_exemptions,
+        board_approval_date,
+        stockholder_approval_date,
+        consideration_text,
+        security_law_exemptions,
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
@@ -93,7 +109,7 @@ export const handleStockTransfer = async (stock, issuerId) => {
     console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
 
     const id = convertBytes16ToUUID(stock.id);
-    const quantity = toDecimal(stock.quantity).toString()
+    const quantity = toDecimal(stock.quantity).toString();
     const createdStockTransfer = await upsertStockTransferById(id, {
         _id: id,
         object_type: stock.object_type,
@@ -153,7 +169,7 @@ export const handleStockCancellation = async (stock, issuerId, timestamp) => {
         is_onchain_synced: true,
     });
 
-    const createdHistoricalTransaction = await createHistoricalTransaction({
+    await createHistoricalTransaction({
         transaction: createdStockCancellation._id,
         issuer: createdStockCancellation.issuer,
         transactionType: "StockCancellation",

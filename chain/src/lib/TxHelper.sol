@@ -3,29 +3,30 @@ pragma solidity ^0.8.20;
 
 import { StockIssuance, StockIssuanceParams, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferParams, StockParamsQuantity, StockIssuanceParams } from "./Structs.sol";
 
+enum TxType {
+    INVALID,
+    ISSUER_AUTHORIZED_SHARES_ADJUSTMENT,
+    STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT,
+    STOCK_ACCEPTANCE,
+    STOCK_CANCELLATION,
+    STOCK_ISSUANCE,
+    STOCK_REISSUANCE,
+    STOCK_REPURCHASE,
+    STOCK_RETRACTION,
+    STOCK_TRANSFER
+}
+
+struct Tx {
+    TxType txType;
+    bytes txData;
+}
+
 library TxHelper {
-    function _updateContext(
-        StockIssuance memory issuance,
-        ActivePositions storage positions,
-        SecIdsStockClass storage activeSecs,
-        Issuer storage issuer,
-        StockClass storage stockClass
-    ) internal {
-        activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(issuance.security_id);
+    event TxCreated(uint256 index, TxType txType, bytes txData);
 
-        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
-            issuance.params.stock_class_id,
-            issuance.params.quantity,
-            issuance.params.share_price,
-            _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
-        );
-
-        issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
-        stockClass.shares_issued = stockClass.shares_issued + issuance.params.quantity;
-    }
-
-    function _safeNow() internal view returns (uint40) {
-        return uint40(block.timestamp);
+    function createTx(TxType txType, bytes memory txData, bytes[] storage transactions) internal {
+        transactions.push(txData);
+        emit TxCreated(transactions.length, txType, txData);
     }
 
     function generateDeterministicUniqueID(bytes16 stakeholderId, uint256 nonce) public view returns (bytes16) {

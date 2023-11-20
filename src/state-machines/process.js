@@ -1,11 +1,12 @@
 import { interpret } from "xstate";
 import { parentMachine } from "./parent.js";
-
 import { preProcessorCache } from "../utils/caches.js";
 
 /*
     @dev: Parent-Child machines are created to calculate current context then deleted.
-    if we ever need then, consider saving them to the DB.
+    if we ever need them, consider saving them to the DB.
+
+    TODO: Adjustments - consider adding shares_issued and authorized to the machines
 */
 const preProcessManifestTxs = (issuerId, txs) => {
     const parent = interpret(parentMachine);
@@ -58,7 +59,7 @@ const preProcessManifestTxs = (issuerId, txs) => {
         }
     });
 
-    console.log("parent context ", JSON.stringify(parent._state.context, null, 2))
+    console.log("parent context ", JSON.stringify(parent._state.context, null, 2));
 
     preProcessorCache[issuerId] = {
         activePositions: parent._state.context.activePositions,

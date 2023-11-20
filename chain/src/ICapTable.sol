@@ -7,7 +7,7 @@ import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, Sto
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
-    function transactions(uint index) external view returns (address);
+    function transactions(uint index) external view returns (bytes memory);
 
     function stakeholderIndex(bytes16 index) external view returns (uint);
 
@@ -66,15 +66,15 @@ interface ICapTable {
 
     function getTotalNumberOfStockClasses() external view returns (uint256);
 
-    function issueStockByTA(StockIssuanceParams memory params) external;
+    function issueStock(StockIssuanceParams calldata params) external;
 
-    function repurchaseStock(StockParams memory params, uint256 quantity, uint256 price) external;
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external;
 
-    function retractStockIssuance(StockParams memory params) external;
+    function retractStockIssuance(StockParams calldata params) external;
 
-    function reissueStock(StockParams memory params, bytes16[] memory resulting_security_ids) external;
+    function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external;
 
-    function cancelStock(StockParams memory params, uint256 quantity) external;
+    function cancelStock(StockParams calldata params, uint256 quantity) external;
 
     function transferStock(
         bytes16 transferorStakeholderId,
