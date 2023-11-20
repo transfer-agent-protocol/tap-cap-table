@@ -235,24 +235,22 @@ transactions.post("/accept/stock", async (req, res) => {
 
 transactions.post("/adjust/issuer/authorized-shares", async (req, res) => {
     const { contract } = req;
-    const { data } = req.body
-    console.log('data', data)
+    const { data } = req.body;
 
     try {
         // OCF doesn't allow extra fields in their validation
-        const issuerAutnorizedSharesAdj = {
+        const issuerAuthorizedSharesAdj = {
             id: uuid(),
             date: new Date().toISOString().slice(0, 10),
             object_type: "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
-            ...data
+            ...data,
         };
 
-        await validateInputAgainstOCF(issuerAutnorizedSharesAdj, issuerAuthorizedSharesAdjustmentSchema);
+        await validateInputAgainstOCF(issuerAuthorizedSharesAdj, issuerAuthorizedSharesAdjustmentSchema);
 
-        await convertAndAdjustIssuerAuthorizedSharesOnChain(contract, issuerAutnorizedSharesAdj);
+        await convertAndAdjustIssuerAuthorizedSharesOnChain(contract, issuerAuthorizedSharesAdj);
 
-
-        res.status(200).send({ issuerAutnorizedSharesAdj });
+        res.status(200).send({ issuerAuthorizedSharesAdj });
     } catch (error) {
         console.error(`error: ${error}`);
         res.status(500).send(`${error}`);

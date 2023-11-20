@@ -17,16 +17,6 @@ const main = async () => {
         )
     );
     console.log("stockClassResponse", stockClassAdjResponse.data);
-
-    // const issuerAdjustedResponse = await axios.post(
-    //     "http://localhost:8080/transactions/adjust/issuer/authorized-shares",
-    //     issuerAuthorizedSharesAdjust(
-    //         issuer, // Issuer ID
-    //         "5555",
-    //         ["adjusting issuer authorized shares"]
-    //     )
-    // );
-    // console.log("✅ | Issuer adjusted response", issuerAdjustedResponse.data);
 };
 
 main()
