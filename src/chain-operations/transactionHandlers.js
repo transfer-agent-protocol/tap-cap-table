@@ -26,14 +26,12 @@ const options = {
     second: "2-digit",
 };
 export const handleStockIssuance = async (stock, issuerId, timestamp) => {
-    const [id, object_type, security_id, params] = stock;
+    const { id, object_type, security_id, params } = stock;
     console.log("StockIssuanceCreated Event Emitted!", id);
-    console.log("stock", stock[3]);
-    console.log({ params });
-    const [
+    const {
         stock_class_id,
         stock_plan_id,
-        [starting_share_number, ending_share_number],
+        share_numbers_issued: { starting_share_number, ending_share_number },
         share_price,
         quantity,
         vesting_terms_id,
@@ -47,7 +45,7 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
         stockholder_approval_date,
         consideration_text,
         security_law_exemptions,
-    ] = [params];
+    } = params;
     // TODO: (Victor): Think about data validation if the transaction is created onchain, without going through the API
     const sharePriceOCF = {
         amount: toDecimal(share_price).toString(),
