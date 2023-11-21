@@ -98,9 +98,9 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
         shares_issued: String(parent._state.context.issuer.shares_issued),
     };
 
-    const formattedStockClasses = {};
-    Object.keys(parent._state.context.stockClasses).forEach((stockClassId) => {
-        formattedStockClasses[stockClassId] = {
+    const formattedStockClasses = Object.keys(parent._state.context.stockClasses).map((stockClassId) => {
+        return {
+            id: stockClassId,
             shares_authorized: String(parent._state.context.stockClasses[stockClassId].shares_authorized),
             shares_issued: String(parent._state.context.stockClasses[stockClassId].shares_issued),
         };
