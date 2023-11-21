@@ -38,6 +38,22 @@ struct ShareNumbersIssued {
     uint256 ending_share_number;
 }
 
+struct IssuerInitialShares {
+    uint256 shares_authorized;
+    uint256 shares_issued;
+}
+
+struct StockClassInitialShares {
+    bytes16 id;
+    uint256 shares_authorized;
+    uint256 shares_issued;
+}
+
+struct InitialShares {
+    IssuerInitialShares issuerInitialShares;
+    StockClassInitialShares[] stockClassesInitialShares;
+}
+
 struct StockCancellation {
     bytes16 id;
     string object_type;
