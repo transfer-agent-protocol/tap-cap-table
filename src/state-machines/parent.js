@@ -4,12 +4,15 @@ const { assign, raise } = actions;
 
 export const parentMachine = createMachine(
     {
+        /** @xstate-layout N4IgpgJg5mDOIC5QAUCGAnMA7ALgOk1QgE8BiAdQEEBJAFWoDkBxAbQAYBdRUABwHtYASxyC+WbiAAeiAIwB2AMx4ATAA4AnGzkA2VTPlsArOoAsAGhDFEqw2zwzltmQtUKT2j6oC+Xi2ky4BGBEZMgASgCiAPoAyrQA8gDCANJR1DExAKqUDIkR7FxIIPxCImIS0gj6qnh6jkbaciZsqrrqFlYIcoYmeGzuqqo6hjK6Iz5+GNj4hCSkmcgAIpS00YnxDKsAGrQFEiXCouJFlc696soyg-oDcq7KHYjahnJ46ro6MrdsCgoTIP5pkEQqQ4vFkFFEgAJagAGUWeyKBzKx1Ap2MeAUagcGg8XyGjwQhm0Mlqmm0CkMahel0M-0BgVmoUisQSKSitDCORiADEImFEbwBIdyidZPI3qoTC5DFLnBc1IT3IZag5bOoZGxlIp1HJ6VNGcE5uFomD2YkcnlYbCVtQNoLisKURVEOp1HhundLvIZJoTPpCQptO7FNLVMoNbqXup9QEZkbmaa2alIpzKIl6PbOPsnUcXVU2O7+rprq5ul9CdqlM9tI5GkG5J9Y0CmaQTaykqlEjaMrEoZRIjEopRFgApTJxACyEU2DuRebFCBMD0sskbeBeegURkMCjkpm1zcNIPbZpTEXSWUt+WzSNzorRskLmOlOjU4ZljkJeg3bD--T3FoHHcHxfBALA+AgOAJAZHAc1KBdHwQABabRCVQo94xCeCRVRKRZCGFQ6gpFo7j-NDVwQTQVVrWxCyDHoem0UCvCAA */
         id: "Parent",
         initial: "ready",
         context: {
             securities: {}, // This will store references to spawned child machines
             activePositions: {},
             activeSecurityIdsByStockClass: {},
+            issuer: {},
+            stockClasses: {},
             transactions: [],
         },
         predictableActionArguments: true,
@@ -18,17 +21,17 @@ export const parentMachine = createMachine(
             ready: {
                 on: {
                     WAITING: {},
+                    IMPORT_ISSUER: {
+                        actions: ["importIssuer"],
+                    },
+                    IMPORT_STOCK_CLASS: {
+                        actions: ["importStockClass"],
+                    },
                     PRE_STOCK_ISSUANCE: {
                         actions: ["spawnSecurity"],
                     },
-                    UPDATE_CONTEXT: {
-                        actions: ["updateParentContext"],
-                    },
-                    STOP_CHILD: {
-                        actions: ["stopChild"],
-                    },
                     PRE_STOCK_TRANSFER: {
-                        actions: ["createChildTransfer"],
+                        actions: ["preTransfer"],
                     },
                     PRE_STOCK_CANCELLATION: {
                         actions: ["preCancel"],
@@ -36,9 +39,20 @@ export const parentMachine = createMachine(
                     PRE_STOCK_RETRACTION: {
                         actions: ["preRetract"],
                     },
-
                     PRE_STOCK_REISSUANCE: {
                         actions: ["preReissuance"],
+                    },
+                    PRE_STOCK_REPURCHASE: {
+                        actions: ["preRepurchase"],
+                    },
+                    PRE_STOCK_CLASS_SHARES_ADJUSTMENT: {
+                        actions: ["preStockClassAuthorizedShares"],
+                    },
+                    UPDATE_CONTEXT: {
+                        actions: ["updateParentContext"],
+                    },
+                    STOP_CHILD: {
+                        actions: ["stopChild"],
                     },
                 },
             },
@@ -46,7 +60,26 @@ export const parentMachine = createMachine(
     },
     {
         actions: {
-            createChildTransfer: assign((context, event) => {
+            importIssuer: assign((context, event) => {
+                console.log("event ", event);
+                const initial_shares_authorized = event.value.initial_shares_authorized || 0;
+
+                return {
+                    issuer: {
+                        shares_authorized: initial_shares_authorized,
+                        shares_issued: 0,
+                    },
+                };
+            }),
+            importStockClass: assign((context, event) => {
+                const initial_shares_authorized = event.value.initial_shares_authorized || 0;
+                const { id } = event.value;
+
+                return {
+                    stockClasses: { ...context.stockClasses, [id]: { shares_authorized: initial_shares_authorized, shares_issued: 0 } },
+                };
+            }),
+            preTransfer: assign((context, event) => {
                 const security_id = event.value.security_id;
                 const resulting_security_ids = event.value.resulting_security_ids;
                 const balance_security_id = event.value?.balance_security_id || null;
@@ -79,6 +112,21 @@ export const parentMachine = createMachine(
                     transactions: [...context.transactions, currentTransaction],
                 };
             }),
+            preStockClassAuthorizedShares: assign((context, event) => {
+                const currentTransaction = event.value;
+                const { security_id } = currentTransaction;
+
+                const securityActor = context.securities[security_id];
+
+                securityActor.send({
+                    type: "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+                    security_id,
+                });
+
+                return {
+                    transactions: [...context.transactions, currentTransaction],
+                };
+            }),
             preRetract: assign((context, event) => {
                 const currentTransaction = event.value;
                 const { security_id } = currentTransaction;
@@ -94,11 +142,26 @@ export const parentMachine = createMachine(
                     transactions: [...context.transactions, currentTransaction],
                 };
             }),
+            preRepurchase: assign((context, event) => {
+                const currentTransaction = event.value;
+                const { security_id } = currentTransaction;
+
+                const securityActor = context.securities[security_id];
+
+                securityActor.send({
+                    type: "TX_STOCK_REPURCHASE",
+                    security_id,
+                });
+
+                return {
+                    transactions: [...context.transactions, currentTransaction],
+                };
+            }),
             preReissuance: assign((context, event) => {
                 const currentTransaction = event.value;
                 const { security_id } = currentTransaction;
 
-                console.log({security_id})
+                console.log({ security_id });
                 const securityActor = context.securities[security_id];
 
                 securityActor.send({
@@ -134,9 +197,12 @@ export const parentMachine = createMachine(
                 return { ...context };
             }),
             spawnSecurity: assign((context, event) => {
-                console.log("inside spawnSecurity");
-
                 const { value } = event;
+
+                // check if stock_class_id is in context
+                if (!context.stockClasses[value.stock_class_id]) {
+                    throw Error("stock class not in context");
+                }
 
                 const securityId = event.id;
                 const newSecurity = spawn(stockMachine.withContext(value), securityId);
@@ -148,59 +214,100 @@ export const parentMachine = createMachine(
                     transactions: [...context.transactions, value.value],
                 };
             }),
-            updateParentContext: assign({
-                activePositions: (context, event) => {
-                    // console.log("context to update parent ", context, "and event ", event);
+            updateParentContext: assign(() => {
+                const quantityPerStockClass = sumQuantitiesByStockClass(context.activePositions); // {stock_class_id: quantity}}
+                return {
+                    issuer: (context, event) => {
+                        return {
+                            ...context.issuer,
+                            // sum all stockClasses
+                            shares_issued: Object.values(stockClassQuantities).reduce((total, quantity) => total + quantity, 0),
+                        };
+                    },
+                    stockClasses: (context, event) => {
+                        console.log(event);
+                        const stock_class_id = event.value.stock_class_id;
+                        const shares_issued = quantityPerStockClass[stock_class_id];
+                        return {
+                            ...context.stockClasses,
+                            [event.value.id]: {
+                                ...context.stockClasses[event.value.id],
+                                shares_issued,
+                            },
+                        };
+                    },
+                    activePositions: (context, event) => {
+                        // console.log("context to update parent ", context, "and event ", event);
 
-                    const updatedActivePositions = { ...context.activePositions };
+                        const updatedActivePositions = { ...context.activePositions };
 
-                    for (const stakeholderId in event.value.activePositions) {
-                        if (updatedActivePositions[stakeholderId]) {
-                            // If the stakeholderId already exists in the context, merge the securities
-                            updatedActivePositions[stakeholderId] = {
-                                ...updatedActivePositions[stakeholderId],
-                                ...event.value.activePositions[stakeholderId],
-                            };
-                        } else {
-                            // If the stakeholderId doesn't exist in the context, just add it
-                            updatedActivePositions[stakeholderId] = event.value.activePositions[stakeholderId];
-                        }
-                    }
-
-                    return updatedActivePositions;
-                },
-                activeSecurityIdsByStockClass: (context, event) => {
-                    const updatedSecurityIdsByStockClass = {
-                        ...context.activeSecurityIdsByStockClass,
-                    };
-
-                    for (const stakeholderId in event.value.activeSecurityIdsByStockClass) {
-                        if (updatedSecurityIdsByStockClass[stakeholderId]) {
-                            // If the stakeholderId already exists in the context, merge the stock classes
-                            for (const stockClassId in event.value.activeSecurityIdsByStockClass[stakeholderId]) {
-                                if (updatedSecurityIdsByStockClass[stakeholderId][stockClassId]) {
-                                    // Merge the security IDs arrays
-                                    updatedSecurityIdsByStockClass[stakeholderId][stockClassId] = [
-                                        ...new Set([
-                                            ...updatedSecurityIdsByStockClass[stakeholderId][stockClassId],
-                                            ...event.value.activeSecurityIdsByStockClass[stakeholderId][stockClassId],
-                                        ]),
-                                    ];
-                                } else {
-                                    // If the stockClassId doesn't exist in the context for this stakeholder, just add it
-                                    updatedSecurityIdsByStockClass[stakeholderId][stockClassId] =
-                                        event.value.activeSecurityIdsByStockClass[stakeholderId][stockClassId];
-                                }
+                        for (const stakeholderId in event.value.activePositions) {
+                            if (updatedActivePositions[stakeholderId]) {
+                                // If the stakeholderId already exists in the context, merge the securities
+                                updatedActivePositions[stakeholderId] = {
+                                    ...updatedActivePositions[stakeholderId],
+                                    ...event.value.activePositions[stakeholderId],
+                                };
+                            } else {
+                                // If the stakeholderId doesn't exist in the context, just add it
+                                updatedActivePositions[stakeholderId] = event.value.activePositions[stakeholderId];
                             }
-                        } else {
-                            // If the stakeholderId doesn't exist in the context, just add it
-                            updatedSecurityIdsByStockClass[stakeholderId] = event.value.activeSecurityIdsByStockClass[stakeholderId];
                         }
-                    }
 
-                    return updatedSecurityIdsByStockClass;
-                },
+                        return updatedActivePositions;
+                    },
+                    activeSecurityIdsByStockClass: (context, event) => {
+                        const updatedSecurityIdsByStockClass = {
+                            ...context.activeSecurityIdsByStockClass,
+                        };
+
+                        for (const stakeholderId in event.value.activeSecurityIdsByStockClass) {
+                            if (updatedSecurityIdsByStockClass[stakeholderId]) {
+                                // If the stakeholderId already exists in the context, merge the stock classes
+                                for (const stockClassId in event.value.activeSecurityIdsByStockClass[stakeholderId]) {
+                                    if (updatedSecurityIdsByStockClass[stakeholderId][stockClassId]) {
+                                        // Merge the security IDs arrays
+                                        updatedSecurityIdsByStockClass[stakeholderId][stockClassId] = [
+                                            ...new Set([
+                                                ...updatedSecurityIdsByStockClass[stakeholderId][stockClassId],
+                                                ...event.value.activeSecurityIdsByStockClass[stakeholderId][stockClassId],
+                                            ]),
+                                        ];
+                                    } else {
+                                        // If the stockClassId doesn't exist in the context for this stakeholder, just add it
+                                        updatedSecurityIdsByStockClass[stakeholderId][stockClassId] =
+                                            event.value.activeSecurityIdsByStockClass[stakeholderId][stockClassId];
+                                    }
+                                }
+                            } else {
+                                // If the stakeholderId doesn't exist in the context, just add it
+                                updatedSecurityIdsByStockClass[stakeholderId] = event.value.activeSecurityIdsByStockClass[stakeholderId];
+                            }
+                        }
+
+                        return updatedSecurityIdsByStockClass;
+                    },
+                };
             }),
         },
     }
 );
+
+function sumQuantitiesByStockClass(activePositions) {
+    return Object.keys(activePositions).reduce((result, stakeholderId) => {
+        const positions = activePositions[stakeholderId];
+
+        Object.keys(positions).forEach((positionId) => {
+            const position = positions[positionId];
+            const stockClassId = position.stock_class_id;
+
+            if (!result[stockClassId]) {
+                result[stockClassId] = 0;
+            }
+
+            result[stockClassId] += parseInt(position.quantity, 10);
+        });
+
+        return result;
+    }, {});
+}
