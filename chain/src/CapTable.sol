@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
-import { StockTransferParams, Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
+import { StockTransferParams, Issuer, Stakeholder, StockClass, InitialShares, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 import "./lib/transactions/Adjustment.sol";
 import "./lib/Stock.sol";
 
@@ -61,15 +61,40 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         emit IssuerCreated(_id, _name);
     }
 
-    // TODO: review after completing the stock machine
+    /// @inheritdoc ICapTable
+    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override onlyAdmin {
+        require(
+            params.issuerInitialShares.shares_authorized > 0 &&
+                params.issuerInitialShares.shares_issued > 0 &&
+                params.stockClassesInitialShares.length > 0,
+            "Invalid Seeding Shares Params"
+        );
+
+        issuer.shares_authorized = params.issuerInitialShares.shares_authorized;
+        issuer.shares_issued = params.issuerInitialShares.shares_issued;
+
+        for (uint256 i = 0; i < params.stockClassesInitialShares.length; i++) {
+            bytes16 stockClassId = params.stockClassesInitialShares[i].id;
+
+            if (stockClassIndex[stockClassId] == 0) {
+                revert StockClassDoesNotExist(stockClassId);
+            }
+
+            uint256 index = stockClassIndex[stockClassId] - 1;
+
+            stockClasses[index].shares_authorized = params.stockClassesInitialShares[i].shares_authorized;
+            stockClasses[index].shares_issued = params.stockClassesInitialShares[i].shares_issued;
+        }
+    }
+
     /// @inheritdoc ICapTable
     function seedMultipleActivePositionsAndSecurityIds(
-        bytes16[] memory stakeholderIds,
-        bytes16[] memory securityIds,
-        bytes16[] memory stockClassIds,
-        uint256[] memory quantities,
-        uint256[] memory sharePrices,
-        uint40[] memory timestamps
+        bytes16[] calldata stakeholderIds,
+        bytes16[] calldata securityIds,
+        bytes16[] calldata stockClassIds,
+        uint256[] calldata quantities,
+        uint256[] calldata sharePrices,
+        uint40[] calldata timestamps
     ) external override onlyAdmin {
         require(
             stakeholderIds.length == securityIds.length &&
@@ -81,7 +106,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         );
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
-            // Set activePositions
             positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
                 stockClassIds[i],
                 quantities[i],
@@ -89,7 +113,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
                 timestamps[i]
             );
 
-            // Set activeSecurityIdsByStockClass
             activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
         }
     }
