@@ -83,7 +83,7 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
                 });
 
                 break;
-            case "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMEN":
+            case "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT":
                 parent.send({
                     type: "PRE_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
                     value: tx,

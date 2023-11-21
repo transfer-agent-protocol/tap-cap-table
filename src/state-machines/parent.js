@@ -202,7 +202,7 @@ export const parentMachine = createMachine(
             }),
             updateIssuerShares: assign({
                 issuer: (context, event) => {
-                    // sum all stockClasses  {stock_class_id: quantity}}
+                    // sum all stockClasses  {[stock_class_id]: quantity}}
                     const quantityPerStockClass = sumQuantitiesByStockClass(context.activePositions);
                     const shares_issued = Object.values(quantityPerStockClass).reduce((total, quantity) => total + quantity, 0);
                     if (event.value.new_shares_authorized && event.value.new_shares_authorized <= shares_issued) {
