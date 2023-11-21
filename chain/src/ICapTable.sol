@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
@@ -21,13 +21,15 @@ interface ICapTable {
     function OPERATOR_ROLE() external returns (bytes32);
 
     function seedMultipleActivePositionsAndSecurityIds(
-        bytes16[] memory stakeholderIds,
-        bytes16[] memory securityIds,
-        bytes16[] memory stockClassIds,
-        uint256[] memory quantities,
-        uint256[] memory sharePrices,
-        uint40[] memory timestamps
+        bytes16[] calldata stakeholderIds,
+        bytes16[] calldata securityIds,
+        bytes16[] calldata stockClassIds,
+        uint256[] calldata quantities,
+        uint256[] calldata sharePrices,
+        uint40[] calldata timestamps
     ) external;
+
+    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external;
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external;
 
