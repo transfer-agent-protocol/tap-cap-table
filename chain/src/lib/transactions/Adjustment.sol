@@ -24,7 +24,7 @@ library Adjustment {
             issuer.id
         );
 
-        issuer.shares_authorized = newSharesAuthorized + issuer.shares_authorized;
+        issuer.shares_authorized = newSharesAuthorized;
 
         TxHelper.createTx(TxType.ISSUER_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
@@ -48,7 +48,7 @@ library Adjustment {
             stockClass.id
         );
 
-        stockClass.shares_authorized = newSharesAuthorized + stockClass.shares_authorized;
+        stockClass.shares_authorized = newSharesAuthorized;
 
         TxHelper.createTx(TxType.STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
