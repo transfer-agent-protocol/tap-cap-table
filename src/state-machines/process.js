@@ -6,9 +6,6 @@ import { preProcessorCache } from "../utils/caches.js";
     @dev: Parent-Child machines are created to calculate current context then deleted.
     if we ever need them, consider saving them to the DB.
 
-    TODO:
-    - Adjustments - consider adding shares_issued and authorized to the machines
-
 */
 const preProcessManifestTxs = (issuer, txs, stockClasses) => {
     const parent = interpret(parentMachine);
@@ -25,6 +22,10 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
             type: "IMPORT_STOCK_CLASS",
             value: stockClass,
         });
+    });
+
+    parent.send({
+        type: "VERIFY_STOCK_CLASSES_AUTHORIZED_SHARES",
     });
 
     txs.items.forEach((tx) => {
@@ -89,7 +90,6 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
                     value: tx,
                 });
                 break;
-;
         }
     });
 

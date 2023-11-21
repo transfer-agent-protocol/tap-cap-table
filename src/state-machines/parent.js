@@ -27,6 +27,9 @@ export const parentMachine = createMachine(
                     IMPORT_STOCK_CLASS: {
                         actions: ["importStockClass"],
                     },
+                    VERIFY_STOCK_CLASSES_AUTHORIZED_SHARES: {
+                        actions: ["verifyStockClassesAuthorizedShares"],
+                    },
                     PRE_STOCK_ISSUANCE: {
                         actions: ["spawnSecurity"],
                     },
@@ -81,6 +84,20 @@ export const parentMachine = createMachine(
                     stockClasses: { ...context.stockClasses, [id]: { shares_authorized: initial_shares_authorized, shares_issued: 0 } },
                 };
             }),
+            verifyStockClassesAuthorizedShares: (context, _) => {
+                const { stockClasses } = context;
+
+                let totalAuthorizedShares = 0;
+                Object.keys(stockClasses).forEach((id) => {
+                    const stockClass = stockClasses[id];
+                    const authorizedShares = parseInt(stockClass.shares_authorized);
+                    totalAuthorizedShares += authorizedShares;
+                });
+
+                const issuerAuthorizedShares = parseInt(context.issuer.shares_authorized);
+
+                if (totalAuthorizedShares > issuerAuthorizedShares) throw new Error("Stock Classes authorized shares exceeed Issuer's");
+            },
             preTransfer: assign((context, event) => {
                 const security_id = event.value.security_id;
                 const resulting_security_ids = event.value.resulting_security_ids;
