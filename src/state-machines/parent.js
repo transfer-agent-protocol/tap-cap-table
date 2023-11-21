@@ -202,23 +202,32 @@ export const parentMachine = createMachine(
             }),
             updateIssuerShares: assign({
                 issuer: (context, event) => {
-                    // sum all stockClasses
-                    const quantityPerStockClass = sumQuantitiesByStockClass(context.activePositions); // {stock_class_id: quantity}}
-                    const shares_issued = Object.values(quantityPerStockClass).reduce((total, quantity) => total + quantity, 0)
+                    // sum all stockClasses  {stock_class_id: quantity}}
+                    const quantityPerStockClass = sumQuantitiesByStockClass(context.activePositions);
+                    const shares_issued = Object.values(quantityPerStockClass).reduce((total, quantity) => total + quantity, 0);
+                    if (event.value.new_shares_authorized && event.value.new_shares_authorized <= shares_issued) {
+                        throw Error(`New Issuer shares authorized must be larger than current shares authorized: shares Authorized \
+                        ${event.value.new_shares_authorized} - Shares Issued: ${shares_issued} `);
+                    }
                     return {
                         shares_authorized: event.value.new_shares_authorized || context.issuer.shares_authorized,
-                        shares_issued
+                        shares_issued,
                     };
                 },
             }),
             updateStockClassShares: assign({
                 stockClasses: (context, event) => {
-                    console.log('event', event.type)
-
-                    const quantityPerStockClass = sumQuantitiesByStockClass(context.activePositions); // {stock_class_id: quantity}}
+                    const quantityPerStockClass = sumQuantitiesByStockClass(context.activePositions);
                     const stock_class_id = event.value.stock_class_id;
                     const shares_issued = quantityPerStockClass[stock_class_id];
 
+                    if (
+                        event.value.new_shares_authorized &&
+                        event.value.new_shares_authorized <= context.stockClasses[stock_class_id].shares_authorized
+                    ) {
+                        throw Error(`New Stock Class shares authorized must be larger than current shares authorized: shares Authorized \
+                        ${event.value.new_shares_authorized} - Shares Issued: ${shares_issued} `);
+                    }
                     return {
                         ...context.stockClasses,
                         [stock_class_id]: {
