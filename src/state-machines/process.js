@@ -28,7 +28,6 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
     });
 
     txs.items.forEach((tx) => {
-        console.log("tx ", tx.object_type);
         switch (tx.object_type) {
             case "TX_STOCK_ISSUANCE":
                 parent.send({
@@ -79,17 +78,20 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
                 break;
             case "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT":
                 parent.send({
-                    type: "PRE_STOCK_CLASS_SHARES_ADJUSTMENT",
+                    type: "PRE_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
                     value: tx,
                 });
 
                 break;
-            case "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT":
+            case "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMEN":
+                parent.send({
+                    type: "PRE_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+                    value: tx,
+                });
                 break;
+;
         }
     });
-
-    console.log("parent context ", JSON.stringify(parent._state.context, null, 2));
 
     preProcessorCache[issuer.id] = {
         activePositions: parent._state.context.activePositions,
@@ -98,25 +100,7 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
         issuer: parent._state.context.issuer,
         stockClasses: parent._state.context.stockClasses,
     };
+    console.log("preProcessorCache ", JSON.stringify(preProcessorCache[issuer.id], null, 2));
 };
 
 export default preProcessManifestTxs;
-
-/*
-struct Issuer {
-    bytes16 id;
-    string legal_name;
-    uint256 shares_issued;
-    uint256 shares_authorized;
-}
-
-// can be later extended to add things like seniority, conversion_rights, etc.
-struct StockClass {
-    bytes16 id;
-    string class_type; // ["COMMON", "PREFERRED"]
-    uint256 price_per_share; // Per-share price this stock class was issued for
-    uint256 shares_issued;
-    uint256 shares_authorized;
-}
-
-*/
