@@ -93,13 +93,27 @@ const preProcessManifestTxs = (issuer, txs, stockClasses) => {
         }
     });
 
+    const formattedIssuer = {
+        shares_authorized: String(parent._state.context.issuer.shares_authorized),
+        shares_issued: String(parent._state.context.issuer.shares_issued),
+    };
+
+    const formattedStockClasses = {};
+    Object.keys(parent._state.context.stockClasses).forEach((stockClassId) => {
+        formattedStockClasses[stockClassId] = {
+            shares_authorized: String(parent._state.context.stockClasses[stockClassId].shares_authorized),
+            shares_issued: String(parent._state.context.stockClasses[stockClassId].shares_issued),
+        };
+    });
+
     preProcessorCache[issuer.id] = {
         activePositions: parent._state.context.activePositions,
         activeSecurityIdsByStockClass: parent._state.context.activeSecurityIdsByStockClass,
         transactions: parent._state.context.transactions,
-        issuer: parent._state.context.issuer,
-        stockClasses: parent._state.context.stockClasses,
+        issuer: formattedIssuer,
+        stockClasses: formattedStockClasses,
     };
+
     console.log("preProcessorCache ", JSON.stringify(preProcessorCache[issuer.id], null, 2));
 };
 

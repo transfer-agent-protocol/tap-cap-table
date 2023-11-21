@@ -87,16 +87,11 @@ export const parentMachine = createMachine(
             verifyStockClassesAuthorizedShares: (context, _) => {
                 const { stockClasses } = context;
 
-                let totalAuthorizedShares = 0;
-                Object.keys(stockClasses).forEach((id) => {
-                    const stockClass = stockClasses[id];
-                    const authorizedShares = parseInt(stockClass.shares_authorized);
-                    totalAuthorizedShares += authorizedShares;
-                });
+                const totalAuthorizedShares = totalSharesInStockClasses(stockClasses);
 
-                const issuerAuthorizedShares = parseInt(context.issuer.shares_authorized);
+                const issuerAuthorizedShares = parseInt(context.issuer.shares_authorized, 10);
 
-                if (totalAuthorizedShares > issuerAuthorizedShares) throw new Error("Stock Classes authorized shares exceeed Issuer's");
+                if (totalAuthorizedShares > issuerAuthorizedShares) throw Error("Stock Classes authorized shares exceeed Issuer's");
             },
             preTransfer: assign((context, event) => {
                 const security_id = event.value.security_id;
@@ -226,6 +221,10 @@ export const parentMachine = createMachine(
                         throw Error(`New Issuer shares authorized must be larger than current shares authorized: shares Authorized \
                         ${event.value.new_shares_authorized} - Shares Issued: ${shares_issued} `);
                     }
+
+                    const totalStockClassesSharesAuthorized = totalSharesInStockClasses(context.stockClasses);
+                    if (event.value.new_shares_authorized < totalStockClassesSharesAuthorized)
+                        throw Error(`Issuers Shares Authorized cannot be less than Stock Classes`);
                     return {
                         shares_authorized: event.value.new_shares_authorized || context.issuer.shares_authorized,
                         shares_issued,
@@ -238,13 +237,16 @@ export const parentMachine = createMachine(
                     const stock_class_id = event.value.stock_class_id;
                     const shares_issued = quantityPerStockClass[stock_class_id];
 
-                    if (
-                        event.value.new_shares_authorized &&
-                        event.value.new_shares_authorized <= context.stockClasses[stock_class_id].shares_authorized
-                    ) {
-                        throw Error(`New Stock Class shares authorized must be larger than current shares authorized: shares Authorized \
+                    if (event.value.new_shares_authorized && event.value.new_shares_authorized <= shares_issued) {
+                        throw Error(`New Stock Class shares authorized must be larger than current shares issued: shares Authorized \
                         ${event.value.new_shares_authorized} - Shares Issued: ${shares_issued} `);
                     }
+                    // check new shares authorized is less than issuer sharse authorized
+                    if (event.value.new_shares_authorized > context.issuer.shares_authorized) {
+                        throw Error(`Stock Class shares authorized cannot be larger than issuers`);
+                    }
+
+                    console.log("issuer ", context.issuer.shares_authorized);
                     return {
                         ...context.stockClasses,
                         [stock_class_id]: {
@@ -308,6 +310,16 @@ export const parentMachine = createMachine(
         },
     }
 );
+
+function totalSharesInStockClasses(stockClasses) {
+    let totalAuthorizedShares = 0;
+    Object.keys(stockClasses).forEach((id) => {
+        const stockClass = stockClasses[id];
+        const authorizedShares = parseInt(stockClass.shares_authorized);
+        totalAuthorizedShares += authorizedShares;
+    });
+    return totalAuthorizedShares;
+}
 
 function sumQuantitiesByStockClass(activePositions) {
     return Object.keys(activePositions).reduce((result, stakeholderId) => {
