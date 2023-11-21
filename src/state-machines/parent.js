@@ -114,22 +114,6 @@ export const parentMachine = createMachine(
                     transactions: [...context.transactions, currentTransaction],
                 };
             }),
-            preStockClassAuthorizedShares: assign((context, event) => {
-                const currentTransaction = event.value;
-                const { security_id } = currentTransaction;
-
-                // TODO: change this to stock_class_id
-                const securityActor = context.securities[security_id];
-
-                securityActor.send({
-                    type: "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
-                    security_id,
-                });
-
-                return {
-                    transactions: [...context.transactions, currentTransaction],
-                };
-            }),
             preRetract: assign((context, event) => {
                 const currentTransaction = event.value;
                 const { security_id } = currentTransaction;
