@@ -12,7 +12,7 @@ const main = async () => {
         "http://localhost:8080/transactions/adjust/issuer/authorized-shares",
         issuerAuthorizedSharesAdjust(
             issuer, // Issuer ID
-            "5555",
+            "1000000",
             ["adjusting issuer authorized shares"]
         )
     );
