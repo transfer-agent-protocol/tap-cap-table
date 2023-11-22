@@ -232,16 +232,14 @@
                     "id": "test-stock-class-adjustment",
                     "date": "2023-11-21",
                     "new_shares_authorized": "100000000",
-                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
-                    "reason_text": "stock class adjustment"
+                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7"
                 },
                 {
                     "object_type": "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
                     "id": "test-issuer-adjustment",
                     "date": "2023-11-21",
                     "new_shares_authorized": "10000000000",
-                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
-                    "reason_text": "issuer authorized shaers adjustment"
+                    "issuer_id": "d3373e0a-4dd9-430f-8a56-3281f2800e1e"
                 }
 
             ]
