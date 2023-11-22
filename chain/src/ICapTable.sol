@@ -2,21 +2,8 @@
 pragma solidity ^0.8.20;
 
 import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import {AccessControlDefaultAdminRules} from
-    "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import {
-    Issuer,
-    Stakeholder,
-    StockClass,
-    ActivePositions,
-    SecIdsStockClass,
-    StockLegendTemplate,
-    InitialShares,
-    ShareNumbersIssued,
-    StockParams,
-    StockParamsQuantity,
-    StockIssuanceParams
-} from "./lib/Structs.sol";
+import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
@@ -42,12 +29,9 @@ interface ICapTable {
         uint40[] calldata timestamps
     ) external;
 
-    function seedSharesAuthorizedAndIssued(InitialShares calldata params)
-        external
-        returns (Issuer memory, StockClass[] memory);
+    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external;
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship)
-        external;
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external;
 
     function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) external;
 
@@ -55,8 +39,7 @@ interface ICapTable {
 
     function getStakeholderIdByWallet(address _wallet) external view returns (bytes16 stakeholderId);
 
-    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments)
-        external;
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external;
 
     function adjustIssuerAuthorizedShares(
         uint256 newSharesAuthorized,
@@ -73,12 +56,7 @@ interface ICapTable {
         string memory stockholderApprovalDate
     ) external;
 
-    function createStockClass(
-        bytes16 _id,
-        string memory _class_type,
-        uint256 _price_per_share,
-        uint256 _initial_share_authorized
-    ) external;
+    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) external;
 
     function createStockLegendTemplate(bytes16 _id) external;
 
