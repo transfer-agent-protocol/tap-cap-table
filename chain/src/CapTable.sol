@@ -1,49 +1,57 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+import "forge-std/console.sol";
+
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate } from "./lib/Structs.sol";
-import "./lib/transactions/StockIssuance.sol";
-import "./lib/transactions/StockTransfer.sol";
-import "./lib/transactions/StockCancellation.sol";
-import "./lib/transactions/StockRetraction.sol";
-import "./lib/transactions/StockRepurchase.sol";
+import { ICapTable } from "./ICapTable.sol";
+import { StockTransferParams, Issuer, Stakeholder, StockClass, InitialShares, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 import "./lib/transactions/Adjustment.sol";
-import "./lib/transactions/StockAcceptance.sol";
-import "./lib/transactions/StockReissuance.sol";
+import "./lib/Stock.sol";
 
-contract CapTable is AccessControlDefaultAdminRules {
-    using SafeMath for uint256;
-
+contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
     StockLegendTemplate[] public stockLegendTemplates;
 
-    // @dev Transactions will be created on-chain then reflected off-chain.
-    address[] public transactions;
+    /// @inheritdoc ICapTable
+    bytes[] public override transactions;
 
-    // used to help generate deterministic UUIDs
+    /// @dev Used to help generate deterministic UUIDs
     uint256 private nonce;
 
-    // O(1) search
-    // id -> index
-    mapping(bytes16 => uint256) stakeholderIndex;
-    mapping(bytes16 => uint256) stockClassIndex;
-    // wallet address => stakeholder_id
-    mapping(address => bytes16) walletsPerStakeholder;
+    /// @inheritdoc ICapTable
+    mapping(bytes16 => uint256) public override stakeholderIndex;
+    /// @inheritdoc ICapTable
+    mapping(bytes16 => uint256) public override stockClassIndex;
+    /// @inheritdoc ICapTable
+    mapping(address => bytes16) public override walletsPerStakeholder;
 
+    // TODO: need a getter to fetch all active positions. These aren't defined in the interface.
     ActivePositions positions;
     SecIdsStockClass activeSecs;
 
-    // RBAC
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
-    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
+    /// @inheritdoc ICapTable
+    bytes32 public constant override ADMIN_ROLE = keccak256("ADMIN");
+    /// @inheritdoc ICapTable
+    bytes32 public constant override OPERATOR_ROLE = keccak256("OPERATOR");
 
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
     event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
+
+    error StakeholderAlreadyExists(bytes16 stakeholder_id);
+    error StockClassAlreadyExists(bytes16 stock_class_id);
+    error StockClassDoesNotExist(bytes16 stock_class_id);
+    error InvalidWallet(address wallet);
+    error NoStakeholder(bytes16 stakeholder_id);
+    error InvalidStockClass(bytes16 stock_class_id);
+    error InsufficientIssuerSharesAuthorized();
+    error InsufficientStockClassSharesAuthorized();
+    error NoIssuanceFound();
+    error WalletAlreadyExists(address wallet);
+    error NoActivePositionFound();
 
     constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
         _grantRole(ADMIN_ROLE, _msgSender());
@@ -55,15 +63,37 @@ contract CapTable is AccessControlDefaultAdminRules {
         emit IssuerCreated(_id, _name);
     }
 
+    /// @inheritdoc ICapTable
+    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override {
+        require(
+            params.issuerInitialShares.shares_authorized > 0 &&
+                params.issuerInitialShares.shares_issued > 0 &&
+                params.stockClassesInitialShares.length > 0,
+            "Invalid Seeding Shares Params"
+        );
+
+        issuer.shares_authorized = params.issuerInitialShares.shares_authorized;
+        issuer.shares_issued = params.issuerInitialShares.shares_issued;
+
+        for (uint256 i = 0; i < params.stockClassesInitialShares.length; i++) {
+            bytes16 stockClassId = params.stockClassesInitialShares[i].id;
+            _checkInvalidStockClass(stockClassId);
+
+            uint256 index = stockClassIndex[stockClassId] - 1;
+            stockClasses[index].shares_authorized = params.stockClassesInitialShares[i].shares_authorized;
+            stockClasses[index].shares_issued = params.stockClassesInitialShares[i].shares_issued;
+        }
+    }
+
+    /// @inheritdoc ICapTable
     function seedMultipleActivePositionsAndSecurityIds(
-        bytes16[] memory stakeholderIds,
-        bytes16[] memory securityIds,
-        bytes16[] memory stockClassIds,
-        uint256[] memory quantities,
-        uint256[] memory sharePrices,
-        uint40[] memory timestamps
-    ) external onlyAdmin {
-        //TODO: check stakeholders and stock classes exist
+        bytes16[] calldata stakeholderIds,
+        bytes16[] calldata securityIds,
+        bytes16[] calldata stockClassIds,
+        uint256[] calldata quantities,
+        uint256[] calldata sharePrices,
+        uint40[] calldata timestamps
+    ) external override onlyAdmin {
         require(
             stakeholderIds.length == securityIds.length &&
                 securityIds.length == stockClassIds.length &&
@@ -74,7 +104,6 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
-            // Set activePositions
             positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
                 stockClassIds[i],
                 quantities[i],
@@ -82,58 +111,206 @@ contract CapTable is AccessControlDefaultAdminRules {
                 timestamps[i]
             );
 
-            // Set activeSecurityIdsByStockClass
             activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
         }
     }
 
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) public onlyAdmin {
-        require(stakeholderIndex[_id] == 0, "Stakeholder already exists");
+    /// @inheritdoc ICapTable
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external override onlyAdmin {
+        _checkStakeholderExists(_id);
+
         stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
 
+    /// @inheritdoc ICapTable
+    function createStockClass(
+        bytes16 _id,
+        string memory _class_type,
+        uint256 _price_per_share,
+        uint256 _initial_share_authorized
+    ) external override onlyAdmin {
+        _checkStockClassExists(_id);
+
+        stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
+        stockClassIndex[_id] = stockClasses.length;
+        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
+    }
+
+    /// @inheritdoc ICapTable
+    // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
+    function createStockLegendTemplate(bytes16 _id) external override onlyAdmin {
+        // add require
+        stockLegendTemplates.push(StockLegendTemplate(_id));
+    }
+
+    /// @inheritdoc ICapTable
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
-        require(_wallet != address(0), "Invalid wallet");
-        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] == bytes16(0), "Wallet already exists");
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
+        _checkInvalidWallet(_wallet);
+        _checkStakeholderIsStored(_stakeholder_id);
+        _checkWalletAlreadyExists(_wallet);
 
         walletsPerStakeholder[_wallet] = _stakeholder_id;
     }
 
+    /// @inheritdoc ICapTable
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) public onlyAdmin {
-        require(_wallet != address(0), "Invalid wallet");
-        require(stakeholderIndex[_stakeholder_id] > 0, "No stakeholder");
-        require(walletsPerStakeholder[_wallet] != bytes16(0), "Wallet doesn't exist");
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
+        _checkInvalidWallet(_wallet);
+        _checkStakeholderIsStored(_stakeholder_id);
+        _checkWalletAlreadyExists(_wallet);
 
         delete walletsPerStakeholder[_wallet];
     }
 
-    function getStakeholderIdByWallet(address _wallet) public view returns (bytes16 stakeholderId) {
-        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
-        return walletsPerStakeholder[_wallet];
+    /// @inheritdoc ICapTable
+    function issueStock(StockIssuanceParams calldata params) external override onlyAdmin {
+        _checkStakeholderExists(params.stakeholder_id);
+        _checkStakeholderIsStored(params.stakeholder_id);
+        _checkInvalidStockClass(params.stock_class_id);
+
+        StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
+
+        require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+
+        StockLib.createIssuance(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
-    // Stock Acceptance does not currently impact an active position. It's only recorded.
-    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
+    /// @inheritdoc ICapTable
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
+        _checkStakeholderIsStored(params.stakeholder_id);
+        _checkInvalidStockClass(params.stock_class_id);
 
-        // require active position to exist?
+        StockParamsQuantity memory repurchaseParams = StockParamsQuantity(
+            nonce,
+            quantity,
+            params.stakeholder_id,
+            params.stock_class_id,
+            params.security_id,
+            params.comments,
+            params.reason_text
+        );
 
-        StockAcceptanceLib.acceptStockByTA(nonce, securityId, comments, transactions);
+        StockLib.createRepurchase(
+            repurchaseParams,
+            price,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+        );
     }
 
+    /// @inheritdoc ICapTable
+    function retractStockIssuance(StockParams calldata params) external override onlyAdmin {
+        _checkStakeholderIsStored(params.stakeholder_id);
+        _checkInvalidStockClass(params.stock_class_id);
+
+        StockLib.createRetraction(
+            params,
+            nonce,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+        );
+    }
+
+    /// @inheritdoc ICapTable
+    function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external override onlyAdmin {
+        _checkStakeholderIsStored(params.stakeholder_id);
+        _checkInvalidStockClass(params.stock_class_id);
+        _checkResultingSecurityIds(resulting_security_ids);
+
+        StockLib.createReissuance(
+            params,
+            nonce,
+            resulting_security_ids,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+        );
+    }
+
+    /// @inheritdoc ICapTable
+    function cancelStock(StockParams calldata params, uint256 quantity) external override onlyAdmin {
+        _checkStakeholderIsStored(params.stakeholder_id);
+        _checkInvalidStockClass(params.stock_class_id);
+
+        StockParamsQuantity memory cancelParams = StockParamsQuantity(
+            nonce,
+            quantity,
+            params.stakeholder_id,
+            params.stock_class_id,
+            params.security_id,
+            params.comments,
+            params.reason_text
+        );
+
+        StockLib.createCancellation(
+            cancelParams,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+        );
+    }
+
+    /// @inheritdoc ICapTable
+    function transferStock(
+        bytes16 transferorStakeholderId,
+        bytes16 transfereeStakeholderId,
+        bytes16 stockClassId,
+        bool isBuyerVerified,
+        uint256 quantity,
+        uint256 share_price
+    ) external override onlyOperator {
+        _checkStakeholderExists(transferorStakeholderId);
+        _checkStakeholderExists(transfereeStakeholderId);
+        _checkInvalidStockClass(stockClassId);
+
+        StockTransferParams memory params = StockTransferParams(
+            transferorStakeholderId,
+            transfereeStakeholderId,
+            stockClassId,
+            isBuyerVerified,
+            quantity,
+            share_price,
+            nonce
+        );
+
+        StockLib.createTransfer(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
+    }
+
+    /// @inheritdoc ICapTable
+    // Stock Acceptance does not impact an active position. It's only recorded.
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external override onlyAdmin {
+        _checkStakeholderIsStored(stakeholderId);
+        _checkInvalidStockClass(stockClassId);
+
+        ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
+
+        _checkActivePositionExists(activePosition);
+
+        StockLib.createAcceptance(nonce, securityId, comments, transactions);
+    }
+
+    /// @inheritdoc ICapTable
     function adjustIssuerAuthorizedShares(
         uint256 newSharesAuthorized,
         string[] memory comments,
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         Adjustment.adjustIssuerAuthorizedShares(
             nonce,
             newSharesAuthorized,
@@ -145,15 +322,16 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
+    /// @inheritdoc ICapTable
     function adjustStockClassAuthorizedShares(
         bytes16 stockClassId,
         uint256 newAuthorizedShares,
         string[] memory comments,
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
-        require(stockClass.id == stockClassId, "Invalid stock class");
+        _checkInvalidStockClass(stockClassId);
 
         Adjustment.adjustStockClassAuthorizedShares(
             nonce,
@@ -166,20 +344,8 @@ contract CapTable is AccessControlDefaultAdminRules {
         );
     }
 
-    function createStockClass(bytes16 _id, string memory _class_type, uint256 _price_per_share, uint256 _initial_share_authorized) public onlyAdmin {
-        require(stockClassIndex[_id] == 0, "Stock class already exists");
-
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
-        stockClassIndex[_id] = stockClasses.length;
-        emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
-    }
-
-    // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
-    function createStockLegendTemplate(bytes16 _id) public onlyAdmin {
-        stockLegendTemplates.push(StockLegendTemplate(_id));
-    }
-
-    function getStakeholderById(bytes16 _id) public view returns (bytes16, string memory, string memory) {
+    /// @inheritdoc ICapTable
+    function getStakeholderById(bytes16 _id) external view override returns (bytes16, string memory, string memory) {
         if (stakeholderIndex[_id] > 0) {
             Stakeholder memory stakeholder = stakeholders[stakeholderIndex[_id] - 1];
             return (stakeholder.id, stakeholder.stakeholder_type, stakeholder.current_relationship);
@@ -188,215 +354,33 @@ contract CapTable is AccessControlDefaultAdminRules {
         }
     }
 
-    function getStockClassById(bytes16 _id) public view returns (bytes16, string memory, uint256, uint256) {
+    /// @inheritdoc ICapTable
+    function getStockClassById(bytes16 _id) external view override returns (bytes16, string memory, uint256, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized);
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized, stockClass.shares_issued);
         } else {
-            return ("", "", 0, 0);
+            return ("", "", 0, 0, 0);
         }
     }
 
-    function getTotalNumberOfStakeholders() public view returns (uint256) {
+    /// @inheritdoc ICapTable
+    function getStakeholderIdByWallet(address _wallet) external view override returns (bytes16 stakeholderId) {
+        require(walletsPerStakeholder[_wallet] != bytes16(0), "No stakeholder found");
+        return walletsPerStakeholder[_wallet];
+    }
+
+    /// @inheritdoc ICapTable
+    function getTotalNumberOfStakeholders() external view override returns (uint256) {
         return stakeholders.length;
     }
 
-    function getTotalNumberOfStockClasses() public view returns (uint256) {
+    /// @inheritdoc ICapTable
+    function getTotalNumberOfStockClasses() external view override returns (uint256) {
         return stockClasses.length;
     }
 
-    // TODO: small syntax but change this to issueStock
-    function issueStockByTA(
-        bytes16 stockClassId,
-        bytes16 stockPlanId,
-        ShareNumbersIssued memory shareNumbersIssued,
-        uint256 sharePrice,
-        uint256 quantity,
-        bytes16 vestingTermsId,
-        uint256 costBasis,
-        bytes16[] memory stockLegendIds,
-        string memory issuanceType,
-        string[] memory comments,
-        string memory customId,
-        bytes16 stakeholderId,
-        string memory boardApprovalDate,
-        string memory stockholderApprovalDate,
-        string memory considerationText,
-        string[] memory securityLawExemptions
-    ) external onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
-
-        require(issuer.shares_issued.add(quantity) <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued.add(quantity) <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
-
-        StockIssuanceLib.createStockIssuanceByTA(
-            nonce,
-            stockClassId,
-            stockPlanId,
-            shareNumbersIssued,
-            sharePrice,
-            quantity,
-            vestingTermsId,
-            costBasis,
-            stockLegendIds,
-            issuanceType,
-            comments,
-            customId,
-            stakeholderId,
-            boardApprovalDate,
-            stockholderApprovalDate,
-            considerationText,
-            securityLawExemptions,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClass
-        );
-    }
-
-    function repurchaseStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory considerationText,
-        uint256 quantity,
-        uint256 price
-    ) external onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        StockRepurchaseLib.repurchaseStockByTA(
-            nonce,
-            stakeholderId,
-            stockClassId,
-            securityId,
-            comments,
-            considerationText,
-            quantity,
-            price,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
-        );
-    }
-
-    function retractStockIssuance(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText
-    ) external onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        StockRetractionLib.retractStockIssuanceByTA(
-            nonce,
-            stakeholderId,
-            stockClassId,
-            securityId,
-            comments,
-            reasonText,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
-        );
-    }
-
-    function reissueStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16[] memory resulting_security_ids,
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText
-    ) external {
-        StockReissuanceLib.reissueStockByTA(
-            nonce,
-            stakeholderId,
-            stockClassId,
-            comments,
-            securityId,
-            resulting_security_ids,
-            reasonText,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
-        );
-    }
-
-    // Missed date here. Make sure it's recorded where it needs to be (in the struct)
-    // TODO: dates seem to be missing in a handful of places, go back and recheck
-    function cancelStock(
-        bytes16 stakeholderId, // not OCF, but required to fetch activePositions
-        bytes16 stockClassId, //  not OCF, but required to fetch activePositions
-        bytes16 securityId,
-        string[] memory comments,
-        string memory reasonText,
-        uint256 quantity
-    ) external onlyAdmin {
-        require(stakeholderIndex[stakeholderId] > 0, "No stakeholder");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        // need a require for activePositions
-
-        StockCancellationLib.cancelStockByTA(
-            nonce,
-            stakeholderId,
-            stockClassId,
-            securityId,
-            comments,
-            reasonText,
-            quantity,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
-        );
-    }
-
-    function transferStock(
-        bytes16 transferorStakeholderId,
-        bytes16 transfereeStakeholderId,
-        bytes16 stockClassId, // TODO: verify that we would have fong would have the stock class
-        bool isBuyerVerified,
-        uint256 quantity,
-        uint256 share_price
-    ) external onlyOperator {
-        require(stakeholderIndex[transferorStakeholderId] > 0, "No transferor");
-        require(stakeholderIndex[transfereeStakeholderId] > 0, "No transferee");
-        require(stockClassIndex[stockClassId] > 0, "Invalid stock class");
-
-        StockTransferLib.transferStock(
-            transferorStakeholderId,
-            transfereeStakeholderId,
-            stockClassId,
-            isBuyerVerified,
-            quantity,
-            share_price,
-            nonce,
-            positions,
-            activeSecs,
-            transactions,
-            issuer,
-            stockClasses[stockClassIndex[stockClassId] - 1]
-        );
-    }
-
     /* Role Based Access Control */
-
     modifier onlyOperator() {
         /// @notice Admins are also considered Operators
         require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
@@ -414,19 +398,71 @@ contract CapTable is AccessControlDefaultAdminRules {
 
     //  External API for updating roles of addresses
 
-    function addAdmin(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function addAdmin(address addr) external override onlyAdmin {
         _grantRole(ADMIN_ROLE, addr);
     }
 
-    function removeAdmin(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function removeAdmin(address addr) external override onlyAdmin {
         _revokeRole(ADMIN_ROLE, addr);
     }
 
-    function addOperator(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function addOperator(address addr) external override onlyAdmin {
         _grantRole(OPERATOR_ROLE, addr);
     }
 
-    function removeOperator(address addr) external onlyAdmin {
+    /// @inheritdoc ICapTable
+    function removeOperator(address addr) external override onlyAdmin {
         _revokeRole(OPERATOR_ROLE, addr);
+    }
+
+    function _checkStakeholderExists(bytes16 _id) internal view {
+        if (stakeholderIndex[_id] > 0) {
+            revert StakeholderAlreadyExists(_id);
+        }
+    }
+
+    function _checkStockClassExists(bytes16 _id) internal view {
+        if (stockClassIndex[_id] > 0) {
+            revert StockClassAlreadyExists(_id);
+        }
+    }
+
+    function _checkInvalidWallet(address _wallet) internal pure {
+        if (_wallet == address(0)) {
+            revert InvalidWallet(_wallet);
+        }
+    }
+
+    function _checkStakeholderIsStored(bytes16 _id) internal view {
+        if (stakeholderIndex[_id] == 0) {
+            revert NoStakeholder(_id);
+        }
+    }
+
+    function _checkWalletAlreadyExists(address _wallet) internal view {
+        if (walletsPerStakeholder[_wallet] != bytes16(0)) {
+            revert WalletAlreadyExists(_wallet);
+        }
+    }
+
+    function _checkInvalidStockClass(bytes16 _stock_class_id) internal view {
+        if (stockClassIndex[_stock_class_id] == 0) {
+            revert InvalidStockClass(_stock_class_id);
+        }
+    }
+
+    function _checkResultingSecurityIds(bytes16[] memory resulting_security_ids) internal pure {
+        if (resulting_security_ids.length == 0) {
+            revert NoIssuanceFound();
+        }
+    }
+
+    function _checkActivePositionExists(ActivePosition memory activePosition) internal pure {
+        if (activePosition.quantity == 0) {
+            revert NoActivePositionFound();
+        }
     }
 }

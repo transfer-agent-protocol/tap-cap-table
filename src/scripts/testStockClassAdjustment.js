@@ -5,7 +5,7 @@ import connectDB from "../db/config/mongoose.js";
 connectDB();
 
 const main = async () => {
-    const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
+    const lastStockIssuance = await StockIssuance.find().sort({ updatedAt: -1 }).limit(1);
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity } = lastStockIssuance[0];
     const stockClassAdjResponse = await axios.post(
         "http://localhost:8080/transactions/adjust/stock-class/authorized-shares",
@@ -17,16 +17,6 @@ const main = async () => {
         )
     );
     console.log("stockClassResponse", stockClassAdjResponse.data);
-
-    // const issuerAdjustedResponse = await axios.post(
-    //     "http://localhost:8080/transactions/adjust/issuer/authorized-shares",
-    //     issuerAuthorizedSharesAdjust(
-    //         issuer, // Issuer ID
-    //         "5555",
-    //         ["adjusting issuer authorized shares"]
-    //     )
-    // );
-    // console.log("✅ | Issuer adjusted response", issuerAdjustedResponse.data);
 };
 
 main()

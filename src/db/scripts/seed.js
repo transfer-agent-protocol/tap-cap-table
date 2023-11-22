@@ -23,6 +23,8 @@ import txStockRetractionSchema from "../../../ocf/schema/objects/transactions/re
 import txStockAcceptanceSchema from "../../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
 import txStockReissuanceSchema from "../../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
 import txStockRepurchaseSchema from "../../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
+import txStockClassAuthorizedSharesAdjustmentSchema from "../../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
+import txIssuerAuthorizedSharesAdjustmentSchema from "../../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
 
 import validateInputAgainstOCF from "../../utils/validateInputAgainstSchema.js";
 import preProcessManifestTxs from "../../state-machines/process.js";
@@ -62,7 +64,12 @@ async function processTransactionEntity(txs) {
             case "TX_STOCK_REPURCHASE":
                 schema = txStockRepurchaseSchema;
                 break;
-            // Should we add adjustment here?
+            case "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT":
+                schema = txStockClassAuthorizedSharesAdjustmentSchema;
+                break;
+            case "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT":
+                schema = txIssuerAuthorizedSharesAdjustmentSchema;
+                break;
             default:
                 throw new Error(`${tx.object_type} is not mapped - please add the transaction validation to the schema`);
         }
@@ -114,7 +121,7 @@ async function seedDB(manifestArr) {
     await processEntity(incomingVestingTerms, createVestingTerms, vestingTermsSchema, issuerId);
     await processTransactionEntity(incomingTransactions);
 
-    preProcessManifestTxs(issuerId, incomingTransactions);
+    preProcessManifestTxs(incomingIssuer, incomingTransactions, incomingStockClasses);
     await addTransactions(incomingTransactions, issuerId);
 
     return issuer;

@@ -1,22 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import { Issuer, StockClass } from "../Structs.sol";
 import "../TxHelper.sol";
-import "../../transactions/IssuerAuthorizedSharesAdjustmentTX.sol";
-import "../../transactions/StockClassAuthorizedSharesAdjustmentTX.sol";
 
 library Adjustment {
-    using SafeMath for uint256;
-    // combine both
-    // 1. Issuer authorized shares adjustment
-    // 2. Stock Class authorized shares adjustment
-
-    event IssuerAuthorizedSharesAdjusted(IssuerAuthorizedSharesAdjustment adjustment);
-
-    event StockClassAuthorizedSharesAdjusted(StockClassAuthorizedSharesAdjustment adjustment);
-
     function adjustIssuerAuthorizedShares(
         uint256 nonce,
         uint256 newSharesAuthorized,
@@ -24,7 +12,7 @@ library Adjustment {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate,
         Issuer storage issuer,
-        address[] storage transactions
+        bytes[] storage transactions
     ) external {
         nonce++;
         IssuerAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustIssuerAuthorizedShares(
@@ -36,14 +24,11 @@ library Adjustment {
             issuer.id
         );
 
-        issuer.shares_authorized = newSharesAuthorized.add(issuer.shares_authorized);
+        issuer.shares_authorized = newSharesAuthorized;
 
-        IssuerAuthorizedSharesAdjustmentTx issuerAuthorizedSharesAdjustmentTx = new IssuerAuthorizedSharesAdjustmentTx(adjustment);
-        transactions.push(address(issuerAuthorizedSharesAdjustmentTx));
-        emit IssuerAuthorizedSharesAdjusted(adjustment);
+        TxHelper.createTx(TxType.ISSUER_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
 
-    // do the above for stock class
     function adjustStockClassAuthorizedShares(
         uint256 nonce,
         uint256 newSharesAuthorized,
@@ -51,11 +36,8 @@ library Adjustment {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate,
         StockClass storage stockClass,
-        address[] storage transactions
+        bytes[] storage transactions
     ) external {
-        uint256 newShares = newSharesAuthorized + stockClass.shares_authorized;
-        stockClass.shares_authorized = newShares;
-
         nonce++;
         StockClassAuthorizedSharesAdjustment memory adjustment = TxHelper.adjustStockClassAuthorizedShares(
             nonce,
@@ -66,8 +48,8 @@ library Adjustment {
             stockClass.id
         );
 
-        StockClassAuthorizedSharesAdjustmentTx stockClassAuthorizedSharesAdjustmentTx = new StockClassAuthorizedSharesAdjustmentTx(adjustment);
-        transactions.push(address(stockClassAuthorizedSharesAdjustmentTx));
-        emit StockClassAuthorizedSharesAdjusted(adjustment);
+        stockClass.shares_authorized = newSharesAuthorized;
+
+        TxHelper.createTx(TxType.STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT, abi.encode(adjustment), transactions);
     }
 }

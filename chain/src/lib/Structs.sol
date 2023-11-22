@@ -38,6 +38,22 @@ struct ShareNumbersIssued {
     uint256 ending_share_number;
 }
 
+struct IssuerInitialShares {
+    uint256 shares_authorized;
+    uint256 shares_issued;
+}
+
+struct StockClassInitialShares {
+    bytes16 id;
+    uint256 shares_authorized;
+    uint256 shares_issued;
+}
+
+struct InitialShares {
+    IssuerInitialShares issuerInitialShares;
+    StockClassInitialShares[] stockClassesInitialShares;
+}
+
 struct StockCancellation {
     bytes16 id;
     string object_type;
@@ -106,44 +122,59 @@ struct StockClassAuthorizedSharesAdjustment {
 struct StockIssuance {
     bytes16 id;
     string object_type;
+    bytes16 security_id;
+    StockIssuanceParams params;
+}
+
+struct StockLegendTemplate {
+    bytes16 id;
+}
+
+struct StockParamsQuantity {
+    uint256 nonce;
+    uint256 quantity;
+    bytes16 stakeholder_id;
+    bytes16 stock_class_id;
+    bytes16 security_id;
+    string[] comments;
+    string reason_text;
+}
+
+struct StockParams {
+    bytes16 stakeholder_id; // not OCF, but required to fetch activePositions
+    bytes16 stock_class_id; //  not OCF, but required to fetch activePositions
+    bytes16 security_id;
+    string[] comments;
+    string reason_text;
+}
+
+struct StockTransferParams {
+    bytes16 transferor_stakeholder_id;
+    bytes16 transferee_stakeholder_id;
+    bytes16 stock_class_id;
+    bool is_buyer_verified;
+    uint256 quantity;
+    uint256 share_price;
+    uint256 nonce;
+}
+
+struct StockIssuanceParams {
     bytes16 stock_class_id;
     bytes16 stock_plan_id; // Optional
     ShareNumbersIssued share_numbers_issued; // Optional
-    uint256 share_price; // OCF Monetary (USD is all that matters). Amount is  Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    uint256 share_price; // OCF Monetary (USD is all that matters). Amount is Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
     uint256 quantity; // Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
     bytes16 vesting_terms_id; // Optional
-    uint256 cost_basis; // Optional OCF Monetary (USD is all that matters). Amount is  Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
+    uint256 cost_basis; // Optional OCF Monetary (USD is all that matters). Amount is Numeric: Fixed-point string representation of a number (up to 10 decimal places supported)
     bytes16[] stock_legend_ids; // Optional
     string issuance_type; // Optional for special types (["RSA", "FOUNDERS_STOCK"],)
     string[] comments; // Optional
-    bytes16 security_id;
     string custom_id; // Optional (eg R2-D2)
     bytes16 stakeholder_id;
     string board_approval_date; // Optional
     string stockholder_approval_date; // Optional
     string consideration_text; // Optional
     string[] security_law_exemptions; // Unclear
-}
-
-/*
- "properties": {
-    "object_type": {
-      "const": "STOCK_LEGEND_TEMPLATE"
-    },
-    "name": {
-      "description": "Name for the stock legend template",
-      "type": "string"
-    },
-    "text": {
-      "description": "The full text of the stock legend",
-      "type": "string"
-    },
-    "id": {},
-    "comments": {}
-  }, */
-
-struct StockLegendTemplate {
-    bytes16 id;
 }
 
 // date fields are going to use block timestamp

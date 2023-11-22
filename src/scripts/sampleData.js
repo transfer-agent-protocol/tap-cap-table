@@ -71,6 +71,7 @@ export const issuerAuthorizedSharesAdjust = (issuerId, new_shares_authorized, co
     return {
         issuerId,
         data: {
+            issuer_id: issuerId,
             new_shares_authorized,
             comments,
         },

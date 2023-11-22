@@ -9,7 +9,7 @@ const main = async () => {
     console.log("⏳ | Creating stock retraction…");
 
     // latest StockIssuance record inserted
-    const lastStockIssuance = await StockIssuance.find().sort({ _id: -1 }).limit(1);
+    const lastStockIssuance = await StockIssuance.find().sort({ updatedAt: -1 }).limit(1);
     console.log("lastStockIssuance", lastStockIssuance[0]);
     const { issuer, security_id, stakeholder_id, stock_class_id } = lastStockIssuance[0];
 

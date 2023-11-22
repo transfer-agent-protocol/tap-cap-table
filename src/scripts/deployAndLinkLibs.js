@@ -82,7 +82,7 @@ async function deployLib(lib, libs) {
             "--private-key",
             privateKey,
             `${lib.path}:${lib.libraryName || lib.fileName}`,
-            "--via-ir",
+            // "--via-ir",
             "--json",
             ...librariesDepsArgs,
         ];

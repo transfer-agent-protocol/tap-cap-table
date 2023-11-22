@@ -21,8 +21,7 @@ export const convertAndCreateTransferStockOnchain = async (contract, transfer) =
         sharePriceScaled
     );
     await tx.wait();
-
-    console.log(`✅ | Transfer completed from transferee ID: ${transfereeId} to transferor ID: ${transferorId}`);
-    console.log(`Quantity transferred: ${quantity}`);
+    console.log(`Initiate Stock Transfer from transferee ID: ${transfereeId} to transferor ID: ${transferorId}`);
+    console.log(`Quantity to be transferred: ${quantity}`);
     console.log(`Price per share: ${sharePrice}`);
 };

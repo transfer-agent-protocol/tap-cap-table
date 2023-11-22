@@ -16,7 +16,7 @@ const StakeholderSchema = new mongoose.Schema({
         ref: "Issuer",
     },
     is_onchain_synced: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 const Stakeholder = mongoose.model("Stakeholder", StakeholderSchema);
 
