@@ -29,7 +29,7 @@ interface ICapTable {
         uint40[] calldata timestamps
     ) external;
 
-    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external;
+    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external returns (Issuer memory, StockClass[] memory);
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external;
 
@@ -62,7 +62,7 @@ interface ICapTable {
 
     function getStakeholderById(bytes16 _id) external view returns (bytes16, string memory, string memory);
 
-    function getStockClassById(bytes16 _id) external view returns (bytes16, string memory, uint256, uint256);
+    function getStockClassById(bytes16 _id) external view returns (bytes16, string memory, uint256, uint256, uint256);
 
     function getTotalNumberOfStakeholders() external view returns (uint256);
 
