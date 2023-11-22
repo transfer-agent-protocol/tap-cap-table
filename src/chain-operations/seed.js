@@ -19,7 +19,7 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     console.log(`✅ | Completed Seeding issuer ${uuid} on chain`);
 
     // seed shares_authorized and issued for Issuer and Stock Classes
-    await seedSharesAuthorizedAndIssued(contract);
+    await seedSharesAuthorizedAndIssued(uuid, contract);
 
     const arrays = extractArrays(preProcessorCache[uuid]);
 
@@ -28,7 +28,7 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     console.log("⏳ | Checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
 };
 
-const seedSharesAuthorizedAndIssued = async (contract) => {
+const seedSharesAuthorizedAndIssued = async (uuid, contract) => {
     const issuerToSeed = preProcessorCache[uuid].issuer;
     const stockClassesToSeed = preProcessorCache[uuid].stockClasses;
 
