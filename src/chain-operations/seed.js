@@ -18,10 +18,44 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     await initiateSeeding(uuid, contract);
     console.log(`✅ | Completed Seeding issuer ${uuid} on chain`);
 
+    // seed shares_authorized and issued for Issuer and Stock Classes
+    await seedSharesAuthorizedAndIssued(uuid, contract);
+
     const arrays = extractArrays(preProcessorCache[uuid]);
+
     await seedActivePositionsAndActiveSecurityIds(arrays, contract);
 
     console.log("⏳ | Checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
+};
+
+const seedSharesAuthorizedAndIssued = async (uuid, contract) => {
+    const issuerToSeed = preProcessorCache[uuid].issuer;
+    const stockClassesToSeed = preProcessorCache[uuid].stockClasses;
+
+    // Construct IssuerInitialShares
+    const issuerInitialShares = {
+        shares_authorized: toScaledBigNumber(issuerToSeed.shares_authorized),
+        shares_issued: toScaledBigNumber(issuerToSeed.shares_issued),
+    };
+
+    // Construct an array of StockClassInitialShares
+    const stockClassesInitialShares = stockClassesToSeed.map((stockClass) => ({
+        id: convertUUIDToBytes16(stockClass.id),
+        shares_authorized: toScaledBigNumber(stockClass.shares_authorized),
+        shares_issued: toScaledBigNumber(stockClass.shares_issued),
+    }));
+
+    // Construct InitialShares struct
+    const initialShares = {
+        issuerInitialShares: issuerInitialShares,
+        stockClassesInitialShares: stockClassesInitialShares,
+    };
+
+    // Pass the struct to the contract function
+    const tx = await contract.seedSharesAuthorizedAndIssued(initialShares);
+    await tx.wait();
+
+    console.log(`Seeded shares_authorized and shares_issued for Issuer and Stock Classes`);
 };
 
 export const initiateSeeding = async (uuid, contract) => {
@@ -60,7 +94,6 @@ export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) 
     console.log("💾 | sharePrices ", sharePrices);
     console.log("💾 | timestamps ", timestamps);
 
-    // convert them.
     const stakeholderIdsBytes16 = stakeholders.map((stakeholder) => convertUUIDToBytes16(stakeholder));
     const stockClassIdsBytes16 = stockClasses.map((stockClass) => convertUUIDToBytes16(stockClass));
     const quantitiesScaled = quantities.map((quantity) => toScaledBigNumber(quantity));

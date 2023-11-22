@@ -156,6 +156,28 @@
                     ]
                 },
                 {
+                    "object_type": "TX_STOCK_ISSUANCE",
+                    "id": "repurchase-remaining",
+                    "security_id": "c6044385-3b0c-4bed-80a0-1136df4ff03a",
+                    "date": "2022-11-21",
+                    "security_law_exemptions": [],
+                    "stakeholder_id": "aceb81e6-2d19-4ef2-ac53-05ff210d3508",
+                    "custom_id": "PA-2",
+                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7",
+                    "share_price": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "quantity": "1000000",
+                    "cost_basis": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "stock_legend_ids": [
+                        "f04e7c40-0a64-4d2e-9208-8828098d73d5"
+                    ]
+                },
+                {
                     "object_type": "TX_STOCK_TRANSFER",
                     "id": "4ea56d95-f3c3-4637-9678-90d1e396b6f2",
                     "security_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
@@ -186,10 +208,39 @@
                     "object_type": "TX_STOCK_REISSUANCE",
                     "id": "test-stock-reissuance-minimal",
                     "security_id": "06fcd012-4a7f-446e-87ed-c7cc7cfbecec",
-                    "resulting_security_ids": ["01a550ea-fe3b-4082-8de0-f2bf9edfc87b", "0e6d0858-e9d5-48d2-ad9d-5e7c19b30118"],
+                    "resulting_security_ids": ["01a550ea-fe3b-4082-8de0-f2bf9edfc87b"],
                     "date": "2023-10-03",
                     "reason_text": "stock split",
                     "comments": []
+                },
+                {
+                    "object_type": "TX_STOCK_REPURCHASE",
+                    "id": "test-stock-repurchase-minimal",
+                    "security_id": "0e6d0858-e9d5-48d2-ad9d-5e7c19b30118",
+                    "date": "2023-11-21",
+                    "price": {
+                        "amount": "0.0001000000",
+                        "currency": "USD"
+                    },
+                    "quantity": "1000000",
+                    "balance_security_id": "c6044385-3b0c-4bed-80a0-1136df4ff03a",
+                    "consideration_text": "stock repurchase",
+                    "comments": []
+                },
+                {
+                    "object_type": "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+                    "id": "test-stock-class-adjustment",
+                    "date": "2023-11-21",
+                    "new_shares_authorized": "100000000",
+                    "stock_class_id": "8f14e45f-ea0c-495d-88fd-c6476d68b4b7"
+                },
+                {
+                    "object_type": "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+                    "id": "test-issuer-adjustment",
+                    "date": "2023-11-21",
+                    "new_shares_authorized": "10000000000",
+                    "issuer_id": "d3373e0a-4dd9-430f-8a56-3281f2800e1e"
                 }
+
             ]
         }

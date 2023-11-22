@@ -6,15 +6,29 @@ import { preProcessorCache } from "../utils/caches.js";
     @dev: Parent-Child machines are created to calculate current context then deleted.
     if we ever need them, consider saving them to the DB.
 
-    TODO: Adjustments - consider adding shares_issued and authorized to the machines
 */
-const preProcessManifestTxs = (issuerId, txs) => {
+const preProcessManifestTxs = (issuer, txs, stockClasses) => {
     const parent = interpret(parentMachine);
 
     parent.start();
 
+    parent.send({
+        type: "IMPORT_ISSUER",
+        value: issuer,
+    });
+
+    stockClasses.items.forEach((stockClass) => {
+        parent.send({
+            type: "IMPORT_STOCK_CLASS",
+            value: stockClass,
+        });
+    });
+
+    parent.send({
+        type: "VERIFY_STOCK_CLASSES_AUTHORIZED_SHARES",
+    });
+
     txs.items.forEach((tx) => {
-        console.log("tx ", tx.object_type);
         switch (tx.object_type) {
             case "TX_STOCK_ISSUANCE":
                 parent.send({
@@ -56,16 +70,51 @@ const preProcessManifestTxs = (issuerId, txs) => {
                     value: tx,
                 });
                 break;
+            case "TX_STOCK_REPURCHASE":
+                parent.send({
+                    type: "PRE_STOCK_REPURCHASE",
+                    id: tx.security_id,
+                    value: tx,
+                });
+                break;
+            case "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT":
+                parent.send({
+                    type: "PRE_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+                    value: tx,
+                });
+
+                break;
+            case "TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT":
+                parent.send({
+                    type: "PRE_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT",
+                    value: tx,
+                });
+                break;
         }
     });
 
-    console.log("parent context ", JSON.stringify(parent._state.context, null, 2));
+    const formattedIssuer = {
+        shares_authorized: String(parent._state.context.issuer.shares_authorized),
+        shares_issued: String(parent._state.context.issuer.shares_issued),
+    };
 
-    preProcessorCache[issuerId] = {
+    const formattedStockClasses = Object.keys(parent._state.context.stockClasses).map((stockClassId) => {
+        return {
+            id: stockClassId,
+            shares_authorized: String(parent._state.context.stockClasses[stockClassId].shares_authorized),
+            shares_issued: String(parent._state.context.stockClasses[stockClassId].shares_issued),
+        };
+    });
+
+    preProcessorCache[issuer.id] = {
         activePositions: parent._state.context.activePositions,
         activeSecurityIdsByStockClass: parent._state.context.activeSecurityIdsByStockClass,
         transactions: parent._state.context.transactions,
+        issuer: formattedIssuer,
+        stockClasses: formattedStockClasses,
     };
+
+    console.log("preProcessorCache ", JSON.stringify(preProcessorCache[issuer.id], null, 2));
 };
 
 export default preProcessManifestTxs;
