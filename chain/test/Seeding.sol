@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "./CapTable.t.sol";
-import {InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass} from "../src/lib/Structs.sol";
+import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass } from "../src/lib/Structs.sol";
 
 contract StockClassTests is CapTableTest {
     function createInitialDummyStockClassData() public pure returns (bytes16, string memory, uint256, uint256) {
@@ -30,19 +30,26 @@ contract StockClassTests is CapTableTest {
         uint256 expectedIssuerSharesIssued = 350000000000000000; // 35M
 
         StockClassInitialShares[] memory expectedStockClassInitialShares = new StockClassInitialShares[](1);
-        expectedStockClassInitialShares[0] =
-            StockClassInitialShares(stockClassId, expectedStockClassSharesAuthorized, expectedStockClassSharesIssued);
+        expectedStockClassInitialShares[0] = StockClassInitialShares(
+            stockClassId,
+            expectedStockClassSharesAuthorized,
+            expectedStockClassSharesIssued
+        );
 
         InitialShares memory params = InitialShares(
             IssuerInitialShares(expectedIssuerSharesAuthorized, expectedIssuerSharesIssued),
             expectedStockClassInitialShares
         );
 
-        (Issuer memory issuer, StockClass[] memory stockClasses) = capTable.seedSharesAuthorizedAndIssued(params);
+        capTable.seedSharesAuthorizedAndIssued(params);
 
-        assertEq(issuer.shares_authorized, expectedIssuerSharesAuthorized);
-        assertEq(issuer.shares_issued, expectedIssuerSharesIssued);
-        assertEq(stockClasses[0].shares_authorized, expectedStockClassSharesAuthorized);
-        assertEq(stockClasses[0].shares_issued, expectedStockClassSharesIssued);
+        (, , uint256 actualIssuerSharesAuthorized, uint256 actualIssuerSharesIssued) = capTable.issuer();
+
+        (, , , uint256 scSharesAuthorized, uint256 scSharesIssued) = capTable.getStockClassById(stockClassId);
+
+        assertEq(actualIssuerSharesAuthorized, expectedIssuerSharesAuthorized);
+        assertEq(actualIssuerSharesIssued, expectedIssuerSharesIssued);
+        assertEq(scSharesAuthorized, expectedStockClassSharesAuthorized);
+        assertEq(scSharesIssued, expectedStockClassSharesIssued);
     }
 }
