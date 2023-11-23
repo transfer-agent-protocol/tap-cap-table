@@ -36,17 +36,17 @@ library StockLib {
     ) external {
         _checkBuyerVerified(params.is_buyer_verified);
         _checkInvalidQuantityOrPrice(params.quantity, params.share_price);
-
         require(
             activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
             "No active security ids found"
         );
-        bytes16[] storage activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
+        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
 
         uint256 sum = 0;
         uint256 numSecurityIds = 0;
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
+
             ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
             sum += activePosition.quantity;
 
