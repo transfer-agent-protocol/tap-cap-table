@@ -61,7 +61,9 @@ library StockLib {
         uint256 remainingQuantity = params.quantity;
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
-            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
+            bytes16 active_security_id = activeSecurityIDs[index];
+
+            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][active_security_id];
 
             uint256 transferQuantity = remainingQuantity;
 
@@ -71,13 +73,14 @@ library StockLib {
 
             params.quantity = transferQuantity;
 
-            _transferSingleStock(params, activeSecurityIDs[index], positions, activeSecs, transactions, issuer, stockClass);
+            _transferSingleStock(params, active_security_id, positions, activeSecs, transactions, issuer, stockClass);
 
             remainingQuantity -= transferQuantity;
 
             if (remainingQuantity == 0) {
                 break;
             }
+
         }
     }
 
@@ -275,14 +278,13 @@ library StockLib {
     // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. TODO: delete if not necessary
     function _transferSingleStock(
         StockTransferParams memory params,
-        bytes16 securityId,
+        bytes16 transferorSecurityId,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         bytes[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
     ) internal {
-        bytes16 transferorSecurityId = securityId;
         ActivePosition memory transferorActivePosition = positions.activePositions[params.transferor_stakeholder_id][transferorSecurityId];
 
         _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
@@ -296,11 +298,21 @@ library StockLib {
 
         bytes16 balance_security_id = "";
 
-        params.quantity = balanceForTransferor;
-        params.share_price = transferorActivePosition.share_price;
+        StockTransferParams memory newParams = StockTransferParams(
+            params.transferor_stakeholder_id,
+            params.transferee_stakeholder_id,
+            params.stock_class_id,
+            params.is_buyer_verified,
+            params.quantity,
+            params.share_price,
+            params.nonce
+        );
+        newParams.quantity = balanceForTransferor;
+        newParams.share_price = transferorActivePosition.share_price;
+
         if (balanceForTransferor > 0) {
             params.nonce++;
-            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.transferor_stakeholder_id);
+            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(newParams, newParams.transferor_stakeholder_id);
 
             _updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
 
