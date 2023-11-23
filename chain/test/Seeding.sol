@@ -43,7 +43,7 @@ contract StockClassTests is CapTableTest {
 
         capTable.seedSharesAuthorizedAndIssued(params);
 
-        (, , uint256 actualIssuerSharesAuthorized, uint256 actualIssuerSharesIssued) = capTable.issuer();
+        (, , uint256 actualIssuerSharesIssued, uint256 actualIssuerSharesAuthorized) = capTable.issuer();
 
         (, , , uint256 scSharesAuthorized, uint256 scSharesIssued) = capTable.getStockClassById(stockClassId);
 
