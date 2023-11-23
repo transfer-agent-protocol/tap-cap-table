@@ -23,6 +23,7 @@ library StockLib {
 
         StockIssuance memory issuance = TxHelper.createStockIssuanceStruct(issuanceParams, nonce);
         _updateContext(issuance, positions, activeSecs, issuer, stockClass, transactions);
+        nonce++;
     }
 
     function createTransfer(
