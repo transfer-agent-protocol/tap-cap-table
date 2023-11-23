@@ -194,6 +194,16 @@ contract Stock is CapTableTest {
             issuanceParams1.share_price
         );
 
+        /*
+            Transactions Array:
+                 1. Delete 1000 position from sh1
+                 2. issue 1000 to sh2
+                 3. create tx transfer (quantity = 1000)
+                 4. delete 2000 position from sh 1
+                 5. issue 500 position to sh1
+                 6. issue 1500 to position sh1
+                 7. create tx transfer (quantity = 1500)
+        */
         StockTransfer memory firstTransfer =  abi.decode(capTable.transactions(capTable.getTransactionsCount() - 4), (StockTransfer));
         bytes16 remainingIssuanceSecurityId = abi.decode(capTable.transactions(capTable.getTransactionsCount() - 2), (StockIssuance)).security_id;
         StockTransfer memory secondTransfer =  abi.decode(capTable.transactions(capTable.getTransactionsCount() - 1), (StockTransfer));
