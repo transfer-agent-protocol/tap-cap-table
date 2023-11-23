@@ -287,8 +287,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         uint256 quantity,
         uint256 share_price
     ) external override onlyOperator {
-        _checkStakeholderExists(transferorStakeholderId);
-        _checkStakeholderExists(transfereeStakeholderId);
+        _checkStakeholderIsStored(transferorStakeholderId);
+        _checkStakeholderIsStored(transfereeStakeholderId);
         _checkInvalidStockClass(stockClassId);
 
         StockTransferParams memory params = StockTransferParams(
