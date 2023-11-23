@@ -172,20 +172,29 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     function issueStock(StockIssuanceParams calldata params) external override onlyAdmin {
-        _checkStakeholderExists(params.stakeholder_id);
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
+        nonce++;
         StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
 
-        require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+        require(
+            issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized"
+        );
+        require(
+            stockClass.shares_issued + params.quantity <= stockClass.shares_authorized,
+            "StockClass: Insufficient shares authorized"
+        );
 
         StockLib.createIssuance(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price)
+        external
+        override
+        onlyAdmin
+    {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
