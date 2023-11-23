@@ -64,11 +64,15 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
+    function getTransactionsCount() external view returns (uint256) {
+        return transactions.length;
+    }
+
+    /// @inheritdoc ICapTable
     function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override {
         require(
-            params.issuerInitialShares.shares_authorized > 0 &&
-                params.issuerInitialShares.shares_issued > 0 &&
-                params.stockClassesInitialShares.length > 0,
+            params.issuerInitialShares.shares_authorized > 0 && params.issuerInitialShares.shares_issued > 0
+                && params.stockClassesInitialShares.length > 0,
             "Invalid Seeding Shares Params"
         );
 
