@@ -204,9 +204,14 @@ contract Stock is CapTableTest {
                  6. issue 1500 to position sh1
                  7. create tx transfer (quantity = 1500)
         */
-        StockTransfer memory firstTransfer =  abi.decode(capTable.transactions(capTable.getTransactionsCount() - 4), (StockTransfer));
-        bytes16 remainingIssuanceSecurityId = abi.decode(capTable.transactions(capTable.getTransactionsCount() - 2), (StockIssuance)).security_id;
-        StockTransfer memory secondTransfer =  abi.decode(capTable.transactions(capTable.getTransactionsCount() - 1), (StockTransfer));
+        uint256 transactionsCount = capTable.getTransactionsCount();
+        bytes memory lastIssuanceTx = capTable.transactions(transactionsCount - 2);
+        bytes memory firstTransferTx = capTable.transactions(transactionsCount - 4);
+        bytes memory secondTransferTx = capTable.transactions(transactionsCount - 1);
+
+        StockTransfer memory firstTransfer =  abi.decode(firstTransferTx, (StockTransfer));
+        bytes16 remainingIssuanceSecurityId = abi.decode(lastIssuanceTx, (StockIssuance)).security_id;
+        StockTransfer memory secondTransfer =  abi.decode(secondTransferTx, (StockTransfer));
 
         assertEq(firstTransfer.quantity, 1000);
         assertEq(secondTransfer.quantity, 1500);
