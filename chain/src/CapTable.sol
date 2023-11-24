@@ -434,13 +434,13 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _revokeRole(OPERATOR_ROLE, addr);
     }
 
-    function _checkStakeholderExists(bytes16 _id) internal pure {
+    function _checkStakeholderExists(bytes16 _id) internal view {
         if (stakeholderIndex[_id] > 0) {
             revert StakeholderAlreadyExists(_id);
         }
     }
 
-    function _checkStockClassExists(bytes16 _id) internal pure {
+    function _checkStockClassExists(bytes16 _id) internal view {
         if (stockClassIndex[_id] > 0) {
             revert StockClassAlreadyExists(_id);
         }
@@ -452,19 +452,19 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         }
     }
 
-    function _checkStakeholderIsStored(bytes16 _id) internal pure {
+    function _checkStakeholderIsStored(bytes16 _id) internal view {
         if (stakeholderIndex[_id] == 0) {
             revert NoStakeholder(_id);
         }
     }
 
-    function _checkWalletAlreadyExists(address _wallet) internal pure {
+    function _checkWalletAlreadyExists(address _wallet) internal view {
         if (walletsPerStakeholder[_wallet] != bytes16(0)) {
             revert WalletAlreadyExists(_wallet);
         }
     }
 
-    function _checkInvalidStockClass(bytes16 _stock_class_id) internal pure {
+    function _checkInvalidStockClass(bytes16 _stock_class_id) internal view {
         if (stockClassIndex[_stock_class_id] == 0) {
             revert InvalidStockClass(_stock_class_id);
         }
