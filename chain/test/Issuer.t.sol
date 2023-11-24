@@ -9,5 +9,7 @@ contract IssuerTests is CapTableTest {
         bytes16 expectedId = 0xd3373e0a4dd9430f8a563281f2800e1e;
         assertEq(id, expectedId);
         assertEq(legal_name, "Winston, Inc.");
+        assertEq(shares_authorized, issuerInitialSharesAuthorized);
+        assertEq(shares_issued, 0);
     }
 }
