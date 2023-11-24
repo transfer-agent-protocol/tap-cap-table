@@ -73,7 +73,7 @@ contract StockIssuanceTest is CapTableTest {
     }
 
     function testIssuingExcessiveStockAgainstIssuerAuthorizedShares() public {
-        uint256 stockClassIntialSharesAuthorized = 10000000000000;
+        uint256 stockClassIntialSharesAuthorized = issuerInitialSharesAuthorized -  100;
         (bytes16 stockClassId, bytes16 stakeholderId) =
             _createStockClassAndStakeholder(stockClassIntialSharesAuthorized);
         uint256 excessiveQuantity = 10000000000001; // More than the Issuer authorized amount
@@ -101,8 +101,9 @@ contract StockIssuanceTest is CapTableTest {
     }
 
     function testIssuingExcessiveStockAgainstAuthorizedShares() public {
-        (bytes16 stockClassId, bytes16 stakeholderId) = _createStockClassAndStakeholder(1000000);
-        uint256 excessiveQuantity = 1000001; // More than the authorized amount
+        uint256 stockClassAuthorizedShares = 1000;
+        (bytes16 stockClassId, bytes16 stakeholderId) = _createStockClassAndStakeholder(stockClassAuthorizedShares);
+        uint256 excessiveQuantity = stockClassAuthorizedShares  + 1; // More than the authorized amount
         StockIssuanceParams memory params = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
