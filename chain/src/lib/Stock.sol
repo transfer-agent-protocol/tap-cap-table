@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+
 import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams } from "./Structs.sol";
 import "./TxHelper.sol";
 import "./DeleteContext.sol";
@@ -177,7 +178,6 @@ library StockLib {
         StockClass storage stockClass
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
-
         _checkInsuffientAmount(activePosition.quantity, params.quantity);
 
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
@@ -342,7 +342,7 @@ library StockLib {
         }
     }
 
-    function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
+    function _checkInsuffientAmount(uint256 available, uint256 desired) internal view {
         if (available < desired) {
             revert InsufficientShares(available, desired);
         }
