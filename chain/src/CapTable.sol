@@ -68,6 +68,17 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
+    function getActivePositionsCount() external view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < stakeholders.length; i++) {
+            for (uint256 j = 0; j < stockClasses.length; j++) {
+                count += activeSecs.activeSecurityIdsByStockClass[stakeholders[i].id][stockClasses[j].id].length;
+            }
+        }
+        return count;
+    }
+
+    /// @inheritdoc ICapTable
     function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override {
         require(
             params.issuerInitialShares.shares_authorized > 0 && params.issuerInitialShares.shares_issued > 0
