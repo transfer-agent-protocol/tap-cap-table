@@ -324,6 +324,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
     ) external override onlyAdmin {
+        require(newSharesAuthorized >= issuer.shares_issued, "InsufficientIssuerSharesAuthorized: shares_issued exceeds newSharesAuthorized");
+
         Adjustment.adjustIssuerAuthorizedShares(
             nonce,
             newSharesAuthorized,
@@ -345,6 +347,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     ) external override onlyAdmin {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         _checkInvalidStockClass(stockClassId);
+        // check that the new stock class authorized is less than the issuer authorized if not revert
+        require(newAuthorizedShares <= issuer.shares_authorized, "InsufficientStockClassSharesAuthorized: stock class authorized shares exceeds issuer shares authorized");
 
         Adjustment.adjustStockClassAuthorizedShares(
             nonce,
