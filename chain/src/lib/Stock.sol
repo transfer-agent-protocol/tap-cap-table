@@ -342,7 +342,7 @@ library StockLib {
         }
     }
 
-    function _checkInsuffientAmount(uint256 available, uint256 desired) internal view {
+    function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
         if (available < desired) {
             revert InsufficientShares(available, desired);
         }
