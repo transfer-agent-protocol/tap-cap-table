@@ -163,14 +163,8 @@ After, you can seed and deploy the cap table with either of the above options. I
 
 To run tests for the smart contracts in the `chain` directory, follow these steps:
 
-1. Change into the `chain` directory by running:
-   ```sh
-   cd chain
-   ```
-2. Execute the tests using Forge with the following command:
-   ```sh
-   forge test
-   ```
+1. Change into the `chain` directory by running `cd chain`
+2. Execute the tests using Forge with the following command `forge test`
 
 This will run all the tests defined in the test suite and output the results to the console.
 
