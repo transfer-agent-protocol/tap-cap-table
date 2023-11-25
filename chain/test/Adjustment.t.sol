@@ -30,7 +30,6 @@ contract AdjustmentTests is CapTableTest {
         });
         capTable.issueStock(issuanceParams);
         (,, uint256 shareIssued,) = capTable.issuer();
-        console.log("shares Issued: %s", shareIssued);
 
         // Attempt to adjust issuer authorized shares below the issued amount
         uint256 newSharesAuthorized = 500; // Less than the issued amount
