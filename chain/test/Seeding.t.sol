@@ -95,7 +95,7 @@ contract SeedingTests is CapTableTest {
             stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps
         );
 
-        uint256 transactionCount = capTable.getActiveSecuritiesCount();
+        uint256 transactionCount = capTable.getTotalActiveSecuritiesCount();
         // get active position count
         assertEq(
             transactionCount,

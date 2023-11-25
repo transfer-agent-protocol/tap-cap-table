@@ -70,7 +70,7 @@ interface ICapTable {
 
     function getTransactionsCount() external view returns (uint256);
 
-    function getActiveSecuritiesCount() external view returns (uint256);
+    function getTotalActiveSecuritiesCount() external view returns (uint256);
 
     function issueStock(StockIssuanceParams calldata params) external;
 

@@ -67,7 +67,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    function getActiveSecuritiesCount() external view returns (uint256) {
+    function getTotalActiveSecuritiesCount() external view returns (uint256) {
         uint256 count = 0;
         for (uint256 i = 0; i < stakeholders.length; i++) {
             for (uint256 j = 0; j < stockClasses.length; j++) {
