@@ -160,8 +160,7 @@ After, you can seed and deploy the cap table with either of the above options. I
 
 ## Testing
 
-To run tests for the smart contracts, inside of`/chain` directory, run `forge test`.
-
+To run tests for the smart contracts, run `yarn test`.
 This will run all the tests defined in the test suite and output the results to the console.
 
 ## Contributing
