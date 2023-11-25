@@ -27,7 +27,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     mapping(address => bytes16) public override walletsPerStakeholder;
 
-    // TODO: need a getter to fetch all active positions. These aren't defined in the interface.
     ActivePositions positions;
     SecIdsStockClass activeSecs;
 
