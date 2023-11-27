@@ -5,6 +5,7 @@ import "forge-std/Script.sol";
 import "forge-std/console.sol";
 
 import "../src/CapTable.sol";
+import "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract CapTableDeployLocalScript is Script {
     function setUp() public {}
@@ -14,7 +15,15 @@ contract CapTableDeployLocalScript is Script {
 
         vm.startBroadcast(deployerPrivateKeyFakeAccount);
 
-        new CapTable(0xd3373e0a4dd9430f8a563281f2800e1e, "Winston Inc.", 10000000);
+        CapTable implementation = new CapTable();
+        CapTable(
+            address(
+                new ERC1967Proxy(
+                    address(implementation),
+                    abi.encodeWithSelector(implementation.initialize.selector, 0xd3373e0a4dd9430f8a563281f2800e1e, "Winston, Inc.", 10000000)
+                )
+            )
+        );
 
         vm.stopBroadcast();
     }
@@ -28,7 +37,15 @@ contract CapTableDeployOptimismGoerli is Script {
 
         vm.startBroadcast(deployerPrivateKeyPoetTest);
 
-        new CapTable(0xd3373e0a4dd9430f8a563281f2800e1e, "Winston Inc.", 1000000);
+        CapTable implementation = new CapTable();
+        CapTable(
+            address(
+                new ERC1967Proxy(
+                    address(implementation),
+                    abi.encodeWithSelector(implementation.initialize.selector, 0xd3373e0a4dd9430f8a563281f2800e1e, "Winston, Inc.", 10000000)
+                )
+            )
+        );
 
         vm.stopBroadcast();
     }
