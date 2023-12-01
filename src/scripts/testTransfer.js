@@ -41,17 +41,29 @@ const main = async () => {
     console.log("⏳ | Creating stock issuance…");
 
     // create stockIssuance
-    const stockIssuanceResponse = await axios.post(
+    const stockIssuanceResponse1 = await axios.post(
         "http://localhost:8080/transactions/issuance/stock",
         stockIssuance(
             issuerResponse.data.issuer._id,
             stakeholder1Response.data.stakeholder._id,
             stockClassResponse.data.stockClass._id,
-            "3000",
+            "1000",
             "1.2"
         )
     );
-    console.log("✅ | stockIssuanceResponse1", stockIssuanceResponse.data);
+    console.log("✅ | stockIssuanceResponse1", stockIssuanceResponse1.data);
+
+    const stockIssuanceResponse2 = await axios.post(
+        "http://localhost:8080/transactions/issuance/stock",
+        stockIssuance(
+            issuerResponse.data.issuer._id,
+            stakeholder1Response.data.stakeholder._id,
+            stockClassResponse.data.stockClass._id,
+            "2000",
+            "1.2"
+        )
+    );
+    console.log("✅ | stockIssuanceResponse1", stockIssuanceResponse2.data);
 
     console.log("⏳ | Creating stock transfer…");
     // create stockTransfer

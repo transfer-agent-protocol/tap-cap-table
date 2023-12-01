@@ -42,4 +42,19 @@ contract StockClassTests is CapTableTest {
         assertEq(actualInitialSharesAuthorized, expectedInitialSharesAuthorized);
         assertEq(actualSharesIssued, expectedSharesIssued);
     }
+
+    function testGetTotalNumberOfStockClasses() public {
+        bytes16[5] memory stockClassIds = [
+            bytes16(0x11111111111111111111111111111111),
+            bytes16(0x22222222222222222222222222222222),
+            bytes16(0x33333333333333333333333333333333),
+            bytes16(0x44444444444444444444444444444444),
+            bytes16(0x55555555555555555555555555555555)
+        ];
+        for (uint256 i = 0; i < stockClassIds.length; i++) {
+            capTable.createStockClass(stockClassIds[i], "Common", 10000000000, issuerInitialSharesAuthorized - 1);
+        }
+        uint256 totalStockClasses = capTable.getTotalNumberOfStockClasses();
+        assertEq(totalStockClasses, 5);
+    }
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/console.sol";
 
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
@@ -28,7 +27,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     mapping(address => bytes16) public override walletsPerStakeholder;
 
-    // TODO: need a getter to fetch all active positions. These aren't defined in the interface.
     ActivePositions positions;
     SecIdsStockClass activeSecs;
 
@@ -64,11 +62,26 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
+    function getTransactionsCount() external view returns (uint256) {
+        return transactions.length;
+    }
+
+    /// @inheritdoc ICapTable
+    function getTotalActiveSecuritiesCount() external view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < stakeholders.length; i++) {
+            for (uint256 j = 0; j < stockClasses.length; j++) {
+                count += activeSecs.activeSecurityIdsByStockClass[stakeholders[i].id][stockClasses[j].id].length;
+            }
+        }
+        return count;
+    }
+
+    /// @inheritdoc ICapTable
     function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override {
         require(
-            params.issuerInitialShares.shares_authorized > 0 &&
-                params.issuerInitialShares.shares_issued > 0 &&
-                params.stockClassesInitialShares.length > 0,
+            params.issuerInitialShares.shares_authorized > 0 && params.issuerInitialShares.shares_issued > 0
+                && params.stockClassesInitialShares.length > 0,
             "Invalid Seeding Shares Params"
         );
 
@@ -168,20 +181,29 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
 
     /// @inheritdoc ICapTable
     function issueStock(StockIssuanceParams calldata params) external override onlyAdmin {
-        _checkStakeholderExists(params.stakeholder_id);
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
+        nonce++;
         StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
 
-        require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
-        require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+        require(
+            issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized"
+        );
+        require(
+            stockClass.shares_issued + params.quantity <= stockClass.shares_authorized,
+            "StockClass: Insufficient shares authorized"
+        );
 
         StockLib.createIssuance(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price)
+        external
+        override
+        onlyAdmin
+    {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -274,8 +296,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         uint256 quantity,
         uint256 share_price
     ) external override onlyOperator {
-        _checkStakeholderExists(transferorStakeholderId);
-        _checkStakeholderExists(transfereeStakeholderId);
+        _checkStakeholderIsStored(transferorStakeholderId);
+        _checkStakeholderIsStored(transfereeStakeholderId);
         _checkInvalidStockClass(stockClassId);
 
         StockTransferParams memory params = StockTransferParams(
@@ -311,6 +333,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         string memory boardApprovalDate,
         string memory stockholderApprovalDate
     ) external override onlyAdmin {
+        require(newSharesAuthorized >= issuer.shares_issued, "InsufficientIssuerSharesAuthorized: shares_issued exceeds newSharesAuthorized");
+
         Adjustment.adjustIssuerAuthorizedShares(
             nonce,
             newSharesAuthorized,
@@ -332,6 +356,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     ) external override onlyAdmin {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         _checkInvalidStockClass(stockClassId);
+        // check that the new stock class authorized is less than the issuer authorized if not revert
+        require(newAuthorizedShares <= issuer.shares_authorized, "InsufficientStockClassSharesAuthorized: stock class authorized shares exceeds issuer shares authorized");
 
         Adjustment.adjustStockClassAuthorizedShares(
             nonce,
