@@ -45,7 +45,7 @@ contract StockClassTests is CapTableTest {
             string memory expectedClassType,
             uint256 expectedPricePerShare,
             uint256 expectedInitialSharesAuthorized,
-            uint256 expectedSharesIssued
+
         ) = createInitialDummyStockClassData();
         capTable.createStockClass(expectedId, expectedClassType, expectedPricePerShare, expectedInitialSharesAuthorized);
     }
@@ -56,7 +56,7 @@ contract StockClassTests is CapTableTest {
             string memory expectedClassType,
             uint256 expectedPricePerShare,
             uint256 expectedInitialSharesAuthorized,
-            uint256 expectedSharesIssued
+
         ) = createInitialDummyStockClassData();
         capTable.createStockClass(expectedId, expectedClassType, expectedPricePerShare, expectedInitialSharesAuthorized);
 
