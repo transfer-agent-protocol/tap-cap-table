@@ -7,6 +7,7 @@ import "../src/CapTable.sol";
 contract CapTableTest is Test {
     CapTable public capTable;
     uint256 public issuerInitialSharesAuthorized = 1000000;
+
     function setUp() public {
         bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
         capTable = new CapTable(issuerId, "Winston, Inc.", issuerInitialSharesAuthorized);
@@ -15,6 +16,16 @@ contract CapTableTest is Test {
     function createPranksterAndExpectRevert() public {
         address prankster = address(0);
         vm.prank(prankster);
-        vm.expectRevert();
+        vm.expectRevert("Does not have admin role");
+    }
+
+    function createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized) public returns (bytes16, bytes16) {
+        bytes16 stakeholderId = 0xd3373e0a4dd940000000000000000005;
+        capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "EMPLOYEE");
+
+        bytes16 stockClassId = 0xd3373e0a4dd940000000000000000000;
+        capTable.createStockClass(stockClassId, "COMMON", 100, stockClassInitialSharesAuthorized);
+
+        return (stockClassId, stakeholderId);
     }
 }
