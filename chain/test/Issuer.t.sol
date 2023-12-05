@@ -11,5 +11,6 @@ contract IssuerTests is CapTableTest {
         assertEq(legal_name, "Winston, Inc.");
         assertEq(shares_authorized, issuerInitialSharesAuthorized);
         assertEq(shares_issued, 0);
+        assertNotEq(shares_issued, 1);
     }
 }
