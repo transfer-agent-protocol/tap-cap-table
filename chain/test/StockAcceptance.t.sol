@@ -4,34 +4,12 @@ pragma solidity ^0.8.20;
 import "forge-std/console.sol";
 
 import "./CapTable.t.sol";
-import {
-    InitialShares,
-    IssuerInitialShares,
-    StockClassInitialShares,
-    Issuer,
-    StockClass,
-    StockIssuanceParams,
-    ShareNumbersIssued,
-    StockParams
-} from "../src/lib/Structs.sol";
+import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockParams } from "../src/lib/Structs.sol";
 
 contract StockAcceptanceTest is CapTableTest {
-    function _createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized)
-        private
-        returns (bytes16, bytes16)
-    {
-        bytes16 stakeholderId = 0xd3373e0a4dd940000000000000000005;
-        capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "EMOLOYEE");
-
-        bytes16 stockClassId = 0xd3373e0a4dd940000000000000000000;
-        capTable.createStockClass(stockClassId, "Common", 100, stockClassInitialSharesAuthorized);
-
-        return (stockClassId, stakeholderId);
-    }
-
     function testStockAcceptance() public {
         // Create stock class and stakeholder
-        (bytes16 stockClassId, bytes16 stakeholderId) = _createStockClassAndStakeholder(1000000);
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
         // Issue stock
         StockIssuanceParams memory issuanceParams = StockIssuanceParams({
