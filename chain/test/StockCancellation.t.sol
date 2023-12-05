@@ -35,6 +35,64 @@ contract StockCancellationTest is CapTableTest {
         assertEq(lastCancellation.quantity, lastIssuance.params.quantity);
     }
 
+    function testNoActivePositionCancellationRevert() public {
+        // Create stock class and stakeholder
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
+
+        issueStock(stockClassId, stakeholderId);
+
+        uint256 partialCancellationQuantity = 500; // Cancel only part of the stock
+        uint256 quantityAvailable = 0;
+
+        // if quantity is 0, there's no ActivePosition that exists.
+        bytes memory expectedError = abi.encodeWithSignature(
+            "InsufficientSharesOrNoActivePosition(uint256,uint256)",
+            quantityAvailable,
+            partialCancellationQuantity
+        );
+        vm.expectRevert(expectedError);
+
+        // cancel a stock with a security_id that doesn't exist, therefore no ActivePosition present.
+        capTable.cancelStock(
+            StockParams({
+                stakeholder_id: stakeholderId,
+                stock_class_id: stockClassId,
+                security_id: bytes16("0xd3373e0a4dd86"),
+                reason_text: "Partial cancellation",
+                comments: new string[](0)
+            }),
+            partialCancellationQuantity
+        );
+    }
+
+    function testCancelMoreThanAvailableRevert() public {
+        // Create stock class and stakeholder
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
+
+        issueStock(stockClassId, stakeholderId); // issues for 1000 shares default.
+
+        uint256 lastTransactionIndex = capTable.getTransactionsCount() - 1;
+        bytes memory lastTransaction = capTable.transactions(lastTransactionIndex);
+        StockIssuance memory lastIssuance = abi.decode(lastTransaction, (StockIssuance));
+
+        uint256 quantityToCancel = 1200; // Cancel 200 more than available
+
+        // if quantity is 0, there's no ActivePosition that exists.
+        bytes memory expectedError = abi.encodeWithSignature("InsufficientSharesOrNoActivePosition(uint256,uint256)", 1000, quantityToCancel);
+        vm.expectRevert(expectedError);
+
+        capTable.cancelStock(
+            StockParams({
+                stakeholder_id: stakeholderId,
+                stock_class_id: stockClassId,
+                security_id: lastIssuance.security_id,
+                reason_text: "Partial cancellation",
+                comments: new string[](0)
+            }),
+            quantityToCancel
+        );
+    }
+
     function testPartialStockCancellation() public {
         // Create stock class and stakeholder
         (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
