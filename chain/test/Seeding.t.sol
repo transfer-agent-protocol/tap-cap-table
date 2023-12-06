@@ -2,13 +2,11 @@
 pragma solidity ^0.8.20;
 
 import "./CapTable.t.sol";
-import {InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass} from "../src/lib/Structs.sol";
+import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass } from "../src/lib/Structs.sol";
 
-contract SeedingTests is CapTableTest {
-    function _createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized)
-        private
-        returns (bytes16, bytes16)
-    {
+contract SeedingTest is CapTableTest {
+    // TODO: should this be a global test helper?
+    function _createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized) private returns (bytes16, bytes16) {
         bytes16 stakeholderId = 0xd3373e0a4dd940000000000000000005;
         capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "EMOLOYEE");
 
@@ -43,8 +41,11 @@ contract SeedingTests is CapTableTest {
         uint256 expectedIssuerSharesIssued = 350000000000000000; // 35M
 
         StockClassInitialShares[] memory expectedStockClassInitialShares = new StockClassInitialShares[](1);
-        expectedStockClassInitialShares[0] =
-            StockClassInitialShares(stockClassId, expectedStockClassSharesAuthorized, expectedStockClassSharesIssued);
+        expectedStockClassInitialShares[0] = StockClassInitialShares(
+            stockClassId,
+            expectedStockClassSharesAuthorized,
+            expectedStockClassSharesIssued
+        );
 
         InitialShares memory params = InitialShares(
             IssuerInitialShares(expectedIssuerSharesAuthorized, expectedIssuerSharesIssued),
@@ -53,9 +54,9 @@ contract SeedingTests is CapTableTest {
 
         capTable.seedSharesAuthorizedAndIssued(params);
 
-        (,, uint256 actualIssuerSharesIssued, uint256 actualIssuerSharesAuthorized) = capTable.issuer();
+        (, , uint256 actualIssuerSharesIssued, uint256 actualIssuerSharesAuthorized) = capTable.issuer();
 
-        (,,, uint256 scSharesAuthorized, uint256 scSharesIssued) = capTable.getStockClassById(stockClassId);
+        (, , , uint256 scSharesAuthorized, uint256 scSharesIssued) = capTable.getStockClassById(stockClassId);
 
         assertEq(actualIssuerSharesAuthorized, expectedIssuerSharesAuthorized);
         assertEq(actualIssuerSharesIssued, expectedIssuerSharesIssued);
@@ -91,16 +92,10 @@ contract SeedingTests is CapTableTest {
             capTable.createStakeholder(stakeholderIds[i], "INDIVIDUAL", "INVESTOR");
         }
 
-        capTable.seedMultipleActivePositionsAndSecurityIds(
-            stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps
-        );
+        capTable.seedMultipleActivePositionsAndSecurityIds(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
 
         uint256 transactionCount = capTable.getTotalActiveSecuritiesCount();
         // get active position count
-        assertEq(
-            transactionCount,
-            5,
-            "Transaction count should be 5 after seeding multiple active positions and security IDs"
-        );
+        assertEq(transactionCount, 5, "Transaction count should be 5 after seeding multiple active positions and security IDs");
     }
 }
