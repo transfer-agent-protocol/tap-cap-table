@@ -173,7 +173,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
-        _checkWalletAlreadyExists(_wallet);
 
         delete walletsPerStakeholder[_wallet];
     }
@@ -183,11 +182,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
-        nonce++;
         StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
 
         require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
         require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+
+        nonce++;
 
         StockLib.createIssuance(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
@@ -196,6 +196,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
+
+        nonce++;
 
         StockParamsQuantity memory repurchaseParams = StockParamsQuantity(
             nonce,
@@ -223,6 +225,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
+        nonce++;
+
         StockLib.createRetraction(
             params,
             nonce,
@@ -238,7 +242,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
-        _checkResultingSecurityIds(resulting_security_ids);
+        _checkResultingSecurityIds(resulting_security_ids, params.stakeholder_id, params.stock_class_id);
+
+        nonce++;
 
         StockLib.createReissuance(
             params,
@@ -256,6 +262,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function cancelStock(StockParams calldata params, uint256 quantity) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
+
+        nonce++;
 
         StockParamsQuantity memory cancelParams = StockParamsQuantity(
             nonce,
@@ -290,6 +298,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(transfereeStakeholderId);
         _checkInvalidStockClass(stockClassId);
 
+        nonce++;
+
         StockTransferParams memory params = StockTransferParams(
             transferorStakeholderId,
             transfereeStakeholderId,
@@ -309,6 +319,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(stakeholderId);
         _checkInvalidStockClass(stockClassId);
 
+        nonce++;
+
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
         _checkActivePositionExists(activePosition);
@@ -324,6 +336,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         string memory stockholderApprovalDate
     ) external override onlyAdmin {
         require(newSharesAuthorized >= issuer.shares_issued, "InsufficientIssuerSharesAuthorized: shares_issued exceeds newSharesAuthorized");
+
+        nonce++;
 
         Adjustment.adjustIssuerAuthorizedShares(
             nonce,
@@ -351,6 +365,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
             newAuthorizedShares <= issuer.shares_authorized,
             "InsufficientStockClassSharesAuthorized: stock class authorized shares exceeds issuer shares authorized"
         );
+
+        nonce++;
 
         Adjustment.adjustStockClassAuthorizedShares(
             nonce,
@@ -473,9 +489,16 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         }
     }
 
-    function _checkResultingSecurityIds(bytes16[] memory resulting_security_ids) internal pure {
+    function _checkResultingSecurityIds(bytes16[] memory resulting_security_ids, bytes16 stakeholder_id, bytes16 stock_class_id) internal view {
         if (resulting_security_ids.length == 0) {
             revert NoIssuanceFound();
+        }
+
+        bytes16 security_id = resulting_security_ids[0];
+        ActivePosition memory activePosition = positions.activePositions[stakeholder_id][security_id];
+
+        if (activePosition.quantity == 0 || activePosition.stock_class_id != stock_class_id) {
+            revert NoActivePositionFound();
         }
     }
 

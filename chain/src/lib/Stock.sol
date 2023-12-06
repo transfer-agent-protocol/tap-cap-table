@@ -97,8 +97,6 @@ library StockLib {
         bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
-            params.nonce++;
-
             StockTransferParams memory transferParams = StockTransferParams(
                 params.stakeholder_id,
                 bytes16(0),
@@ -118,7 +116,6 @@ library StockLib {
             balance_security_id = balanceIssuance.security_id;
         }
 
-        params.nonce++;
         StockCancellation memory cancellation = TxHelper.createStockCancellationStruct(
             params.nonce,
             params.quantity,
@@ -148,7 +145,6 @@ library StockLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
-        nonce++;
         StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(
             nonce,
             params.comments,
@@ -181,8 +177,6 @@ library StockLib {
         bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
-            params.nonce++;
-
             StockTransferParams memory transferParams = StockTransferParams(
                 params.stakeholder_id,
                 bytes16(0),
@@ -202,7 +196,6 @@ library StockLib {
             balance_security_id = balanceIssuance.security_id;
         }
 
-        params.nonce++;
         StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(params, price);
 
         TxHelper.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), transactions);
@@ -285,7 +278,6 @@ library StockLib {
 
         _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
 
-        params.nonce++;
         StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.transferee_stakeholder_id);
 
         _updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass, transactions);
@@ -307,7 +299,6 @@ library StockLib {
         newParams.share_price = transferorActivePosition.share_price;
 
         if (balanceForTransferor > 0) {
-            params.nonce++;
             StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 newParams,
                 newParams.transferor_stakeholder_id
@@ -318,7 +309,6 @@ library StockLib {
             balance_security_id = transferorBalanceIssuance.security_id;
         }
 
-        params.nonce++;
         StockTransfer memory transfer = TxHelper.createStockTransferStruct(
             params.nonce,
             params.quantity,
