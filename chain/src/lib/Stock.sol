@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-
 import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams } from "./Structs.sol";
 import "./TxHelper.sol";
 import "./DeleteContext.sol";
 
 library StockLib {
-    error InsufficientShares(uint256 available, uint256 required);
+    error InsufficientSharesOrNoActivePosition(uint256 available, uint256 required);
     error InvalidQuantityOrPrice(uint256 quantity, uint256 price);
     error UnverifiedBuyer();
 
@@ -46,7 +45,6 @@ library StockLib {
         uint256 numSecurityIds = 0;
 
         for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
-
             ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
             sum += activePosition.quantity;
 
@@ -80,7 +78,6 @@ library StockLib {
             if (remainingQuantity == 0) {
                 break;
             }
-
         }
     }
 
@@ -311,7 +308,10 @@ library StockLib {
 
         if (balanceForTransferor > 0) {
             params.nonce++;
-            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(newParams, newParams.transferor_stakeholder_id);
+            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                newParams,
+                newParams.transferor_stakeholder_id
+            );
 
             _updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
 
@@ -344,7 +344,7 @@ library StockLib {
 
     function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
         if (available < desired) {
-            revert InsufficientShares(available, desired);
+            revert InsufficientSharesOrNoActivePosition(available, desired);
         }
     }
 
