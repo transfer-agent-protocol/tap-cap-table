@@ -12,7 +12,7 @@ contract StockAcceptanceTest is CapTableTest {
         (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
         // using helper found in CapTable.t.sol
-        issueStock(stockClassId, stakeholderId);
+        issueStock(stockClassId, stakeholderId, 1000);
 
         // Accept stock
         uint256 lastTransactionIndex = capTable.getTransactionsCount() - 1;
