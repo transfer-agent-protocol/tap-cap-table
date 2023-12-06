@@ -32,14 +32,14 @@ contract CapTableTest is Test {
         return (stockClassId, stakeholderId);
     }
 
-    function issueStock(bytes16 stockClassId, bytes16 stakeholderId) public {
+    function issueStock(bytes16 stockClassId, bytes16 stakeholderId, uint256 quantity) public {
         // Issue stock
         StockIssuanceParams memory issuanceParams = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
             share_numbers_issued: ShareNumbersIssued(0, 0),
             share_price: 100,
-            quantity: 1000,
+            quantity: quantity,
             vesting_terms_id: 0x00000000000000000000000000000000,
             cost_basis: 50,
             stock_legend_ids: new bytes16[](0),
