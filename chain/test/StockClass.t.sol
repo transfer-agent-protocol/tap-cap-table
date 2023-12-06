@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "./CapTable.t.sol";
 import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass } from "../src/lib/Structs.sol";
 
-contract StockClassTests is CapTableTest {
+contract StockClassTest is CapTableTest {
     function createInitialDummyStockClassData() public pure returns (bytes16, string memory, uint256, uint256, uint256) {
         bytes16 expectedId = 0xd3373e0a4dd9430f8a563281f2454545;
         string memory expectedClassType = "Common";
