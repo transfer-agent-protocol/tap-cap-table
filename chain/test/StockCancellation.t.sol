@@ -10,7 +10,7 @@ contract StockCancellationTest is CapTableTest {
     function testFullStockCancellation() public {
         (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
-        issueStock(stockClassId, stakeholderId);
+        issueStock(stockClassId, stakeholderId, 1000);
 
         // Cancel stock
         uint256 lastTransactionIndex = capTable.getTransactionsCount() - 1;
@@ -39,7 +39,7 @@ contract StockCancellationTest is CapTableTest {
         // Create stock class and stakeholder
         (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
-        issueStock(stockClassId, stakeholderId);
+        issueStock(stockClassId, stakeholderId, 1000);
 
         uint256 partialCancellationQuantity = 500; // Cancel only part of the stock
         uint256 quantityAvailable = 0;
@@ -69,7 +69,7 @@ contract StockCancellationTest is CapTableTest {
         // Create stock class and stakeholder
         (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
-        issueStock(stockClassId, stakeholderId); // issues for 1000 shares default.
+        issueStock(stockClassId, stakeholderId, 1000); // issues for 1000 shares.
 
         uint256 lastTransactionIndex = capTable.getTransactionsCount() - 1;
         bytes memory lastTransaction = capTable.transactions(lastTransactionIndex);
@@ -97,7 +97,7 @@ contract StockCancellationTest is CapTableTest {
         // Create stock class and stakeholder
         (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
-        issueStock(stockClassId, stakeholderId);
+        issueStock(stockClassId, stakeholderId, 1000);
 
         // Cancel part of the stock
         uint256 lastTransactionIndex = capTable.getTransactionsCount() - 1;
