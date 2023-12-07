@@ -46,7 +46,7 @@ contract StockIssuanceTest is CapTableTest {
         StockIssuance memory actualIssuance = abi.decode(lastTransaction, (StockIssuance));
 
         (, , uint256 issuerSharesIssued, ) = capTable.issuer();
-        (, , , , uint256 actualSharesIssuedStockClass) = capTable.getStockClassById(stockClassId);
+        (, , , uint256 actualSharesIssuedStockClass, ) = capTable.getStockClassById(stockClassId);
 
         // Compare the expected and actual issuance through deterministic encoding
         assertEq(keccak256(abi.encode(actualIssuance.params)), keccak256(abi.encode(expectedIssuance.params)));

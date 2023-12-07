@@ -27,8 +27,8 @@ contract StockClassTest is CapTableTest {
             bytes16 actualId,
             string memory actualClassType,
             uint256 actualPricePerShare,
-            uint256 actualInitialSharesAuthorized,
-            uint256 actualSharesIssued
+            uint256 actualSharesIssued,
+            uint256 actualInitialSharesAuthorized
         ) = capTable.getStockClassById(expectedId);
         assertEq(actualId, expectedId);
         assertEq(actualClassType, expectedClassType);

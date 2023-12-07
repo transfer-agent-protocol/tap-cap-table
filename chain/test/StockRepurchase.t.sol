@@ -58,7 +58,7 @@ contract StockRepurchaseTest is CapTableTest {
         (, , uint256 issuerSharesIssued, ) = capTable.issuer();
         assertEq(issuerSharesIssued, issuanceQuantity - partialRepurchaseQuantity);
 
-        (, , , , uint256 stockClassSharesIssued) = capTable.getStockClassById(stockClassId);
+        (, , , uint256 stockClassSharesIssued, ) = capTable.getStockClassById(stockClassId);
         assertEq(stockClassSharesIssued, issuanceQuantity - partialRepurchaseQuantity);
     }
 
