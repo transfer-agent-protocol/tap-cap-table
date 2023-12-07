@@ -6,7 +6,7 @@ import "./TxHelper.sol";
 import "./DeleteContext.sol";
 
 library StockLib {
-    error InsufficientSharesOrNoActivePosition(uint256 available, uint256 required);
+    error InsufficientShares(uint256 available, uint256 required);
     error InvalidQuantityOrPrice(uint256 quantity, uint256 price);
     error UnverifiedBuyer();
     error ActivePositionNotFound(bytes16 stakeholderId, bytes16 securityId);
@@ -92,6 +92,7 @@ library StockLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
         _checkInsuffientAmount(activePosition.quantity, params.quantity);
 
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
@@ -128,7 +129,7 @@ library StockLib {
 
         TxHelper.createTx(TxType.STOCK_CANCELLATION, abi.encode(cancellation), transactions);
 
-        _subtractSharesIssued(issuer, stockClass, params.quantity);
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
 
         DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
@@ -174,6 +175,8 @@ library StockLib {
         StockClass storage stockClass
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
         _checkInsuffientAmount(activePosition.quantity, params.quantity);
 
         uint256 remainingQuantity = activePosition.quantity - params.quantity;
@@ -203,7 +206,7 @@ library StockLib {
 
         TxHelper.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), transactions);
 
-        _subtractSharesIssued(issuer, stockClass, params.quantity);
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
 
         DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
@@ -337,7 +340,7 @@ library StockLib {
 
     function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
         if (available < desired) {
-            revert InsufficientSharesOrNoActivePosition(available, desired);
+            revert InsufficientShares(available, desired);
         }
     }
 
