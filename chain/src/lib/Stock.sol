@@ -223,6 +223,8 @@ library StockLib {
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
 
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
+
         StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, params.comments, params.security_id, params.reason_text);
         TxHelper.createTx(TxType.STOCK_RETRACTION, abi.encode(retraction), transactions);
 
