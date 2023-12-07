@@ -393,7 +393,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function getStockClassById(bytes16 _id) external view override returns (bytes16, string memory, uint256, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized, stockClass.shares_issued);
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_issued, stockClass.shares_authorized);
         } else {
             return ("", "", 0, 0, 0);
         }
