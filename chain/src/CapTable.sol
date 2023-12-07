@@ -17,7 +17,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     bytes[] public override transactions;
 
     /// @dev Used to help generate deterministic UUIDs
-    uint256 private nonce;
+    uint256 public nonce;
 
     /// @inheritdoc ICapTable
     mapping(bytes16 => uint256) public override stakeholderIndex;
