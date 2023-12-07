@@ -4,75 +4,43 @@ pragma solidity ^0.8.20;
 import "forge-std/console.sol";
 
 import "./CapTable.t.sol";
-import {
-    InitialShares,
-    IssuerInitialShares,
-    StockClassInitialShares,
-    Issuer,
-    StockClass,
-    StockIssuanceParams,
-    ShareNumbersIssued,
-    StockIssuance,
-    StockParams,
-    StockReissuance
-} from "../src/lib/Structs.sol";
+import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockParams, StockReissuance } from "../src/lib/Structs.sol";
 
 contract StockReissuanceTest is CapTableTest {
-    function _createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized)
-        private
-        returns (bytes16, bytes16)
-    {
-        bytes16 stakeholderId = 0xd3373e0a4dd940000000000000000005;
-        capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "EMOLOYEE");
-
-        bytes16 stockClassId = 0xd3373e0a4dd940000000000000000000;
-        capTable.createStockClass(stockClassId, "Common", 100, stockClassInitialSharesAuthorized);
-
-        return (stockClassId, stakeholderId);
-    }
-
     function testStockReissuance() public {
-        // Create stock class and stakeholder
-        (bytes16 stockClassId, bytes16 stakeholderId) = _createStockClassAndStakeholder(1000000);
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
         uint256 issuanceQuantity = 1000;
 
-        // Issue stock
-        StockIssuanceParams memory issuanceParams = StockIssuanceParams({
-            stock_class_id: stockClassId,
-            stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
-            share_price: 10000000000,
-            quantity: issuanceQuantity,
-            vesting_terms_id: 0x00000000000000000000000000000000,
-            cost_basis: 5000000000,
-            stock_legend_ids: new bytes16[](0),
-            issuance_type: "RSA",
-            comments: new string[](0),
-            custom_id: "R2-D2",
-            stakeholder_id: stakeholderId,
-            board_approval_date: "2023-01-01",
-            stockholder_approval_date: "2023-01-02",
-            consideration_text: "For services rendered",
-            security_law_exemptions: new string[](0)
-        });
-        capTable.issueStock(issuanceParams);
+        // First issuance to reissue as security_id
+        issueStock(stockClassId, stakeholderId, issuanceQuantity);
+        // Second issuance as resulting_security_id
+        issueStock(stockClassId, stakeholderId, issuanceQuantity);
 
-        // Assert last transaction is of type issuance with the remaining amount
-        bytes memory issuanceTx = capTable.transactions(capTable.getTransactionsCount() - 1);
-        StockIssuance memory issuance = abi.decode(issuanceTx, (StockIssuance));
+        // last transaction = resulting_security_id issuance
+        bytes memory newIssuance = capTable.transactions(capTable.getTransactionsCount() - 1);
+        StockIssuance memory issuanceReissued = abi.decode(newIssuance, (StockIssuance));
+
+        // second to last transaction to reissue = security_id
+        bytes memory issuanceToReissue = capTable.transactions(capTable.getTransactionsCount() - 2);
+        StockIssuance memory issuanceToDelete = abi.decode(issuanceToReissue, (StockIssuance));
 
         (, , uint256 issuerSharesIssuedBefore, ) = capTable.issuer();
-        assertEq(issuerSharesIssuedBefore, issuanceQuantity);
+
+        uint256 totalSharesIssued = issuanceQuantity * 2;
+
+        // ensure total issued matches.
+        assertEq(issuerSharesIssuedBefore, totalSharesIssued);
 
         // Perform reissuance
         bytes16[] memory resulting_security_ids = new bytes16[](1);
-        resulting_security_ids[0] = 0x00000000000000000000000000000001; // Dummy value for resulting_security_ids
+        resulting_security_ids[0] = issuanceReissued.security_id;
+
         capTable.reissueStock(
             StockParams({
                 stakeholder_id: stakeholderId,
                 stock_class_id: stockClassId,
-                security_id: issuance.security_id, // Assuming security_id is the same as stock_class_id for this dummy test
+                security_id: issuanceToDelete.security_id,
                 reason_text: "Reissuance for testing",
                 comments: new string[](0)
             }),
@@ -85,8 +53,72 @@ contract StockReissuanceTest is CapTableTest {
         StockReissuance memory reissuance = abi.decode(lastTransaction, (StockReissuance));
         assertEq(reissuance.object_type, "TX_STOCK_REISSUANCE");
 
-        // Assert that the issuer shares issued is 0 after reissuance
+        // Assert that the issuer shares issued is 1000 after reissuance, since it was 2000 initially
         (, , uint256 issuerSharesIssuedAfter, ) = capTable.issuer();
-        assertEq(issuerSharesIssuedAfter, 0);
+        assertEq(issuerSharesIssuedAfter, issuanceQuantity);
+    }
+
+    function testStockReissuanceNoResultingSecurityIdReverts() public {
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
+
+        uint256 issuanceQuantity = 1000;
+
+        // First issuance to reissue as security_id
+        issueStock(stockClassId, stakeholderId, issuanceQuantity);
+
+        bytes memory newIssuance = capTable.transactions(capTable.getTransactionsCount() - 1);
+        StockIssuance memory issuance = abi.decode(newIssuance, (StockIssuance));
+
+        // empty array should fail
+        bytes16[] memory resulting_security_ids = new bytes16[](0);
+
+        bytes memory expectedError = abi.encodeWithSignature("NoIssuanceFound()");
+        vm.expectRevert(expectedError);
+
+        capTable.reissueStock(
+            StockParams({
+                stakeholder_id: stakeholderId,
+                stock_class_id: stockClassId,
+                security_id: issuance.security_id,
+                reason_text: "Reissuance for testing",
+                comments: new string[](0)
+            }),
+            resulting_security_ids
+        );
+    }
+
+    function testStockReissuanceNoSecurityIdReverts() public {
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
+
+        uint256 issuanceQuantity = 1000;
+
+        // First issuance to reissue as security_id
+        issueStock(stockClassId, stakeholderId, issuanceQuantity);
+
+        bytes memory newIssuance = capTable.transactions(capTable.getTransactionsCount() - 1);
+        StockIssuance memory issuance = abi.decode(newIssuance, (StockIssuance));
+
+        // empty array should fail
+        bytes16[] memory resulting_security_ids = new bytes16[](1);
+        resulting_security_ids[0] = issuance.security_id;
+
+        bytes16 nonExistingSecId = 0x00000000000000000000000000000000;
+
+        // Expecting the ActivePositionNotFound revert
+        bytes memory expectedError = abi.encodeWithSignature("ActivePositionNotFound(bytes16,bytes16)", stakeholderId, nonExistingSecId);
+        vm.expectRevert(expectedError);
+
+        capTable.reissueStock(
+            StockParams({
+                stakeholder_id: stakeholderId,
+                stock_class_id: stockClassId,
+                security_id: nonExistingSecId,
+                reason_text: "Reissuance for testing",
+                comments: new string[](0)
+            }),
+            resulting_security_ids
+        );
+
+        capTable.getTransactionsCount();
     }
 }
