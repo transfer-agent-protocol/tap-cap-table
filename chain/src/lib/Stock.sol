@@ -9,6 +9,7 @@ library StockLib {
     error InsufficientSharesOrNoActivePosition(uint256 available, uint256 required);
     error InvalidQuantityOrPrice(uint256 quantity, uint256 price);
     error UnverifiedBuyer();
+    error ActivePositionNotFound(bytes16 stakeholderId, bytes16 securityId);
 
     function createIssuance(
         uint256 nonce,
@@ -144,6 +145,8 @@ library StockLib {
         StockClass storage stockClass
     ) external {
         ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
 
         StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(
             nonce,
@@ -335,6 +338,12 @@ library StockLib {
     function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
         if (available < desired) {
             revert InsufficientSharesOrNoActivePosition(available, desired);
+        }
+    }
+
+    function _checkActivePositionExists(ActivePosition memory activePosition, bytes16 stakeholderId, bytes16 securityId) internal pure {
+        if (activePosition.quantity == 0) {
+            revert ActivePositionNotFound(stakeholderId, securityId);
         }
     }
 
