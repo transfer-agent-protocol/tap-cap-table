@@ -4,60 +4,25 @@ pragma solidity ^0.8.20;
 import "forge-std/console.sol";
 
 import "./CapTable.t.sol";
-import {
-    StockIssuanceParams,
-    ShareNumbersIssued,
-    StockIssuance,
-    StockParams,
-    StockRepurchase
-} from "../src/lib/Structs.sol";
+import { StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockParams, StockRepurchase } from "../src/lib/Structs.sol";
 
 contract StockRepurchaseTest is CapTableTest {
-    function _createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized)
-        private
-        returns (bytes16, bytes16)
-    {
-        bytes16 stakeholderId = 0xd3373e0a4dd940000000000000000005;
-        capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "EMOLOYEE");
-
-        bytes16 stockClassId = 0xd3373e0a4dd940000000000000000000;
-        capTable.createStockClass(stockClassId, "Common", 100, stockClassInitialSharesAuthorized);
-
-        return (stockClassId, stakeholderId);
-    }
-
     function testPartialStockRepurchase() public {
         // Create stock class and stakeholder
-        (bytes16 stockClassId, bytes16 stakeholderId) = _createStockClassAndStakeholder(1000000);
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
         uint256 issuanceQuantity = 1000;
         // Issue stock
-        StockIssuanceParams memory params = StockIssuanceParams({
-            stock_class_id: stockClassId,
-            stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
-            share_price: 10000000000,
-            quantity: issuanceQuantity,
-            vesting_terms_id: 0x00000000000000000000000000000000,
-            cost_basis: 5000000000,
-            stock_legend_ids: new bytes16[](0),
-            issuance_type: "RSA",
-            comments: new string[](0),
-            custom_id: "R2-D2",
-            stakeholder_id: stakeholderId,
-            board_approval_date: "2023-01-01",
-            stockholder_approval_date: "2023-01-02",
-            consideration_text: "For services rendered",
-            security_law_exemptions: new string[](0)
-        });
-        capTable.issueStock(params);
+        issueStock(stockClassId, stakeholderId, issuanceQuantity);
 
-        // Assert last transaction is of type issuance with the remaining amount
+        // repurchase last issuance
         bytes memory issuanceTx = capTable.transactions(capTable.getTransactionsCount() - 1);
         StockIssuance memory issuance = abi.decode(issuanceTx, (StockIssuance));
 
         // Repurchase part of the stock
-        uint256 partialRepurchaseQuantity = 500;
+        uint256 partialRepurchaseQuantity = 300;
+        uint256 repurchasePrice = 2000;
+
         capTable.repurchaseStock(
             StockParams({
                 stakeholder_id: stakeholderId,
@@ -67,7 +32,7 @@ contract StockRepurchaseTest is CapTableTest {
                 comments: new string[](0)
             }),
             partialRepurchaseQuantity,
-            50 // Assuming a valid price
+            repurchasePrice
         );
 
         uint256 transactionsCount = capTable.getTransactionsCount();
@@ -75,43 +40,43 @@ contract StockRepurchaseTest is CapTableTest {
         StockIssuance memory remainingIssuance = abi.decode(remainingIssuanceTx, (StockIssuance));
 
         assertEq(remainingIssuance.params.quantity, issuanceQuantity - partialRepurchaseQuantity);
+        // Assert security ID of initial issuance is not the same as remaining balance issuance
+        assertNotEq(issuance.security_id, remainingIssuance.security_id);
 
         // Assert last transaction is of type repurchase
         bytes memory lastTransaction = capTable.transactions(transactionsCount - 1);
         StockRepurchase memory repurchase = abi.decode(lastTransaction, (StockRepurchase));
+
+        // verify that the original issuance and new balance issuance don't collide in security_ids
+        assertNotEq(repurchase.security_id, repurchase.balance_security_id);
+
         assertEq(repurchase.object_type, "TX_STOCK_REPURCHASE");
+        assertEq(repurchase.price, repurchasePrice);
+        assertEq(repurchase.quantity, partialRepurchaseQuantity);
+
+        // Assert issuer and stock class shares_issued
+        (, , uint256 issuerSharesIssued, ) = capTable.issuer();
+        assertEq(issuerSharesIssued, issuanceQuantity - partialRepurchaseQuantity);
+
+        (, , , , uint256 stockClassSharesIssued) = capTable.getStockClassById(stockClassId);
+        assertEq(stockClassSharesIssued, issuanceQuantity - partialRepurchaseQuantity);
     }
 
     function testFullStockRepurchase() public {
-        (bytes16 stockClassId, bytes16 stakeholderId) = _createStockClassAndStakeholder(1000000);
+        (bytes16 stockClassId, bytes16 stakeholderId) = createStockClassAndStakeholder(1000000);
 
         uint256 fullRepurchaseQuantity = 1000;
-        StockIssuanceParams memory params = StockIssuanceParams({
-            stock_class_id: stockClassId,
-            stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
-            share_price: 10000000000,
-            quantity: fullRepurchaseQuantity,
-            vesting_terms_id: 0x00000000000000000000000000000000,
-            cost_basis: 5000000000,
-            stock_legend_ids: new bytes16[](0),
-            issuance_type: "RSA",
-            comments: new string[](0),
-            custom_id: "R2-D2",
-            stakeholder_id: stakeholderId,
-            board_approval_date: "2023-01-01",
-            stockholder_approval_date: "2023-01-02",
-            consideration_text: "For services rendered",
-            security_law_exemptions: new string[](0)
-        });
 
-        capTable.issueStock(params);
+        issueStock(stockClassId, stakeholderId, fullRepurchaseQuantity);
+
         // Assert last transaction is of type issuance with the remaining amount
         uint256 issuanceTxIdx = capTable.getTransactionsCount() - 1;
         bytes memory issuanceTx = capTable.transactions(issuanceTxIdx);
         StockIssuance memory issuance = abi.decode(issuanceTx, (StockIssuance));
+
         // Repurchase all of the stock
-        uint256 expectedNewPrice = 99;
+        uint256 repurchasePrice = 99;
+
         capTable.repurchaseStock(
             StockParams({
                 stakeholder_id: stakeholderId,
@@ -121,21 +86,25 @@ contract StockRepurchaseTest is CapTableTest {
                 comments: new string[](0)
             }),
             fullRepurchaseQuantity,
-            expectedNewPrice
+            repurchasePrice
         );
 
         uint256 transactionsCount = capTable.getTransactionsCount();
         uint256 remainingIssuaneTxIndex = transactionsCount - 2;
         bytes memory remainingIssuanceTx = capTable.transactions(remainingIssuaneTxIndex);
-        StockIssuance memory repuchaseIssuance = abi.decode(remainingIssuanceTx, (StockIssuance));
+        StockIssuance memory repurchaseIssuance = abi.decode(remainingIssuanceTx, (StockIssuance));
 
-        assertEq(repuchaseIssuance.params.quantity, fullRepurchaseQuantity);
+        assertEq(repurchaseIssuance.params.quantity, fullRepurchaseQuantity);
 
         uint256 lastTransactionIndex = transactionsCount - 1;
         bytes memory lastTransaction = capTable.transactions(lastTransactionIndex);
         StockRepurchase memory repurchase = abi.decode(lastTransaction, (StockRepurchase));
 
         assertEq(repurchase.object_type, "TX_STOCK_REPURCHASE");
-        assertEq(repurchase.price, expectedNewPrice);
+        assertEq(repurchase.price, repurchasePrice);
+
+        // Assert issuer and stock class shares_issued
+        (, , uint256 issuerSharesIssued, ) = capTable.issuer();
+        assertEq(issuerSharesIssued, issuance.params.quantity - repurchaseIssuance.params.quantity);
     }
 }
