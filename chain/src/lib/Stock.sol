@@ -327,8 +327,7 @@ library StockLib {
 
         TxHelper.createTx(TxType.STOCK_TRANSFER, abi.encode(transfer), transactions);
 
-        issuer.shares_issued = issuer.shares_issued - transferorActivePosition.quantity;
-        stockClass.shares_issued = stockClass.shares_issued - transferorActivePosition.quantity;
+        _subtractSharesIssued(issuer, stockClass, transferorActivePosition.quantity);
 
         DeleteContext.deleteActivePosition(params.transferor_stakeholder_id, transferorSecurityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.transferor_stakeholder_id, params.stock_class_id, transferorSecurityId, activeSecs);
