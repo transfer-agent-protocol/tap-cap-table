@@ -8,9 +8,9 @@ import { StockIssuanceParams } from "../src/lib/Structs.sol";
 contract CapTableTest is Test {
     CapTable public capTable;
     uint256 public issuerInitialSharesAuthorized = 1000000;
+    bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
 
     function setUp() public {
-        bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
         capTable = new CapTable(issuerId, "Winston, Inc.", issuerInitialSharesAuthorized);
     }
 
