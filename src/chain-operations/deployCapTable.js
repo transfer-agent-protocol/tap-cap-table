@@ -7,21 +7,28 @@ import getTXLibContracts from "../utils/getLibrariesContracts.js";
 config();
 
 async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
-    // Replace with your private key and provider endpoint
+    // Use environment variables for private key and provider endpoint
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
+    const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL; // Use the LOCAL_RPC_URL from .env
+
     const customNetwork = {
-        chainId: 31337,
+        // TODO: handle changing Anvil's chain id better
+        // chainId: 31337,
+        // This one is Arbitrum Orbit's chain id
+        chainId: 32586980208,
         name: "local",
     };
-    const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545", customNetwork);
+
+    // Use the LOCAL_RPC_URL for the provider
+    const provider = new ethers.JsonRpcProvider(LOCAL_RPC_URL, customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     console.log("🗽 | Wallet address ", wallet.address);
 
     const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
     console.log(
         `✅ | Issuer id inside of deployment: ${issuerId},
-		✅ | Issuer name inside of deployment: ${issuerName},
-		✅ | With initial shares: ${initial_shares_authorized}`
+        ✅ | Issuer name inside of deployment: ${issuerName},
+        ✅ | With initial shares: ${initial_shares_authorized}`
     );
 
     const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
@@ -36,6 +43,7 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
         libraries,
     };
 }
+
 
 async function deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
