@@ -117,6 +117,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         );
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
+            // perform requires to ensure valid stakeholders and stock classes
+            _checkStakeholderIsStored(stakeholderIds[i]);
+            _checkInvalidStockClass(stockClassIds[i]);
             positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
                 stockClassIds[i],
                 quantities[i],
