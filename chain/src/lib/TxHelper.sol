@@ -83,7 +83,6 @@ library TxHelper {
         StockIssuanceParams memory issuanceParams,
         uint256 nonce
     ) internal view returns (StockIssuance memory issuance) {
-        nonce++;
         bytes16 id = generateDeterministicUniqueID(issuanceParams.stakeholder_id, nonce);
         bytes16 secId = generateDeterministicUniqueID(issuanceParams.stock_class_id, nonce);
 
@@ -134,7 +133,6 @@ library TxHelper {
         bytes16 securityId,
         string memory reasonText
     ) internal view returns (StockRetraction memory retraction) {
-        nonce++;
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockRetraction(id, "TX_STOCK_RETRACTION", comments, securityId, reasonText);
@@ -217,7 +215,6 @@ library TxHelper {
         string[] memory comments,
         bytes16 securityId
     ) internal view returns (StockAcceptance memory acceptance) {
-        nonce++;
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
 
         return StockAcceptance(id, "TX_STOCK_ACCEPTANCE", securityId, comments);

@@ -15,7 +15,7 @@ const StockTransferSchema = new mongoose.Schema({
         type: String,
         ref: "Issuer",
     },
-});
+}, {timestamps: true});
 
 const StockTransfer = mongoose.model("StockTransfer", StockTransferSchema);
 
