@@ -78,6 +78,7 @@ interface ICapTable {
 
     function retractStockIssuance(StockParams calldata params) external;
 
+    /// Reissuance assumes an issuance transaction has been created and it's tied here under resulting_security_ids
     function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external;
 
     function cancelStock(StockParams calldata params, uint256 quantity) external;
@@ -85,7 +86,7 @@ interface ICapTable {
     function transferStock(
         bytes16 transferorStakeholderId,
         bytes16 transfereeStakeholderId,
-        bytes16 stockClassId, // TODO: verify that we would have fong would have the stock class
+        bytes16 stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
         uint256 share_price

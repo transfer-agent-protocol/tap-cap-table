@@ -4,21 +4,10 @@ pragma solidity ^0.8.20;
 import "forge-std/console.sol";
 
 import "./CapTable.t.sol";
-import {
-    InitialShares,
-    IssuerInitialShares,
-    StockClassInitialShares,
-    Issuer,
-    StockClass,
-    StockIssuanceParams,
-    ShareNumbersIssued,
-    StockIssuance,
-    StockTransfer,
-    StockParams
-} from "../src/lib/Structs.sol";
+import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockTransfer, StockParams } from "../src/lib/Structs.sol";
 
 contract StockTransferTest is CapTableTest {
-    function testTransferStock() public {
+    function createTransferSetup() private returns (bytes16, bytes16, bytes16, uint256) {
         // Create stakeholders
         bytes16 transferorStakeholderId = 0xd3373e0a4dd940000000000000000006;
         bytes16 transfereeStakeholderId = 0xd3373e0a4dd940000000000000000007;
@@ -29,68 +18,26 @@ contract StockTransferTest is CapTableTest {
         bytes16 stockClassId = 0xd3373e0a4dd940000000000000000008;
         capTable.createStockClass(stockClassId, "Common", 100, 1000000);
 
-        // Create stock issuance
-        StockIssuanceParams memory issuanceParams1 = StockIssuanceParams({
-            stock_class_id: stockClassId,
-            stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
-            share_price: 100,
-            quantity: 1000,
-            vesting_terms_id: 0x00000000000000000000000000000000,
-            cost_basis: 50,
-            stock_legend_ids: new bytes16[](0),
-            issuance_type: "RSA",
-            comments: new string[](0),
-            custom_id: "R2-D2",
-            stakeholder_id: transferorStakeholderId,
-            board_approval_date: "2023-01-01",
-            stockholder_approval_date: "2023-01-02",
-            consideration_text: "For services rendered",
-            security_law_exemptions: new string[](0)
-        });
-        capTable.issueStock(issuanceParams1);
+        uint256 firstIssuanceQty = 3000;
+        uint256 secondIssuanceQty = 2000;
 
-        StockIssuanceParams memory issuanceParams2 = StockIssuanceParams({
-            stock_class_id: stockClassId,
-            stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
-            share_price: 100,
-            quantity: 2000,
-            vesting_terms_id: 0x00000000000000000000000000000000,
-            cost_basis: 50,
-            stock_legend_ids: new bytes16[](0),
-            issuance_type: "RSA",
-            comments: new string[](0),
-            custom_id: "R2-D2",
-            stakeholder_id: transferorStakeholderId,
-            board_approval_date: "2023-01-01",
-            stockholder_approval_date: "2023-01-02",
-            consideration_text: "For services rendered",
-            security_law_exemptions: new string[](0)
-        });
-        capTable.issueStock(issuanceParams2);
+        // Issue twice to the same stakeholder
+        issueStock(stockClassId, transferorStakeholderId, firstIssuanceQty);
+        issueStock(stockClassId, transferorStakeholderId, secondIssuanceQty);
+
+        uint256 totalIssued = firstIssuanceQty + secondIssuanceQty;
+
+        return (transferorStakeholderId, transfereeStakeholderId, stockClassId, totalIssued);
+    }
+
+    function testTransferStockAcrossMultiplePositions() public {
+        (bytes16 transferorStakeholderId, bytes16 transfereeStakeholderId, bytes16 stockClassId, uint256 totalIssued) = createTransferSetup();
 
         // Transfer stock
-        uint256 quantityToTransfer = 2500;
-        capTable.transferStock(
-            transferorStakeholderId,
-            transfereeStakeholderId,
-            stockClassId,
-            true,
-            quantityToTransfer,
-            issuanceParams1.share_price
-        );
+        uint256 quantityToTransfer = 3500;
+        uint256 price = 25;
+        capTable.transferStock(transferorStakeholderId, transfereeStakeholderId, stockClassId, true, quantityToTransfer, price);
 
-        /*
-            Transactions Array:
-                 1. Delete 1000 position from sh1
-                 2. issue 1000 to sh2
-                 3. create tx transfer (quantity = 1000)
-                 4. delete 2000 position from sh 1
-                 5. issue 500 position to sh1
-                 6. issue 1500 to position sh1
-                 7. create tx transfer (quantity = 1500)
-        */
         uint256 transactionsCount = capTable.getTransactionsCount();
         bytes memory lastIssuanceTx = capTable.transactions(transactionsCount - 2);
         bytes memory firstTransferTx = capTable.transactions(transactionsCount - 4);
@@ -100,8 +47,25 @@ contract StockTransferTest is CapTableTest {
         bytes16 remainingIssuanceSecurityId = abi.decode(lastIssuanceTx, (StockIssuance)).security_id;
         StockTransfer memory secondTransfer = abi.decode(secondTransferTx, (StockTransfer));
 
-        assertEq(firstTransfer.quantity, 1000);
-        assertEq(secondTransfer.quantity, 1500);
+        assertEq(firstTransfer.quantity, 3000);
+        assertEq(secondTransfer.quantity, 500);
         assertEq(secondTransfer.balance_security_id, remainingIssuanceSecurityId);
+
+        (, , uint256 shares_issued, ) = capTable.issuer();
+
+        // shares issued should not have changed.
+        assertEq(shares_issued, totalIssued);
+    }
+
+    function testTransferMoreThanAvailable() public {
+        (bytes16 transferorStakeholderId, bytes16 transfereeStakeholderId, bytes16 stockClassId, uint256 totalIssued) = createTransferSetup();
+
+        // Transfer stock
+        uint256 quantityToTransfer = 5500;
+        uint256 price = 25;
+
+        bytes memory expectedError = abi.encodeWithSignature("InsufficientShares(uint256,uint256)", totalIssued, quantityToTransfer);
+        vm.expectRevert(expectedError);
+        capTable.transferStock(transferorStakeholderId, transfereeStakeholderId, stockClassId, true, quantityToTransfer, price);
     }
 }

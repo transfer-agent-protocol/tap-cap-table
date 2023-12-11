@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-
 import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
 import { ICapTable } from "./ICapTable.sol";
 import { StockTransferParams, Issuer, Stakeholder, StockClass, InitialShares, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
@@ -18,7 +17,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     bytes[] public override transactions;
 
     /// @dev Used to help generate deterministic UUIDs
-    uint256 private nonce;
+    uint256 public nonce;
 
     /// @inheritdoc ICapTable
     mapping(bytes16 => uint256) public override stakeholderIndex;
@@ -80,8 +79,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     /// @inheritdoc ICapTable
     function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override {
         require(
-            params.issuerInitialShares.shares_authorized > 0 && params.issuerInitialShares.shares_issued > 0
-                && params.stockClassesInitialShares.length > 0,
+            params.issuerInitialShares.shares_authorized > 0 &&
+                params.issuerInitialShares.shares_issued > 0 &&
+                params.stockClassesInitialShares.length > 0,
             "Invalid Seeding Shares Params"
         );
 
@@ -117,6 +117,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         );
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
+            // perform requires to ensure valid stakeholders and stock classes
+            _checkStakeholderIsStored(stakeholderIds[i]);
+            _checkInvalidStockClass(stockClassIds[i]);
             positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
                 stockClassIds[i],
                 quantities[i],
@@ -152,9 +155,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     }
 
     /// @inheritdoc ICapTable
-    // Basic functionality of Stock Legend Template, unclear how it ties to active positions atm.
+    // Basic functionality of Stock Legend Template, unclear how it ties to active positions.
     function createStockLegendTemplate(bytes16 _id) external override onlyAdmin {
-        // add require
         stockLegendTemplates.push(StockLegendTemplate(_id));
     }
 
@@ -174,7 +176,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
-        _checkWalletAlreadyExists(_wallet);
 
         delete walletsPerStakeholder[_wallet];
     }
@@ -184,28 +185,22 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
-        nonce++;
         StockClass storage stockClass = stockClasses[stockClassIndex[params.stock_class_id] - 1];
 
-        require(
-            issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized"
-        );
-        require(
-            stockClass.shares_issued + params.quantity <= stockClass.shares_authorized,
-            "StockClass: Insufficient shares authorized"
-        );
+        require(issuer.shares_issued + params.quantity <= issuer.shares_authorized, "Issuer: Insufficient shares authorized");
+        require(stockClass.shares_issued + params.quantity <= stockClass.shares_authorized, "StockClass: Insufficient shares authorized");
+
+        nonce++;
 
         StockLib.createIssuance(nonce, params, positions, activeSecs, transactions, issuer, stockClass);
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price)
-        external
-        override
-        onlyAdmin
-    {
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
+
+        nonce++;
 
         StockParamsQuantity memory repurchaseParams = StockParamsQuantity(
             nonce,
@@ -233,6 +228,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
+        nonce++;
+
         StockLib.createRetraction(
             params,
             nonce,
@@ -248,7 +245,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
-        _checkResultingSecurityIds(resulting_security_ids);
+        _checkResultingSecurityIds(resulting_security_ids, params.stakeholder_id, params.stock_class_id);
+
+        nonce++;
 
         StockLib.createReissuance(
             params,
@@ -266,6 +265,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function cancelStock(StockParams calldata params, uint256 quantity) external override onlyAdmin {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
+
+        nonce++;
 
         StockParamsQuantity memory cancelParams = StockParamsQuantity(
             nonce,
@@ -300,6 +301,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(transfereeStakeholderId);
         _checkInvalidStockClass(stockClassId);
 
+        nonce++;
+
         StockTransferParams memory params = StockTransferParams(
             transferorStakeholderId,
             transfereeStakeholderId,
@@ -319,6 +322,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         _checkStakeholderIsStored(stakeholderId);
         _checkInvalidStockClass(stockClassId);
 
+        nonce++;
+
         ActivePosition memory activePosition = positions.activePositions[stakeholderId][securityId];
 
         _checkActivePositionExists(activePosition);
@@ -334,6 +339,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         string memory stockholderApprovalDate
     ) external override onlyAdmin {
         require(newSharesAuthorized >= issuer.shares_issued, "InsufficientIssuerSharesAuthorized: shares_issued exceeds newSharesAuthorized");
+
+        nonce++;
 
         Adjustment.adjustIssuerAuthorizedShares(
             nonce,
@@ -357,7 +364,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         _checkInvalidStockClass(stockClassId);
         // check that the new stock class authorized is less than the issuer authorized if not revert
-        require(newAuthorizedShares <= issuer.shares_authorized, "InsufficientStockClassSharesAuthorized: stock class authorized shares exceeds issuer shares authorized");
+        require(
+            newAuthorizedShares <= issuer.shares_authorized,
+            "InsufficientStockClassSharesAuthorized: stock class authorized shares exceeds issuer shares authorized"
+        );
+
+        nonce++;
 
         Adjustment.adjustStockClassAuthorizedShares(
             nonce,
@@ -384,7 +396,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     function getStockClassById(bytes16 _id) external view override returns (bytes16, string memory, uint256, uint256, uint256) {
         if (stockClassIndex[_id] > 0) {
             StockClass memory stockClass = stockClasses[stockClassIndex[_id] - 1];
-            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_authorized, stockClass.shares_issued);
+            return (stockClass.id, stockClass.class_type, stockClass.price_per_share, stockClass.shares_issued, stockClass.shares_authorized);
         } else {
             return ("", "", 0, 0, 0);
         }
@@ -480,9 +492,16 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
         }
     }
 
-    function _checkResultingSecurityIds(bytes16[] memory resulting_security_ids) internal pure {
+    function _checkResultingSecurityIds(bytes16[] memory resulting_security_ids, bytes16 stakeholder_id, bytes16 stock_class_id) internal view {
         if (resulting_security_ids.length == 0) {
             revert NoIssuanceFound();
+        }
+
+        bytes16 security_id = resulting_security_ids[0];
+        ActivePosition memory activePosition = positions.activePositions[stakeholder_id][security_id];
+
+        if (activePosition.quantity == 0 || activePosition.stock_class_id != stock_class_id) {
+            revert NoActivePositionFound();
         }
     }
 
