@@ -1,6 +1,6 @@
 [submodule "ocf"]
 	path = ocf
-	url = https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF.git
+	url = https://github.com/poet-network/tap-ocf.git
 [submodule "chain/lib/forge-std"]
 	path = chain/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
