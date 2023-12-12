@@ -3,15 +3,6 @@ pragma solidity ^0.8.20;
 
 import "./CapTable.t.sol";
 
-/*
-
-    to test
-    - Adjusting Issuer Authorized Shares
-        - Fails
-        - 
-
-*/
-
 contract AdjustmentTest is CapTableTest {
     function testAdjustIssuerAuthorizedSharesBelowIssuedFails() public {
         // Create stock class and stakeholder
