@@ -4,13 +4,12 @@ pragma solidity ^0.8.20;
 import { UpgradeableBeacon } from "openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { Ownable } from "openzeppelin/contracts/access/Ownable.sol";
+import { ICapTableFactory } from "./interfaces/ICapTableFactory.sol";
 
-contract CapTableFactory is Ownable {
+contract CapTableFactory is ICapTableFactory, Ownable {
     address public capTableImplementation;
     UpgradeableBeacon public capTableBeacon;
     address[] public capTableProxies;
-
-    event CapTableCreated(address indexed capTableProxy);
 
     constructor(address _capTableImplementation) Ownable() {
         require(_capTableImplementation != address(0), "Invalid implementation address");
