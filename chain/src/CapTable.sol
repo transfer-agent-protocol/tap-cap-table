@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from "openzeppelin-contracts-upgradeable/contracts/access/AccessControlDefaultAdminRulesUpgradeable.sol";
+
 import { ICapTable } from "./ICapTable.sol";
 import { StockTransferParams, Issuer, Stakeholder, StockClass, InitialShares, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
 import "./lib/transactions/Adjustment.sol";
 import "./lib/Stock.sol";
 
-contract CapTable is ICapTable, AccessControlDefaultAdminRules {
+contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     Issuer public issuer;
     Stakeholder[] public stakeholders;
     StockClass[] public stockClasses;
@@ -50,12 +51,16 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRules {
     error WalletAlreadyExists(address wallet);
     error NoActivePositionFound();
 
-    constructor(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) AccessControlDefaultAdminRules(0 seconds, _msgSender()) {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) external initializer {
+        __AccessControlDefaultAdminRules_init(0 seconds, _msgSender());
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
-        nonce = 0;
         issuer = Issuer(_id, _name, 0, _initial_shares_authorized);
         emit IssuerCreated(_id, _name);
     }
