@@ -18,6 +18,7 @@
         "build": "cd chain && node ../src/scripts/deployAndLinkLibs.js",
         "setup": "cd chain && foundryup && forge build --via-ir",
         "deseed": "node src/db/scripts/deseed.js",
+        "test": "cd chain && forge test",
         "validate-poet-files": "cd ocf && yarn validate-poet-files",
         "test-onchain-cap-table-local": "node src/chain-operations/capTable.cjs local",
         "test-onchain-cap-table-optimism-goerli": "node src/chain-operations/capTable.cjs optimism-goerli",

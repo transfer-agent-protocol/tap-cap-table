@@ -158,6 +158,11 @@ Inside of `/chain`:
 
 After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
 
+## Testing
+
+To run tests for the smart contracts, run `yarn test`.
+This will run all the tests defined in the test suite and output the results to the console.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to this project.

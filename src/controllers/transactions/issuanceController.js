@@ -50,7 +50,7 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
     }
 
     // Second: create issuance onchain
-    const tx = await contract.issueStockByTA({
+    const tx = await contract.issueStock({
         stock_class_id: convertUUIDToBytes16(stock_class_id),
         stock_plan_id: convertUUIDToBytes16(stock_plan_id),
         share_numbers_issued, // not converted

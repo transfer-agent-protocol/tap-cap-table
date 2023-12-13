@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./CapTable.t.sol";
 
-contract StakeholderTests is CapTableTest {
+contract StakeholderTest is CapTableTest {
     function testCreateStakeholder() public {
         bytes16 stakeholderId = 0xf47ac10b58cc4372a5670e02b2c3d479;
         capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "ADVISOR");
@@ -11,9 +11,29 @@ contract StakeholderTests is CapTableTest {
         assertEq(actualId, stakeholderId);
     }
 
-    function testCreateDuplicateStakeholderReverts() public {
+    function testCreateNotAdminReverts() public {
         bytes16 stakeholderId = 0xf47ac10b58cc4372a5670e02b2c3d479;
         createPranksterAndExpectRevert();
         capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "ADVISOR");
+    }
+
+    function testCreateDuplicateStakeholderReverts() public {
+        bytes16 stakeholderId = 0xf47ac10b58cc4372a5670e02b2c3d479;
+        capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "ADVISOR");
+
+        // Since custom error passes ID, need to encode it to bytes
+        bytes memory expectedError = abi.encodeWithSignature("StakeholderAlreadyExists(bytes16)", stakeholderId);
+
+        vm.expectRevert(expectedError);
+        capTable.createStakeholder(stakeholderId, "INDIVIDUAL", "ADVISOR");
+    }
+
+    function testGetTotalNumberOfStakeholders() public {
+        bytes16 firstStakeholderId = 0x123456789abcdef0123456789abcdef1;
+        bytes16 secondStakeholderId = 0xfedcba9876543210fedcba9876543210;
+        capTable.createStakeholder(firstStakeholderId, "INDIVIDUAL", "INVESTOR");
+        capTable.createStakeholder(secondStakeholderId, "ENTITY", "BOARD_MEMBER");
+        uint256 totalStakeholders = capTable.getTotalNumberOfStakeholders();
+        assertEq(totalStakeholders, 2);
     }
 }
