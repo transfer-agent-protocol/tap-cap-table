@@ -25,7 +25,6 @@ contract CapTableFactory is ICapTableFactory, Ownable {
     }
 
     function updateCapTableImplementation(address newImplementation) external onlyOwner {
-        // Add access control to restrict who can call this function
         require(newImplementation != address(0), "Invalid implementation address");
         capTableBeacon.upgradeTo(newImplementation);
     }
