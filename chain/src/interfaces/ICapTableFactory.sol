@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 interface ICapTableFactory {
     event CapTableCreated(address indexed capTableProxy);
 
-    function createCapTable(bytes memory initializationData) external returns (address);
+    function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized) external returns (address);
 
     function updateCapTableImplementation(address newImplementation) external;
 

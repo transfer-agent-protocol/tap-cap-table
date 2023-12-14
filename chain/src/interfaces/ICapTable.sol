@@ -19,6 +19,9 @@ interface ICapTable {
 
     function OPERATOR_ROLE() external returns (bytes32);
 
+    /// @notice Initializer for the CapTable, sets access control and initializes issuer struct.
+    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized) external;
+
     function seedMultipleActivePositionsAndSecurityIds(
         bytes16[] calldata stakeholderIds,
         bytes16[] calldata securityIds,
