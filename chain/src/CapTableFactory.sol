@@ -5,6 +5,7 @@ import { UpgradeableBeacon } from "openzeppelin/contracts/proxy/beacon/Upgradeab
 import { BeaconProxy } from "openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { Ownable } from "openzeppelin/contracts/access/Ownable.sol";
 import { ICapTableFactory } from "./interfaces/ICapTableFactory.sol";
+import { ICapTable } from "./interfaces/ICapTable.sol";
 
 contract CapTableFactory is ICapTableFactory, Ownable {
     address public capTableImplementation;
@@ -17,7 +18,10 @@ contract CapTableFactory is ICapTableFactory, Ownable {
         capTableBeacon = new UpgradeableBeacon(capTableImplementation);
     }
 
-    function createCapTable(bytes memory initializationData) external onlyOwner returns (address) {
+    function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized) external onlyOwner returns (address) {
+        require(id != bytes16(0) && initial_shares_authorized != 0, "Invalid issuer params");
+
+        bytes memory initializationData = abi.encodeCall(ICapTable.initialize, (id, name, initial_shares_authorized));
         BeaconProxy capTableProxy = new BeaconProxy(address(capTableBeacon), initializationData);
         capTableProxies.push(address(capTableProxy));
         emit CapTableCreated(address(capTableProxy));
