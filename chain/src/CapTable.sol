@@ -55,14 +55,14 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(bytes16 _id, string memory _name, uint256 _initial_shares_authorized) external initializer {
+    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized) external initializer {
         __AccessControlDefaultAdminRules_init(0 seconds, _msgSender());
         _grantRole(ADMIN_ROLE, _msgSender());
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
-        issuer = Issuer(_id, _name, 0, _initial_shares_authorized);
-        emit IssuerCreated(_id, _name);
+        issuer = Issuer(id, name, 0, initial_shares_authorized);
+        emit IssuerCreated(id, name);
     }
 
     /// @inheritdoc ICapTable
