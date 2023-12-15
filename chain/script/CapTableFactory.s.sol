@@ -11,24 +11,6 @@ import "../src/CapTableFactory.sol";
 contract CapTableFactoryDeployLocalScript is Script {
     function setUp() public {}
 
-    // function run() public {
-    //     uint256 deployerPrivateKeyFakeAccount = vm.envUint("PRIVATE_KEY_FAKE_ACCOUNT");
-
-    //     vm.startBroadcast(deployerPrivateKeyFakeAccount);
-
-    //     CapTable implementation = new CapTable();
-    //     CapTable(
-    //         address(
-    //             new ERC1967Proxy(
-    //                 address(implementation),
-    //                 abi.encodeWithSelector(implementation.initialize.selector, 0xd3373e0a4dd9430f8a563281f2800e1e, "Winston, Inc.", 10000000)
-    //             )
-    //         )
-    //     );
-
-    //     vm.stopBroadcast();
-    // }
-
     function run() external {
         uint256 deployerPrivateKeyFakeAccount = vm.envUint("PRIVATE_KEY_FAKE_ACCOUNT");
 
