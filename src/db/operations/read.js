@@ -8,6 +8,7 @@ import VestingTerms from "../objects/VestingTerms.js";
 import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
+import Factory from "../objects/Factory.js";
 
 // READ By ID
 export const readIssuerById = async (id) => {
@@ -99,3 +100,13 @@ export const getAllIssuerDataById = async (issuerId) => {
         stockTransfers: issuerStockTransfers,
     };
 };
+
+export const readAllIssuers = async () => {
+    const issuers = await Issuer.find();
+    return issuers;
+}
+
+export const readFactory = async () => {
+    const factory = await Factory.find();
+    return factory;
+}
