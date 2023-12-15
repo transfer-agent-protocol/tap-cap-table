@@ -12,7 +12,7 @@ contract CapTableFactory is ICapTableFactory, Ownable {
     UpgradeableBeacon public capTableBeacon;
     address[] public capTableProxies;
 
-    constructor(address _capTableImplementation) Ownable() {
+    constructor(address _capTableImplementation) {
         require(_capTableImplementation != address(0), "Invalid implementation address");
         capTableImplementation = _capTableImplementation;
         capTableBeacon = new UpgradeableBeacon(capTableImplementation);
@@ -21,7 +21,7 @@ contract CapTableFactory is ICapTableFactory, Ownable {
     function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized) external onlyOwner returns (address) {
         require(id != bytes16(0) && initial_shares_authorized != 0, "Invalid issuer params");
 
-        bytes memory initializationData = abi.encodeCall(ICapTable.initialize, (id, name, initial_shares_authorized));
+        bytes memory initializationData = abi.encodeCall(ICapTable.initialize, (id, name, initial_shares_authorized, msg.sender));
         BeaconProxy capTableProxy = new BeaconProxy(address(capTableBeacon), initializationData);
         capTableProxies.push(address(capTableProxy));
         emit CapTableCreated(address(capTableProxy));
