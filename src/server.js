@@ -19,7 +19,7 @@ import transactionRoutes from "./routes/transactions.js";
 import valuationRoutes from "./routes/valuation.js";
 import vestingTermsRoutes from "./routes/vestingTerms.js";
 
-import { readIssuerById } from "./db/operations/read.js";
+import { readIssuerById, readAllIssuers } from "./db/operations/read.js";
 import { contractCache } from "./utils/caches.js";
 
 const app = express();
@@ -81,4 +81,17 @@ app.use("/transactions/", contractMiddleware, transactionRoutes);
 
 app.listen(PORT, async () => {
     console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
+     // Fetch all issuers
+     const issuers = await readAllIssuers();
+     if (issuers && issuers.length > 0) {
+         for (const issuer of issuers) {
+             if (issuer.deployed_to) {
+                 // Create a new contract instance for each issuer
+                 const { contract, provider, libraries } = await getContractInstance(CHAIN, issuer.deployed_to);
+ 
+                 // Initialize listener for this contract
+                 startOnchainListeners(contract, provider, issuer._id, libraries);
+             }
+         }
+     }
 });
