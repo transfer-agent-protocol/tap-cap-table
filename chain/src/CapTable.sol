@@ -55,9 +55,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized) external initializer {
-        __AccessControlDefaultAdminRules_init(0 seconds, _msgSender());
-        _grantRole(ADMIN_ROLE, _msgSender());
+    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external initializer {
+        __AccessControlDefaultAdminRules_init(0 seconds, admin);
+        _grantRole(ADMIN_ROLE, admin);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
