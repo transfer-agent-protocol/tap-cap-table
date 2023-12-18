@@ -1,4 +1,4 @@
-import { Router } from "express";
+ximport { Router } from "express";
 import { v4 as uuid } from "uuid";
 
 import issuerSchema from "../../ocf/schema/objects/Issuer.schema.json" assert { type: "json" };
