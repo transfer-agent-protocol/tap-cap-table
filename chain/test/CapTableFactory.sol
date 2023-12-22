@@ -61,6 +61,16 @@ contract CapTableFactoryTest is Test {
     }
 
     function testUpdateCapTableImplementation() public {
+        // Create cap table prior to upgrade
+        bytes16 issuerId0 = 0xd3373e0a4dd9430f8a563281f2800333;
+        string memory issuerName0 = "Alpha, Inc.";
+        uint256 issuerInitialSharesAuthorized0 = 1000000;
+
+        address capTableProxy0 = _capTableFactory.createCapTable(issuerId0, issuerName0, issuerInitialSharesAuthorized0);
+
+        // Assert the cap table was created
+        CapTable capTable0 = CapTable(capTableProxy0);
+
         // Deploy new implementation
         CapTable newCapTableImplementation = new CapTable();
 
@@ -69,6 +79,7 @@ contract CapTableFactoryTest is Test {
 
         // Assert the implementation was updated
         assertEq(address(_capTableFactory.capTableImplementation()), address(newCapTableImplementation));
+        assertEq(address(_capTableFactory.capTableBeacon().implementation()), address(newCapTableImplementation));
 
         // Create a cap table
         bytes16 issuerId = 0xd3373e0a4dd9430f8a563281f2800e1e;
@@ -86,5 +97,18 @@ contract CapTableFactoryTest is Test {
         assertEq(name, issuerName);
         assertEq(shares_issued, 0);
         assertEq(initial_shares_authorized, issuerInitialSharesAuthorized);
+
+        // make sure previous cap table still works
+        bytes16 stakeholderId = 0xd3373e0a4dd940000000000000000010;
+
+        capTable0.createStakeholder(stakeholderId, "INDIVIDUAL", "INVESTOR");
+
+        (bytes16 actualStakeolderId, string memory actualStakeholderType, string memory actualStakeholderRelationship) = capTable0.getStakeholderById(
+            stakeholderId
+        );
+
+        assertEq(actualStakeolderId, stakeholderId);
+        assertEq(actualStakeholderType, "INDIVIDUAL");
+        assertEq(actualStakeholderRelationship, "INVESTOR");
     }
 }
