@@ -30,8 +30,8 @@ contract CapTableFactory is ICapTableFactory, Ownable {
 
     function updateCapTableImplementation(address newImplementation) external onlyOwner {
         require(newImplementation != address(0), "Invalid implementation address");
-        capTableImplementation = newImplementation;
         capTableBeacon.upgradeTo(newImplementation);
+        capTableImplementation = newImplementation;
     }
 
     function getCapTableCount() external view returns (uint256) {
