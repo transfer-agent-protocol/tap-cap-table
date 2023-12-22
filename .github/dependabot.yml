@@ -1,0 +1,10 @@
+# Config for Dependabot to automatically send PRs to keep dependencies up-to-date
+version: 2
+updates:
+  # Configuration for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    # Create PRs for version updates on dev branch only
+    target-branch: "dev"
