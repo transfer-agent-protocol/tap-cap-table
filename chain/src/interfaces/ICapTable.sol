@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-import { AccessControlDefaultAdminRules } from "openzeppelin-contracts/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
+import { AccessControlDefaultAdminRules } from "openzeppelin/contracts/access/AccessControlDefaultAdminRules.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "../lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
@@ -19,6 +18,9 @@ interface ICapTable {
     function ADMIN_ROLE() external returns (bytes32);
 
     function OPERATOR_ROLE() external returns (bytes32);
+
+    /// @notice Initializer for the CapTable, sets access control and initializes issuer struct.
+    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external;
 
     function seedMultipleActivePositionsAndSecurityIds(
         bytes16[] calldata stakeholderIds,

@@ -43,7 +43,7 @@ const txMapper = {
 };
 
 async function startOnchainListeners(contract, provider, issuerId, libraries) {
-    console.log("🌐 | Initiating on-chain event listeners for ", contract.target);
+    console.log("🌐 | Initiating on-chain event listeners for issuer", issuerId, "at address", contract.target);
 
     libraries.txHelper.on("TxCreated", async (_, txTypeIdx, txData, event) => {
         const [type, structType] = txMapper[txTypeIdx];
