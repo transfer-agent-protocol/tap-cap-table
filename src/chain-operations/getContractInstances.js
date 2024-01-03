@@ -28,7 +28,7 @@ async function getOptimismGoerliContractInstance(address) {
     const CONTRACT_ADDRESS_OPTIMISM_GOERLI = address;
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
-    const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.L2_TESTNET_RPC_URL);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS_OPTIMISM_GOERLI, abi, wallet);
     const libraries = getTXLibContracts(contract.target, wallet)

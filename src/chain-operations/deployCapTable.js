@@ -9,7 +9,8 @@ config();
 async function deployCapTableLocal(issuerId, issuerName, initial_shares_authorized) {
     // Use environment variables for private key and provider endpoint
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
-    const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL; // Use the LOCAL_RPC_URL from .env
+    // Use the LOCAL_RPC_URL from .env
+    const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL;
 
     const customNetwork = {
         // TODO: handle changing Anvil's chain id better
@@ -44,11 +45,10 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
     };
 }
 
-
 async function deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares_authorized) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
-    const provider = new ethers.JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.L2_TESTNET_RPC_URL);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
     const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
