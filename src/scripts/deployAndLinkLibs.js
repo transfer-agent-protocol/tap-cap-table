@@ -1,13 +1,14 @@
-import { spawn } from "child_process";
 import { config } from "dotenv";
+import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import sleep from "../utils/sleep.js";
 
 config();
 
-const privateKey = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
-
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const RPC_URL = process.env.RPC_URL;
+const CHAIN_ID = process.env.CHAIN_ID;
 const rootDirectory = "./src/lib";
 const excludeDirectory = "./src/lib/transactions";
 
@@ -70,37 +71,62 @@ function getAllLibraries(dirPath) {
 
 async function deployLib(lib, libs) {
     return new Promise((resolve, reject) => {
-        console.log(`Deploying ${lib.libraryName || lib.fileName}\n`);
-        const librariesDepsArgs = lib.deps.map((idx) => ["--libraries", `${libs[idx].path}:${libs[idx].libraryName}:${libs[idx].address}`]).flat();
+        console.log(`Starting deployment for ${lib.libraryName || lib.fileName}`);
+
+        // Logging the dependencies and their addresses
+        const librariesDepsArgs = lib.deps
+            .map((idx) => {
+                console.log(`Dependency: ${libs[idx].libraryName}, Address: ${libs[idx].address}`);
+                return ["--libraries", `${libs[idx].path}:${libs[idx].libraryName}:${libs[idx].address}`];
+            })
+            .flat();
         console.log("librariesDepsArgs:", librariesDepsArgs);
+
+        // Forge command arguments
         const args = [
             "c",
             "-r",
-            "http://127.0.0.1:8545",
+            // Using the RPC_URL from .env
+            RPC_URL,
             "--chain",
-            31337,
+            CHAIN_ID,
             "--private-key",
-            privateKey,
+            PRIVATE_KEY,
             `${lib.path}:${lib.libraryName || lib.fileName}`,
-            // "--via-ir",
             "--json",
             ...librariesDepsArgs,
         ];
+        // TODO: only log when things break console.log(`Forge command arguments: ${args.join(" ")}`);
+
+        // Executing the forge command
         const subprocess = spawn("forge", args);
 
         subprocess.stdout.on("data", (data) => {
-            lib.address = JSON.parse(data).deployedTo;
-            console.log(`${lib.fileName} Deployed Successfully - Address: ${lib.address}\n`);
+            console.log(`stdout: ${data}`);
+            try {
+                lib.address = JSON.parse(data).deployedTo;
+                console.log(`${lib.fileName} Deployed Successfully - Address: ${lib.address}`);
+            } catch (err) {
+                console.error(`Error parsing JSON from stdout: ${err}`);
+            }
         });
 
         subprocess.stderr.on("data", (data) => {
-            reject(new Error(`${lib.fileName}::stderr: ${data}`));
+            const errorDetails = data.toString(); // Convert Buffer to string
+            console.error(`stderr: ${errorDetails}`);
+        });
+
+        subprocess.on("error", (error) => {
+            console.error(`Spawn error: ${error}`);
+            reject(new Error(`Error executing forge command for ${lib.fileName}`));
         });
 
         subprocess.on("close", (code) => {
             if (code !== 0) {
-                reject(new Error(`${lib.fileName}::child process exited with code ${code}`));
+                console.error(`${lib.fileName} deployment failed with exit code ${code}`);
+                reject(new Error(`${lib.fileName} deployment failed. Details in the logs above.`));
             } else {
+                console.log(`${lib.fileName} deployment process exited successfully`);
                 resolve();
             }
         });

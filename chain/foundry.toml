@@ -8,11 +8,10 @@ cbor_metadata = false
 
 
 [rpc_endpoints]
-optimism_goerli = "${OPTIMISM_GOERLI_RPC_URL}"
-local = "${LOCAL_RPC_URL}"
+rpc_url = "${RPC_URL}"
 
 [etherscan]
-optimism_goerli_etherscan = { key = "${ETHERSCAN_OPTIMISM_API_KEY}", chain = "goerli" }
+optimism_goerli_etherscan = { key = "${ETHERSCAN_L2_API_KEY}", chain = "goerli" }
 
 
 
