@@ -1,65 +1,57 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-// import "forge-std/Test.sol";
-// import "./CapTable.t.sol";
+import "./CapTable.t.sol";
 
-// contract RolesTests is CapTableTest {
-//     address RANDO_ADDR = address(0xf001);
-//     address OPERATOR_ADDR = address(0xf002);
+contract RolesTests is CapTableTest {
+    address RANDO_ADDR = address(0xf001);
+    address OPERATOR_ADDR = address(0xf002);
 
-//     function testOperatorRole() public {
-//         _attemptOperatorFunc(false, true);
+    function testIssuerInitialization() public {
+        (bytes16 id, string memory legalName, , ) = capTable.issuer();
+        assertEq(id, issuerId);
+        assertEq(legalName, "Winston, Inc.");
+    }
 
-//         capTable.addOperator(RANDO_ADDR);
-//         _attemptOperatorFunc(true, true);
+    function testOperatorTransfer() public {
+        bytes16[] memory stakeholderIds = new bytes16[](2);
 
-//         capTable.removeOperator(RANDO_ADDR);
-//         _attemptOperatorFunc(false, true);
-//     }
+        for (uint256 i = 0; i < 2; i++) {
+            bytes16 stakeholderId = bytes16(keccak256(abi.encodePacked("STAKEHOLDER", i)));
+            string memory stakeholderType = "Individual";
+            string memory currentRelationship = "Investor";
+            capTable.createStakeholder(stakeholderId, stakeholderType, currentRelationship);
+            stakeholderIds[i] = stakeholderId;
+        }
 
-//     function testAdminRole() public {
-//         _attemptAdminFunc(false);
+        bytes16 stockClassId = bytes16(keccak256(abi.encodePacked("STOCKCLASS")));
+        string memory classType = "Common";
+        uint256 pricePerShare = 100; // Example value
+        uint256 initialSharesAuthorized = 1000; // Example value
+        capTable.createStockClass(stockClassId, classType, pricePerShare, initialSharesAuthorized);
 
-//         capTable.addAdmin(RANDO_ADDR);
-//         _attemptAdminFunc(true);
+        // add operator and change address
+        capTable.addOperator(OPERATOR_ADDR);
+        vm.prank(OPERATOR_ADDR);
 
-//         capTable.removeAdmin(RANDO_ADDR);
-//         _attemptAdminFunc(false);
-//     }
+        vm.expectRevert("No active security ids found");
 
-//     function testAdminIsOperatorRole() public {
-//         _attemptOperatorFunc(true, false);
-//     }
+        // will revert because we haven't performed an issuance, but it would have already verified operator
+        // role working
+        capTable.transferStock(
+            stakeholderIds[0], // transferor
+            stakeholderIds[1], // transferee
+            stockClassId,
+            true,
+            100,
+            100
+        );
+    }
 
-//     function _attemptOperatorFunc(bool shouldBeOperator, bool asRando) internal {
-//         if (shouldBeOperator) {
-//             vm.expectRevert("No transferor");
-//         } else {
-//             vm.expectRevert("Does not have operator role");
-//         }
-//         if (asRando) {
-//             vm.prank(RANDO_ADDR);
-//         }
-//         /// @dev this was chosen arbitrarily bc it is onlyOperator. The arguments are garbage and we expect it to throw
-//         capTable.transferStock(
-//             0x0000000000000000000000000000000a,
-//             0x0000000000000000000000000000000b,
-//             0x0000000000000000000000000000000c,
-//             false,
-//             0,
-//             0
-//         );
-//     }
+    function testNotAdminReverting() public {
+        vm.prank(RANDO_ADDR);
 
-//     function _attemptAdminFunc(bool shouldBeAdmin) internal {
-//         if (shouldBeAdmin) {
-//             vm.expectRevert("Invalid wallet");
-//         } else {
-//             vm.expectRevert("Does not have admin role");
-//         }
-//         vm.prank(RANDO_ADDR);
-//         /// @dev this was chosen arbitrarily bc it is onlyAdmin. The arguments are garbage and we expect it to throw
-//         capTable.addWalletToStakeholder(0x0000000000000000000000000000000d, address(0));
-//     }
-// }
+        vm.expectRevert("Does not have admin role");
+        capTable.createStakeholder(bytes16("0101"), "Individual", "Investor");
+    }
+}

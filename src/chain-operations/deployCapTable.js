@@ -1,8 +1,10 @@
 import { config } from "dotenv";
 import { ethers } from "ethers";
-import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import CAP_TABLE_FACTORY from "../../chain/out/CapTableFactory.sol/CapTableFactory.json" assert { type: "json" };
+import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
+import { readFactory } from "../db/operations/read.js";
 
 config();
 
@@ -21,19 +23,34 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
 
     console.log("🗽 | Wallet address: ", wallet.address);
 
-    const factory = new ethers.ContractFactory(CAP_TABLE.abi, CAP_TABLE.bytecode, wallet);
-    const contract = await factory.deploy(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
+    const factory = await readFactory();
+    const factoryAddress = factory[0].factory_address;
+
+    console.log('factory ', factory)
+    
+    if(!factoryAddress) {
+        throw new Error(`❌ | Factory address not found`);
+    }
+   
+    const capTableFactory = new ethers.Contract(factoryAddress, CAP_TABLE_FACTORY.abi, wallet);
+
+    const tx = await capTableFactory.createCapTable(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
+    await tx.wait();
+
+    const capTableCount = await capTableFactory.getCapTableCount();
+
+    const latestCapTableProxyContractAddress = await capTableFactory.capTableProxies(capTableCount - BigInt(1));
+
+    const contract = new ethers.Contract(latestCapTableProxyContractAddress, CAP_TABLE.abi, wallet); 
 
     console.log("⏳ | Waiting for contract to be deployed...");
-
-    const libraries = getTXLibContracts(contract.target, wallet);
-
-    console.log("✅ | Contract deployed!");
+    console.log("cap table contract address ", latestCapTableProxyContractAddress);
+    const libraries = getTXLibContracts(latestCapTableProxyContractAddress, wallet);
 
     return {
         contract,
         provider,
-        address: contract.target,
+        address: latestCapTableProxyContractAddress,
         libraries,
     };
 }
