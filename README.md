@@ -2,15 +2,15 @@
 
 Developed by:
 
-- [Poet](https://poet.network/)
+- [Transfer Agent Protocol](https://transferagentprotocol.xyz/)
 - [Plural Energy](https://www.pluralenergy.co/)
 - [Fairmint](https://www.fairmint.com/)
 
 This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active development, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
 
 <div align="center">
-  <a href="https://github.com/poet-network/tap-cap-table/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/poet-network/tap-cap-table">
+  <a href="https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/transfer-agent-protocol/tap-cap-table">
   </a>
 </div>
 
@@ -36,7 +36,7 @@ We're using the official [MongoDB Docker image](https://hub.docker.com/_/mongo) 
 
 ## Official links
 
-- [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
+- [Contributor doc](https://coda.io/d/_dFoHg0h07Et/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
 - [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
 
 ## Getting started
@@ -87,16 +87,20 @@ Install dependencies and setup [Foundry](https://book.getfoundry.sh/) and `forge
 yarn install && yarn setup
 ```
 
-## Deploying external libraries
+## Deploying the cap table smart contracts
 
-In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met.
-
-To deploy these libraries:
+In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met. To deploy these libraries:
 
 1. Ensure you have Anvil running in the `/chain` directory
-2. Then, inside of the root directory run `yarn build`
+2. Then, inside of the root directory run
+
+```sh
+yarn build
+```
 
 This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
+
+To deploy the cap table smart contracts to a testnet, update `RPC_URL` and `CHAIN_ID` in the `.env` file, then run the same `yarn build` command.
 
 
 ## Running the cap table server
