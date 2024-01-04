@@ -1,15 +1,14 @@
-import { spawn } from "child_process";
 import { config } from "dotenv";
+import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import sleep from "../utils/sleep.js";
 
 config();
 
-const privateKey = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
-// Use environment variable for the RPC URL
-const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL;
-
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const RPC_URL = process.env.RPC_URL;
+const CHAIN_ID = process.env.CHAIN_ID;
 const rootDirectory = "./src/lib";
 const excludeDirectory = "./src/lib/transactions";
 
@@ -87,15 +86,12 @@ async function deployLib(lib, libs) {
         const args = [
             "c",
             "-r",
-            // Using the LOCAL_RPC_URL from .env
-            LOCAL_RPC_URL,
+            // Using the RPC_URL from .env
+            RPC_URL,
             "--chain",
-            // TODO: Handle changing Anvil's chain id better
-            // 31337,
-            // This is Arbitrum Orbit's chain id
-            32586980208,
+            CHAIN_ID,
             "--private-key",
-            privateKey,
+            PRIVATE_KEY,
             `${lib.path}:${lib.libraryName || lib.fileName}`,
             "--json",
             ...librariesDepsArgs,
