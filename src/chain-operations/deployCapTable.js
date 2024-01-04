@@ -44,7 +44,7 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
     const contract = new ethers.Contract(latestCapTableProxyContractAddress, CAP_TABLE.abi, wallet); 
 
     console.log("⏳ | Waiting for contract to be deployed...");
-    console.log("cap table contract address ", latestCapTableProxyContractAddress);
+    console.log("✅ | Cap table contract address ", latestCapTableProxyContractAddress);
     const libraries = getTXLibContracts(latestCapTableProxyContractAddress, wallet);
 
     return {
