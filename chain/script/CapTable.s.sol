@@ -10,7 +10,7 @@ contract CapTableDeployLocalScript is Script {
     function setUp() public {}
 
     function run() public {
-        uint256 deployerPrivateKeyFakeAccount = vm.envUint("PRIVATE_KEY_FAKE_ACCOUNT");
+        uint256 deployerPrivateKeyFakeAccount = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKeyFakeAccount);
 
@@ -24,7 +24,7 @@ contract CapTableDeployOptimismGoerli is Script {
     function setUp() public {}
 
     function run() public {
-        uint256 deployerPrivateKeyPoetTest = vm.envUint("PRIVATE_KEY_POET_TEST");
+        uint256 deployerPrivateKeyPoetTest = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKeyPoetTest);
 
