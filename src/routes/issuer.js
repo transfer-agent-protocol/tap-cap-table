@@ -42,8 +42,6 @@ issuer.get("/total-number", async (req, res) => {
 });
 
 issuer.post("/create", async (req, res) => {
-    const { chain } = req;
-
     try {
         // OCF doesn't allow extra fields in their validation
         const incomingIssuerToValidate = {
@@ -59,7 +57,6 @@ issuer.post("/create", async (req, res) => {
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("💾 | Issuer id in bytes16 ", issuerIdBytes16);
         const { contract, provider, address, libraries } = await deployCapTable(
-            chain,
             issuerIdBytes16,
             incomingIssuerToValidate.legal_name,
             incomingIssuerToValidate.initial_shares_authorized

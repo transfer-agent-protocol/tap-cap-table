@@ -28,13 +28,6 @@ const app = express();
 connectDB();
 
 const PORT = process.env.PORT;
-const CHAIN = process.env.CHAIN;
-
-// Middlewares
-const chainMiddleware = (req, res, next) => {
-    req.chain = CHAIN;
-    next();
-};
 
 // Middleware to get or create contract instance
 // the listener is first started on deployment, then here as a backup
@@ -50,7 +43,7 @@ const contractMiddleware = async (req, res, next) => {
 
     // Check if contract instance already exists in cache
     if (!contractCache[req.body.issuerId]) {
-        const { contract, provider, libraries } = await getContractInstance(CHAIN, issuer.deployed_to);
+        const { contract, provider, libraries } = await getContractInstance(issuer.deployed_to);
         contractCache[req.body.issuerId] = { contract, provider, libraries };
 
         // Initialize listener for this contract
@@ -65,8 +58,8 @@ app.use(urlencoded({ limit: "50mb", extended: true }));
 app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
 
-app.use("/", chainMiddleware, mainRoutes);
-app.use("/issuer", chainMiddleware, issuerRoutes);
+app.use("/", mainRoutes);
+app.use("/issuer", issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
 // No middleware required since these are only created offchain
@@ -87,7 +80,7 @@ app.listen(PORT, async () => {
          for (const issuer of issuers) {
              if (issuer.deployed_to) {
                  // Create a new contract instance for each issuer
-                 const { contract, provider, libraries } = await getContractInstance(CHAIN, issuer.deployed_to);
+                 const { contract, provider, libraries } = await getContractInstance(issuer.deployed_to);
  
                  // Initialize listener for this contract
                  startOnchainListeners(contract, provider, issuer._id, libraries);
