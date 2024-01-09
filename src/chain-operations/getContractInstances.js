@@ -5,14 +5,14 @@ import getTXLibContracts from "../utils/getLibrariesContracts.js";
 
 config();
 
-async function getContractInstance(chain, address) {
+async function getContractInstance(address) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY;
     const RPC_URL = process.env.RPC_URL;
     const CHAIN_ID = parseInt(process.env.CHAIN_ID); // Convert to integer
 
     const customNetwork = {
         chainId: CHAIN_ID, // Use the CHAIN_ID from .env
-        name: chain, // Use the chain parameter as the network name
+        name: "network",
     };
 
     const provider = new ethers.JsonRpcProvider(RPC_URL, customNetwork);
