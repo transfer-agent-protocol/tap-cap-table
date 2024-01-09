@@ -13,10 +13,20 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
     const RPC_URL = process.env.RPC_URL;
     const CHAIN_ID = process.env.CHAIN_ID;
 
-    const customNetwork = {
-        // Change the CHAIN_ID in the .env file to deploy to a different network
-        chainId: parseInt(CHAIN_ID),
-    };
+    let customNetwork;
+
+    // Change the CHAIN_ID in the .env file to deploy to a different network
+    if (RPC_URL === "http://127.0.0.1:8545") {
+        customNetwork =  {
+            chainId: parseInt(CHAIN_ID),
+            name: "local"
+        };
+    } else {
+        customNetwork =  {
+            // Change the CHAIN_ID in the .env file to deploy to a different network
+            chainId: parseInt(CHAIN_ID),
+        };
+    }
 
     const provider = new ethers.JsonRpcProvider(RPC_URL, customNetwork);
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
