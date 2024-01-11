@@ -8,8 +8,8 @@ import { countIssuers, readIssuerById } from "../db/operations/read.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
-import { contractCache } from "../utils/caches.js";
 import startOnchainListeners from "../chain-operations/transactionListener.js";
+import { contractCache } from "../utils/caches.ts";
 
 const issuer = Router();
 

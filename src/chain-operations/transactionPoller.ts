@@ -1,9 +1,9 @@
 import { AbiCoder } from "ethers";
-import connectDB from "../db/config/mongoose.js";
-import { withGlobalTransaction } from "../db/operations/atomic.js";
+import { connectDB } from "../db/config/mongoose.ts";
+import { withGlobalTransaction } from "../db/operations/atomic.ts";
 import { readAllIssuers } from "../db/operations/read.js";
 import { updateIssuerById } from "../db/operations/update.js";
-import { getIssuerContract } from "../utils/caches.js";
+import { getIssuerContract } from "../utils/caches.ts";
 import { verifyIssuerAndSeed } from "./seed.js";
 import {
     IssuerAuthorizedSharesAdjustment,
@@ -55,6 +55,7 @@ const txFuncs = new Map(
     // @ts-ignore
     Object.entries(txMapper).filter((arr) => arr.length === 3).forEach(([_x, [name, _y, handleFunc]]) => [name, handleFunc])
 );
+
 
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
@@ -115,6 +116,8 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBl
             continue;
         }
         // TODO: does txTypeIdx even come with the event??? need to test this...
+        let txTypeIdx;
+        let txData;
         const [type, structType] = txMapper[txTypeIdx];
         const decodedData = abiCoder.decode([structType], txData);
         const { timestamp } = await provider.getBlock(event.blockNumber);
@@ -176,7 +179,7 @@ const persistEvents = async (issuerId, events) => {
     }
 };
 
-const trimEvents = (events, maxEvents, endBlock) => {
+export const trimEvents = (events, maxEvents, endBlock) => {
     let index = 0;    
     while (index < maxEvents && index < events.length) {
         // Iterate through the entire next block

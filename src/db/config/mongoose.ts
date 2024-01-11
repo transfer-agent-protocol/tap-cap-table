@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 dotenv.config();
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-const connectDB = async () => {
+export const connectDB = async () => {
     try {
         await mongoose.connect(DATABASE_URL);
         console.log("✅ | Mongo connected succesfully");
@@ -16,5 +16,3 @@ const connectDB = async () => {
         process.exit(1);
     }
 };
-
-export default connectDB;

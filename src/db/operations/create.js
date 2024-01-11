@@ -10,7 +10,7 @@ import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIss
 import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import { save } from "./atomic.js";
+import { save } from "./atomic.ts";
 
 export const createIssuer = (issuerData) => {
     return save(new Issuer(issuerData));

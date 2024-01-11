@@ -9,7 +9,7 @@ import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import { countDocuments, find, findById } from "./atomic.js";
+import { countDocuments, find, findById } from "./atomic.ts";
 
 // READ By ID
 export const readIssuerById = async (id) => {
