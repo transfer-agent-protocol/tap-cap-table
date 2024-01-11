@@ -182,23 +182,21 @@ const persistEvents = async (issuerId, events) => {
 export const trimEvents = (events, maxEvents, endBlock) => {
     let index = 0;    
     while (index < maxEvents && index < events.length) {
-        // Iterate through the entire next block
+        // Include the entire next block
         const includeBlock = events[index].blockNumber;
         index++;
         while (index < events.length && events[index].blockNumber === includeBlock) {
             index++;
         }
     }
-
     // Nothing to trim!
-    if (index >= (events.length - 1)) {
+    if (index >= events.length) {
         return [events, endBlock];
     }
-
-    // Trim up to index (exclusive)
     // We processed up to the last events' blockNumber
+    // `index` is *exclusive* when trimming
     const useEvents = [...events.slice(0, index)];
-    return [useEvents, trimEvents[useEvents.length - 1].blockNumber];
+    return [useEvents, useEvents[useEvents.length - 1].blockNumber];
 };
 
 
