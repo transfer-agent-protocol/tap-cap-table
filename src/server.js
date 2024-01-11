@@ -19,7 +19,7 @@ import valuationRoutes from "./routes/valuation.js";
 import vestingTermsRoutes from "./routes/vestingTerms.js";
 
 import { readIssuerById } from "./db/operations/read.js";
-import { getIssuerContract } from "./utils/caches.js";
+import { getIssuerContract } from "./utils/caches.ts";
 
 const app = express();
 

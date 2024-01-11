@@ -8,7 +8,7 @@ import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import { save } from "./atomic.js";
+import { save } from "./atomic.ts";
 
 export const createIssuer = (issuerData) => {
     return save(new Issuer(issuerData));

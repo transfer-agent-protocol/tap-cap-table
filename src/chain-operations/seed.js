@@ -1,12 +1,10 @@
 import { convertAndReflectStakeholderOnchain } from "../controllers/stakeholderController.js";
 import { convertAndReflectStockClassOnchain } from "../controllers/stockClassController.js";
-import { convertAndSeedIssuanceStockOnchain, convertAndSeedTransferStockOnchain } from "../controllers/transactions/seed.js";
-import { getAllIssuerDataById } from "../db/operations/read.js";
+import { getAllIssuerDataById, readIssuerById } from "../db/operations/read.js";
+import { preProcessorCache } from "../utils/caches.ts";
 import { convertTimeStampToUint40, toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import { extractArrays } from "../utils/flattenPreprocessorCache.js";
-import { preProcessorCache } from "../utils/caches.js";
-import { readIssuerById } from "../db/operations/read.js";
 import sleep from "../utils/sleep.js";
 
 export const verifyIssuerAndSeed = async (contract, id) => {
