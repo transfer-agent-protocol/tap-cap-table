@@ -52,7 +52,8 @@ const txMapper = {
 
 // Map(event.type => handler) derived from the above
 const txFuncs = new Map(
-    Object.entries(txMapper).filter((arr) => arr.length === 3).forEach(([_, [name, _1, handleFunc]]) => [name, handleFunc])
+    // @ts-ignore
+    Object.entries(txMapper).filter((arr) => arr.length === 3).forEach(([_x, [name, _y, handleFunc]]) => [name, handleFunc])
 );
 
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
@@ -71,9 +72,12 @@ export const startSynchronousEventProcessing = async () => {
             }
         }
     }
-}
+};
 
-const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBlocks = 250, maxEvents = 100) => {
+const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBlocks = 1500, maxEvents = 250) => {
+    /*
+    We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
+    */
     console.log(" processEvents for issuer", issuer);
     let {_id: issuerId, last_processed_block: startBlock, tx_hash: deployedTx} = issuer;
     if (startBlock === null) {
@@ -85,7 +89,7 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBl
         startBlock = await bootstrapTable(issuerId, receipt.blockNumber, contract, dbConn);
     }
     const {number: latestBlock} = await provider.getBlock('finalized');
-    const endBlock = Math.min(startBlock + maxBlocks, latestBlock);
+    let endBlock = Math.min(startBlock + maxBlocks, latestBlock);
 
     let events: any[] = [];
 
@@ -126,12 +130,13 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBl
 
     // Process in the correct order
     events.sort((a, b) => a.blockNumber - b.blockNumber || a.transactionIndex - b.transactionIndex);
+    [events, endBlock] = trimEvents(events, maxEvents, endBlock);
 
     await withGlobalTransaction(async () => {
         await persistEvents(issuerId, events);
         await updateLastProcessed(issuerId, endBlock);
     }, dbConn);
-}
+};
 
 const bootstrapTable = async (issuerId, deployedBlockNumber, contract, dbConn) => {
     // TODO: fix the copy-pasted query
@@ -150,7 +155,7 @@ const bootstrapTable = async (issuerId, deployedBlockNumber, contract, dbConn) =
     }, dbConn);
 
     return tMinusOne;
-}
+};
 
 const persistEvents = async (issuerId, events) => {
     // Persist all the necessary changes for each event gathered in process events
@@ -158,6 +163,7 @@ const persistEvents = async (issuerId, events) => {
         const txHandleFunc = txFuncs.get(event.type);
         console.log("persistEvent: ", event);
         if (txHandleFunc) {
+            // @ts-ignore
             await txHandleFunc(event.data, issuerId, event.timestamp);
             continue;
         }
@@ -168,7 +174,30 @@ const persistEvents = async (issuerId, events) => {
         }
         throw new Error(`Invalid transaction type: "${event.type}" for ${event}`);
     }
-}
+};
+
+const trimEvents = (events, maxEvents, endBlock) => {
+    let index = 0;    
+    while (index < maxEvents && index < events.length) {
+        // Iterate through the entire next block
+        const includeBlock = events[index].blockNumber;
+        index++;
+        while (index < events.length && events[index].blockNumber === includeBlock) {
+            index++;
+        }
+    }
+
+    // Nothing to trim!
+    if (index >= (events.length - 1)) {
+        return [events, endBlock];
+    }
+
+    // Trim up to index (exclusive)
+    // We processed up to the last events' blockNumber
+    const useEvents = [...events.slice(0, index)];
+    return [useEvents, trimEvents[useEvents.length - 1].blockNumber];
+};
+
 
 const updateLastProcessed = async (issuerId, lastProcessedBlock) => {
     return updateIssuerById(issuerId, {lastProcessedBlock});
