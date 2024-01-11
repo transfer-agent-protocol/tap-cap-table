@@ -17,6 +17,8 @@ const IssuerSchema = new mongoose.Schema({
     initial_shares_authorized: String,
     comments: [String],
     deployed_to: String,
+    tx_hash: String,
+    last_processed_block: { type: Number, default: null },
     is_manifest_created: { type: Boolean, default: false },
 }, { timestamps: true });
 

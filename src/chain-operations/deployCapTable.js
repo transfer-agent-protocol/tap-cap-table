@@ -54,6 +54,7 @@ async function deployCapTableLocal(issuerId, issuerName, initial_shares_authoriz
         provider,
         address: latestCapTableProxyContractAddress,
         libraries,
+        deployHash: tx.hash,
     };
 }
 
@@ -94,6 +95,7 @@ async function deployCapTableOptimismGoerli(issuerId, issuerName, initial_shares
         provider,
         address: latestCapTableProxyContractAddress,
         libraries,
+        deployHash: tx.hash,
     };
 }
 
