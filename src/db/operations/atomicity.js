@@ -1,3 +1,0 @@
-/*
-For database transactions to ensure each event is processed exactly once
-*/

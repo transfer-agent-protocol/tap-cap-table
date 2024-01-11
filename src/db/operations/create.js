@@ -1,3 +1,4 @@
+import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
 import StockClass from "../objects/StockClass.js";
@@ -5,68 +6,56 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIssuance.js";
+import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import HistoricalTransaction from "../objects/HistoricalTransaction.js";
-import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
-import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIssuance.js";
+import { save } from "./atomic.js";
 
 export const createIssuer = (issuerData) => {
-    const issuer = new Issuer(issuerData);
-    return issuer.save();
+    return save(new Issuer(issuerData));
 };
 
 export const createStakeholder = (stakeholderData) => {
-    const stakeholder = new Stakeholder(stakeholderData);
-    return stakeholder.save();
+    return save(new Stakeholder(stakeholderData));
 };
 
 export const createStockClass = (stockClassData) => {
-    const stockClass = new StockClass(stockClassData);
-    return stockClass.save();
+    return save(new StockClass(stockClassData));
 };
 
 export const createStockLegendTemplate = (stockLegendTemplateData) => {
-    const stockLegendTemplate = new StockLegendTemplate(stockLegendTemplateData);
-    return stockLegendTemplate.save();
+    return save(new StockLegendTemplate(stockLegendTemplateData));
 };
 
 export const createStockPlan = (stockPlanData) => {
-    const stockPlan = new StockPlan(stockPlanData);
-    return stockPlan.save();
+    return save(new StockPlan(stockPlanData));
 };
 
 export const createValuation = (valuationData) => {
-    const valuation = new Valuation(valuationData);
-    return valuation.save();
+    return save(new Valuation(valuationData));
 };
 
 export const createVestingTerms = (vestingTermsData) => {
-    const vestingTerms = new VestingTerms(vestingTermsData);
-    return vestingTerms.save();
+    return save(new VestingTerms(vestingTermsData));
 };
 
 export const createHistoricalTransaction = (transactionHistoryData) => {
-    const historicalTransaction = new HistoricalTransaction(transactionHistoryData);
-    return historicalTransaction.save();
+    return save(new HistoricalTransaction(transactionHistoryData));
 };
 
 export const createStockIssuance = (stockIssuanceData) => {
-    const stockIssuance = new StockIssuance(stockIssuanceData);
-    return stockIssuance.save();
+    return save(new StockIssuance(stockIssuanceData));
 };
 
 export const createEquityCompensationIssuance = (issuanceData) => {
-    const equityCompensationIssuance = new EquityCompensationIssuance(issuanceData);
-    return equityCompensationIssuance.save();
+    return save(new EquityCompensationIssuance(issuanceData));
 };
 
 export const createConvertibleIssuance = (issuanceData) => {
-    const convertibleIssuance = new ConvertibleIssuance(issuanceData);
-    return convertibleIssuance.save();
+    return save(new ConvertibleIssuance(issuanceData));
 };
 
 export const createStockTransfer = (stockTransferData) => {
-    const stockTransfer = new StockTransfer(stockTransferData);
-    return stockTransfer.save();
+    return save(new StockTransfer(stockTransferData));
 };

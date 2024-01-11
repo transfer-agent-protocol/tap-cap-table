@@ -56,7 +56,8 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("💾 | Issuer id in bytes16 ", issuerIdBytes16);
-        const { contract, provider, address, libraries } = await deployCapTable(
+        const { contract, provider, address, libraries, deployHash } = await deployCapTable(
+            chain,
             issuerIdBytes16,
             incomingIssuerToValidate.legal_name,
             incomingIssuerToValidate.initial_shares_authorized
@@ -69,6 +70,7 @@ issuer.post("/create", async (req, res) => {
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,
             deployed_to: address,
+            tx_hash: deployHash,
         };
 
         const issuer = await createIssuer(incomingIssuerForDB);

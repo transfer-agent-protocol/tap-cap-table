@@ -49,6 +49,7 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
         provider,
         address: latestCapTableProxyContractAddress,
         libraries,
+        deployHash: tx.hash,
     };
 }
 

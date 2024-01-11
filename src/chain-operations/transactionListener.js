@@ -1,18 +1,11 @@
-import { verifyIssuerAndSeed } from "./seed.js";
-import {
-    handleStockCancellation,
-    handleIssuerAuthorizedSharesAdjusted,
-    handleStockAcceptance,
-    handleStockReissuance,
-    handleStockRepurchase,
-    handleStockRetraction,
-    handleStockClass,
-    handleStakeholder,
-    handleStockIssuance,
-    handleStockTransfer,
-    handleStockClassAuthorizedSharesAdjusted,
-} from "./transactionHandlers.js";
+/*
+DEPRECATED! DO NOT USE
+TODO: delete 
+*/
+
+
 import { AbiCoder } from "ethers";
+import { verifyIssuerAndSeed } from "./seed.js";
 import {
     IssuerAuthorizedSharesAdjustment,
     StockAcceptance,
@@ -24,6 +17,19 @@ import {
     StockRetraction,
     StockTransfer,
 } from "./structs.js";
+import {
+    handleIssuerAuthorizedSharesAdjusted,
+    handleStakeholder,
+    handleStockAcceptance,
+    handleStockCancellation,
+    handleStockClass,
+    handleStockClassAuthorizedSharesAdjusted,
+    handleStockIssuance,
+    handleStockReissuance,
+    handleStockRepurchase,
+    handleStockRetraction,
+    handleStockTransfer,
+} from "./transactionHandlers.js";
 
 const abiCoder = new AbiCoder();
 const eventQueue = [];
@@ -120,4 +126,4 @@ async function processEventQueue() {
     }
 }
 
-export default startOnchainListeners;
+// export default startOnchainListeners;

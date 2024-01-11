@@ -1,3 +1,5 @@
+import Factory from "../objects/Factory.js";
+import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
 import StockClass from "../objects/StockClass.js";
@@ -5,93 +7,78 @@ import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
-import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import Factory from "../objects/Factory.js";
+import { countDocuments, find, findById } from "./atomic.js";
 
 // READ By ID
 export const readIssuerById = async (id) => {
-    const issuer = await Issuer.findById(id);
-    return issuer;
+    return await findById(Issuer, id);
 };
 
 export const readStakeholderById = async (id) => {
-    const stakeholder = await Stakeholder.findById(id);
-    return stakeholder;
+    return await findById(Stakeholder, id);
 };
 
 export const readStockClassById = async (id) => {
-    const stockClass = await StockClass.findById(id);
-    return stockClass;
+    return await findById(StockClass, id);
 };
 
 export const readStockLegendTemplateById = async (id) => {
-    const stockLegendTemplate = await StockLegendTemplate.findById(id);
-    return stockLegendTemplate;
+    return await findById(StockLegendTemplate, id);
 };
 
 export const readStockPlanById = async (id) => {
-    const stockPlan = await StockPlan.findById(id);
-    return stockPlan;
+    return await findById(StockPlan, id);
 };
 
 export const readValuationById = async (id) => {
-    const valuation = await Valuation.findById(id);
-    return valuation;
+    return await findById(Valuation, id);
 };
 
 export const readVestingTermsById = async (id) => {
-    const vestingTerms = await VestingTerms.findById(id);
-    return vestingTerms;
+    return await findById(VestingTerms, id);
 };
 
+// READ Multiple
 export const readHistoricalTransactionByIssuerId = async (issuerId) => {
-    const historicalTransactions = await HistoricalTransaction.find({ issuer: issuerId }).populate("transaction");
-    return historicalTransactions;
+    return await find(HistoricalTransaction, { issuer: issuerId }).populate("transaction");
 };
 
 // COUNT
 export const countIssuers = async () => {
-    const totalIssuers = await Issuer.countDocuments();
-    return totalIssuers;
+    return await countDocuments(Issuer);
 };
 
 export const countStakeholders = async () => {
-    const totalStakeholders = await Stakeholder.countDocuments();
-    return totalStakeholders;
+    return await countDocuments(Stakeholder);
 };
 
 export const countStockClasses = async () => {
-    const totalStockClasses = await StockClass.countDocuments();
-    return totalStockClasses;
+    return await countDocuments(StockClass);
 };
 
 export const countStockLegendTemplates = async () => {
-    const totalTemplates = await StockLegendTemplate.countDocuments();
-    return totalTemplates;
+    return await countDocuments(StockLegendTemplate);
 };
 
 export const countStockPlans = async () => {
-    const totalStockPlans = await StockPlan.countDocuments();
-    return totalStockPlans;
+    return await countDocuments(StockPlan);
 };
 
 export const countValuations = async () => {
-    const totalValuations = await Valuation.countDocuments();
-    return totalValuations;
+    return await countDocuments(Valuation);
 };
 
 export const countVestingTerms = async () => {
-    const totalVestingTerms = await VestingTerms.countDocuments();
-    return totalVestingTerms;
+    return await countDocuments(VestingTerms);
 };
 
 export const getAllIssuerDataById = async (issuerId) => {
-    const issuerStakeholders = await Stakeholder.find({ issuer: issuerId });
-    const issuerStockClasses = await StockClass.find({ issuer: issuerId });
-    const issuerStockIssuances = await StockIssuance.find({ issuer: issuerId });
-    const issuerStockTransfers = await StockTransfer.find({ issuer: issuerId });
+    const issuerStakeholders = await find(Stakeholder, { issuer: issuerId });
+    const issuerStockClasses = await find(StockClass, { issuer: issuerId });
+    const issuerStockIssuances = await find(StockIssuance, { issuer: issuerId });
+    const issuerStockTransfers = await find(StockTransfer, { issuer: issuerId });
 
     return {
         stakeholders: issuerStakeholders,
@@ -102,11 +89,9 @@ export const getAllIssuerDataById = async (issuerId) => {
 };
 
 export const readAllIssuers = async () => {
-    const issuers = await Issuer.find();
-    return issuers;
+    return await find(Issuer);
 }
 
 export const readFactory = async () => {
-    const factory = await Factory.find();
-    return factory;
+    return await find(Factory);
 }
