@@ -1,4 +1,4 @@
-import getContractInstance from "../chain-operations/getContractInstances";
+import { getContractInstance } from "../chain-operations/getContractInstances.js";
 
 const CHAIN = process.env.CHAIN;
 

@@ -3,6 +3,9 @@
  * https://jestjs.io/docs/configuration
  */
 
+// This allows us to avoid messing with the state of people's standard dev database
+process.env['DATABASE_OVERRIDE'] = 'jest';
+
 /** @type {import('jest').Config} */
 const config = {
   // All imported modules in your tests should be mocked automatically

@@ -1,6 +1,7 @@
 import { trimEvents } from "../../chain-operations/transactionPoller";
 
-// TODO: if starts failing again: yarn add --dev jest-esm-transformer
+// TODO: if starts failing again run: yarn add --dev jest-esm-transformer
+// https://jestjs.io/docs/using-matchers for more docs on `expect`
 
 const myEvents = [5, 6, 6, 6, 7, 7, 7].map((x, i) => { return {blockNumber: x, i}; });
 

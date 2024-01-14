@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import connectDB from "../config/mongoose.js";
+import { connectDB } from "../config/mongoose.ts";
+import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
 import StockClass from "../objects/StockClass.js";
@@ -8,7 +9,6 @@ import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import { typeToModelType } from "../operations/transactions.js"; // Import the typeToModelType object to delete all transactions
-import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 
 const deleteAllTransactions = async () => {
     for (const ModelType of Object.values(typeToModelType)) {

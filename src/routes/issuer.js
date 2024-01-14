@@ -8,9 +8,6 @@ import { countIssuers, readIssuerById } from "../db/operations/read.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
-import startOnchainListeners from "../chain-operations/transactionListener.js";
-import { contractCache } from "../utils/caches.ts";
-
 const issuer = Router();
 
 issuer.get("/", async (req, res) => {
@@ -58,16 +55,12 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("💾 | Issuer id in bytes16 ", issuerIdBytes16);
-        const { contract, provider, address, libraries, deployHash } = await deployCapTable(
+        const { address, deployHash } = await deployCapTable(
             chain,
             issuerIdBytes16,
             incomingIssuerToValidate.legal_name,
             incomingIssuerToValidate.initial_shares_authorized
         );
-
-        // add contract to the cache and start listener
-        contractCache[incomingIssuerToValidate.id] = { contract, provider, libraries };
-        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, libraries);
 
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,

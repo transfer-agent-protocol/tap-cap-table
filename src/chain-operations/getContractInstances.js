@@ -1,12 +1,12 @@
-import { ethers } from "ethers";
 import { config } from "dotenv";
+import { ethers } from "ethers";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 
 config();
 
 
-async function getLocalContractInstance(address) {
+const getLocalContractInstance = async (address) => {
     const CONTRACT_ADDRESS_LOCAL = address;
 
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_FAKE_ACCOUNT;
@@ -24,7 +24,7 @@ async function getLocalContractInstance(address) {
     return { contract, provider, libraries };
 }
 
-async function getOptimismGoerliContractInstance(address) {
+const getOptimismGoerliContractInstance = async (address) => {
     const CONTRACT_ADDRESS_OPTIMISM_GOERLI = address;
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY_POET_TEST;
 
@@ -37,7 +37,7 @@ async function getOptimismGoerliContractInstance(address) {
     return { contract, provider, libraries};
 }
 
-async function getContractInstance(chain, address) {
+export const getContractInstance = async (chain, address) => {
     if (chain === "local") {
         return getLocalContractInstance(address);
     } else if (chain === "optimism-goerli") {
@@ -46,5 +46,3 @@ async function getContractInstance(chain, address) {
         throw new Error(`Unsupported chain: ${chain}`);
     }
 }
-
-export default getContractInstance;
