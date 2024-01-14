@@ -4,6 +4,7 @@ import { withGlobalTransaction } from "../db/operations/atomic.ts";
 import { readAllIssuers } from "../db/operations/read.js";
 import { updateIssuerById } from "../db/operations/update.js";
 import { getIssuerContract } from "../utils/caches.ts";
+import sleep from "../utils/sleep.js";
 import { verifyIssuerAndSeed } from "./seed.js";
 import {
     IssuerAuthorizedSharesAdjustment,
@@ -56,22 +57,25 @@ const txFuncs = new Map(
     Object.entries(txMapper).filter((arr) => arr.length === 3).forEach(([_x, [name, _y, handleFunc]]) => [name, handleFunc])
 );
 
+let _keepProcessing = true;
 
-const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+export const stopEventProcessing = () => {
+    _keepProcessing = false;
+}
 
-export const startSynchronousEventProcessing = async () => {
-    while (true) {
-        await sleep(1 * 1000);
+export const startEventProcessing = async () => {
+    _keepProcessing = true
+    const dbConn = await connectDB();
+    while (_keepProcessing) {
         const issuers = await readAllIssuers();
-        const dbConn = await connectDB();
-        // Process events synchronously for each issuer
-        console.log(`Processing for ${issuers.length} issuers`);
+        console.log(`Processing synchronously for ${issuers.length} issuers`);
         for (const issuer of issuers) {
             if (issuer.deployed_to) {
                 const { contract, provider, libraries } = await getIssuerContract(issuer);
                 await processEvents(dbConn, contract, provider, issuer, libraries.txHelper);
             }
         }
+        await sleep(10 * 1000);
     }
 };
 
@@ -79,15 +83,17 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBl
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
-    console.log(" processEvents for issuer", issuer);
-    let {_id: issuerId, last_processed_block: startBlock, tx_hash: deployedTx} = issuer;
+    let {_id: issuerId, last_processed_block: startBlock, tx_hash: deployedTxHash} = issuer;
+    console.log("Processing for issuer", issuerId, startBlock, deployedTxHash);
     if (startBlock === null) {
-        const receipt = await provider.getTransactionReceipt(deployedTx);
+        const receipt = await provider.getTransactionReceipt(deployedTxHash);
+        const tx = await provider.getTransaction(deployedTxHash);
+        console.log("tx", tx);
         if (!receipt) {
             console.error("Transaction receipt not found");
             return;
         }
-        startBlock = await bootstrapTable(issuerId, receipt.blockNumber, contract, dbConn);
+        startBlock = await bootstrapIssuer(issuerId, receipt.blockNumber, contract, dbConn);
     }
     const {number: latestBlock} = await provider.getBlock('finalized');
     let endBlock = Math.min(startBlock + maxBlocks, latestBlock);
@@ -141,7 +147,8 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBl
     }, dbConn);
 };
 
-const bootstrapTable = async (issuerId, deployedBlockNumber, contract, dbConn) => {
+const bootstrapIssuer = async (issuerId, deployedBlockNumber, contract, dbConn) => {
+    console.log("Bootstrapping issuer");
     // TODO: fix the copy-pasted query
     const issuerCreatedFilter = contract.filters.IssuerCreated;
     const issuerEvents = await contract.queryFilter(issuerCreatedFilter);

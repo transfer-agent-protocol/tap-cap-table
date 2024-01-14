@@ -1,7 +1,7 @@
+import axios from "axios";
+import { connectDB } from "../config/mongoose.ts";
 import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
 import { stockRepurchase } from "./sampleData.js";
-import axios from "axios";
-import connectDB from "../db/config/mongoose.js";
 connectDB();
 
 const main = async () => {

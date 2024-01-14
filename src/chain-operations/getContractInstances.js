@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
 import { config } from "dotenv";
+import { ethers } from "ethers";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 import getProvider from "./getProvider.js";
