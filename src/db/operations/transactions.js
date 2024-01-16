@@ -1,8 +1,8 @@
 import * as Acceptance from "../objects/transactions/acceptance/index.js";
 import * as Adjustment from "../objects/transactions/adjustment/index.js";
 import * as Cancellation from "../objects/transactions/cancellation/index.js";
-import * as Exercise from "../objects/transactions/exercise/index.js";
 import * as Conversion from "../objects/transactions/conversion/index.js";
+import * as Exercise from "../objects/transactions/exercise/index.js";
 import * as Issuance from "../objects/transactions/issuance/index.js";
 import * as Reissuance from "../objects/transactions/reissuance/index.js";
 import * as Release from "../objects/transactions/release/index.js";
@@ -12,6 +12,7 @@ import * as ReturnToPool from "../objects/transactions/return_to_pool/index.js";
 import * as Split from "../objects/transactions/split/index.js";
 import * as Transfer from "../objects/transactions/transfer/index.js";
 import * as Vesting from "../objects/transactions/vesting/index.js";
+import { save } from "./atomic.ts";
 
 const typeToModelType = {
     // Acceptance
@@ -91,7 +92,7 @@ const addTransactions = async (inputTransactions, issuerId) => {
         inputTransaction = { ...inputTransaction, issuer: issuerId };
         const ModelType = typeToModelType[inputTransaction.object_type];
         if (ModelType) {
-            const transaction = await new ModelType(inputTransaction).save();
+            const transaction = await save(new ModelType(inputTransaction));
             console.log(`${inputTransaction.object_type} transaction added. Details:`, JSON.stringify(transaction, null, 2));
         } else {
             console.log(`Unknown object type for transaction:`, JSON.stringify(inputTransaction, null, 2));

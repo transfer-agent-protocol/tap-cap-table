@@ -1,4 +1,4 @@
-import { AbiCoder } from "ethers";
+import { AbiCoder, EventLog } from "ethers";
 import { connectDB } from "../db/config/mongoose.ts";
 import { withGlobalTransaction } from "../db/operations/atomic.ts";
 import { readAllIssuers } from "../db/operations/read.js";
@@ -33,28 +33,37 @@ import {
 
 const abiCoder = new AbiCoder();
 
+interface QueuedEvent {
+    type: string;
+    timestamp: Date;
+    data: any;
+    o: EventLog;
+}
+
 const contractFuncs = new Map([
     ["StakeholderCreated", handleStakeholder],
     ["StockClassCreated", handleStockClass],
 ]);
 
 const txMapper = {
-    0: ["INVALID"],
-    1: ["ISSUER_AUTHORIZED_SHARES_ADJUSTMENT", IssuerAuthorizedSharesAdjustment, handleIssuerAuthorizedSharesAdjusted],
-    2: ["STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT", StockClassAuthorizedSharesAdjustment, handleStockClassAuthorizedSharesAdjusted],
-    3: ["STOCK_ACCEPTANCE", StockAcceptance, handleStockAcceptance],
-    4: ["STOCK_CANCELLATION", StockCancellation, handleStockCancellation],
-    5: ["STOCK_ISSUANCE", StockIssuance, handleStockIssuance],
-    6: ["STOCK_REISSUANCE", StockReissuance, handleStockReissuance],
-    7: ["STOCK_REPURCHASE", StockRepurchase, handleStockRepurchase],
-    8: ["STOCK_RETRACTION", StockRetraction, handleStockRetraction],
-    9: ["STOCK_TRANSFER", StockTransfer, handleStockTransfer],
+    1: [IssuerAuthorizedSharesAdjustment, handleIssuerAuthorizedSharesAdjusted],
+    2: [StockClassAuthorizedSharesAdjustment, handleStockClassAuthorizedSharesAdjusted],
+    3: [StockAcceptance, handleStockAcceptance],
+    4: [StockCancellation, handleStockCancellation],
+    5: [StockIssuance, handleStockIssuance],
+    6: [StockReissuance, handleStockReissuance],
+    7: [StockRepurchase, handleStockRepurchase],
+    8: [StockRetraction, handleStockRetraction],
+    9: [StockTransfer, handleStockTransfer],
 };
-
-// Map(event.type => handler) derived from the above
-const txFuncs = new Map(
+// (idx => type name) derived from txMapper
+export const txTypes = Object.fromEntries(
     // @ts-ignore
-    Object.entries(txMapper).filter((arr) => arr.length === 3).forEach(([_x, [name, _y, handleFunc]]) => [name, handleFunc])
+    Object.entries(txMapper).map(([i, [_, f]]) => [i, f.name.replace("handle", "")])
+);
+// (name => handler) derived from txMapper
+export const txFuncs = Object.fromEntries(
+    Object.entries(txMapper).map(([i, [_, f]]) => [txTypes[i], f])
 );
 
 let _keepProcessing = true;
@@ -63,72 +72,69 @@ export const stopEventProcessing = () => {
     _keepProcessing = false;
 }
 
-export const startEventProcessing = async () => {
+export const startEventProcessing = async (processTo: "latest" | "finalized") => {
     _keepProcessing = true
     const dbConn = await connectDB();
     while (_keepProcessing) {
         const issuers = await readAllIssuers();
-        console.log(`Processing synchronously for ${issuers.length} issuers`);
+        // console.log(`Processing synchronously for ${issuers.length} issuers`);
         for (const issuer of issuers) {
             if (issuer.deployed_to) {
                 const { contract, provider, libraries } = await getIssuerContract(issuer);
-                await processEvents(dbConn, contract, provider, issuer, libraries.txHelper);
+                await processEvents(dbConn, contract, provider, issuer, libraries.txHelper, processTo);
             }
         }
-        await sleep(10 * 1000);
+        await sleep(1 * 1000);
     }
 };
 
-const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBlocks = 1500, maxEvents = 250) => {
+const processEvents = async (dbConn, contract, provider, issuer, txHelper, processTo, maxBlocks = 1500, maxEvents = 250) => {
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
-    let {_id: issuerId, last_processed_block: startBlock, tx_hash: deployedTxHash} = issuer;
-    console.log("Processing for issuer", issuerId, startBlock, deployedTxHash);
-    if (startBlock === null) {
+    let {_id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash} = issuer;
+    const {number: latestBlock} = await provider.getBlock(processTo);
+    // console.log("Processing for issuer", {issuerId, lastProcessedBlock, deployedTxHash, latestBlock});
+    if (lastProcessedBlock === null) {
         const receipt = await provider.getTransactionReceipt(deployedTxHash);
-        const tx = await provider.getTransaction(deployedTxHash);
-        console.log("tx", tx);
         if (!receipt) {
-            console.error("Transaction receipt not found");
+            console.error("Deployment receipt not found");
             return;
         }
-        startBlock = await bootstrapIssuer(issuerId, receipt.blockNumber, contract, dbConn);
+        if (receipt.blockNumber > latestBlock) {
+            console.log("Deployment tx not finalized", {receipt, lastFinalizedBlock: latestBlock});
+            return;
+        }
+        lastProcessedBlock = await issuerDeployed(issuerId, receipt, contract, dbConn);
     }
-    const {number: latestBlock} = await provider.getBlock('finalized');
+    const startBlock = lastProcessedBlock + 1;
     let endBlock = Math.min(startBlock + maxBlocks, latestBlock);
+    if (startBlock >= endBlock) {
+        return;
+    }
+    
+    // console.log(" processing from", { startBlock, endBlock });
+    let events: QueuedEvent[] = [];
 
-    let events: any[] = [];
-
-    // TODO: fix filter
-    const contractEvents = await contract.queryFilter("*", startBlock, endBlock);
+    const contractEvents: EventLog[] = await contract.queryFilter("*", startBlock, endBlock);
     for (const event of contractEvents) {
-        if (contractFuncs.has(event.type)) {
-            // TODO: how to deserialize event.data?
-            console.log("contract event: ", event);
-            events.push(event);
+        const type = event?.fragment?.name;
+        if (contractFuncs.has(type)) {
+            const { timestamp } = await provider.getBlock(event.blockNumber);
+            events.push({type, timestamp, data: event.args[0], o: event });
         }
     }
 
-    // TODO: fix filter
-    const txEvents = await txHelper.queryFilter("*", startBlock, endBlock);
+    const txEvents: EventLog[] = await txHelper.queryFilter(txHelper.filters.TxCreated, startBlock, endBlock);
     for (const event of txEvents) {
-        // TODO: the same processing as libraries.txHelper.on     
-        // TODO:  emit TxCreated(transactions.length, txType, txData);
-        //  how do we parse the event.data string of each event? 
-        //    https://www.npmjs.com/package/@ethersproject/abstract-provider?activeTab=code (line 102: Log.data is string-type)
-        console.log("txHelper event: ", event);
         if (event.removed) {
             continue;
         }
-        // TODO: does txTypeIdx even come with the event??? need to test this...
-        let txTypeIdx;
-        let txData;
-        const [type, structType] = txMapper[txTypeIdx];
+        const [_len, typeIdx, txData] = event.args;
+        const [structType, _] = txMapper[typeIdx];
         const decodedData = abiCoder.decode([structType], txData);
         const { timestamp } = await provider.getBlock(event.blockNumber);
-        // TODO: I think the below needs a lot of work
-        events.push({ ...event, type, timestamp, data: decodedData[0] });
+        events.push({ type: txTypes[typeIdx], timestamp, data: decodedData[0], o: event });
     }
 
     // Nothing to process
@@ -137,62 +143,62 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, maxBl
         return;
     }
 
-    // Process in the correct order
-    events.sort((a, b) => a.blockNumber - b.blockNumber || a.transactionIndex - b.transactionIndex);
+    // Process only up to a certain amount
     [events, endBlock] = trimEvents(events, maxEvents, endBlock);
-
     await withGlobalTransaction(async () => {
         await persistEvents(issuerId, events);
         await updateLastProcessed(issuerId, endBlock);
     }, dbConn);
 };
 
-const bootstrapIssuer = async (issuerId, deployedBlockNumber, contract, dbConn) => {
-    console.log("Bootstrapping issuer");
-    // TODO: fix the copy-pasted query
-    const issuerCreatedFilter = contract.filters.IssuerCreated;
-    const issuerEvents = await contract.queryFilter(issuerCreatedFilter);
-    if (issuerEvents.length === 0) {
+const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
+    console.log("New issuer was deployed", {issuerId});
+    const events = await contract.queryFilter(contract.filters.IssuerCreated);
+    if (events.length === 0) {
         throw new Error(`No issuer events found!`);
     }
-    const issuerCreatedEventId = issuerEvents[0].args[0];
-    console.log("IssuerCreated Event Emitted!", issuerCreatedEventId);
-    const tMinusOne = deployedBlockNumber - 1;
-    
+    const issuerCreatedEventId = events[0].args[0];
+    console.log("IssuerCreated event captured!", {issuerCreatedEventId});
+    const lastProcessedBlock = receipt.blockNumber - 1;
     await withGlobalTransaction(async () => {
         await verifyIssuerAndSeed(contract, issuerCreatedEventId);
-        await updateLastProcessed(issuerId, tMinusOne);
+        await updateLastProcessed(issuerId, lastProcessedBlock);
     }, dbConn);
-
-    return tMinusOne;
+    return lastProcessedBlock;
 };
 
-const persistEvents = async (issuerId, events) => {
+const persistEvents = async (issuerId, events: QueuedEvent[]) => {
     // Persist all the necessary changes for each event gathered in process events
+    console.log(`${events.length} events to process for issuerId ${issuerId}`);
     for (const event of events) {
-        const txHandleFunc = txFuncs.get(event.type);
-        console.log("persistEvent: ", event);
+        const {type, data, timestamp} = event;
+        const txHandleFunc = txFuncs[type];
+        // console.log("persistEvent: ", {type, data, timestamp});
         if (txHandleFunc) {
             // @ts-ignore
-            await txHandleFunc(event.data, issuerId, event.timestamp);
+            await txHandleFunc(data, issuerId, timestamp);
             continue;
         }
-        const contractHandleFunc = contractFuncs.get(event.type);
+        const contractHandleFunc = contractFuncs.get(type);
         if (contractHandleFunc) {
-            await contractHandleFunc(event.data);
+            await contractHandleFunc(data);
             continue;
         }
-        throw new Error(`Invalid transaction type: "${event.type}" for ${event}`);
+        console.error("Invalid transaction type: ", type, event);
+        throw new Error(`Invalid transaction type: "${type}"`);
     }
 };
 
-export const trimEvents = (events, maxEvents, endBlock) => {
+export const trimEvents = (origEvents: QueuedEvent[], maxEvents, endBlock) => {
+    // Sort for correct execution order
+    let events = [...origEvents];
+    events.sort((a, b) => a.o.blockNumber - b.o.blockNumber || a.o.transactionIndex - b.o.transactionIndex || a.o.index - b.o.index);
     let index = 0;    
     while (index < maxEvents && index < events.length) {
         // Include the entire next block
-        const includeBlock = events[index].blockNumber;
+        const includeBlock = events[index].o.blockNumber;
         index++;
-        while (index < events.length && events[index].blockNumber === includeBlock) {
+        while (index < events.length && events[index].o.blockNumber === includeBlock) {
             index++;
         }
     }
@@ -203,10 +209,10 @@ export const trimEvents = (events, maxEvents, endBlock) => {
     // We processed up to the last events' blockNumber
     // `index` is *exclusive* when trimming
     const useEvents = [...events.slice(0, index)];
-    return [useEvents, useEvents[useEvents.length - 1].blockNumber];
+    return [useEvents, useEvents[useEvents.length - 1].o.blockNumber];
 };
 
 
 const updateLastProcessed = async (issuerId, lastProcessedBlock) => {
-    return updateIssuerById(issuerId, {lastProcessedBlock});
+    return updateIssuerById(issuerId, {last_processed_block: lastProcessedBlock});
 };

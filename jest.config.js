@@ -4,7 +4,7 @@
  */
 
 // This allows us to avoid messing with the state of people's standard dev database
-process.env['DATABASE_OVERRIDE'] = 'jest';
+process.env['DATABASE_OVERRIDE'] = 'jest-integration';
 
 /** @type {import('jest').Config} */
 const config = {

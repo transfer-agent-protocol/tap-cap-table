@@ -14,6 +14,7 @@ import StockReissuance from "../objects/transactions/reissuance/StockReissuance.
 import StockRepurchase from "../objects/transactions/repurchase/StockRepurchase.js";
 import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
+import { findByIdAndUpdate } from "./atomic.ts";
 
 
 export const updateIssuerById = async (id, updatedData) => {
