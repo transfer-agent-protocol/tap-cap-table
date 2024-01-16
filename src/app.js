@@ -7,6 +7,7 @@ import { connectDB } from "./db/config/mongoose.ts";
 import { startEventProcessing, stopEventProcessing } from "./chain-operations/transactionPoller.ts";
 
 // Routes
+import { capTable as capTableRoutes } from "./routes/capTable.js";
 import historicalTransactions from "./routes/historicalTransactions.js";
 import mainRoutes from "./routes/index.js";
 import issuerRoutes from "./routes/issuer.js";
@@ -55,6 +56,7 @@ app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
 
 app.use("/", chainMiddleware, mainRoutes);
+app.use("/cap-table", chainMiddleware, capTableRoutes);
 app.use("/issuer", chainMiddleware, issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
@@ -90,9 +92,13 @@ export const shutdownServer = async (server) => {
         console.log("Shutting down app server...");
         server.close();
     }
-    console.log("Stopping event processing...");
-    stopEventProcessing();
-    console.log("Disconnecting from mongo...");
-    await mongoose.disconnect();
+    
+    console.log("Waiting for event processing to stop...");
+    await stopEventProcessing();
+
+    if (mongoose.connection?.readyState === mongoose.STATES.connected) {
+        console.log("Disconnecting from mongo...");
+        await mongoose.disconnect();
+    }
 }
 
