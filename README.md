@@ -2,9 +2,9 @@
 
 Developed by:
 
-- [Poet](https://poet.network/)
-- [Plural Energy](https://www.pluralenergy.co/)
-- [Fairmint](https://www.fairmint.com/)
+-   [Poet](https://poet.network/)
+-   [Plural Energy](https://www.pluralenergy.co/)
+-   [Fairmint](https://www.fairmint.com/)
 
 This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active development, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
 
@@ -16,28 +16,28 @@ This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap
 
 ## Dependencies
 
-- [Docker](https://docs.docker.com/get-docker/)
+-   [Docker](https://docs.docker.com/get-docker/)
 
-- [Foundry](https://getfoundry.sh/)
+-   [Foundry](https://getfoundry.sh/)
 
 ```sh
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-- [Mongo Compass](https://www.mongodb.com/try/download/compass)
+-   [Mongo Compass](https://www.mongodb.com/try/download/compass)
 
-- [Postman App](https://www.postman.com/downloads/)
+-   [Postman App](https://www.postman.com/downloads/)
 
-- [Node.js v18.16.0](https://nodejs.org/en/download/)
+-   [Node.js v18.16.0](https://nodejs.org/en/download/)
 
-- [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
+-   [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
 
 We're using the official [MongoDB Docker image](https://hub.docker.com/_/mongo) for the local development database. You can find the [Docker Compose file](./docker-compose.yml) in the root of this repository.
 
 ## Official links
 
-- [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
-- [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
+-   [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
+-   [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
 
 ## Getting started
 
@@ -98,7 +98,6 @@ To deploy these libraries:
 
 This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
 
-
 ## Running the cap table server
 
 After the deployment script is completed, start the server with nodemon:
@@ -152,16 +151,40 @@ We're shipping code fast. If you run into an issue, particularly one that result
 
 Inside of `/chain`:
 
-- Restart anvil
-- Run `forge clean`
-- Move back to the root directory, then run `yarn build`
+-   Restart anvil
+-   Run `forge clean`
+-   Move back to the root directory, then run `yarn build`
 
 After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
 
-## Testing
+## Testing Web3
 
-To run tests for the smart contracts, run `yarn test`.
-This will run all the tests defined in the test suite and output the results to the console.
+Run all smart contracts tests
+
+`yarn test`
+
+## Testing Web2
+
+### Unit tests
+
+Run all javascript unit tests with jest
+
+`yarn test-js`
+
+### Integration tests
+
+Deploy a cap table to local anvil server through a local web2 server. The chain event listener is also run to ensure the events are properly mirrored into the mongo database. NOTE: running this deletes your local mongo collections first
+
+`yarn test-js-integration`
+
+Condensed steps from no active processes running:
+
+-   Terminal 1: `docker compose up`
+-   Terminal 2: `anvil`
+-   Terminal 3: `cd chain && forge script script/CapTableFactory.s.sol --fork-url http://localhost:8545 --broadcast` 
+    -   To bootstrap `jest-integration` MongoDB collections: `cd .. && yarn test-js-integration` NOTE: we use `jest-integration`
+    -   Then using MongoDB compass, create/update the record in `jest-integration.factories` with the implementation_address and factory_address
+    -   Run `yarn test-js-integration`!
 
 ## Contributing
 

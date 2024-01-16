@@ -6,6 +6,7 @@ import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
+import { findByIdAndDelete } from "./atomic.ts";
 
 // TODO: since we're doing a time series db that's meant to be immutable, is this needed?
 

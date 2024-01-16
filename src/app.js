@@ -68,26 +68,31 @@ app.use("/historical-transactions", historicalTransactions);
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
 
-export const startServer = async () => {
+export const startServer = async (processTo = "finalized") => {
+    /*
+    processTo can be "latest" or "finalized". Latest helps during testing bc we dont have to wait for blocks to finalize
+    */
+
     // Connect to MongoDB
     await connectDB();
 
     const server = app.listen(PORT, async () => {
         console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
         // Asynchronous job to track web3 events in web2
-        startEventProcessing();
+        startEventProcessing(processTo);
     });
 
     return server;
 };
 
 export const shutdownServer = async (server) => {
-    console.log("Shutting down app server...");
-    server.close();
+    if (server) {
+        console.log("Shutting down app server...");
+        server.close();
+    }
     console.log("Stopping event processing...");
     stopEventProcessing();
     console.log("Disconnecting from mongo...");
     await mongoose.disconnect();
-    console.log(" done!");
 }
 
