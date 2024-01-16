@@ -423,6 +423,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         return stockClasses.length;
     }
 
+    /// @inheritdoc ICapTable
+    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) public view returns (bytes16, uint, uint, uint40) {
+        ActivePosition storage position = positions.activePositions[stakeholderId][securityId];
+        return (position.stock_class_id, position.quantity, position.share_price, position.timestamp);
+    }
+
     /* Role Based Access Control */
     modifier onlyOperator() {
         /// @notice Admins are also considered Operators
