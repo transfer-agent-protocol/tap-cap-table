@@ -67,13 +67,20 @@ export const txFuncs = Object.fromEntries(
 );
 
 let _keepProcessing = true;
+let _finishedProcessing = false;
 
-export const stopEventProcessing = () => {
+export const stopEventProcessing = async () => {
     _keepProcessing = false;
+    while (!_finishedProcessing) {
+        await sleep(50);
+    }
 }
 
+export const pollingSleepTime = 1000;
+
 export const startEventProcessing = async (processTo: "latest" | "finalized") => {
-    _keepProcessing = true
+    _keepProcessing = true;
+    _finishedProcessing = false;
     const dbConn = await connectDB();
     while (_keepProcessing) {
         const issuers = await readAllIssuers();
@@ -84,8 +91,9 @@ export const startEventProcessing = async (processTo: "latest" | "finalized") =>
                 await processEvents(dbConn, contract, provider, issuer, libraries.txHelper, processTo);
             }
         }
-        await sleep(1 * 1000);
+        await sleep(pollingSleepTime);
     }
+    _finishedProcessing = true;
 };
 
 const processEvents = async (dbConn, contract, provider, issuer, txHelper, processTo, maxBlocks = 1500, maxEvents = 250) => {
