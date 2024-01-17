@@ -77,7 +77,6 @@ export const stopEventProcessing = async () => {
 }
 
 export const pollingSleepTime = 1000;
-export const web3WaitTime = 5000;
 
 export const startEventProcessing = async (finalizedOnly: boolean) => {
     _keepProcessing = true;
@@ -154,13 +153,6 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
 
     // Process only up to a certain amount
     [events, endBlock] = trimEvents(events, maxEvents, endBlock);
-
-    if (!finalizedOnly) {
-        // kkolze: when running against `latest`, our server routes need to wait 
-        //  for the web3 operations to complete before they write to mongo. therefore 
-        //  we need to wait here to ensure the server routes have written to mongo 
-        await sleep(web3WaitTime);
-    }
 
     await withGlobalTransaction(async () => {
         await persistEvents(issuerId, events);

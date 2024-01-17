@@ -1,7 +1,8 @@
 import axios from "axios";
 import { shutdownServer, startServer } from "../../app";
-import { pollingSleepTime, web3WaitTime } from "../../chain-operations/transactionPoller";
+import { pollingSleepTime } from "../../chain-operations/transactionPoller";
 import Factory from "../../db/objects/Factory";
+import { web3WaitTime } from "../../db/operations/update";
 import { issuer as exampleIssuer, stakeholder1, stakeholder2, stockClass, stockIssuance, stockTransfer } from "../../scripts/sampleData";
 import sleep from "../../utils/sleep";
 import { deseedDatabase } from "../deseed";
