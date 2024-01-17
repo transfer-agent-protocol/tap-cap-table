@@ -74,6 +74,9 @@ interface ICapTable {
 
     function getTotalActiveSecuritiesCount() external view returns (uint256);
 
+    // Function to get the timestamp of an active position
+    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint, uint, uint40);
+
     function issueStock(StockIssuanceParams calldata params) external;
 
     function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external;

@@ -1,31 +1,20 @@
 import axios from "axios";
-import { shutdownServer, startServer } from "../../app";
 import { pollingSleepTime } from "../../chain-operations/transactionPoller";
 import Factory from "../../db/objects/Factory";
 import { web3WaitTime } from "../../db/operations/update";
 import { issuer as exampleIssuer, stakeholder1, stakeholder2, stockClass, stockIssuance, stockTransfer } from "../../scripts/sampleData";
 import sleep from "../../utils/sleep";
-import { deseedDatabase } from "../deseed";
+import { SERVER_BASE, runLocalServer, shutdownLocalServer } from "./utils";
 
 
-const SERVER_BASE = `http://localhost:${process.env.PORT}`;
-// Pro-tip: use this for faster iteration in dev after seedExampleData is done
-const HARDCODED_ISSUER_ID = null;
-let _server = null
-
+// Pro-tip: set this to iterate faster in dev after `seedExampleData` finishes
+const HARDCODED_ISSUER_ID = "4e25e7b9-9718-4c95-9f74-57a729b9cfb2";
 
 beforeAll(async () => {
-    if (!HARDCODED_ISSUER_ID) {
-        await deseedDatabase();
-    }
-    console.log("starting server");
-    _server = await startServer(false);
+    await runLocalServer(!HARDCODED_ISSUER_ID);
 }, 10000);
 
-afterAll(async () => {
-    console.log("shutting down server");
-    await shutdownServer(_server);
-}, 10000);
+afterAll(shutdownLocalServer, 10000);
 
 const WAIT_TIME = 1000;
 
@@ -103,8 +92,6 @@ const seedExampleData = async () => {
 }
 
 const checkRecs = async (issuerId) => {
-    // TODO: there is a timing issue when running with `latest` instead of `finalized` 
-
     // TODO: aggregate docs across activePositions to 
     const { data: capTable } = await axios.get(`${SERVER_BASE}/cap-table/latest?issuerId=${issuerId}`);
     console.log("cap Table Latest: ", capTable);
