@@ -177,13 +177,13 @@ Deploy a cap table to local anvil server through a local web2 server. The chain 
 
 `yarn test-js-integration`
 
-Condensed steps from no active processes running:
+Integration test setup from no active processes:
 
 -   Terminal 1: `docker compose up`
 -   Terminal 2: `anvil`
--   Terminal 3: `cd chain && forge script script/CapTableFactory.s.sol --fork-url http://localhost:8545 --broadcast` 
-    -   To bootstrap `jest-integration` MongoDB collections: `cd .. && yarn test-js-integration` NOTE: we use `jest-integration`
-    -   Then using MongoDB compass, create/update the record in `jest-integration.factories` with the implementation_address and factory_address
+-   Terminal 3: `cd chain && forge script script/CapTableFactory.s.sol --fork-url http://localhost:8545 --broadcast`
+    -   In MongoDB compass, create/update `implementation_address` and `factory_address` in `jest-integration.factories`
+        -   If the `jest-integration` MongoDB databases dont exist: `cd .. && yarn test-js-integration`
     -   Run `yarn test-js-integration`!
 
 ## Contributing

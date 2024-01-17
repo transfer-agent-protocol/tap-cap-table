@@ -10,8 +10,8 @@ import {
 
 import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
 import { createStakeholder } from "../db/operations/create.js";
-import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 import { readIssuerById } from "../db/operations/read.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stakeholder = Router();
 

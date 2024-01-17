@@ -7,7 +7,7 @@ import { connectDB } from "./db/config/mongoose.ts";
 import { startEventProcessing, stopEventProcessing } from "./chain-operations/transactionPoller.ts";
 
 // Routes
-import { capTable as capTableRoutes } from "./routes/capTable.js";
+import { capTable as capTableRoutes } from "./routes/capTable.ts";
 import historicalTransactions from "./routes/historicalTransactions.js";
 import mainRoutes from "./routes/index.js";
 import issuerRoutes from "./routes/issuer.js";
@@ -70,7 +70,7 @@ app.use("/historical-transactions", historicalTransactions);
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
 
-export const startServer = async (processTo = "finalized") => {
+export const startServer = async (finalizedOnly = true) => {
     /*
     processTo can be "latest" or "finalized". Latest helps during testing bc we dont have to wait for blocks to finalize
     */
@@ -81,7 +81,7 @@ export const startServer = async (processTo = "finalized") => {
     const server = app.listen(PORT, async () => {
         console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
         // Asynchronous job to track web3 events in web2
-        startEventProcessing(processTo);
+        startEventProcessing(finalizedOnly);
     });
 
     return server;
