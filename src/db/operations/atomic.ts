@@ -21,10 +21,23 @@ export const clearGlobalSession = () => {
     _globalSession = null;
 }
 
+const isReplSet = () => {
+    if (process.env.DATABASE_REPLSET === "1") {
+        return true;
+    } 
+    return false;
+}
+
 export const withGlobalTransaction = async (func: () => Promise<void>, useConn?: Connection) => {
+    if (!isReplSet()) {
+        // Transactions in mongo only work when running with --replSet
+        //  https://www.mongodb.com/docs/manual/tutorial/convert-standalone-to-replica-set/
+        return await func();
+    }
+
     // Wrap a user defined `func` in a global transaction
-    const db = useConn || await connectDB();
-    await db.transaction(async (session) => {
+    const dbConn = useConn || await connectDB();
+    await dbConn.transaction(async (session) => {
         setGlobalSession(session);
         try {
             return await func();
@@ -37,7 +50,7 @@ export const withGlobalTransaction = async (func: () => Promise<void>, useConn?:
 
 const includeSession = (options?: TQueryOptions) => {
     let useOptions = options || {};
-    if (!_globalSession) {
+    if (_globalSession !== null) {
         if (useOptions.session) {
             throw new Error(`options.session is already set!: ${useOptions}`);
         }

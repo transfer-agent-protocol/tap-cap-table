@@ -77,8 +77,9 @@ export const stopEventProcessing = async () => {
 }
 
 export const pollingSleepTime = 1000;
+export const web3WaitTime = 5000;
 
-export const startEventProcessing = async (processTo: "latest" | "finalized") => {
+export const startEventProcessing = async (finalizedOnly: boolean) => {
     _keepProcessing = true;
     _finishedProcessing = false;
     const dbConn = await connectDB();
@@ -88,7 +89,7 @@ export const startEventProcessing = async (processTo: "latest" | "finalized") =>
         for (const issuer of issuers) {
             if (issuer.deployed_to) {
                 const { contract, provider, libraries } = await getIssuerContract(issuer);
-                await processEvents(dbConn, contract, provider, issuer, libraries.txHelper, processTo);
+                await processEvents(dbConn, contract, provider, issuer, libraries.txHelper, finalizedOnly);
             }
         }
         await sleep(pollingSleepTime);
@@ -96,12 +97,12 @@ export const startEventProcessing = async (processTo: "latest" | "finalized") =>
     _finishedProcessing = true;
 };
 
-const processEvents = async (dbConn, contract, provider, issuer, txHelper, processTo, maxBlocks = 1500, maxEvents = 250) => {
+const processEvents = async (dbConn, contract, provider, issuer, txHelper, finalizedOnly, maxBlocks = 1500, maxEvents = 250) => {
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
     let {_id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash} = issuer;
-    const {number: latestBlock} = await provider.getBlock(processTo);
+    const {number: latestBlock} = await provider.getBlock(finalizedOnly ? "finalized" : "latest");
     // console.log("Processing for issuer", {issuerId, lastProcessedBlock, deployedTxHash, latestBlock});
     if (lastProcessedBlock === null) {
         const receipt = await provider.getTransactionReceipt(deployedTxHash);
@@ -153,6 +154,14 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, proce
 
     // Process only up to a certain amount
     [events, endBlock] = trimEvents(events, maxEvents, endBlock);
+
+    if (!finalizedOnly) {
+        // kkolze: when running against `latest`, our server routes need to wait 
+        //  for the web3 operations to complete before they write to mongo. therefore 
+        //  we need to wait here to ensure the server routes have written to mongo 
+        await sleep(web3WaitTime);
+    }
+
     await withGlobalTransaction(async () => {
         await persistEvents(issuerId, events);
         await updateLastProcessed(issuerId, endBlock);

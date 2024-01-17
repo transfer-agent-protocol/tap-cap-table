@@ -1,8 +1,7 @@
 import axios from "axios";
 import { shutdownServer, startServer } from "../../app";
-import { pollingSleepTime } from "../../chain-operations/transactionPoller";
+import { pollingSleepTime, web3WaitTime } from "../../chain-operations/transactionPoller";
 import Factory from "../../db/objects/Factory";
-import Issuer from "../../db/objects/Issuer";
 import { issuer as exampleIssuer, stakeholder1, stakeholder2, stockClass, stockIssuance, stockTransfer } from "../../scripts/sampleData";
 import sleep from "../../utils/sleep";
 import { deseedDatabase } from "../deseed";
@@ -19,13 +18,13 @@ beforeAll(async () => {
         await deseedDatabase();
     }
     console.log("starting server");
-    _server = await startServer("latest");
-});
+    _server = await startServer(false);
+}, 10000);
 
 afterAll(async () => {
     console.log("shutting down server");
     await shutdownServer(_server);
-});
+}, 10000);
 
 const WAIT_TIME = 1000;
 
@@ -97,18 +96,17 @@ const seedExampleData = async () => {
     // await allowPropagate();
 
     // Allow time for poller process to catch up
-    await sleep(pollingSleepTime + 3000);
+    await sleep(pollingSleepTime + web3WaitTime + 2000);
 
     return issuerId;
 }
 
 const checkRecs = async (issuerId) => {
-    const issuer = Issuer.findById(issuerId);
+    // TODO: there is a timing issue when running with `latest` instead of `finalized` 
 
     // TODO: aggregate docs across activePositions to 
-    const resp = await axios.get(`${SERVER_BASE}/cap-table/`);
-    console.log(resp);
-
+    const { data: capTable } = await axios.get(`${SERVER_BASE}/cap-table/latest?issuerId=${issuerId}`);
+    console.log("cap Table Latest: ", capTable);
 
 }
 
