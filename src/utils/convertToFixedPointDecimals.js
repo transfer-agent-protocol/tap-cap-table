@@ -1,8 +1,10 @@
 import { toBigInt } from "ethers";
 
+export const decimalScaleValue = 1e10;
+
 // Convert a price to a BigInt
 function toScaledBigNumber(price) {
-    return toBigInt(Math.round(price * 1e10).toString());
+    return toBigInt(Math.round(price * decimalScaleValue).toString());
 }
 
 // TODO: might not be refactored correctly from ethers v5 to v6
@@ -10,7 +12,7 @@ function toScaledBigNumber(price) {
 function toDecimal(scaledPriceBigInt) {
     if (typeof scaledPriceBigInt === "bigint") {
         const numberString = scaledPriceBigInt.toString();
-        return parseFloat(numberString / 1e10).toString();
+        return parseFloat(numberString / decimalScaleValue).toString();
     } else {
         return scaledPriceBigInt;
     }

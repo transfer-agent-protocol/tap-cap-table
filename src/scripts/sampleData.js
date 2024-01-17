@@ -174,6 +174,24 @@ export const stakeholder2 = (issuerId) => {
         },
     };
 };
+
+export const stakeholder3 = (issuerId) => {
+    return {
+        issuerId,
+        data: {
+            name: {
+                legal_name: "Kent Kolze",
+                first_name: "Kent",
+                last_name: "Kolze",
+            },
+            issuer_assigned_id: "",
+            stakeholder_type: "INDIVIDUAL",
+            current_relationship: "EMPLOYEE",
+            comments: [],
+        },
+    };
+};
+
 export const stockClass = (issuerId) => {
     return {
         issuerId,
