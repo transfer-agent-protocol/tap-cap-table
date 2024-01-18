@@ -2,28 +2,14 @@ import { ethers } from "ethers";
 import { config } from "dotenv";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
+import getProvider from "./getProvider.js";
 
 config();
 
 async function getContractInstance(address) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY;
-    const RPC_URL = process.env.RPC_URL;
-    const CHAIN_ID = process.env.CHAIN_ID;
 
-    let provider
-
-    // Change the CHAIN_ID in the .env file to deploy to a different network
-    if (RPC_URL === "http://127.0.0.1:8545") {
-        console.log("🔗 | Connecting to local network: ", RPC_URL)
-       const  customNetwork =  {
-            chainId: parseInt(CHAIN_ID),
-            name: "local"
-        };
-         provider = new ethers.JsonRpcProvider(RPC_URL, customNetwork);
-    } else {
-            console.log("🔗 | Connecting to network: ", RPC_URL)
-            provider = new ethers.JsonRpcProvider(RPC_URL);
-    } 
+    const provider = getProvider();
 
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(address, CAP_TABLE.abi, wallet);
