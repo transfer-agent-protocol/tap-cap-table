@@ -6,7 +6,7 @@ import getProvider from "./getProvider.js";
 
 config();
 
-async function getContractInstance(address) {
+export const getContractInstance = (address) => {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY;
 
     const provider = getProvider();
@@ -17,5 +17,3 @@ async function getContractInstance(address) {
 
     return { contract, provider, libraries };
 }
-
-export default getContractInstance;
