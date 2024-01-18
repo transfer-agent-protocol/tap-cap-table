@@ -2,7 +2,9 @@
 
 Developed by:
 
--   [Transfer Agent Protocol](https://transferagentprotocol.xyz/)
+-   # [Transfer Agent Protocol](https://transferagentprotocol.xyz/)
+-   [Poet](https://poet.network/)
+    > > > > > > > ff7779fd6fb670514902163f312e88db4a8aa9be
 -   [Plural Energy](https://www.pluralenergy.co/)
 -   [Fairmint](https://www.fairmint.com/)
 
@@ -39,8 +41,10 @@ We're using the official [MongoDB Docker image](https://hub.docker.com/_/mongo) 
 -   [Contributor doc](https://coda.io/d/_dFoHg0h07Et/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
 -   # [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
 -   [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
+-   # [Slack](https://transferagentprotocol.slack.com/) - invite only for now. > > > > > > > ec8edb9 (correct the issues with polling for blockchain events and get the integration test working properly)
+-   [Contributor doc](https://coda.io/d/_drhpwRhDok-/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
 -   [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
-    > > > > > > > ec8edb9 (correct the issues with polling for blockchain events and get the integration test working properly)
+    > > > > > > > ff7779fd6fb670514902163f312e88db4a8aa9be
 
 ## Getting started
 
@@ -187,9 +191,8 @@ Integration test setup from no active processes:
 -   Terminal 1: `docker compose up`
 -   Terminal 2: `anvil`
 -   Terminal 3: `cd chain && forge script script/CapTableFactory.s.sol --fork-url http://localhost:8545 --broadcast`
-
-    -   To bootstrap `jest-integration` MongoDB collections: `cd .. && yarn test-js-integration` NOTE: we use `jest-integration`
-    -   Then using MongoDB compass, create/update the record in `jest-integration.factories` with the implementation_address and factory_address
+    -   In MongoDB compass, create/update `implementation_address` and `factory_address` in `jest-integration.factories`
+        -   If the `jest-integration` MongoDB databases dont exist: `cd .. && yarn test-js-integration`
     -   Run `yarn test-js-integration`!
 
 ## Contributing
