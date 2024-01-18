@@ -8,6 +8,8 @@ import VestingTerms from "../objects/VestingTerms.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
 import HistoricalTransaction from "../objects/HistoricalTransaction.js";
+import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
+import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIssuance.js";
 
 export const createIssuer = (issuerData) => {
     const issuer = new Issuer(issuerData);
@@ -52,6 +54,16 @@ export const createHistoricalTransaction = (transactionHistoryData) => {
 export const createStockIssuance = (stockIssuanceData) => {
     const stockIssuance = new StockIssuance(stockIssuanceData);
     return stockIssuance.save();
+};
+
+export const createEquityCompensationIssuance = (issuanceData) => {
+    const equityCompensationIssuance = new EquityCompensationIssuance(issuanceData);
+    return equityCompensationIssuance.save();
+};
+
+export const createConvertibleIssuance = (issuanceData) => {
+    const convertibleIssuance = new ConvertibleIssuance(issuanceData);
+    return convertibleIssuance.save();
 };
 
 export const createStockTransfer = (stockTransferData) => {

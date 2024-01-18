@@ -9,6 +9,11 @@ import startOnchainListeners from "../chain-operations/transactionListener.js";
 
 const router = Router();
 
+router.get("/", async (req, res) => {
+    console.log("Welcome to TAP")
+    res.status(200).send(`Welcome to the future of Transfer Agents 💸`);
+})
+
 
 router.post("/mint-cap-table", async (req, res) => {
     try {

@@ -73,7 +73,7 @@ app.use("/historical-transactions", historicalTransactions);
 app.use("/transactions/", contractMiddleware, transactionRoutes);
 
 app.listen(PORT, async () => {
-    console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
+    console.log(`🚀  Server successfully launched on port ${PORT}`);
      // Fetch all issuers
      const issuers = await readAllIssuers();
      if (issuers && issuers.length > 0) {
