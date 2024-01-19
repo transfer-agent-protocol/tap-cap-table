@@ -12,4 +12,4 @@ RUN yarn install
 
 EXPOSE 8080
 # Specify the command to run on container start
-CMD ["node", "src/server.js"]
+CMD ["npx tsx", "src/server.js"]
