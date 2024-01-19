@@ -26,13 +26,6 @@ import { getIssuerContract } from "./utils/caches.ts";
 const app = express();
 
 const PORT = process.env.PORT;
-const CHAIN = process.env.CHAIN;
-
-// Middlewares
-const chainMiddleware = (req, res, next) => {
-    req.chain = CHAIN;
-    next();
-};
 
 // Middleware to get or create contract instance
 // the listener is first started on deployment, then here as a backup
@@ -46,7 +39,7 @@ const contractMiddleware = async (req, res, next) => {
     const issuer = await readIssuerById(req.body.issuerId);
     if (!issuer) res.status(400).send("issuer not found ");
 
-    const {contract, provider} = await getIssuerContract(issuer);
+    const { contract, provider } = await getIssuerContract(issuer);
     req.contract = contract;
     req.provider = provider;
     next();
@@ -55,9 +48,9 @@ app.use(urlencoded({ limit: "50mb", extended: true }));
 app.use(json({ limit: "50mb" }));
 app.enable("trust proxy");
 
-app.use("/", chainMiddleware, mainRoutes);
-app.use("/cap-table", chainMiddleware, capTableRoutes);
-app.use("/issuer", chainMiddleware, issuerRoutes);
+app.use("/", mainRoutes);
+app.use("/cap-table", capTableRoutes);
+app.use("/issuer", issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
 // No middleware required since these are only created offchain
@@ -70,18 +63,18 @@ app.use("/historical-transactions", historicalTransactions);
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
 
-export const startServer = async (finalizedOnly = true) => {
+export const startServer = async (finalizedOnly) => {
     /*
     processTo can be "latest" or "finalized". Latest helps during testing bc we dont have to wait for blocks to finalize
     */
 
     // Connect to MongoDB
-    await connectDB();
+    const dbConn = await connectDB();
 
     const server = app.listen(PORT, async () => {
-        console.log(`🚀  Server successfully launched. Access at: http://localhost:${PORT}`);
+        console.log(`🚀  Server successfully launched at ${PORT}`);
         // Asynchronous job to track web3 events in web2
-        startEventProcessing(finalizedOnly);
+        startEventProcessing(finalizedOnly, dbConn);
     });
 
     return server;
@@ -92,7 +85,7 @@ export const shutdownServer = async (server) => {
         console.log("Shutting down app server...");
         server.close();
     }
-    
+
     console.log("Waiting for event processing to stop...");
     await stopEventProcessing();
 
@@ -100,5 +93,4 @@ export const shutdownServer = async (server) => {
         console.log("Disconnecting from mongo...");
         await mongoose.disconnect();
     }
-}
-
+};
