@@ -7,7 +7,7 @@
     "description": "Transfer Agent Protocol onchain cap table",
     "type": "module",
     "scripts": {
-        "start": "npx tsx src/server.js",
+        "prod": "npx tsx src/server.js --finalized-only",
         "dev": "npx tsx watch src/server.js",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "yarn run eslint . --ext .js,.jsx,.ts,.tsx",
@@ -22,14 +22,6 @@
         "test-js": "jest --testPathPattern src/tests/unit",
         "test-js-integration": "jest --testPathPattern src/tests/integration",
         "validate-poet-files": "cd ocf && yarn validate-poet-files",
-        "test-onchain-cap-table-local": "npx tsx src/chain-operations/capTable.cjs local",
-        "test-onchain-cap-table-optimism-goerli": "npx tsx src/chain-operations/capTable.cjs optimism-goerli",
-        "test-onchain-cap-table-factory-local": "npx tsx src/chain-operations/capTableFactory.cjs local",
-        "test-onchain-cap-table-factory-optimism-goerli": "npx tsx src/chain-operations/capTableFactory.cjs optimism-goerli",
-        "forge-deploy-captable-local": "cd chain && forge script script/CapTable.s.sol:CapTableDeployLocalScript --fork-url local --broadcast --verify -vvvv",
-        "forge-deploy-captable-optimism-goerli": "cd chain && forge script script/CapTable.s.sol:CapTableDeployOptimismGoerli --rpc-url optimism_goerli --etherscan-api-key optimism_goerli_etherscan --broadcast --verify -vvvv",
-        "forge-deploy-captable-factory-local": "cd chain && forge script script/CapTableFactory.s.sol:CapTableFactoryDeployLocalScript --fork-url local --broadcast --verify -vvvv",
-        "forge-deploy-captable-factory-optimism-goerli": "cd chain && forge script script/CapTableFactory.s.sol:CapTableFactoryDeployOptimismGoerli --rpc-url optimism_goerli --etherscan-api-key optimism_goerli_etherscan --broadcast --verify -vvvv",
         "export-manifest": "cd src/db/samples && zip -r notPoet.zip notPoet && mv notPoet.zip $HOME/Downloads"
     },
     "dependencies": {
