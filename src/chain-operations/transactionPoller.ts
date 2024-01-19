@@ -78,12 +78,12 @@ export const stopEventProcessing = async () => {
 
 export const pollingSleepTime = 1000;
 
-export const startEventProcessing = async (finalizedOnly: boolean) => {
+export const startEventProcessing = async (finalizedOnly: boolean, dbConn) => {
     _keepProcessing = true;
     _finishedProcessing = false;
-    const dbConn = await connectDB();
     while (_keepProcessing) {
         const issuers = await readAllIssuers();
+
         // console.log(`Processing synchronously for ${issuers.length} issuers`);
         for (const issuer of issuers) {
             if (issuer.deployed_to) {
