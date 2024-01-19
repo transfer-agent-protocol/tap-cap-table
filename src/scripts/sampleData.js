@@ -1,5 +1,5 @@
 export const issuer = {
-    legal_name: "Poet Network Inc.",
+    legal_name: "Banana Peppers Inc.",
     formation_date: "2022-08-23",
     country_of_formation: "US",
     country_subdivision_of_formation: "DE",
