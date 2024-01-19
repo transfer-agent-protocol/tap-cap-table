@@ -8,9 +8,6 @@ import { countIssuers, readIssuerById } from "../db/operations/read.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
-import { contractCache } from "../utils/caches.js";
-import startOnchainListeners from "../chain-operations/transactionListener.js";
-
 const issuer = Router();
 
 issuer.get("/", async (req, res) => {
@@ -42,8 +39,6 @@ issuer.get("/total-number", async (req, res) => {
 });
 
 issuer.post("/create", async (req, res) => {
-    const { chain } = req;
-
     try {
         // OCF doesn't allow extra fields in their validation
         const incomingIssuerToValidate = {
@@ -58,20 +53,16 @@ issuer.post("/create", async (req, res) => {
 
         const issuerIdBytes16 = convertUUIDToBytes16(incomingIssuerToValidate.id);
         console.log("💾 | Issuer id in bytes16 ", issuerIdBytes16);
-        const { contract, provider, address, libraries } = await deployCapTable(
-            chain,
+        const { address, deployHash } = await deployCapTable(
             issuerIdBytes16,
             incomingIssuerToValidate.legal_name,
             incomingIssuerToValidate.initial_shares_authorized
         );
 
-        // add contract to the cache and start listener
-        contractCache[incomingIssuerToValidate.id] = { contract, provider, libraries };
-        startOnchainListeners(contract, provider, incomingIssuerToValidate.id, libraries);
-
         const incomingIssuerForDB = {
             ...incomingIssuerToValidate,
             deployed_to: address,
+            tx_hash: deployHash,
         };
 
         const issuer = await createIssuer(incomingIssuerForDB);

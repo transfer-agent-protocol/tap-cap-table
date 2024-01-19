@@ -1,5 +1,5 @@
 export const issuer = {
-    legal_name: "Poet Network Inc.",
+    legal_name: "Banana Peppers Inc.",
     formation_date: "2022-08-23",
     country_of_formation: "US",
     country_subdivision_of_formation: "DE",
@@ -174,6 +174,24 @@ export const stakeholder2 = (issuerId) => {
         },
     };
 };
+
+export const stakeholder3 = (issuerId) => {
+    return {
+        issuerId,
+        data: {
+            name: {
+                legal_name: "Kent Kolze",
+                first_name: "Kent",
+                last_name: "Kolze",
+            },
+            issuer_assigned_id: "",
+            stakeholder_type: "INDIVIDUAL",
+            current_relationship: "EMPLOYEE",
+            comments: [],
+        },
+    };
+};
+
 export const stockClass = (issuerId) => {
     return {
         issuerId,

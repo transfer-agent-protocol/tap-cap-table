@@ -1,9 +1,9 @@
+import axios from "axios";
+import { connectDB } from "../config/mongoose.ts";
 import Issuer from "../db/objects/Issuer.js";
 import Stakeholder from "../db/objects/Stakeholder.js";
 import StockClass from "../db/objects/StockClass.js";
-import axios from "axios";
 import { stockIssuance } from "./sampleData.js";
-import connectDB from "../db/config/mongoose.js";
 connectDB();
 
 const main = async () => {

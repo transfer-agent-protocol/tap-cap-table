@@ -9,6 +9,8 @@ import stockRepurchaseSchema from "../../ocf/schema/objects/transactions/repurch
 import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
 import stockClassAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
 import issuerAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
+import equityCompensationIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json" assert { type: "json" };
+import convertibleIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/ConvertibleIssuance.schema.json" assert { type: "json" };
 
 import { convertAndAdjustIssuerAuthorizedSharesOnChain } from "../controllers/issuerController.js";
 import { convertAndAdjustStockClassAuthorizedSharesOnchain } from "../controllers/stockClassController.js";
@@ -19,6 +21,8 @@ import { convertAndCreateReissuanceStockOnchain } from "../controllers/transacti
 import { convertAndCreateRepurchaseStockOnchain } from "../controllers/transactions/repurchaseController.js";
 import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
 import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
+import { createEquityCompensationIssuance } from "../db/operations/create.js";
+import { createConvertibleIssuance } from "../db/operations/create.js";
 
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
@@ -272,8 +276,6 @@ transactions.post("/adjust/stock-class/authorized-shares", async (req, res) => {
 
         console.log("stockClassAuthorizedSharesAdjustment", stockClassAuthorizedSharesAdjustment);
 
-        // delete incomingStockClassAdjustment.stockClassId;
-
         // NOTE: schema validation does not include stakeholder, stockClassId, however these properties are needed on to be passed on chain
         await validateInputAgainstOCF(stockClassAuthorizedSharesAdjustment, stockClassAuthorizedSharesAdjustmentSchema);
 
@@ -288,5 +290,60 @@ transactions.post("/adjust/stock-class/authorized-shares", async (req, res) => {
         res.status(500).send(`${error}`);
     }
 });
+
+transactions.post("/issuance/equity-compensation", async (req, res) => {
+    const { issuerId, data } = req.body;
+
+    try {
+        // ensuring issuer exists
+        await readIssuerById(issuerId);
+
+        const incomingEquityCompensationIssuance = {
+            id: uuid(), // for OCF Validation
+            security_id: uuid(), // for OCF Validation,
+            date: new Date().toISOString().slice(0, 10), // for OCF Validation
+            object_type: "TX_EQUITY_COMPENSATION_ISSUANCE",
+            ...data,
+        };
+        await validateInputAgainstOCF(incomingEquityCompensationIssuance, equityCompensationIssuanceSchema);
+
+        // save to DB
+        const createdIssuance = await createEquityCompensationIssuance(incomingEquityCompensationIssuance);
+
+        res.status(200).send({ equityCompensationIssuance: createdIssuance });
+    } catch (error) {
+        console.error(`error: ${error}`);
+        res.status(500).send(`${error}`);
+    }
+})
+
+
+transactions.post("/issuance/convertible", async (req, res) => {
+    const { issuerId, data } = req.body;
+
+    try {
+        // ensuring issuer exists
+        await readIssuerById(issuerId);
+
+        const incomingConvertibleIssuance = {
+            id: uuid(), // for OCF Validation
+            security_id: uuid(), // for OCF Validation
+            date: new Date().toISOString().slice(0, 10), // for OCF Validation
+            object_type: "TX_CONVERTIBLE_ISSUANCE",
+            ...data,
+        };
+
+        console.log('incomingConvertibleIssuance', incomingConvertibleIssuance)
+        await validateInputAgainstOCF(incomingConvertibleIssuance, convertibleIssuanceSchema);
+
+        // save to DB
+        const createdIssuance = await createConvertibleIssuance(incomingConvertibleIssuance);
+
+        res.status(200).send({ convertibleIssuance: createdIssuance });
+    } catch (error) {
+        console.error(`error: ${error}`);
+        res.status(500).send(`${error}`);
+    }
+})
 
 export default transactions;

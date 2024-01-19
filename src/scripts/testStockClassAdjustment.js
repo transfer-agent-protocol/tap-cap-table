@@ -1,7 +1,8 @@
-import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
-import { stockClass, stockClassAuthorizedSharesAdjust, issuerAuthorizedSharesAdjust } from "./sampleData.js";
 import axios from "axios";
-import connectDB from "../db/config/mongoose.js";
+import { connectDB } from "../config/mongoose.ts";
+import StockIssuance from "../db/objects/transactions/issuance/StockIssuance.js";
+import { stockClassAuthorizedSharesAdjust } from "./sampleData.js";
+
 connectDB();
 
 const main = async () => {
