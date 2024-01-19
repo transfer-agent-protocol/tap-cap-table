@@ -1,19 +1,16 @@
 import { Router } from "express";
 import deployCapTable from "../chain-operations/deployCapTable.js";
+import { updateIssuerById } from "../db/operations/update.js";
 import seedDB from "../db/scripts/seed.js";
-import { contractCache } from "../utils/caches.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import processManifest from "../utils/processManifest.js";
-import { updateIssuerById } from "../db/operations/update.js";
-import startOnchainListeners from "../chain-operations/transactionListener.js";
 
 const router = Router();
 
 router.get("/", async (req, res) => {
-    console.log("Welcome to TAP")
+    console.log("Welcome to TAP");
     res.status(200).send(`Welcome to the future of Transfer Agents 💸`);
-})
-
+});
 
 router.post("/mint-cap-table", async (req, res) => {
     try {
@@ -25,11 +22,6 @@ router.post("/mint-cap-table", async (req, res) => {
         const { contract, address, provider, libraries } = await deployCapTable(issuerIdBytes16, issuer.legal_name, issuer.initial_shares_authorized);
 
         const savedIssuerWithDeployedTo = await updateIssuerById(issuer._id, { deployed_to: address });
-
-        // add contract to the cache and start listener
-        contractCache[issuer._id] = { contract, provider, libraries };
-        await startOnchainListeners(contract, provider, issuer._id, libraries);
-
         res.status(200).send({ issuer: savedIssuerWithDeployedTo });
     } catch (error) {
         console.error(`error: ${error}`);

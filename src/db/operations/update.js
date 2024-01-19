@@ -1,95 +1,103 @@
+import sleep from "../../utils/sleep.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
-import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockClass from "../objects/StockClass.js";
 import StockLegendTemplate from "../objects/StockLegendTemplate.js";
 import StockPlan from "../objects/StockPlan.js";
 import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
+import StockAcceptance from "../objects/transactions/acceptance/StockAcceptance.js";
+import IssuerAuthorizedSharesAdjustment from "../objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.js";
+import StockClassAuthorizedSharesAdjustment from "../objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.js";
 import StockCancellation from "../objects/transactions/cancellation/StockCancellation.js";
-import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
+import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockReissuance from "../objects/transactions/reissuance/StockReissuance.js";
 import StockRepurchase from "../objects/transactions/repurchase/StockRepurchase.js";
-import StockAcceptance from "../objects/transactions/acceptance/StockAcceptance.js";
-import StockClassAuthorizedSharesAdjustment from "../objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.js";
-import IssuerAuthorizedSharesAdjustment from "../objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.js";
+import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
+import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
+import { findByIdAndUpdate } from "./atomic.ts";
+
+
+export const web3WaitTime = 5000;
+
+
+const retryOnMiss = async (updateFunc, numRetries = 5, waitBase = null) => {
+    /* kkolze: When polling `latest` instead of `finalized` web3 blocks, web3 can get ahead of mongo 
+      For example, see the `issuer.post("/create"` code: the issuer is created in mongo after deployCapTable is called  
+      We add retries to ensure the server routes have written to mongo  */
+    let tried = 0;
+    const waitMultiplier = waitBase || web3WaitTime;
+    while (tried <= numRetries) {
+        const res = await updateFunc();
+        if (res !== null) {
+            return res;
+        }
+        tried++;
+        await sleep(tried * waitMultiplier, "Returned null, retrying in ");
+    }
+}
 
 
 export const updateIssuerById = async (id, updatedData) => {
-    const issuer = await Issuer.findByIdAndUpdate(id, updatedData, { new: true });
-    return issuer;
+    return await findByIdAndUpdate(Issuer, id, updatedData, { new: true });
 };
 
 export const updateStakeholderById = async (id, updatedData) => {
-    const stakeholder = await Stakeholder.findByIdAndUpdate(id, updatedData, { new: true });
-    return stakeholder;
+    return await retryOnMiss(async () => findByIdAndUpdate(Stakeholder, id, updatedData, { new: true }));
 };
 
 export const updateStockClassById = async (id, updatedData) => {
-    const stockClass = await StockClass.findByIdAndUpdate(id, updatedData, { new: true });
-    return stockClass;
+    return await retryOnMiss(async () => findByIdAndUpdate(StockClass, id, updatedData, { new: true }));
 };
 
 export const updateStockLegendTemplateById = async (id, updatedData) => {
-    const stockLegendTemplate = await StockLegendTemplate.findByIdAndUpdate(id, updatedData, { new: true });
-    return stockLegendTemplate;
+    return await findByIdAndUpdate(StockLegendTemplate, id, updatedData, { new: true });
 };
 
 export const updateStockPlanById = async (id, updatedData) => {
-    const stockPlan = await StockPlan.findByIdAndUpdate(id, updatedData, { new: true });
-    return stockPlan;
+    return await findByIdAndUpdate(StockPlan, id, updatedData, { new: true });
 };
 
 export const updateValuationById = async (id, updatedData) => {
-    const valuation = await Valuation.findByIdAndUpdate(id, updatedData, { new: true });
-    return valuation;
+    return await findByIdAndUpdate(Valuation, id, updatedData, { new: true });
 };
 
 export const updateVestingTermsById = async (id, updatedData) => {
-    const vestingTerms = await VestingTerms.findByIdAndUpdate(id, updatedData, { new: true });
-    return vestingTerms;
+    return await findByIdAndUpdate(VestingTerms, id, updatedData, { new: true });
 };
 
 export const upsertStockIssuanceById = async (id, updatedData) => {
-    const stockIssuance = await StockIssuance.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockIssuance;
+    return await findByIdAndUpdate(StockIssuance, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockTransferById = async (id, updatedData) => {
-    const stockTransfer = await StockTransfer.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockTransfer;
+    return await findByIdAndUpdate(StockTransfer, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockCancellationById = async (id, updatedData) => {
-    const stockCancellation = await StockCancellation.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockCancellation;
+    return await findByIdAndUpdate(StockCancellation, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockRetractionById = async (id, updatedData) => {
-    const stockRetraction = await StockRetraction.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockRetraction;
+    return await findByIdAndUpdate(StockRetraction, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockReissuanceById = async (id, updatedData) => {
-    const stockReissuance = await StockReissuance.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockReissuance;
+    return await findByIdAndUpdate(StockReissuance, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockRepurchaseById = async (id, updatedData) => {
-    const stockRepurchase = await StockRepurchase.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockRepurchase;
+    return await findByIdAndUpdate(StockRepurchase, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockAcceptanceById = async (id, updatedData) => {
-    const stockAcceptance = await StockAcceptance.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
-    return stockAcceptance;
+    return await findByIdAndUpdate(StockAcceptance, id, updatedData, { new: true, upsert: true });
 };
 
 export const upsertStockClassAuthorizedSharesAdjustment = async (id, updatedData) => {
-    return await StockClassAuthorizedSharesAdjustment.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
+    return await findByIdAndUpdate(StockClassAuthorizedSharesAdjustment, id, updatedData, { new: true, upsert: true });
 };
-export const upsertIssuerAuthorizedSharesAdjustment = async (id, updatedData) => {
-    return await IssuerAuthorizedSharesAdjustment.findByIdAndUpdate(id, updatedData, { new: true, upsert: true, returning: true });
 
-}
+export const upsertIssuerAuthorizedSharesAdjustment = async (id, updatedData) => {
+    return await findByIdAndUpdate(IssuerAuthorizedSharesAdjustment, id, updatedData, { new: true, upsert: true });
+};
