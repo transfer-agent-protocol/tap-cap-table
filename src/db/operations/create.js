@@ -1,3 +1,4 @@
+import Factory from "../objects/Factory.js";
 import HistoricalTransaction from "../objects/HistoricalTransaction.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
@@ -59,3 +60,7 @@ export const createConvertibleIssuance = (issuanceData) => {
 export const createStockTransfer = (stockTransferData) => {
     return save(new StockTransfer(stockTransferData));
 };
+
+export const createFactory = (factoryData) => {
+    return save(new Factory(factoryData));
+}

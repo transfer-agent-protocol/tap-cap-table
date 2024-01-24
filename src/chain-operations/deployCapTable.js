@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_FACTORY from "../../chain/out/CapTableFactory.sol/CapTableFactory.json" assert { type: "json" };
-import { readFactory } from "../db/operations/read.js";
+import { readfactories } from "../db/operations/read.js";
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import { setupEnv } from "../utils/env.js";
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
@@ -15,13 +15,11 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
     const provider = getProvider();
 
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
-
     console.log("🗽 | Wallet address: ", wallet.address);
 
-    const factory = await readFactory();
-    const factoryAddress = factory[0].factory_address;
-
-    console.log("factory ", factory);
+    const factories = await readfactories();
+    const factoryAddress = factories[0]?.factory_address;
+    console.log({factories, factoryAddress});
 
     if (!factoryAddress) {
         throw new Error(`❌ | Factory address not found`);

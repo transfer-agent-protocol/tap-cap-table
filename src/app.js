@@ -5,6 +5,7 @@ import { startEventProcessing, stopEventProcessing } from "./chain-operations/tr
 
 // Routes
 import { capTable as capTableRoutes } from "./routes/capTable.ts";
+import { router as factoryRoutes } from "./routes/factory.ts";
 import historicalTransactions from "./routes/historicalTransactions.js";
 import mainRoutes from "./routes/index.js";
 import issuerRoutes from "./routes/issuer.js";
@@ -50,6 +51,7 @@ app.enable("trust proxy");
 
 app.use("/", mainRoutes);
 app.use("/cap-table", capTableRoutes);
+app.use("/factory", factoryRoutes);
 app.use("/issuer", issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);
