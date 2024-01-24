@@ -2,7 +2,7 @@
 
 TEMP=$PWD/chain/.env
 cp .env $TEMP
-trap "rm $TEMP"
+trap "rm $TEMP" EXIT
 
 set -x
 cd chain

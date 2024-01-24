@@ -5,6 +5,8 @@ out/
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
+/broadcast/*/84531/
+/broadcast/*/84532/
 /broadcast/**/dry-run/
 /broadcast/capTable.s.sol/
 /broadcast/capTableFactory.s.sol/
