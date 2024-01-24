@@ -1,13 +1,13 @@
-import { config } from "dotenv";
 import { ethers } from "ethers";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
 import CAP_TABLE_FACTORY from "../../chain/out/CapTableFactory.sol/CapTableFactory.json" assert { type: "json" };
 import { readFactory } from "../db/operations/read.js";
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
+import { setupEnv } from "../utils/env.js";
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 import getProvider from "./getProvider.js";
 
-config();
+setupEnv();
 
 async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY;

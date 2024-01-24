@@ -1,10 +1,10 @@
-import { config } from "dotenv";
 import { ethers } from "ethers";
 import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import { setupEnv } from "../utils/env.js";
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 import getProvider from "./getProvider.js";
 
-config();
+setupEnv();
 
 export const getContractInstance = (address) => {
     const WALLET_PRIVATE_KEY = process.env.PRIVATE_KEY;

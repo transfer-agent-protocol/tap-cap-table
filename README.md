@@ -107,7 +107,7 @@ This will build all libraries and will take at least 5 minutes to complete. Each
 After the deployment script is completed, start the server with nodemon:
 
 ```sh
-yarn start
+yarn dev
 ```
 
 Inspect the database with Mongo Compass. To connect to it, use the same string that we provided in the `.env` file:

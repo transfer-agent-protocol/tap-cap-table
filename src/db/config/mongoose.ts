@@ -1,7 +1,7 @@
-import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { setupEnv } from "../../utils/env";
 
-dotenv.config();
+setupEnv();
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const DATABASE_OVERRIDE = process.env.DATABASE_OVERRIDE;

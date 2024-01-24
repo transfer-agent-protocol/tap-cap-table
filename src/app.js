@@ -1,7 +1,4 @@
-import { config } from "dotenv";
 import express, { json, urlencoded } from "express";
-config();
-
 import { connectDB } from "./db/config/mongoose.ts";
 
 import { startEventProcessing, stopEventProcessing } from "./chain-operations/transactionPoller.ts";
@@ -22,6 +19,9 @@ import vestingTermsRoutes from "./routes/vestingTerms.js";
 import mongoose from "mongoose";
 import { readIssuerById } from "./db/operations/read.js";
 import { getIssuerContract } from "./utils/caches.ts";
+import { setupEnv } from "./utils/env.js";
+
+setupEnv()
 
 const app = express();
 

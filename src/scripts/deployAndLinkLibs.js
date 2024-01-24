@@ -1,10 +1,10 @@
-import { config } from "dotenv";
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import sleep from "../utils/sleep.js";
+import { setupEnv } from "../utils/env.js";
 
-config();
+setupEnv();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.RPC_URL;
@@ -96,7 +96,8 @@ async function deployLib(lib, libs) {
             "--json",
             ...librariesDepsArgs,
         ];
-        // TODO: only log when things break console.log(`Forge command arguments: ${args.join(" ")}`);
+        // TODO: only log when things break 
+        // console.log(`Forge command arguments: ${args.join(" ")}`);
 
         // Executing the forge command
         const subprocess = spawn("forge", args);
