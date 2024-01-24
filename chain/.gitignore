@@ -11,3 +11,5 @@ out/
 
 # Docs
 docs/
+
+.env

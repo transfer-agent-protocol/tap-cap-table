@@ -1,6 +1,11 @@
 #!/bin/bash
-set -x
 
 source .env
+
+TEMP=$PWD/chain/.env
+cp .env $TEMP
+trap "rm $TEMP"
+
+set -x
 cd chain
 forge script script/CapTableFactory.s.sol --broadcast --fork-url $RPC_URL
