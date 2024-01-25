@@ -15,7 +15,6 @@
         "typecheck": "concurrently --raw yarn:typecheck:*",
         "typecheck:app": "tsc --noEmit",
         "prepare": "husky install",
-        "deploy-libraries": "./scripts/deployLibraries.sh",
         "deploy-factory": "./scripts/deployFactory.sh",
         "setup": "cd chain && foundryup && forge build --via-ir",
         "deseed": "npx tsx src/db/scripts/deseed.js",
