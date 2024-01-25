@@ -1,6 +1,7 @@
-import { config } from "dotenv";
 import { ethers } from "ethers";
-config();
+import { setupEnv } from "../utils/env";
+
+setupEnv();
 
 const RPC_URL = process.env.RPC_URL;
 const CHAIN_ID = process.env.CHAIN_ID;

@@ -59,12 +59,6 @@ Copy `.env.example` to `.env` in the root of the project.
 cd tap-cap-table && cp .env.example .env
 ```
 
-Copy `.env.example` to `.env` inside of the `chain` folder.
-
-```sh
-cd chain && cp .env.example .env
-```
-
 In the root folder, pull the official Mongo image, and run the local development database with `docker compose`:
 
 ```sh
@@ -97,17 +91,23 @@ In our architecture, each transaction is mapped to an external library, which en
 2. Then, inside of the root directory run
 
 ```sh
-yarn build
+yarn deploy-libraries
 ```
 
 This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
+
+```sh
+yarn deploy-factory
+```
+
+This will deploy the factory as pointed to in the `.env`
 
 ## Running the cap table server
 
 After the deployment script is completed, start the server with nodemon:
 
 ```sh
-yarn start
+yarn dev
 ```
 
 Inspect the database with Mongo Compass. To connect to it, use the same string that we provided in the `.env` file:
@@ -157,7 +157,7 @@ Inside of `/chain`:
 
 -   Restart anvil
 -   Run `forge clean`
--   Move back to the root directory, then run `yarn build`
+-   Move back to the root directory, then run `yarn deploy-libraries`
 
 After, you can seed and deploy the cap table with either of the above options. If the bug persists, please open an issue with an attached screenshot and steps to reproduce.
 

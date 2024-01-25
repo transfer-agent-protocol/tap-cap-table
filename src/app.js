@@ -1,13 +1,11 @@
-import { config } from "dotenv";
 import express, { json, urlencoded } from "express";
-config();
-
 import { connectDB } from "./db/config/mongoose.ts";
 
 import { startEventProcessing, stopEventProcessing } from "./chain-operations/transactionPoller.ts";
 
 // Routes
 import { capTable as capTableRoutes } from "./routes/capTable.ts";
+import { router as factoryRoutes } from "./routes/factory.ts";
 import historicalTransactions from "./routes/historicalTransactions.js";
 import mainRoutes from "./routes/index.js";
 import issuerRoutes from "./routes/issuer.js";
@@ -22,6 +20,9 @@ import vestingTermsRoutes from "./routes/vestingTerms.js";
 import mongoose from "mongoose";
 import { readIssuerById } from "./db/operations/read.js";
 import { getIssuerContract } from "./utils/caches.ts";
+import { setupEnv } from "./utils/env.js";
+
+setupEnv()
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.enable("trust proxy");
 
 app.use("/", mainRoutes);
 app.use("/cap-table", capTableRoutes);
+app.use("/factory", factoryRoutes);
 app.use("/issuer", issuerRoutes);
 app.use("/stakeholder", contractMiddleware, stakeholderRoutes);
 app.use("/stock-class", contractMiddleware, stockClassRoutes);

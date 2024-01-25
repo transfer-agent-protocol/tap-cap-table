@@ -1,4 +1,5 @@
 import sleep from "../../utils/sleep.js";
+import Factory from "../objects/Factory.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
 import StockClass from "../objects/StockClass.js";
@@ -15,7 +16,8 @@ import StockReissuance from "../objects/transactions/reissuance/StockReissuance.
 import StockRepurchase from "../objects/transactions/repurchase/StockRepurchase.js";
 import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import { findByIdAndUpdate } from "./atomic.ts";
+import { findByIdAndUpdate, findOne } from "./atomic.ts";
+import { createFactory } from "./create.js";
 
 
 export const web3WaitTime = 5000;
@@ -101,3 +103,12 @@ export const upsertStockClassAuthorizedSharesAdjustment = async (id, updatedData
 export const upsertIssuerAuthorizedSharesAdjustment = async (id, updatedData) => {
     return await findByIdAndUpdate(IssuerAuthorizedSharesAdjustment, id, updatedData, { new: true, upsert: true });
 };
+
+export const upsertFactory = async (updatedData) => {
+    // For now, we only allow a single record in the database
+    const existing = await findOne(Factory);
+    if (existing) {
+        return await findByIdAndUpdate(Factory, existing._id, updatedData, { new: true });
+    } 
+    return await createFactory(updatedData);
+}

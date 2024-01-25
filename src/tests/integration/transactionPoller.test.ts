@@ -27,7 +27,7 @@ const seedExampleData = async () => {
     const rec = await Factory.findOne();
     if (!rec) {
         throw new Error(
-            `Manually create the {"implementation_adress": ..., "factory_address": ...} record 
+            `Manually create the {"implementation_address": ..., "factory_address": ...} record 
             in "factories" collection. Run the "forge script ..." command from the comment 
             in "chain/script/CapTableFactory.s.sol"`
         );
