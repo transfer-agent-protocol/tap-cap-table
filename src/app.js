@@ -22,7 +22,7 @@ import { readIssuerById } from "./db/operations/read.js";
 import { getIssuerContract } from "./utils/caches.ts";
 import { setupEnv } from "./utils/env.js";
 
-setupEnv()
+setupEnv();
 
 const app = express();
 
@@ -33,12 +33,12 @@ const PORT = process.env.PORT;
 const contractMiddleware = async (req, res, next) => {
     if (!req.body.issuerId) {
         console.log("❌ | No issuer ID");
-        res.status(400).send("issuerId is required");
+        return res.status(400).send("issuerId is required");
     }
 
     // fetch issuer to ensure it exists
     const issuer = await readIssuerById(req.body.issuerId);
-    if (!issuer) res.status(400).send("issuer not found ");
+    if (!issuer) return res.status(400).send("Issuer not found");
 
     const { contract, provider } = await getIssuerContract(issuer);
     req.contract = contract;
