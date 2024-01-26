@@ -92,6 +92,6 @@ export const readAllIssuers = async () => {
     return await find(Issuer);
 }
 
-export const readFactory = async () => {
+export const readfactories = async () => {
     return await find(Factory);
 }
