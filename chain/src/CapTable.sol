@@ -168,7 +168,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     /// @inheritdoc ICapTable
     /// @notice Setter for walletsPerStakeholder mapping
     /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
-    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
+    function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyOperator {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
         _checkWalletAlreadyExists(_wallet);
@@ -178,7 +178,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     /// @inheritdoc ICapTable
     /// @notice Removing wallet from walletsPerStakeholder mapping
-    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyAdmin {
+    function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyOperator {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
 
@@ -186,7 +186,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function issueStock(StockIssuanceParams calldata params) external override onlyAdmin {
+    function issueStock(StockIssuanceParams calldata params) external override onlyOperator {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -201,7 +201,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyAdmin {
+    function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external override onlyOperator {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -229,7 +229,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function retractStockIssuance(StockParams calldata params) external override onlyAdmin {
+    function retractStockIssuance(StockParams calldata params) external override onlyOperator {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -247,7 +247,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external override onlyAdmin {
+    function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external override onlyOperator {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
         _checkResultingSecurityIds(resulting_security_ids, params.stakeholder_id, params.stock_class_id);
@@ -267,7 +267,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function cancelStock(StockParams calldata params, uint256 quantity) external override onlyAdmin {
+    function cancelStock(StockParams calldata params, uint256 quantity) external override onlyOperator {
         _checkStakeholderIsStored(params.stakeholder_id);
         _checkInvalidStockClass(params.stock_class_id);
 
@@ -323,7 +323,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     /// @inheritdoc ICapTable
     // Stock Acceptance does not impact an active position. It's only recorded.
-    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external override onlyAdmin {
+    function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external override onlyOperator {
         _checkStakeholderIsStored(stakeholderId);
         _checkInvalidStockClass(stockClassId);
 
@@ -427,6 +427,22 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint, uint, uint40) {
         ActivePosition storage position = positions.activePositions[stakeholderId][securityId];
         return (position.stock_class_id, position.quantity, position.share_price, position.timestamp);
+    }
+
+    /// @inheritdoc ICapTable
+    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint, uint, uint40) {
+        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[stakeholderId][stockClassId];
+        uint quantityPrice = 0;
+        uint quantity = 0;
+        uint40 timestamp = 0;
+        for (uint i = 0; i < activeSecurityIDs.length; i++) {
+            ActivePosition storage position = positions.activePositions[stakeholderId][activeSecurityIDs[i]];
+            // Alley-oop the web2 caller to find the avg to avoid issues with fractions
+            quantityPrice += position.quantity * position.share_price;
+            quantity += position.quantity;
+            timestamp = position.timestamp > timestamp ? position.timestamp : timestamp;
+        }
+        return (quantityPrice, quantity, timestamp);
     }
 
     /* Role Based Access Control */
