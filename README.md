@@ -97,10 +97,10 @@ yarn deploy-libraries
 This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
 
 ```sh
-yarn deploy-factory
+yarn deploy-factory [.env file to use]
 ```
 
-This will deploy the factory as pointed to in the `.env`
+This will deploy the factory as pointed to in the `.env` or the file you pass in, such as .env.local
 
 ## Running the cap table server
 
