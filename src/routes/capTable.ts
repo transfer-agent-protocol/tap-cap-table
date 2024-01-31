@@ -78,7 +78,7 @@ capTable.get("/holdings/stock", async (req, res) => {
                 stakeholder: stakeholderMap[stakeholder_id],
                 quantity: Number(quantity) / decimalScaleValue,
                 sharePrice: Number(sharePrice) / decimalScaleValue,
-                timestamp: Number(timestamp) * 1000,
+                timestamp: Number(timestamp),
             });
         }
         res.send({ holdings, stockClasses, issuer });
