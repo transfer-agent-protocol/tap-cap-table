@@ -116,7 +116,7 @@ const seedExampleData = async () => {
 
 const checkRecs = async (issuerId) => {
     const { data: {holdings} } = await axios.get(`${SERVER_BASE}/cap-table/holdings/stock?issuerId=${issuerId}`);
-    let portions = holdings.map(({quantity, sharePrice, stakeholder}) => { return {quantity, sharePrice: sharePrice.toFixed(2), name: stakeholder.name.legal_name}; });
+    let portions = holdings.map(({quantity, sharePrice, stakeholder}) => { return {quantity, sharePrice: parseFloat(sharePrice.toFixed(2)), name: stakeholder.name.legal_name}; });
     portions.sort((a, b) => b.quantity - a.quantity);
     expect(portions).toStrictEqual([
         {quantity: 300, sharePrice: 9.35, name: "Kent Kolze"},
