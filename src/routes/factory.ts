@@ -16,7 +16,7 @@ router.post("/register", async (req, res) => {
         const factory = await upsertFactory({factory_address, implementation_address});
         res.send({factory});
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

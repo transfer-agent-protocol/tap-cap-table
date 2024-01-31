@@ -2,15 +2,15 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 
 import stockAcceptanceSchema from "../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
+import issuerAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
+import stockClassAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
 import stockCancellationSchema from "../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
+import convertibleIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/ConvertibleIssuance.schema.json" assert { type: "json" };
+import equityCompensationIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json" assert { type: "json" };
 import stockIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
 import stockReissuanceSchema from "../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
 import stockRepurchaseSchema from "../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
 import stockRetractionSchema from "../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
-import stockClassAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
-import issuerAuthorizedSharesAdjustmentSchema from "../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
-import equityCompensationIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json" assert { type: "json" };
-import convertibleIssuanceSchema from "../../ocf/schema/objects/transactions/issuance/ConvertibleIssuance.schema.json" assert { type: "json" };
 
 import { convertAndAdjustIssuerAuthorizedSharesOnChain } from "../controllers/issuerController.js";
 import { convertAndAdjustStockClassAuthorizedSharesOnchain } from "../controllers/stockClassController.js";
@@ -21,8 +21,7 @@ import { convertAndCreateReissuanceStockOnchain } from "../controllers/transacti
 import { convertAndCreateRepurchaseStockOnchain } from "../controllers/transactions/repurchaseController.js";
 import { convertAndCreateRetractionStockOnchain } from "../controllers/transactions/retractionController.js";
 import { convertAndCreateTransferStockOnchain } from "../controllers/transactions/transferController.js";
-import { createEquityCompensationIssuance } from "../db/operations/create.js";
-import { createConvertibleIssuance } from "../db/operations/create.js";
+import { createConvertibleIssuance, createEquityCompensationIssuance } from "../db/operations/create.js";
 
 import { readIssuerById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
@@ -50,7 +49,7 @@ transactions.post("/issuance/stock", async (req, res) => {
 
         res.status(200).send({ stockIssuance: incomingStockIssuance });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -68,7 +67,7 @@ transactions.post("/transfer/stock", async (req, res) => {
 
         res.status(200).send("success");
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -256,7 +255,7 @@ transactions.post("/adjust/issuer/authorized-shares", async (req, res) => {
 
         res.status(200).send({ issuerAuthorizedSharesAdj });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -312,7 +311,7 @@ transactions.post("/issuance/equity-compensation", async (req, res) => {
 
         res.status(200).send({ equityCompensationIssuance: createdIssuance });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 })
@@ -341,7 +340,7 @@ transactions.post("/issuance/convertible", async (req, res) => {
 
         res.status(200).send({ convertibleIssuance: createdIssuance });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 })

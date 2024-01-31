@@ -2,9 +2,8 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import valuationSchema from "../../ocf/schema/objects/Valuation.schema.json" assert { type: "json" };
 import { createValuation } from "../db/operations/create.js";
-import { countValuations, readValuationById } from "../db/operations/read.js";
+import { countValuations, readIssuerById, readValuationById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
-import { readIssuerById } from "../db/operations/read.js";
 
 const valuation = Router();
 
@@ -18,7 +17,7 @@ valuation.get("/id/:id", async (req, res) => {
         const valuation = await readValuationById(id);
         res.status(200).send(valuation);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -28,7 +27,7 @@ valuation.get("/total-number", async (_, res) => {
         const totalValuations = await countValuations();
         res.status(200).send(totalValuations.toString());
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -57,7 +56,7 @@ valuation.post("/create", async (req, res) => {
 
         res.status(200).send({ valuation });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
