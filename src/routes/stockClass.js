@@ -3,8 +3,8 @@ import { v4 as uuid } from "uuid";
 import stockClassSchema from "../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
 import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../controllers/stockClassController.js";
 import { createStockClass } from "../db/operations/create.js";
-import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 import { readIssuerById } from "../db/operations/read.js";
+import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stockClass = Router();
 
@@ -21,7 +21,7 @@ stockClass.get("/id/:id", async (req, res) => {
 
         res.status(200).send({ stockClassId, classType, pricePerShare, initialSharesAuthorized });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -32,7 +32,7 @@ stockClass.get("/total-number", async (req, res) => {
         const totalStockClasses = await getTotalNumberOfStockClasses(contract);
         res.status(200).send(totalStockClasses);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -65,7 +65,7 @@ stockClass.post("/create", async (req, res) => {
 
         res.status(200).send({ stockClass });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

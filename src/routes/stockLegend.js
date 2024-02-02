@@ -2,9 +2,8 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockLegendSchema from "../../ocf/schema/objects/StockLegendTemplate.schema.json" assert { type: "json" };
 import { createStockLegendTemplate } from "../db/operations/create.js";
-import { countStockLegendTemplates, readStockLegendTemplateById } from "../db/operations/read.js";
+import { countStockLegendTemplates, readIssuerById, readStockLegendTemplateById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
-import { readIssuerById } from "../db/operations/read.js";
 
 const stockLegend = Router();
 
@@ -19,7 +18,7 @@ stockLegend.get("/id/:id", async (req, res) => {
         const stockLegend = await readStockLegendTemplateById(id);
         res.status(200).send(stockLegend);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -29,7 +28,7 @@ stockLegend.get("/total-number", async (_, res) => {
         const totalStockLegends = await countStockLegendTemplates();
         res.status(200).send(totalStockLegends.toString());
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -58,7 +57,7 @@ stockLegend.post("/create", async (req, res) => {
 
         res.status(200).send({ stockLegend });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

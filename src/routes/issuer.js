@@ -23,7 +23,7 @@ issuer.get("/id/:id", async (req, res) => {
 
         res.status(200).send({ issuerId, type, role });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -33,7 +33,7 @@ issuer.get("/total-number", async (req, res) => {
         const totalIssuers = await countIssuers();
         res.status(200).send(totalIssuers);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -71,7 +71,7 @@ issuer.post("/create", async (req, res) => {
 
         res.status(200).send({ issuer });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

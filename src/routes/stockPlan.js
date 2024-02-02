@@ -2,9 +2,8 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import stockPlanSchema from "../../ocf/schema/objects/StockPlan.schema.json" assert { type: "json" };
 import { createStockPlan } from "../db/operations/create.js";
-import { countStockPlans, readStockPlanById } from "../db/operations/read.js";
+import { countStockPlans, readIssuerById, readStockPlanById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
-import { readIssuerById } from "../db/operations/read.js";
 
 const stockPlan = Router();
 
@@ -19,7 +18,7 @@ stockPlan.get("/id/:id", async (req, res) => {
         const stockPlan = await readStockPlanById(id);
         res.status(200).send(stockPlan);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -29,7 +28,7 @@ stockPlan.get("/total-number", async (_, res) => {
         const totalStockPlans = await countStockPlans();
         res.status(200).send(totalStockPlans.toString());
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -58,7 +57,7 @@ stockPlan.post("/create", async (req, res) => {
 
         res.status(200).send({ stockPlan });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

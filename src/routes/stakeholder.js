@@ -28,7 +28,7 @@ stakeholder.get("/id/:id", async (req, res) => {
 
         res.status(200).send({ stakeholderId, type, role });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -40,7 +40,7 @@ stakeholder.get("/total-number", async (req, res) => {
         const totalStakeholders = await getTotalNumberOfStakeholders(contract);
         res.status(200).send(totalStakeholders);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -75,7 +75,7 @@ stakeholder.post("/create", async (req, res) => {
 
         res.status(200).send({ stakeholder });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -88,7 +88,7 @@ stakeholder.post("/add-wallet", async (req, res) => {
         await addWalletToStakeholder(contract, id, wallet);
         res.status(200).send("Success");
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -101,7 +101,7 @@ stakeholder.post("/remove-wallet", async (req, res) => {
         await removeWalletFromStakeholder(contract, id, wallet);
         res.status(200).send("Success");
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

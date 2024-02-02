@@ -16,7 +16,7 @@ historicalTransactions.get("/issuer-id/:issuerId", async (req, res) => {
 
         res.status(200).send(historicalTransactions);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
