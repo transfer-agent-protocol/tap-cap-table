@@ -77,6 +77,10 @@ interface ICapTable {
     // Function to get the timestamp of an active position
     function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint, uint, uint40);
 
+    /// @notice Get the avg active position for the stakeholder by dividing the first return value (quantityPrice) by the second (quantity)
+    ///  the timestamp is the time of the latest position
+    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint, uint, uint40);
+
     function issueStock(StockIssuanceParams calldata params) external;
 
     function repurchaseStock(StockParams calldata params, uint256 quantity, uint256 price) external;

@@ -24,7 +24,7 @@ router.post("/mint-cap-table", async (req, res) => {
         const savedIssuerWithDeployedTo = await updateIssuerById(issuer._id, { deployed_to: address });
         res.status(200).send({ issuer: savedIssuerWithDeployedTo });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send({ error });
     }
 });

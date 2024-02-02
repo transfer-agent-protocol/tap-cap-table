@@ -13,7 +13,7 @@ capTable.get("/", async (req, res) => {
     res.send("Hello Cap Table!");
 });
 
-capTable.get("/latest", async (req, res) => {
+capTable.get("/holdings/stock", async (req, res) => {
     /* 
     TODO: handle this in the polling process? or maybe just cache it once in a while?
      It will get slow once we have 50+ stakeholders
@@ -64,26 +64,26 @@ capTable.get("/latest", async (req, res) => {
         const stakeholderMap = Object.fromEntries(stakeholders.map((x) => { return [x._id, x]; }));
         const stockClassMap = Object.fromEntries(stockClasses.map((x) => { return [x._id, x]; }));
         for (const issuance of issuances) {
-            const { stakeholder_id, security_id, stock_class_id } = issuance;
-            const [_, quantity, sharePrice, timestamp] = await contract.getActivePosition(
+            const { stakeholder_id, stock_class_id } = issuance;
+            const [quantityPrice, quantity, timestamp] = await contract.getAveragePosition(
                 convertUUIDToBytes16(stakeholder_id),
-                convertUUIDToBytes16(security_id),
+                convertUUIDToBytes16(stock_class_id),
             );
             if (quantity == 0) {
                 continue;
             }
+            const sharePrice = quantityPrice / quantity;
             holdings.push({
-                issuance,
                 stockClass: stockClassMap[stock_class_id],
                 stakeholder: stakeholderMap[stakeholder_id],
                 quantity: Number(quantity) / decimalScaleValue,
                 sharePrice: Number(sharePrice) / decimalScaleValue,
-                timestamp: Number(timestamp) * 1000,
+                timestamp: Number(timestamp),
             });
         }
         res.send({ holdings, stockClasses, issuer });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 })

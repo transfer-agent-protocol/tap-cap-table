@@ -2,9 +2,8 @@ import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import vestingTermsSchema from "../../ocf/schema/objects/VestingTerms.schema.json" assert { type: "json" };
 import { createVestingTerms } from "../db/operations/create.js";
-import { countVestingTerms, readVestingTermsById } from "../db/operations/read.js";
+import { countVestingTerms, readIssuerById, readVestingTermsById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
-import { readIssuerById } from "../db/operations/read.js";
 
 const vestingTerms = Router();
 
@@ -20,7 +19,7 @@ vestingTerms.get("/id/:id", async (req, res) => {
         const vestingTerms = await readVestingTermsById(id);
         res.status(200).send(vestingTerms);
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -30,7 +29,7 @@ vestingTerms.get("/total-number", async (_, res) => {
         const totalVestingTerms = await countVestingTerms();
         res.status(200).send(totalVestingTerms.toString());
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });
@@ -59,7 +58,7 @@ vestingTerms.post("/create", async (req, res) => {
 
         res.status(200).send({ vestingTerms });
     } catch (error) {
-        console.error(`error: ${error}`);
+        console.error(error);
         res.status(500).send(`${error}`);
     }
 });

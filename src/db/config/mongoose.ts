@@ -10,9 +10,10 @@ export const connectDB = async () => {
     const connectOptions = DATABASE_OVERRIDE ? {dbName: DATABASE_OVERRIDE} : {};
     try {
         await mongoose.connect(DATABASE_URL, connectOptions);
-        console.log("✅ | Mongo connected succesfully");
+        console.log("✅ | Mongo connected succesfully", DATABASE_OVERRIDE);
         return mongoose.connection;
     } catch (error) {
+        console.error(error);
         console.error("❌ | Error connecting to Mongo", error.message);
         // Exit process with failure
         process.exit(1);
