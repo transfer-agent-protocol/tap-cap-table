@@ -49,6 +49,13 @@ export const getStakeholderById = async (contract, id) => {
     return { stakeholderId, type, role };
 };
 
+export const getStakeholderByWalletAddress = async (contract, walletAddress) => {
+    // Second: get stakeholder onchain
+    const stakeholderId = await contract.getStakeholderIdByWallet(walletAddress);
+    console.log("Stakeholder:", { stakeholderId });
+    return { stakeholderId };
+};
+
 export const getTotalNumberOfStakeholders = async (contract) => {
     const totalStakeholders = await contract.getTotalNumberOfStakeholders();
     console.log("＃ | Total number of stakeholders:", totalStakeholders.toString());

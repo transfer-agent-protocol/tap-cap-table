@@ -4,13 +4,14 @@ import {
     addWalletToStakeholder,
     convertAndReflectStakeholderOnchain,
     getStakeholderById,
+    getStakeholderByWalletAddress,
     getTotalNumberOfStakeholders,
     removeWalletFromStakeholder,
 } from "../controllers/stakeholderController.js"; // Importing the controller functions
 
 import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
 import { createStakeholder } from "../db/operations/create.js";
-import { readIssuerById } from "../db/operations/read.js";
+import { readIssuerById, readStakeholderByIssuerAssignedId } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stakeholder = Router();
@@ -27,6 +28,34 @@ stakeholder.get("/id/:id", async (req, res) => {
         const { stakeholderId, type, role } = await getStakeholderById(contract, id);
 
         res.status(200).send({ stakeholderId, type, role });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
+stakeholder.get("/issuer_assigned_id/:id", async (req, res) => {
+    const { id } = req.params;
+    console.log("id", id);
+
+    try {
+        const stakeholder = await readStakeholderByIssuerAssignedId(id);
+
+        res.status(200).send(stakeholder);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
+stakeholder.get("/wallet/:address", async (req, res) => {
+    const { contract } = req;
+    const { address } = req.params;
+
+    try {
+        const stakeholder = await getStakeholderByWalletAddress(contract, address);
+
+        res.status(200).send(stakeholder);
     } catch (error) {
         console.error(error);
         res.status(500).send(`${error}`);
@@ -88,7 +117,9 @@ stakeholder.post("/add-wallet", async (req, res) => {
         await addWalletToStakeholder(contract, id, wallet);
         res.status(200).send("Success");
     } catch (error) {
-        console.error(error);
+        if (error.includes("0x789a109e")) {
+            res.status(200).send("Wallet already added");
+        }
         res.status(500).send(`${error}`);
     }
 });
