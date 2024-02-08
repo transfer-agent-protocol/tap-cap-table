@@ -110,7 +110,7 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
             return;
         }
         if (receipt.blockNumber > latestBlock) {
-            console.log("Deployment tx not finalized", {receipt, lastFinalizedBlock: latestBlock});
+            // console.log("Deployment tx not finalized", {receipt, lastFinalizedBlock: latestBlock});
             return;
         }
         lastProcessedBlock = await issuerDeployed(issuerId, receipt, contract, dbConn);
