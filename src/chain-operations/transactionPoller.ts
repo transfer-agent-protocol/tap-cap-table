@@ -76,7 +76,7 @@ export const stopEventProcessing = async () => {
     }
 }
 
-export const pollingSleepTime = 1000;
+export const pollingSleepTime = 10000;
 
 export const startEventProcessing = async (finalizedOnly: boolean, dbConn) => {
     _keepProcessing = true;
@@ -110,7 +110,7 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
             return;
         }
         if (receipt.blockNumber > latestBlock) {
-            console.log("Deployment tx not finalized", {receipt, lastFinalizedBlock: latestBlock});
+            // console.log("Deployment tx not finalized", {receipt, lastFinalizedBlock: latestBlock});
             return;
         }
         lastProcessedBlock = await issuerDeployed(issuerId, receipt, contract, dbConn);
