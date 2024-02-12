@@ -26,7 +26,7 @@ const allowPropagate = async () => {
 const seedExampleData = async () => {
     const rec = await Factory.findOne();
     if (!rec) {
-        const deterministicFactory = "0x164BEfB302Aa6b2B8fD5485bD2A3d472683B2794";
+        const deterministicFactory = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
         const resp = await axios.post(`${SERVER_BASE}/factory/register`, {factory_address: deterministicFactory});
         console.log("Used deterministic factory address. May need to change in future", resp.data);
         // throw new Error(
