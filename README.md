@@ -1,107 +1,25 @@
-# Transfer Agent Protocol, Specification for a compliant cap table onchain [TAP](https://transferagentprotocol.xyz)
-
-Developed by:
-
-# [Transfer Agent Protocol](https://transferagentprotocol.xyz/)
-
--   [Poet](https://poet.network/)
--   [Plural Energy](https://www.pluralenergy.co/)
--   [Fairmint](https://www.fairmint.com/)
-
-This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety. In development, it's meant to be run in a Docker container with a local MongoDB instance. While in active development, it's meant to be run with [Anvil](https://book.getfoundry.sh/anvil/) and [Forge](https://book.getfoundry.sh/forge/).
-
 <div align="center">
   <a href="https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/transfer-agent-protocol/tap-cap-table">
   </a>
 </div>
 
-## Dependencies
+# Documentation
 
--   [Docker](https://docs.docker.com/get-docker/)
+Read official docs at [https://docs.transferagentprotocol.xyz](https://docs.transferagentprotocol.xyz/) to get started.
 
--   [Foundry](https://getfoundry.sh/)
+This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety.
 
-```sh
-curl -L https://foundry.paradigm.xyz | bash
-```
+## Contributing
 
--   [Mongo Compass](https://www.mongodb.com/try/download/compass)
+We welcome all contributions. Please give a quick read to our [CONTRIBUTING](./CONTRIBUTING.md) guidelines to understand the them and the process.
 
--   [Postman App](https://www.postman.com/downloads/)
+## License
 
--   [Node.js v18.16.0](https://nodejs.org/en/download/)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
--   [Yarn v1.22.19](https://classic.yarnpkg.com/en/docs/install/#mac-stable)
-
-We're using the official [MongoDB Docker image](https://hub.docker.com/_/mongo) for the local development database. You can find the [Docker Compose file](./docker-compose.yml) in the root of this repository.
-
-## Official links
-
--   [Contributor doc](https://coda.io/d/_dFoHg0h07Et/Transfer-Agent-Protocol_sua17) - to read about the project and how to contribute.
--   [Slack](https://transferagentprotocol.slack.com/) - invite only for now.
-
-## Getting started
-
-Ensure you have all dependencies setup. Clone the repository with OCF and Forge included as submodules:
-
-```sh
-git clone --recurse-submodules https://github.com/poet-network/tap-cap-table.git
-```
-
-## Initial setup
-
-Our `.env.example` files are setup for local development with Docker and Foundry. You'll need to copy them to `.env` and update the values with your own. If you're a contributor working with us, you will get those values from our Bitwarden vault.
-
-Copy `.env.example` to `.env` in the root of the project.
-
-```sh
-cd tap-cap-table && cp .env.example .env
-```
-
-In the root folder, pull the official Mongo image, and run the local development database with `docker compose`:
-
-```sh
-docker compose up
-```
-
-## Running Anvil
-
-This repo is onchain first. We use [Anvil](https://book.getfoundry.sh/anvil/) to run the local blockchain and deploy our cap table smart contracts. At all times, you should have Anvil running alongside Docker and nodemon.
-
-With the mongo DB running on Docker you can start Anvil.
-
-In the `/chain` directory, run:
-
-```sh
-anvil
-```
-
-Install dependencies and setup [Foundry](https://book.getfoundry.sh/) and `forge` with our setup script:
-
-```sh
-yarn install && yarn setup
-```
-
-## Deploying the cap table smart contracts
-
-In our architecture, each transaction is mapped to an external library, which ensures bytecode limits are never met. To deploy these libraries:
-
-1. Ensure you have Anvil running in the `/chain` directory
-2. Then, inside of the root directory run
-
-```sh
-yarn deploy-libraries
-```
-
-This will build all libraries and will take at least 5 minutes to complete. Each library is being deployed one at a time using a dependency graph that's generated with the command.
-
-```sh
-yarn deploy-factory [.env file to use]
-```
-
-This will deploy the factory as pointed to in the `.env` or the file you pass in, such as .env.local
-
+## OUTDATED README BELOW
+---
 ## Running the cap table server
 
 After the deployment script is completed, start the server with nodemon:
@@ -189,11 +107,3 @@ Integration test setup from no active processes:
     -   In MongoDB compass, create/update `implementation_address` and `factory_address` in `jest-integration.factories`
         -   If the `jest-integration` MongoDB databases dont exist: `cd .. && yarn test-js-integration`
     -   Run `yarn test-js-integration`!
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
