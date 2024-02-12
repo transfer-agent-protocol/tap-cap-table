@@ -73,10 +73,24 @@ export const startServer = async (finalizedOnly) => {
     // Connect to MongoDB
     const dbConn = await connectDB();
 
-    const server = app.listen(PORT, async () => {
-        console.log(`🚀  Server successfully launched at ${PORT}`);
-        // Asynchronous job to track web3 events in web2
-        startEventProcessing(finalizedOnly, dbConn);
+    const server = app
+        .listen(PORT, async () => {
+            console.log(`🚀  Server successfully launched at ${PORT}`);
+            // Asynchronous job to track web3 events in web2
+            startEventProcessing(finalizedOnly, dbConn);
+        })
+        .on("error", (err) => {
+            if (err.code === "EADDRINUSE") {
+                console.log(`Port ${PORT} is already in use.`);
+            } else {
+                console.log(err);
+            }
+        });
+
+    server.on("listening", () => {
+        const address = server.address();
+        const bind = typeof address === "string" ? "pipe " + address : "port " + address.port;
+        console.log("Listening on " + bind);
     });
 
     return server;

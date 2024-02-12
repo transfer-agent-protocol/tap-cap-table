@@ -1,5 +1,5 @@
 export const issuer = {
-    legal_name: "Banana Peppers Inc.",
+    legal_name: "Transfer Agent Protocol",
     formation_date: "2022-08-23",
     country_of_formation: "US",
     country_subdivision_of_formation: "DE",
@@ -10,7 +10,7 @@ export const issuer = {
         },
     ],
     email: {
-        email_address: "concierge@poet.network",
+        email_address: "alex@transferagentprotocol.xyz",
         email_type: "BUSINESS",
     },
     initial_shares_authorized: "10000000",
