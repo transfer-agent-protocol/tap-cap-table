@@ -12,4 +12,4 @@ trap "rm $TEMP" EXIT
 
 set -x
 cd chain
-forge script script/CapTableFactory.s.sol --broadcast --fork-url $RPC_URL
+forge script script/CapTableFactory.s.sol:DeployCapTableFactoryDeployLocalScript --broadcast --fork-url $RPC_URL
