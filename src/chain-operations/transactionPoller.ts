@@ -1,5 +1,4 @@
 import { AbiCoder, EventLog } from "ethers";
-import { connectDB } from "../db/config/mongoose.ts";
 import { withGlobalTransaction } from "../db/operations/atomic.ts";
 import { readAllIssuers } from "../db/operations/read.js";
 import { updateIssuerById } from "../db/operations/update.js";
@@ -76,7 +75,7 @@ export const stopEventProcessing = async () => {
     }
 }
 
-export const pollingSleepTime = 10000;
+export const pollingSleepTime = 60000;
 
 export const startEventProcessing = async (finalizedOnly: boolean, dbConn) => {
     _keepProcessing = true;
@@ -88,7 +87,12 @@ export const startEventProcessing = async (finalizedOnly: boolean, dbConn) => {
         for (const issuer of issuers) {
             if (issuer.deployed_to) {
                 const { contract, provider, libraries } = await getIssuerContract(issuer);
+                // try {
                 await processEvents(dbConn, contract, provider, issuer, libraries.txHelper, finalizedOnly);
+                // } catch (err) {
+                //     console.error(err);
+                //     break;
+                // }
             }
         }
         await sleep(pollingSleepTime);
