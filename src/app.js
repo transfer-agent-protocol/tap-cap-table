@@ -1,5 +1,4 @@
 import express, { json, urlencoded } from "express";
-import { connectDB } from "./db/config/mongoose.ts";
 
 import { startEventProcessing, stopEventProcessing } from "./chain-operations/transactionPoller.ts";
 
@@ -18,6 +17,7 @@ import valuationRoutes from "./routes/valuation.js";
 import vestingTermsRoutes from "./routes/vestingTerms.js";
 
 import mongoose from "mongoose";
+import { connectDB } from "./db/config/mongoose.ts";
 import { readIssuerById } from "./db/operations/read.js";
 import { getIssuerContract } from "./utils/caches.ts";
 import { setupEnv } from "./utils/env.js";
@@ -65,46 +65,49 @@ app.use("/historical-transactions", historicalTransactions);
 // transactions
 app.use("/transactions/", contractMiddleware, transactionRoutes);
 
-export const startServer = async (finalizedOnly) => {
+// Global vars for elegant shutdown
+let _server = null;
+let _pollerStarted = false;
+
+export const startServer = async ({finalizedOnly, runPoller}) => {
     /*
-    processTo can be "latest" or "finalized". Latest helps during testing bc we dont have to wait for blocks to finalize
+    finalizedOnly=false helps during testing bc we dont have to wait for blocks to finalize
     */
 
-    // Connect to MongoDB
-    const dbConn = await connectDB();
+    // The app depends on an initial Mongo connection
+    await connectDB();
 
-    const server = app
+    _server = app
         .listen(PORT, async () => {
             console.log(`🚀  Server successfully launched at ${PORT}`);
-            // Asynchronous job to track web3 events in web2
-            startEventProcessing(finalizedOnly, dbConn);
+            if (runPoller) {
+                _pollerStarted = true;
+                startEventProcessing({finalizedOnly});
+            }
         })
         .on("error", (err) => {
+            console.error(err);
             if (err.code === "EADDRINUSE") {
                 console.log(`Port ${PORT} is already in use.`);
-            } else {
-                console.log(err);
             }
         });
 
-    server.on("listening", () => {
-        const address = server.address();
+    _server.on("listening", () => {
+        const address = _server.address();
         const bind = typeof address === "string" ? "pipe " + address : "port " + address.port;
         console.log("Listening on " + bind);
     });
-
-    return server;
 };
 
-export const shutdownServer = async (server) => {
-    if (server) {
+export const shutdownServer = async () => {
+    if (_server) {
         console.log("Shutting down app server...");
-        server.close();
+        _server.close();
     }
-
-    console.log("Waiting for event processing to stop...");
-    await stopEventProcessing();
-
+    if (_pollerStarted) {
+        console.log("Waiting for event processing to stop...");
+        await stopEventProcessing();
+    }
     if (mongoose.connection?.readyState === mongoose.STATES.connected) {
         console.log("Disconnecting from mongo...");
         await mongoose.disconnect();

@@ -1,11 +1,13 @@
-import { startServer } from "./app.js";
+/*
+Entrypoint for service
+ */
+import { startServer } from "./app";
+import { isFlagPresent } from "./utils/commandLine";
 
-// Function to check if the flag is present
-const isFlagPresent = (flag) => process.argv.includes(flag);
+const options = {
+    finalizedOnly: isFlagPresent("--finalized-only"), 
+    runPoller: !isFlagPresent("--no-poller"),
+};
+console.log("Parsed options: ", options, " from ", process.argv);
 
-// Setting the default value of the flag to true
-const finalizedOnly = isFlagPresent("--finalized-only");
-
-console.log("Finalized Only:", finalizedOnly);
-
-startServer(finalizedOnly);
+startServer(options);

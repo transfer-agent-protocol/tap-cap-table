@@ -12,22 +12,18 @@ import { typeToModelType } from "../../db/operations/transactions"; // Import th
 
 export const SERVER_BASE = `http://localhost:${process.env.PORT}`;
 
-let _server = null;
-
 export const runLocalServer = async (deseed) => {
     if (deseed) {
         await deseedDatabase();
     }
     console.log("starting server");
-    _server = await startServer(false);
-}
-
+    await startServer({ finalizedOnly: false, runPoller: true });
+};
 
 export const shutdownLocalServer = async () => {
     console.log("shutting down server");
-    await shutdownServer(_server);
-}
-
+    await shutdownServer();
+};
 
 const deleteAllTransactions = async () => {
     for (const ModelType of Object.values(typeToModelType)) {
