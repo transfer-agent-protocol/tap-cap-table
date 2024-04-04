@@ -21,7 +21,7 @@ beforeAll(async () => {
     await runLocalServer(!HARDCODED_ISSUER_ID);
 }, 10000);
 
-afterAll(shutdownLocalServer, 10000);
+afterAll(shutdownLocalServer, 10000 + pollingSleepTime);
 
 const WAIT_TIME = 1000;
 
@@ -32,8 +32,15 @@ const allowPropagate = async () => {
 
 const seedExampleData = async () => {
     const rec = await Factory.findOne();
-    if (!rec) {
-        const deterministicFactory = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+    const deterministicFactory = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+    if (rec) {
+        if (deterministicFactory && rec.factory_address != deterministicFactory) {
+            throw new Error(
+                `Mismatch between hardcoded factory ${deterministicFactory} and the one in mongo ${rec.factory_address}.
+                If this is expected, set deterministicFactory=null to avoid this failure`
+            );
+        }
+    } else {
         const resp = await axios.post(`${SERVER_BASE}/factory/register`, { factory_address: deterministicFactory });
         console.log("Used deterministic factory address. May need to change in future", resp.data);
         // throw new Error(
