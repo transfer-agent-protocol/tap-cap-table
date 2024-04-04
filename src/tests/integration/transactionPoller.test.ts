@@ -38,7 +38,8 @@ const seedExampleData = async () => {
         console.log("Used deterministic factory address. May need to change in future", resp.data);
         // throw new Error(
         //     `Manually create the {"implementation_address": ..., "factory_address": ...} record
-        //     in "factories" collection. Use output of 'yarn deploy-factory' against a local 'anvil' server`
+        //     in "factories" collection. Use output of 'yarn deploy-factory' against a local 'anvil'
+        //     server: "CapTableFactory deployed at: {factory_address}"`
         // );
     }
 

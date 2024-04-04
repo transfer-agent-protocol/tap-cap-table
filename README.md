@@ -103,7 +103,6 @@ Integration test setup from no active processes:
 
 -   Terminal 1: `docker compose up`
 -   Terminal 2: `anvil`
--   Terminal 3: `cd chain && forge script script/CapTableFactory.s.sol --fork-url http://localhost:8545 --broadcast`
-    -   In MongoDB compass, create/update `implementation_address` and `factory_address` in `jest-integration.factories`
-        -   If the `jest-integration` MongoDB databases dont exist: `cd .. && yarn test-js-integration`
-    -   Run `yarn test-js-integration`!
+-   Terminal 3:
+    -   `USE_ENV_FILE=.env.test.local yarn deploy-factory`
+    -   `yarn test-js-integration`
