@@ -1,4 +1,6 @@
 import { AbiCoder, EventLog } from "ethers";
+import { Connection } from "mongoose";
+import pRetry, { Options as RetryOptions } from "p-retry";
 import { connectDB } from "../db/config/mongoose.ts";
 import { withGlobalTransaction } from "../db/operations/atomic.ts";
 import { readAllIssuers } from "../db/operations/read.js";
@@ -62,10 +64,9 @@ export const txTypes = Object.fromEntries(
     Object.entries(txMapper).map(([i, [_, f]]) => [i, f.name.replace("handle", "")])
 );
 // (name => handler) derived from txMapper
-export const txFuncs = Object.fromEntries(
-    Object.entries(txMapper).map(([i, [_, f]]) => [txTypes[i], f])
-);
+export const txFuncs = Object.fromEntries(Object.entries(txMapper).map(([i, [_, f]]) => [txTypes[i], f]));
 
+// Globals enabling elegant poller process shutdown
 let _keepProcessing = true;
 let _finishedProcessing = false;
 
@@ -74,17 +75,24 @@ export const stopEventProcessing = async () => {
     while (!_finishedProcessing) {
         await sleep(50);
     }
+};
+
+export const pollingSleepTime = 20_000;
+
+interface IEventProcessing {
+    finalizedOnly: boolean;
+    useConn?: Connection;
 }
 
-export const pollingSleepTime = 10000;
-
-export const startEventProcessing = async (finalizedOnly: boolean, dbConn) => {
+export const startEventProcessing = async ({ finalizedOnly, useConn }: IEventProcessing) => {
     _keepProcessing = true;
     _finishedProcessing = false;
+
+    const dbConn = useConn || (await connectDB());
     while (_keepProcessing) {
         const issuers = await readAllIssuers();
 
-        // console.log(`Processing synchronously for ${issuers.length} issuers`);
+        console.log(`Processing synchronously for ${issuers.length} issuers at ${Date()}`);
         for (const issuer of issuers) {
             if (issuer.deployed_to) {
                 const { contract, provider, libraries } = await getIssuerContract(issuer);
@@ -96,15 +104,32 @@ export const startEventProcessing = async (finalizedOnly: boolean, dbConn) => {
     _finishedProcessing = true;
 };
 
-const processEvents = async (dbConn, contract, provider, issuer, txHelper, finalizedOnly, maxBlocks = 1500, maxEvents = 250) => {
+const getRetryOptions = (action: string, options?: RetryOptions): RetryOptions => {
+    // https://github.com/sindresorhus/p-retry
+    return {
+        minTimeout: 10 * 1000,
+        maxTimeout: 2 * 60 * 1000,
+        retries: 5,
+        onFailedAttempt: (error) => {
+            console.error(`Error with ${action} (retrying shortly):`);
+            console.error(error);
+        },
+        ...options,
+    };
+};
+
+const processEvents = async (dbConn, contract, provider, issuer, txHelper, finalizedOnly, maxBlocks = 500, maxEvents = 250) => {
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
-    let {_id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash} = issuer;
-    const {number: latestBlock} = await provider.getBlock(finalizedOnly ? "finalized" : "latest");
-    // console.log("Processing for issuer", {issuerId, lastProcessedBlock, deployedTxHash, latestBlock});
+    let { _id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash } = issuer;
+    console.log(`Processing for ${issuerId}: ${lastProcessedBlock}`); //, { lastProcessedBlock, deployedTxHash, latestBlock });
+    const { number: latestBlock } = await pRetry(
+        async () => provider.getBlock(finalizedOnly ? "finalized" : "latest"),
+        getRetryOptions("provider.getBlock")
+    );
     if (lastProcessedBlock === null) {
-        const receipt = await provider.getTransactionReceipt(deployedTxHash);
+        const receipt = await pRetry(async () => provider.getTransactionReceipt(deployedTxHash), getRetryOptions("provider.getTransactionReceipt"));
         if (!receipt) {
             console.error("Deployment receipt not found");
             return;
@@ -120,20 +145,27 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
     if (startBlock >= endBlock) {
         return;
     }
-    
+
     // console.log(" processing from", { startBlock, endBlock });
     let events: QueuedEvent[] = [];
 
-    const contractEvents: EventLog[] = await contract.queryFilter("*", startBlock, endBlock);
+    const contractEvents: EventLog[] = await pRetry(
+        async () => contract.queryFilter("*", startBlock, endBlock),
+        getRetryOptions("contract.queryFilter")
+    );
+
     for (const event of contractEvents) {
         const type = event?.fragment?.name;
         if (contractFuncs.has(type)) {
             const { timestamp } = await provider.getBlock(event.blockNumber);
-            events.push({type, timestamp, data: event.args[0], o: event });
+            events.push({ type, timestamp, data: event.args[0], o: event });
         }
     }
 
-    const txEvents: EventLog[] = await txHelper.queryFilter(txHelper.filters.TxCreated, startBlock, endBlock);
+    const txEvents: EventLog[] = await pRetry(
+        async () => txHelper.queryFilter(txHelper.filters.TxCreated, startBlock, endBlock),
+        getRetryOptions("txHelper.filters.TxCreated")
+    );
     for (const event of txEvents) {
         if (event.removed) {
             continue;
@@ -161,13 +193,13 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
 };
 
 const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
-    console.log("New issuer was deployed", {issuerId});
+    console.log("New issuer was deployed", { issuerId });
     const events = await contract.queryFilter(contract.filters.IssuerCreated);
     if (events.length === 0) {
         throw new Error(`No issuer events found!`);
     }
     const issuerCreatedEventId = events[0].args[0];
-    console.log("IssuerCreated event captured!", {issuerCreatedEventId});
+    console.log("IssuerCreated event captured!", { issuerCreatedEventId });
     const lastProcessedBlock = receipt.blockNumber - 1;
     await withGlobalTransaction(async () => {
         await verifyIssuerAndSeed(contract, issuerCreatedEventId);
@@ -178,9 +210,9 @@ const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
 
 const persistEvents = async (issuerId, events: QueuedEvent[]) => {
     // Persist all the necessary changes for each event gathered in process events
-    console.log(`${events.length} events to process for issuerId ${issuerId}`);
+    // console.log(`${events.length} events to process for issuerId ${issuerId}`);
     for (const event of events) {
-        const {type, data, timestamp} = event;
+        const { type, data, timestamp } = event;
         const txHandleFunc = txFuncs[type];
         // console.log("persistEvent: ", {type, data, timestamp});
         if (txHandleFunc) {
@@ -202,7 +234,7 @@ export const trimEvents = (origEvents: QueuedEvent[], maxEvents, endBlock) => {
     // Sort for correct execution order
     let events = [...origEvents];
     events.sort((a, b) => a.o.blockNumber - b.o.blockNumber || a.o.transactionIndex - b.o.transactionIndex || a.o.index - b.o.index);
-    let index = 0;    
+    let index = 0;
     while (index < maxEvents && index < events.length) {
         // Include the entire next block
         const includeBlock = events[index].o.blockNumber;
@@ -221,7 +253,6 @@ export const trimEvents = (origEvents: QueuedEvent[], maxEvents, endBlock) => {
     return [useEvents, useEvents[useEvents.length - 1].o.blockNumber];
 };
 
-
 const updateLastProcessed = async (issuerId, lastProcessedBlock) => {
-    return updateIssuerById(issuerId, {last_processed_block: lastProcessedBlock});
+    return updateIssuerById(issuerId, { last_processed_block: lastProcessedBlock });
 };
