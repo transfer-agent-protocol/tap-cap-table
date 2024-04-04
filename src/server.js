@@ -2,8 +2,8 @@
 Entrypoint for service
  */
 import { startServer } from "./app";
+import "./tracer";
 import { isFlagPresent } from "./utils/commandLine";
-import "./tracer.js";
 
 const options = {
     finalizedOnly: isFlagPresent("--finalized-only"),
