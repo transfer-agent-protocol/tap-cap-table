@@ -11,6 +11,5 @@ COPY . .
 RUN yarn install
 
 EXPOSE 8080
-# Specify the command to run on container start
-CMD ["npx", "ts-node", "src/server.js"]
 
+ENTRYPOINT ["/entrypoint.sh"]
