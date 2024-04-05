@@ -294,33 +294,32 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function transferStock(
-        bytes16 transferorStakeholderId,
-        bytes16 transfereeStakeholderId,
-        bytes16 stockClassId,
-        bool isBuyerVerified,
-        uint256 quantity,
-        uint256 sharePrice,
-        string calldata customId
-    ) external override onlyOperator {
-        _checkStakeholderIsStored(transferorStakeholderId);
-        _checkStakeholderIsStored(transfereeStakeholderId);
-        _checkInvalidStockClass(stockClassId);
+    function transferStock(StockTransferParams calldata params) external override onlyOperator {
+        _checkStakeholderIsStored(params.transferor_stakeholder_id);
+        _checkStakeholderIsStored(params.transferee_stakeholder_id);
+        _checkInvalidStockClass(params.stock_class_id);
 
         nonce++;
 
-        StockTransferParams memory params = StockTransferParams(
-            transferorStakeholderId,
-            transfereeStakeholderId,
-            stockClassId,
-            isBuyerVerified,
-            quantity,
-            sharePrice,
+        StockTransferParams memory transferParams = StockTransferParams(
+            params.transferor_stakeholder_id,
+            params.transferee_stakeholder_id,
+            params.stock_class_id,
+            params.is_buyer_verified,
+            params.quantity,
+            params.share_price,
             nonce,
-            customId
+            params.custom_id
         );
 
-        StockLib.createTransfer(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
+        StockLib.createTransfer(
+            transferParams,
+            positions,
+            activeSecs,
+            transactions,
+            issuer,
+            stockClasses[stockClassIndex[params.stock_class_id] - 1]
+        );
     }
 
     /// @inheritdoc ICapTable
