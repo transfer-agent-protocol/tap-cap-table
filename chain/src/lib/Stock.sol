@@ -106,7 +106,8 @@ library StockLib {
                 true,
                 remainingQuantity,
                 activePosition.share_price,
-                params.nonce
+                params.nonce,
+                ""
             );
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
@@ -190,7 +191,8 @@ library StockLib {
                 true,
                 remainingQuantity,
                 activePosition.share_price,
-                params.nonce
+                params.nonce,
+                ""
             );
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
