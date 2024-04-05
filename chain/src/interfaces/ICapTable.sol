@@ -98,7 +98,8 @@ interface ICapTable {
         bytes16 stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
-        uint256 share_price
+        uint256 sharePrice,
+        string memory custom_id
     ) external;
 
     function addAdmin(address addr) external;

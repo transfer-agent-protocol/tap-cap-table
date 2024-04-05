@@ -63,7 +63,7 @@ library TxHelper {
             new bytes16[](0), // Stock legend IDs (optional)
             "", // Issuance type (optional)
             new string[](0), // Comments
-            "", // Custom ID (optional)
+            transferParams.custom_id, // Custom ID (optional)
             stakeholderId, // Stakeholder ID
             "", // Board approval date (optional)
             "", // Stockholder approval date (optional)

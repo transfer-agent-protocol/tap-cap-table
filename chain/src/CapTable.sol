@@ -300,7 +300,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         bytes16 stockClassId,
         bool isBuyerVerified,
         uint256 quantity,
-        uint256 share_price
+        uint256 sharePrice,
+        string memory customId
     ) external override onlyOperator {
         _checkStakeholderIsStored(transferorStakeholderId);
         _checkStakeholderIsStored(transfereeStakeholderId);
@@ -314,8 +315,9 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
             stockClassId,
             isBuyerVerified,
             quantity,
-            share_price,
-            nonce
+            sharePrice,
+            nonce,
+            customId
         );
 
         StockLib.createTransfer(params, positions, activeSecs, transactions, issuer, stockClasses[stockClassIndex[stockClassId] - 1]);
