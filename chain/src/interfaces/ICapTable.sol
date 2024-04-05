@@ -99,7 +99,7 @@ interface ICapTable {
         bool isBuyerVerified,
         uint256 quantity,
         uint256 sharePrice,
-        string memory custom_id
+        string calldata custom_id
     ) external;
 
     function addAdmin(address addr) external;

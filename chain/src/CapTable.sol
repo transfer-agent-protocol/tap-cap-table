@@ -301,7 +301,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         bool isBuyerVerified,
         uint256 quantity,
         uint256 sharePrice,
-        string memory customId
+        string calldata customId
     ) external override onlyOperator {
         _checkStakeholderIsStored(transferorStakeholderId);
         _checkStakeholderIsStored(transfereeStakeholderId);
