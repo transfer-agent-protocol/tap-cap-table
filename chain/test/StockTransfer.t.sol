@@ -36,7 +36,17 @@ contract StockTransferTest is CapTableTest {
         // Transfer stock
         uint256 quantityToTransfer = 3500;
         uint256 price = 25;
-        capTable.transferStock(transferorStakeholderId, transfereeStakeholderId, stockClassId, true, quantityToTransfer, price);
+        StockTransferParams memory params = StockTransferParams(
+            transferorStakeholderId,
+            transfereeStakeholderId,
+            stockClassId,
+            true,
+            quantityToTransfer,
+            price,
+            0,
+            ""
+        );
+        capTable.transferStock(params);
 
         uint256 transactionsCount = capTable.getTransactionsCount();
         bytes memory lastIssuanceTx = capTable.transactions(transactionsCount - 2);
@@ -66,6 +76,16 @@ contract StockTransferTest is CapTableTest {
 
         bytes memory expectedError = abi.encodeWithSignature("InsufficientShares(uint256,uint256)", totalIssued, quantityToTransfer);
         vm.expectRevert(expectedError);
-        capTable.transferStock(transferorStakeholderId, transfereeStakeholderId, stockClassId, true, quantityToTransfer, price);
+        StockTransferParams memory params = StockTransferParams(
+            transferorStakeholderId,
+            transfereeStakeholderId,
+            stockClassId,
+            true,
+            quantityToTransfer,
+            price,
+            0,
+            ""
+        );
+        capTable.transferStock(params);
     }
 }

@@ -156,6 +156,7 @@ struct StockTransferParams {
     uint256 quantity;
     uint256 share_price;
     uint256 nonce;
+    string custom_id;
 }
 
 struct StockIssuanceParams {

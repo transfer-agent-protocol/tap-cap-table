@@ -4,13 +4,14 @@ import {
     addWalletToStakeholder,
     convertAndReflectStakeholderOnchain,
     getStakeholderById,
+    getStakeholderByWalletAddress,
     getTotalNumberOfStakeholders,
     removeWalletFromStakeholder,
 } from "../controllers/stakeholderController.js"; // Importing the controller functions
 
 import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
 import { createStakeholder } from "../db/operations/create.js";
-import { readIssuerById } from "../db/operations/read.js";
+import { readIssuerById, readStakeholderByIssuerAssignedId, readStakeholderByIssuerAndIssuerAssignedId } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stakeholder = Router();
@@ -32,6 +33,52 @@ stakeholder.get("/id/:id", async (req, res) => {
         res.status(500).send(`${error}`);
     }
 });
+
+stakeholder.get("/issuer_assigned_id/:id", async (req, res) => {
+    const { id } = req.params;
+    console.log("id", id);
+
+    try {
+        const stakeholder = await readStakeholderByIssuerAssignedId(id);
+
+        res.status(200).send(stakeholder);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
+stakeholder.get("/issuer/:issuerId/issuer_assigned_id/:id", async (req, res) => {
+    console.log("GETTING ISSUER  and ISSUER ASSIGNED ID");
+    console.log("req.params", req.params);
+    const { id, issuerId } = req.params;
+    console.log("id", id);
+    console.log("issuer id", issuerId);
+
+    try {
+        const stakeholder = await readStakeholderByIssuerAndIssuerAssignedId(issuerId, id);
+
+        res.status(200).send(stakeholder);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
+stakeholder.get("/wallet/:address", async (req, res) => {
+    const { contract } = req;
+    const { address } = req.params;
+
+    try {
+        const stakeholder = await getStakeholderByWalletAddress(contract, address);
+
+        res.status(200).send(stakeholder);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
 
 stakeholder.get("/total-number", async (req, res) => {
     const { contract } = req;
@@ -88,6 +135,9 @@ stakeholder.post("/add-wallet", async (req, res) => {
         await addWalletToStakeholder(contract, id, wallet);
         res.status(200).send("Success");
     } catch (error) {
+        if (error?.data && error?.data?.includes("0x789a109e")) {
+            return res.status(200).send("Wallet already added");
+        }
         console.error(error);
         res.status(500).send(`${error}`);
     }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { AccessControlDefaultAdminRules } from "openzeppelin/contracts/access/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams } from "../lib/Structs.sol";
+import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.
@@ -92,14 +92,7 @@ interface ICapTable {
 
     function cancelStock(StockParams calldata params, uint256 quantity) external;
 
-    function transferStock(
-        bytes16 transferorStakeholderId,
-        bytes16 transfereeStakeholderId,
-        bytes16 stockClassId,
-        bool isBuyerVerified,
-        uint256 quantity,
-        uint256 share_price
-    ) external;
+    function transferStock(StockTransferParams calldata params) external;
 
     function addAdmin(address addr) external;
 

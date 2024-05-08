@@ -36,7 +36,7 @@ const getEnvFile = (fileName) => {
 let _ALREADY_SETUP = false;
 
 export const setupEnv = () => {
-    if (_ALREADY_SETUP) {
+    if (_ALREADY_SETUP || process.env.NODE_ENV == "production") {
         return;
     }
     const fileName = process.env.USE_ENV_FILE || '.env';
