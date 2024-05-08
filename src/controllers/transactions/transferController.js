@@ -11,10 +11,16 @@ export const convertAndCreateTransferStockOnchain = async (contract, transfer) =
 
     const quantityScaled = toScaledBigNumber(quantity);
     const sharePriceScaled = toScaledBigNumber(sharePrice);
-
-    const tx = await contract.transferStock(
-        (transferorIdBytes16, transfereeIdBytes16, stockClassIdBytes16, isBuyerVerified, quantityScaled, sharePriceScaled, "")
-    );
+    const tx = await contract.transferStock({
+        transferor_stakeholder_id: transferorIdBytes16,
+        transferee_stakeholder_id: transfereeIdBytes16,
+        stock_class_id: stockClassIdBytes16,
+        is_buyer_verified: isBuyerVerified,
+        quantity: quantityScaled,
+        share_price: sharePriceScaled,
+        nonce: 0,
+        custom_id: "",
+    });
     await tx.wait();
     console.log(`Initiate Stock Transfer from transferee ID: ${transfereeId} to transferor ID: ${transferorId}`);
     console.log(`Quantity to be transferred: ${quantity}`);
