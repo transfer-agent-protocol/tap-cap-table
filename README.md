@@ -104,5 +104,5 @@ Integration test setup from no active processes:
 -   Terminal 1: `docker compose up`
 -   Terminal 2: `anvil`
 -   Terminal 3:
-    -   `USE_ENV_FILE=.env.test.local yarn deploy-factory`
+    -   `yarn deploy-factory .env.test.local`
     -   `yarn test-js-integration`
