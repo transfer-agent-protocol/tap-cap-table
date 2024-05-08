@@ -11,10 +11,7 @@ export const convertAndReflectStakeholderOnchain = async (contract, stakeholder)
     console.log("Stakeholder id for seeding ", stakeholderIdBytes16);
 
     // Second: create stakeholder onchain
-    const tx = await contract.createStakeholder(stakeholderIdBytes16, stakeholder.stakeholder_type, stakeholder.current_relationship, {
-        gasPrice: ethers.parseUnits("500", "gwei"),
-        gasLimit: 1000000,
-    });
+    const tx = await contract.createStakeholder(stakeholderIdBytes16, stakeholder.stakeholder_type, stakeholder.current_relationship);
     await tx.wait();
 
     console.log("✅ | Stakeholder created  onchain");

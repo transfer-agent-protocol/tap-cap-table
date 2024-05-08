@@ -26,6 +26,7 @@ const options = {
     second: "2-digit",
 };
 export const handleStockIssuance = async (stock, issuerId, timestamp) => {
+    const currency = "USD";
     const { id, object_type, security_id, params } = stock;
     console.log("StockIssuanceCreated Event Emitted!", id);
     const {
@@ -47,13 +48,13 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
         security_law_exemptions,
     } = params;
     const sharePriceOCF = {
-        amount: toDecimal(share_price).toString(),
-        currency: "USD",
+        amount: toDecimal(share_price, currency).toString(),
+        currency,
     };
 
     // Type represention of an ISO-8601 date, e.g. 2022-01-28.
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
-    const costBasisOCF = { amount: toDecimal(cost_basis).toString(), currency: "USD" };
+    const costBasisOCF = { amount: toDecimal(cost_basis, currency).toString(), currency };
     const share_numbers_issuedOCF = [
         {
             starting_share_number: toDecimal(starting_share_number).toString(),

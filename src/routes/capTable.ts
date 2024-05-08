@@ -20,8 +20,8 @@ capTable.get("/holdings/stock", async (req, res) => {
     */
     const issuerId = req.query.issuerId;
     try {
-        const stakeholders = await Stakeholder.find({issuer: issuerId});
-        const stockClasses = await StockClass.find({issuer: issuerId});
+        const stakeholders = await Stakeholder.find({ issuer: issuerId });
+        const stockClasses = await StockClass.find({ issuer: issuerId });
         const issuer = await Issuer.findById(issuerId);
         // Grouping by stakeholder_id and stock_class_id, grab the records with the largest createdAt time
         const issuances = await StockIssuance.aggregate([
@@ -29,10 +29,10 @@ capTable.get("/holdings/stock", async (req, res) => {
                 $group: {
                     _id: {
                         stakeholder_id: "$stakeholder_id",
-                        stock_class_id: "$stock_class_id"
+                        stock_class_id: "$stock_class_id",
                     },
-                    maxDate: { $max: "$createdAt" }
-                }
+                    maxDate: { $max: "$createdAt" },
+                },
             },
             {
                 $lookup: {
@@ -45,29 +45,37 @@ capTable.get("/holdings/stock", async (req, res) => {
                                     $and: [
                                         { $eq: ["$stakeholder_id", "$$stakeholder_id"] },
                                         { $eq: ["$stock_class_id", "$$stock_class_id"] },
-                                        { $eq: ["$createdAt", "$$maxDate"] }
-                                    ]
-                                }
-                            }
-                        }
+                                        { $eq: ["$createdAt", "$$maxDate"] },
+                                    ],
+                                },
+                            },
+                        },
                     ],
-                    as: "issuanceData"
-                }
+                    as: "issuanceData",
+                },
             },
             { $unwind: "$issuanceData" },
-            { $replaceRoot: { newRoot: "$issuanceData" } }
+            { $replaceRoot: { newRoot: "$issuanceData" } },
         ]);
-      
+
         // We need to hit web3 to see which are actually valid
         const { contract } = await getIssuerContract(issuer);
         let holdings = [];
-        const stakeholderMap = Object.fromEntries(stakeholders.map((x) => { return [x._id, x]; }));
-        const stockClassMap = Object.fromEntries(stockClasses.map((x) => { return [x._id, x]; }));
+        const stakeholderMap = Object.fromEntries(
+            stakeholders.map((x) => {
+                return [x._id, x];
+            })
+        );
+        const stockClassMap = Object.fromEntries(
+            stockClasses.map((x) => {
+                return [x._id, x];
+            })
+        );
         for (const issuance of issuances) {
             const { stakeholder_id, stock_class_id } = issuance;
             const [quantityPrice, quantity, timestamp] = await contract.getAveragePosition(
                 convertUUIDToBytes16(stakeholder_id),
-                convertUUIDToBytes16(stock_class_id),
+                convertUUIDToBytes16(stock_class_id)
             );
             if (quantity == 0) {
                 continue;
