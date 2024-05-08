@@ -106,7 +106,8 @@ library StockLib {
                 true,
                 remainingQuantity,
                 activePosition.share_price,
-                params.nonce
+                params.nonce,
+                ""
             );
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
@@ -190,7 +191,8 @@ library StockLib {
                 true,
                 remainingQuantity,
                 activePosition.share_price,
-                params.nonce
+                params.nonce,
+                ""
             );
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
@@ -301,7 +303,8 @@ library StockLib {
             params.is_buyer_verified,
             params.quantity,
             params.share_price,
-            params.nonce
+            params.nonce,
+            params.custom_id
         );
         newParams.quantity = balanceForTransferor;
         newParams.share_price = transferorActivePosition.share_price;

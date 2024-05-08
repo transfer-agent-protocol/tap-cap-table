@@ -38,13 +38,18 @@ contract RolesTests is CapTableTest {
 
         // will revert because we haven't performed an issuance, but it would have already verified operator
         // role working
-        capTable.transferStock(
+        StockTransferParams memory params = StockTransferParams(
             stakeholderIds[0], // transferor
             stakeholderIds[1], // transferee
             stockClassId,
             true,
             100,
-            100
+            100,
+            0,
+            ""
+        );
+        capTable.transferStock(
+            params
         );
     }
 
