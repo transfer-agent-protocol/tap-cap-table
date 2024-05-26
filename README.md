@@ -12,7 +12,7 @@ This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap
 
 ## Contributing
 
-We welcome all contributions. Please give a quick read to our [CONTRIBUTING](./CONTRIBUTING.md) guidelines to understand the them and the process.
+We welcome all contributions. Please give a quick read to our [CONTRIBUTING](./CONTRIBUTING.md) guidelines before submiting new PRs!
 
 ## License
 

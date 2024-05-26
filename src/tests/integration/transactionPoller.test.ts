@@ -139,7 +139,7 @@ const checkRecs = async (issuerId) => {
     portions.sort((a, b) => b.quantity - a.quantity);
     expect(portions).toStrictEqual([
         { quantity: 300, sharePrice: 9.35, name: "Kent Kolze" },
-        { quantity: 200, sharePrice: 4.2, name: "Victor Mimo" },
+        { quantity: 200, sharePrice: 4.2, name: "Alex Fong" },
     ]);
 };
 
