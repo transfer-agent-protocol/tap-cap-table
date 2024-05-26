@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// My bet is that Issuer and Stock Class need to have a quanity field where the shares are added back for retractions or cancellations
-// On issuance, we must verify there are enough shares available to issue for that stock class
-
 struct Issuer {
     bytes16 id;
     string legal_name;
