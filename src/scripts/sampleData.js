@@ -148,23 +148,23 @@ export const stakeholder2 = (issuerId) => {
         issuerId,
         data: {
             name: {
-                legal_name: "Victor Mimo",
-                first_name: "Victor",
-                last_name: "Mimo",
+                legal_name: "Alex Fong",
+                first_name: "Alex",
+                last_name: "Fong",
             },
             issuer_assigned_id: "",
             stakeholder_type: "INDIVIDUAL",
             current_relationship: "EMPLOYEE",
             // "primary_contact": {
             //     "name": {
-            //         "legal_name": "Victor Mimo",
-            //         "first_name": "Victor",
-            //         "last_name": "Mimo"
+            //         "legal_name": "Alex Fong",
+            //         "first_name": "Alex",
+            //         "last_name": "Fong"
             //     },
             //     "emails": [
             //         {
             //             "email_type": "PERSONAL",
-            //             "email_address": "victor@poet.network"
+            //             "email_address": "alex@plural.xyz"
             //         }
             //     ],
             //     "phone_numbers": []

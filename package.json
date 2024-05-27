@@ -1,8 +1,8 @@
 {
     "name": "tap-cap-table",
-    "version": "1.0.0-alpha.0",
+    "version": "1.0.0",
     "private": true,
-    "author": "Alex Palmer, Victor Mimo",
+    "author": "thatalexpalmer.eth",
     "license": "MIT",
     "description": "Transfer Agent Protocol onchain cap table",
     "type": "module",
@@ -22,8 +22,6 @@
         "test": "cd chain && forge test",
         "test-js": "jest --testPathPattern src/tests/unit",
         "test-js-integration": "jest --testPathPattern src/tests/integration",
-        "validate-poet-files": "cd ocf && yarn validate-poet-files",
-        "export-manifest": "cd src/db/samples && zip -r notPoet.zip notPoet && mv notPoet.zip $HOME/Downloads"
     },
     "dependencies": {
         "ajv": "^8.12.0",
