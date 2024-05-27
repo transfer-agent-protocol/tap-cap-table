@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { v4 as uuid } from "uuid";
 
-// This model is verified with optional and required fields, comments must remain to aid on-chain to off-chain translation.
+// This model is verified with optional and required fields, comments must remain to aid onchain to offchain translation.
 const StockClassSchema = new mongoose.Schema({
     _id: { type: String, default: () => uuid() },
     object_type: { type: String, default: "STOCK_CLASS" },
