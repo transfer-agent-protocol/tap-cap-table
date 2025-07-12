@@ -18,10 +18,9 @@
         "prepare": "husky install",
         "deploy-factory": "./scripts/deployFactory.sh",
         "setup": "cd chain && foundryup && forge build --via-ir",
-        "deseed": "tsx src/db/scripts/deseed.js",
         "test": "cd chain && forge test",
         "test-js": "jest --testPathPattern src/tests/unit",
-        "test-js-integration": "jest --testPathPattern src/tests/integration",
+        "test-js-integration": "jest --testPathPattern src/tests/integration"
     },
     "dependencies": {
         "ajv": "^8.12.0",
