@@ -232,7 +232,7 @@ const persistEvents = async (issuerId, events: QueuedEvent[]) => {
 
 export const trimEvents = (origEvents: QueuedEvent[], maxEvents, endBlock) => {
     // Sort for correct execution order
-    let events = [...origEvents];
+    const events = [...origEvents];
     events.sort((a, b) => a.o.blockNumber - b.o.blockNumber || a.o.transactionIndex - b.o.transactionIndex || a.o.index - b.o.index);
     let index = 0;
     while (index < maxEvents && index < events.length) {

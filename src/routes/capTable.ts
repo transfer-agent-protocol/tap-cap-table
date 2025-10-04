@@ -60,7 +60,7 @@ capTable.get("/holdings/stock", async (req, res) => {
 
         // We need to hit web3 to see which are actually valid
         const { contract } = await getIssuerContract(issuer);
-        let holdings = [];
+        const holdings = [];
         const stakeholderMap = Object.fromEntries(
             stakeholders.map((x) => {
                 return [x._id, x];

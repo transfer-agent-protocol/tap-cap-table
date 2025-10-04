@@ -8,18 +8,19 @@ If you discover a security vulnerability in this project, please report it by em
 
 ### Dependencies in OCF Submodule
 
-The `ocf/` directory is a git submodule maintained by the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF). 
+The `ocf/` directory is a git submodule maintained by the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF).
 
 As of the latest audit, there are known vulnerabilities in the OCF submodule's dependencies:
 
 - **Critical (1)**: parse-url SSRF vulnerability (in documentation dependencies)
-- **High (3)**: parse-path, braces, ansi-html vulnerabilities (in documentation dependencies)  
+- **High (3)**: parse-path, braces, ansi-html vulnerabilities (in documentation dependencies)
 - **Moderate (6)**: Various ReDoS and XSS vulnerabilities (in documentation/tooling dependencies)
 - **Low (1)**: tmp vulnerability (in development dependencies)
 
 **Impact**: These vulnerabilities are in the OCF documentation generation tooling and do not affect runtime code. They are not used in production deployments of this cap table implementation.
 
-**Mitigation**: 
+**Mitigation**:
+
 - The ocf submodule is only used for schema validation and sample data
 - None of the vulnerable packages are part of the runtime API server or smart contracts
 - Updates to the OCF submodule will be applied when the upstream project addresses these issues
