@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies and setup
-RUN yarn install
+RUN npm install -g pnpm && pnpm install
 RUN git submodule update --init --recursive
 
 EXPOSE 8080

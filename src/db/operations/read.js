@@ -98,8 +98,8 @@ export const getAllIssuerDataById = async (issuerId) => {
 
 export const readAllIssuers = async () => {
     return await find(Issuer);
-}
+};
 
 export const readfactories = async () => {
     return await find(Factory);
-}
+};

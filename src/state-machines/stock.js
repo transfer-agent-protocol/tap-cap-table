@@ -69,13 +69,14 @@ export const stockMachine = createMachine(
             issue: (context, event) => updateContext(context, event.value),
             sendBackToParent: sendParent((context, event) => {
                 return {
-                type: "UPDATE_CONTEXT",
-                value: {
-                    activePositions: context.activePositions,
-                    activeSecurityIdsByStockClass: context.activeSecurityIdsByStockClass,
-                    stock_class_id: context.value.stock_class_id
-                },
-            }}),
+                    type: "UPDATE_CONTEXT",
+                    value: {
+                        activePositions: context.activePositions,
+                        activeSecurityIdsByStockClass: context.activeSecurityIdsByStockClass,
+                        stock_class_id: context.value.stock_class_id,
+                    },
+                };
+            }),
             stopChild: sendParent((context, event) => {
                 const { security_id, resulting_security_ids, balance_security_id } = event;
                 return {

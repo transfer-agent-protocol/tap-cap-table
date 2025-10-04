@@ -6,7 +6,7 @@ connectDB();
 
 const main = async () => {
     const lastStockIssuance = await StockIssuance.find().sort({ updatedAt: -1 }).limit(1);
-    if (!lastStockIssuance || !lastStockIssuance.length) throw Error("No Issuance Exist")
+    if (!lastStockIssuance || !lastStockIssuance.length) throw Error("No Issuance Exist");
 
     const { issuer, security_id, stakeholder_id, stock_class_id, quantity } = lastStockIssuance[0];
 

@@ -96,7 +96,7 @@ async function deployLib(lib, libs) {
             "--json",
             ...librariesDepsArgs,
         ];
-        // TODO: only log when things break 
+        // TODO: only log when things break
         // console.log(`Forge command arguments: ${args.join(" ")}`);
 
         // Executing the forge command

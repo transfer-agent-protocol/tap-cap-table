@@ -6,7 +6,6 @@ type TQueryOptions = QueryOptions | null;
 
 let _globalSession = null;
 
-
 export const setGlobalSession = (session) => {
     if (_globalSession !== null) {
         throw new Error(
@@ -15,18 +14,18 @@ export const setGlobalSession = (session) => {
         );
     }
     _globalSession = session;
-}
+};
 
 export const clearGlobalSession = () => {
     _globalSession = null;
-}
+};
 
 const isReplSet = () => {
     if (process.env.DATABASE_REPLSET === "1") {
         return true;
-    } 
+    }
     return false;
-}
+};
 
 export const withGlobalTransaction = async (func: () => Promise<void>, useConn?: Connection) => {
     if (!isReplSet()) {
@@ -36,7 +35,7 @@ export const withGlobalTransaction = async (func: () => Promise<void>, useConn?:
     }
 
     // Wrap a user defined `func` in a global transaction
-    const dbConn = useConn || await connectDB();
+    const dbConn = useConn || (await connectDB());
     await dbConn.transaction(async (session) => {
         setGlobalSession(session);
         try {
@@ -45,8 +44,7 @@ export const withGlobalTransaction = async (func: () => Promise<void>, useConn?:
             clearGlobalSession();
         }
     });
-}
-
+};
 
 const includeSession = (options?: TQueryOptions) => {
     let useOptions = options || {};
@@ -57,7 +55,7 @@ const includeSession = (options?: TQueryOptions) => {
         useOptions.session = _globalSession;
     }
     return useOptions;
-}
+};
 
 /* 
 Wrapped mongoose db calls. All mongo interaction should go through a function below
@@ -67,34 +65,34 @@ Wrapped mongoose db calls. All mongo interaction should go through a function be
 
 export const save = (model, options?: TQueryOptions) => {
     return model.save(includeSession(options));
-}
+};
 
 // UPDATE
 
 export const findByIdAndUpdate = (model, id, updatedData, options?: TQueryOptions) => {
     return model.findByIdAndUpdate(id, updatedData, includeSession(options));
-}
+};
 
 // DELETE
 
 export const findByIdAndDelete = (model, id, options?: TQueryOptions) => {
     return model.findByIdAndDelete(id, includeSession(options));
-}
+};
 
 // QUERY
 
 export const findById = (model, id, projection?, options?: TQueryOptions) => {
     return model.findById(id, projection, includeSession(options));
-}
+};
 
 export const findOne = (model, filter, projection?, options?: TQueryOptions) => {
     return model.findOne(filter, projection, includeSession(options));
-}
+};
 
 export const find = (model, filter, projection?, options?: TQueryOptions) => {
     return model.find(filter, projection, includeSession(options));
-}
+};
 
 export const countDocuments = (model, options?: TQueryOptions) => {
     return model.countDocuments(includeSession(options));
-}
+};

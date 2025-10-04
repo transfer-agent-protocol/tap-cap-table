@@ -34,7 +34,7 @@ const processManifest = (req) => {
                                     const fileData = Buffer.concat(chunks);
                                     if (fileData.length === 0) {
                                         console.error("Empty file detected:", entry.fileName);
-                                    } else if (entry.fileName.endsWith('ocf.json')) {
+                                    } else if (entry.fileName.endsWith("ocf.json")) {
                                         arr.push(JSON.parse(fileData.toString()));
                                     }
                                     zipfile.readEntry();

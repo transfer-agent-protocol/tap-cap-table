@@ -69,7 +69,7 @@ app.use("/transactions/", contractMiddleware, transactionRoutes);
 let _server = null;
 let _pollerStarted = false;
 
-export const startServer = async ({finalizedOnly, runPoller}) => {
+export const startServer = async ({ finalizedOnly, runPoller }) => {
     /*
     finalizedOnly=false helps during testing bc we dont have to wait for blocks to finalize
     */
@@ -82,7 +82,7 @@ export const startServer = async ({finalizedOnly, runPoller}) => {
             console.log(`🚀  Server successfully launched at ${PORT}`);
             if (runPoller) {
                 _pollerStarted = true;
-                startEventProcessing({finalizedOnly});
+                startEventProcessing({ finalizedOnly });
             }
         })
         .on("error", (err) => {

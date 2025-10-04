@@ -314,8 +314,7 @@ transactions.post("/issuance/equity-compensation", async (req, res) => {
         console.error(error);
         res.status(500).send(`${error}`);
     }
-})
-
+});
 
 transactions.post("/issuance/convertible", async (req, res) => {
     const { issuerId, data } = req.body;
@@ -332,7 +331,7 @@ transactions.post("/issuance/convertible", async (req, res) => {
             ...data,
         };
 
-        console.log('incomingConvertibleIssuance', incomingConvertibleIssuance)
+        console.log("incomingConvertibleIssuance", incomingConvertibleIssuance);
         await validateInputAgainstOCF(incomingConvertibleIssuance, convertibleIssuanceSchema);
 
         // save to DB
@@ -343,6 +342,6 @@ transactions.post("/issuance/convertible", async (req, res) => {
         console.error(error);
         res.status(500).send(`${error}`);
     }
-})
+});
 
 export default transactions;
