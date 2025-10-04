@@ -105,7 +105,7 @@
         /* Completeness */
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         "skipLibCheck": true /* Skip type checking all .d.ts files. */
-    }
-    // "include": ["src/**/*", "chain/out/**/*"], // Include all files in the src directory.
-    // "exclude": ["node_modules", "dist"] // Exclude directories.
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist", "ocf", "chain/lib", "chain/out"]
 }
