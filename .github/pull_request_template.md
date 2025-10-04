@@ -1,9 +1,15 @@
 ## What?
 
-Please describe what you're trying to accomplish in this PR.
+<!-- Describe what you're trying to accomplish in this PR -->
 
 ## Why?
 
-What problem does this solve? Why is this important? What's the context?
+<!-- What problem does this solve? Why is this important? -->
 
-## Screenshots (optional)
+## Testing
+
+<!-- How was this tested? What should reviewers verify? -->
+
+## Related Issues
+
+<!-- Closes #123, Related to #456 -->
