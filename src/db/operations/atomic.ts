@@ -47,7 +47,7 @@ export const withGlobalTransaction = async (func: () => Promise<void>, useConn?:
 };
 
 const includeSession = (options?: TQueryOptions) => {
-    let useOptions = options || {};
+    const useOptions = options || {};
     if (_globalSession !== null) {
         if (useOptions.session) {
             throw new Error(`options.session is already set!: ${useOptions}`);
