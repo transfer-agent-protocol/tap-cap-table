@@ -1,0 +1,37 @@
+{
+    "root": true,
+    "extends": ["eslint:recommended", "plugin:import/recommended", "plugin:import/typescript", "prettier"],
+    "plugins": ["import"],
+    "env": {
+        "node": true,
+        "es2022": true
+    },
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "overrides": [
+        {
+            "files": ["**/*.ts", "**/*.tsx"],
+            "parser": "@typescript-eslint/parser",
+            "parserOptions": {
+                "project": "./tsconfig.json"
+            }
+        },
+        {
+            "files": ["**/*.test.js", "**/*.test.ts", "**/tests/**"],
+            "env": {
+                "jest": true
+            }
+        }
+    ],
+    "rules": {
+        "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+        "import/no-unresolved": "off",
+        "import/namespace": "off",
+        "import/default": "off",
+        "import/no-named-as-default": "off",
+        "import/no-named-as-default-member": "off"
+    },
+    "ignorePatterns": ["node_modules/", "dist/", "chain/out/", "chain/lib/", "chain/cache/", "chain/broadcast/", "ocf/"]
+}
