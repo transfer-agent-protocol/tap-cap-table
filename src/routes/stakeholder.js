@@ -79,7 +79,6 @@ stakeholder.get("/wallet/:address", async (req, res) => {
     }
 });
 
-
 stakeholder.get("/total-number", async (req, res) => {
     const { contract } = req;
 

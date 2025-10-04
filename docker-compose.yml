@@ -1,14 +1,14 @@
-version: '3.7'
+version: "3.7"
 services:
-  mongodb_container:
-    # This image automatically creates a replica set required for transactions
-    image: mongo:latest
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: tap
-      MONGO_INITDB_ROOT_PASSWORD: tap
-      INIT_WAIT_SEC: 3
-    ports:
-      - 27017:27017
-    # Make sure log colors show up correctly
-    tty: true
+    mongodb_container:
+        # This image automatically creates a replica set required for transactions
+        image: mongo:latest
+        restart: always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: tap
+            MONGO_INITDB_ROOT_PASSWORD: tap
+            INIT_WAIT_SEC: 3
+        ports:
+            - 27017:27017
+        # Make sure log colors show up correctly
+        tty: true

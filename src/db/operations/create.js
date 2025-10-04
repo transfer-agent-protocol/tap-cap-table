@@ -63,4 +63,4 @@ export const createStockTransfer = (stockTransferData) => {
 
 export const createFactory = (factoryData) => {
     return save(new Factory(factoryData));
-}
+};

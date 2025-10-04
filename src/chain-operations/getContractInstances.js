@@ -16,4 +16,4 @@ export const getContractInstance = (address) => {
     const libraries = getTXLibContracts(contract.target, wallet);
 
     return { contract, provider, libraries };
-}
+};

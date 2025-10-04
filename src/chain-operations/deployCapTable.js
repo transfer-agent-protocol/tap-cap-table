@@ -19,7 +19,7 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
 
     const factories = await readfactories();
     const factoryAddress = factories[0]?.factory_address;
-    console.log({factories, factoryAddress});
+    console.log({ factories, factoryAddress });
 
     if (!factoryAddress) {
         throw new Error(`❌ | Factory address not found`);
