@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import { UpgradeableBeacon } from "openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -12,10 +12,10 @@ contract CapTableFactory is ICapTableFactory, Ownable {
     UpgradeableBeacon public capTableBeacon;
     address[] public capTableProxies;
 
-    constructor(address _capTableImplementation) {
+    constructor(address _capTableImplementation) Ownable(msg.sender) {
         require(_capTableImplementation != address(0), "Invalid implementation address");
         capTableImplementation = _capTableImplementation;
-        capTableBeacon = new UpgradeableBeacon(capTableImplementation);
+        capTableBeacon = new UpgradeableBeacon(capTableImplementation, address(this));
     }
 
     function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized) external onlyOwner returns (address) {

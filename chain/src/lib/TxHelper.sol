@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import { StockIssuance, StockIssuanceParams, ActivePositions, ActivePosition, SecIdsStockClass, Issuer, StockClass, StockTransfer, StockRepurchase, ShareNumbersIssued, StockAcceptance, StockCancellation, StockReissuance, StockRetraction, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment, StockTransferParams, StockParamsQuantity, StockIssuanceParams } from "./Structs.sol";
 
