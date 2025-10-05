@@ -273,12 +273,13 @@ OCF defines the standard for:
 
 ## Git Workflow
 
-Follow conventional commits and branch from `dev`:
+Follow conventional commits and branch from `main`:
 
-- **Never commit to** `main` or `dev` directly
-- Create feature branches from `dev`
+- **Never commit to** `main` directly
+- Create feature branches from `main`
 - PR titles: `feat(scope): description` or `fix(scope): description`
 - Commit messages: Descriptive, imperative mood
+- All PRs merge into `main` (no separate dev branch)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for full guidelines.
 
@@ -305,17 +306,37 @@ The project uses TypeScript with:
 
 Use `tsx` for running TypeScript files directly (already configured in scripts).
 
+## VS Code Configuration
+
+The repository includes `.vscode/settings.json` for proper Solidity development:
+
+- **Solidity Compiler**: v0.8.24+commit.e11b9ed9 (matches Foundry config)
+- **Formatter**: Uses Forge for consistent formatting
+
+If you encounter "Source file requires different compiler version" errors in VS Code:
+1. Reload VS Code (Cmd+Shift+P → "Developer: Reload Window")
+2. The extension will download the correct compiler version automatically
+
 ## Foundry (Solidity)
 
-- **Compiler**: Solidity 0.8.20
+- **Compiler**: Solidity 0.8.24
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
 - **Tests**: Use `forge test` with optional filters: `--match-test`, `--match-contract`
 
 Libraries:
 
-- OpenZeppelin (upgradeable contracts)
+- OpenZeppelin v5.4.0 (upgradeable contracts)
+- forge-std v1.10.0
 - Access control: `AccessControlDefaultAdminRulesUpgradeable`
+
+**Recent Migration (Oct 2025)**:
+- Migrated from OpenZeppelin v4.9.2 to v5.4.0
+- Updated Solidity from 0.8.20 to 0.8.24 (required for OZ v5)
+- Breaking changes addressed:
+  - `Ownable` constructor now requires `initialOwner` parameter
+  - `UpgradeableBeacon` constructor includes owner parameter
+  - Import paths updated for `AccessControlDefaultAdminRules` (now in `extensions/`)
 
 ## Common Pitfalls
 
