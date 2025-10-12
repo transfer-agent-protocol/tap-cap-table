@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./CapTable.t.sol";
+import { CapTableTest } from "./CapTable.t.sol";
 import { InitialShares, IssuerInitialShares, StockClassInitialShares } from "../src/lib/Structs.sol";
 
 contract SeedingTest is CapTableTest {

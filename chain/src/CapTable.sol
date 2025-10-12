@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import { AccessControlDefaultAdminRulesUpgradeable } from "openzeppelin-upgradeable/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 
 import { ICapTable } from "./interfaces/ICapTable.sol";
-import { StockTransferParams, Issuer, Stakeholder, StockClass, InitialShares, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams } from "./lib/Structs.sol";
-import "./lib/transactions/Adjustment.sol";
-import "./lib/Stock.sol";
+import { StockTransferParams, Issuer, Stakeholder, StockClass, InitialShares, ActivePositions, SecIdsStockClass, StockLegendTemplate, StockParams, StockParamsQuantity, StockIssuanceParams, ActivePosition } from "./lib/Structs.sol";
+import { Adjustment } from "./lib/transactions/Adjustment.sol";
+import { StockLib } from "./lib/Stock.sol";
 
 contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     Issuer public issuer;

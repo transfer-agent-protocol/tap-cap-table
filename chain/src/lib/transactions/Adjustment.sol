@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { Issuer, StockClass } from "../Structs.sol";
-import "../TxHelper.sol";
+import { TxHelper, TxType, IssuerAuthorizedSharesAdjustment, StockClassAuthorizedSharesAdjustment } from "../TxHelper.sol";
 
 library Adjustment {
     function adjustIssuerAuthorizedShares(

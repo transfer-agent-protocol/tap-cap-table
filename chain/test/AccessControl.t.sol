@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./CapTable.t.sol";
+import { CapTableTest } from "./CapTable.t.sol";
+import { StockTransferParams } from "../src/lib/Structs.sol";
 
 contract RolesTests is CapTableTest {
     address RANDO_ADDR = address(0xf001);

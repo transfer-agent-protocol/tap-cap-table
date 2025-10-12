@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams } from "./Structs.sol";
-import "./TxHelper.sol";
-import "./DeleteContext.sol";
+import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams, StockTransferParams, StockCancellation, StockReissuance, StockRepurchase, StockRetraction, StockAcceptance, StockParamsQuantity, StockTransfer } from "./Structs.sol";
+import { TxHelper, TxType } from "./TxHelper.sol";
+import { DeleteContext } from "./DeleteContext.sol";
 
 library StockLib {
     error InsufficientShares(uint256 available, uint256 required);
