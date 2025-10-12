@@ -40,6 +40,8 @@ contract StockCancellationTest is CapTableTest {
 
         issueStock(stockClassId, stakeholderId, 1000);
 
+        // Safe: Test data - intentionally invalid security ID (string literal fits in bytes16)
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes16 nonExistentSecId = bytes16("0xd3373e0a4dd86");
 
         // Expecting the ActivePositionNotFound revert

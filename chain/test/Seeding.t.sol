@@ -72,6 +72,8 @@ contract SeedingTest is CapTableTest {
             stockClassIds[i] = stockClassId;
             quantities[i] = 1000; // Dummy quantities
             sharePrices[i] = 10000000000; // Dummy share prices
+            // Safe: block.timestamp fits in uint40 until year ~36,835 (1099511627775 seconds from epoch)
+            // forge-lint: disable-next-line(unsafe-typecast)
             timestamps[i] = uint40(block.timestamp + i); // Dummy timestamps
         }
 
@@ -106,6 +108,8 @@ contract SeedingTest is CapTableTest {
         stockClassIds[0] = 0x12345678901234567890123456789012; // Non-existent stock class
         quantities[0] = 1000;
         sharePrices[0] = 10000000000;
+        // Safe: block.timestamp fits in uint40 until year ~36,835 (1099511627775 seconds from epoch)
+        // forge-lint: disable-next-line(unsafe-typecast)
         timestamps[0] = uint40(block.timestamp);
 
         bytes memory expectedError = abi.encodeWithSignature("NoStakeholder(bytes16)", stakeholderIds[0]);

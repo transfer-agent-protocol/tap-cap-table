@@ -58,6 +58,8 @@ contract RolesTests is CapTableTest {
         vm.prank(RANDO_ADDR);
 
         vm.expectRevert("Does not have admin role");
+        // Safe: Test data - simple stakeholder ID (string literal fits in bytes16)
+        // forge-lint: disable-next-line(unsafe-typecast)
         capTable.createStakeholder(bytes16("0101"), "Individual", "Investor");
     }
 }
