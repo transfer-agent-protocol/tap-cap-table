@@ -1,0 +1,7 @@
+ 136 note[mixed-case-variable]: mutable variables should use mixedCase
+  68 note[unused-import]: unused imports should be removed
+  37 note[unaliased-plain-import]: use named imports '{A, B}' or alias 'import ".." as X'
+  36 note[named-struct-fields]: prefer initializing structs with named fields
+   4 note[mixed-case-function]: function names should use mixedCase
+   3 warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   2 note[unwrapped-modifier-logic]: wrap modifier logic to reduce code size
