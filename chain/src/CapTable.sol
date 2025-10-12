@@ -61,7 +61,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
-        issuer = Issuer(id, name, 0, initial_shares_authorized);
+        issuer = Issuer({
+            id: id,
+            legal_name: name,
+            shares_issued: 0,
+            shares_authorized: initial_shares_authorized
+        });
         emit IssuerCreated(id, name);
     }
 
@@ -125,12 +130,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
             // perform requires to ensure valid stakeholders and stock classes
             _checkStakeholderIsStored(stakeholderIds[i]);
             _checkInvalidStockClass(stockClassIds[i]);
-            positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition(
-                stockClassIds[i],
-                quantities[i],
-                sharePrices[i],
-                timestamps[i]
-            );
+            positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition({
+                stock_class_id: stockClassIds[i],
+                quantity: quantities[i],
+                share_price: sharePrices[i],
+                timestamp: timestamps[i]
+            });
 
             activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
         }
@@ -140,7 +145,11 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external override onlyAdmin {
         _checkStakeholderExists(_id);
 
-        stakeholders.push(Stakeholder(_id, _stakeholder_type, _current_relationship));
+        stakeholders.push(Stakeholder({
+            id: _id,
+            stakeholder_type: _stakeholder_type,
+            current_relationship: _current_relationship
+        }));
         stakeholderIndex[_id] = stakeholders.length;
         emit StakeholderCreated(_id);
     }
@@ -154,7 +163,13 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     ) external override onlyAdmin {
         _checkStockClassExists(_id);
 
-        stockClasses.push(StockClass(_id, _class_type, _price_per_share, 0, _initial_share_authorized));
+        stockClasses.push(StockClass({
+            id: _id,
+            class_type: _class_type,
+            price_per_share: _price_per_share,
+            shares_issued: 0,
+            shares_authorized: _initial_share_authorized
+        }));
         stockClassIndex[_id] = stockClasses.length;
         emit StockClassCreated(_id, _class_type, _price_per_share, _initial_share_authorized);
     }
@@ -162,7 +177,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     /// @inheritdoc ICapTable
     // Basic functionality of Stock Legend Template, unclear how it ties to active positions.
     function createStockLegendTemplate(bytes16 _id) external override onlyAdmin {
-        stockLegendTemplates.push(StockLegendTemplate(_id));
+        stockLegendTemplates.push(StockLegendTemplate({ id: _id }));
     }
 
     /// @inheritdoc ICapTable
@@ -207,15 +222,15 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
         nonce++;
 
-        StockParamsQuantity memory repurchaseParams = StockParamsQuantity(
-            nonce,
-            quantity,
-            params.stakeholder_id,
-            params.stock_class_id,
-            params.security_id,
-            params.comments,
-            params.reason_text
-        );
+        StockParamsQuantity memory repurchaseParams = StockParamsQuantity({
+            nonce: nonce,
+            quantity: quantity,
+            stakeholder_id: params.stakeholder_id,
+            stock_class_id: params.stock_class_id,
+            security_id: params.security_id,
+            comments: params.comments,
+            reason_text: params.reason_text
+        });
 
         StockLib.createRepurchase(
             repurchaseParams,
@@ -273,15 +288,15 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
         nonce++;
 
-        StockParamsQuantity memory cancelParams = StockParamsQuantity(
-            nonce,
-            quantity,
-            params.stakeholder_id,
-            params.stock_class_id,
-            params.security_id,
-            params.comments,
-            params.reason_text
-        );
+        StockParamsQuantity memory cancelParams = StockParamsQuantity({
+            nonce: nonce,
+            quantity: quantity,
+            stakeholder_id: params.stakeholder_id,
+            stock_class_id: params.stock_class_id,
+            security_id: params.security_id,
+            comments: params.comments,
+            reason_text: params.reason_text
+        });
 
         StockLib.createCancellation(
             cancelParams,
@@ -301,16 +316,16 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
         nonce++;
 
-        StockTransferParams memory transferParams = StockTransferParams(
-            params.transferor_stakeholder_id,
-            params.transferee_stakeholder_id,
-            params.stock_class_id,
-            params.is_buyer_verified,
-            params.quantity,
-            params.share_price,
-            nonce,
-            params.custom_id
-        );
+        StockTransferParams memory transferParams = StockTransferParams({
+            transferor_stakeholder_id: params.transferor_stakeholder_id,
+            transferee_stakeholder_id: params.transferee_stakeholder_id,
+            stock_class_id: params.stock_class_id,
+            is_buyer_verified: params.is_buyer_verified,
+            quantity: params.quantity,
+            share_price: params.share_price,
+            nonce: nonce,
+            custom_id: params.custom_id
+        });
 
         StockLib.createTransfer(
             transferParams,

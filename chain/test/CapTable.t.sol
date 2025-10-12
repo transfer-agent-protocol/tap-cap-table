@@ -44,7 +44,7 @@ contract CapTableTest is Test {
         StockIssuanceParams memory issuanceParams = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
+            share_numbers_issued: ShareNumbersIssued({ starting_share_number: 0, ending_share_number: 0 }),
             share_price: 100,
             quantity: quantity,
             vesting_terms_id: 0x00000000000000000000000000000000,

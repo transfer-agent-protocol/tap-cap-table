@@ -23,12 +23,19 @@ contract SeedingTest is CapTableTest {
         uint256 expectedStockClassSharesIssued = 350000000000000000; // 35M
 
         StockClassInitialShares[] memory stockClassInitialShares = new StockClassInitialShares[](1);
-        stockClassInitialShares[0] = StockClassInitialShares(stockClassId, expectedStockClassSharesAuthorized, expectedStockClassSharesIssued);
+        stockClassInitialShares[0] = StockClassInitialShares({
+            id: stockClassId,
+            shares_authorized: expectedStockClassSharesAuthorized,
+            shares_issued: expectedStockClassSharesIssued
+        });
 
-        InitialShares memory params = InitialShares(
-            IssuerInitialShares(expectedIssuerSharesAuthorized, expectedIssuerSharesIssued),
-            stockClassInitialShares
-        );
+        InitialShares memory params = InitialShares({
+            issuerInitialShares: IssuerInitialShares({
+                shares_authorized: expectedIssuerSharesAuthorized,
+                shares_issued: expectedIssuerSharesIssued
+            }),
+            stockClassesInitialShares: stockClassInitialShares
+        });
 
         capTable.seedSharesAuthorizedAndIssued(params);
 
@@ -43,7 +50,10 @@ contract SeedingTest is CapTableTest {
 
     function testSeedingWithInvalidParameters() public {
         // Attempt to seed with zero shares authorized and issued
-        InitialShares memory params = InitialShares(IssuerInitialShares(0, 0), new StockClassInitialShares[](0));
+        InitialShares memory params = InitialShares({
+            issuerInitialShares: IssuerInitialShares({ shares_authorized: 0, shares_issued: 0 }),
+            stockClassesInitialShares: new StockClassInitialShares[](0)
+        });
 
         vm.expectRevert("Invalid Seeding Shares Params");
         capTable.seedSharesAuthorizedAndIssued(params);
