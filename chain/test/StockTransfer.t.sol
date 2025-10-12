@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/console.sol";
-
-import "./CapTable.t.sol";
-import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockTransfer, StockParams } from "../src/lib/Structs.sol";
+import { CapTableTest } from "./CapTable.t.sol";
+import { StockIssuance, StockTransfer, StockTransferParams } from "../src/lib/Structs.sol";
 
 contract StockTransferTest is CapTableTest {
     function createTransferSetup() private returns (bytes16, bytes16, bytes16, uint256) {
@@ -36,16 +34,16 @@ contract StockTransferTest is CapTableTest {
         // Transfer stock
         uint256 quantityToTransfer = 3500;
         uint256 price = 25;
-        StockTransferParams memory params = StockTransferParams(
-            transferorStakeholderId,
-            transfereeStakeholderId,
-            stockClassId,
-            true,
-            quantityToTransfer,
-            price,
-            0,
-            ""
-        );
+        StockTransferParams memory params = StockTransferParams({
+            transferor_stakeholder_id: transferorStakeholderId,
+            transferee_stakeholder_id: transfereeStakeholderId,
+            stock_class_id: stockClassId,
+            is_buyer_verified: true,
+            quantity: quantityToTransfer,
+            share_price: price,
+            nonce: 0,
+            custom_id: ""
+        });
         capTable.transferStock(params);
 
         uint256 transactionsCount = capTable.getTransactionsCount();
@@ -76,16 +74,16 @@ contract StockTransferTest is CapTableTest {
 
         bytes memory expectedError = abi.encodeWithSignature("InsufficientShares(uint256,uint256)", totalIssued, quantityToTransfer);
         vm.expectRevert(expectedError);
-        StockTransferParams memory params = StockTransferParams(
-            transferorStakeholderId,
-            transfereeStakeholderId,
-            stockClassId,
-            true,
-            quantityToTransfer,
-            price,
-            0,
-            ""
-        );
+        StockTransferParams memory params = StockTransferParams({
+            transferor_stakeholder_id: transferorStakeholderId,
+            transferee_stakeholder_id: transfereeStakeholderId,
+            stock_class_id: stockClassId,
+            is_buyer_verified: true,
+            quantity: quantityToTransfer,
+            share_price: price,
+            nonce: 0,
+            custom_id: ""
+        });
         capTable.transferStock(params);
     }
 }

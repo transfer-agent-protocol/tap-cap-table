@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/console.sol";
-
-import "./CapTable.t.sol";
-import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockTransfer, StockParams } from "../src/lib/Structs.sol";
+import { CapTableTest } from "./CapTable.t.sol";
+import { StockIssuance, StockRetraction, StockParams } from "../src/lib/Structs.sol";
 
 contract StockRetractionTest is CapTableTest {
     function testStockRetraction() public {

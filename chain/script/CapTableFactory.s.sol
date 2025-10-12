@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
-import "forge-std/console.sol";
+import { Script } from "forge-std/Script.sol";
+import { console } from "forge-std/console.sol";
 
-import "../src/CapTable.sol";
-import "../src/CapTableFactory.sol";
+import { CapTable } from "../src/CapTable.sol";
+import { CapTableFactory } from "../src/CapTableFactory.sol";
 
 /// @dev Test deployment using `forge script script/CapTableFactory.s.sol --fork-url http://localhost:8545 --broadcast`
 contract DeployCapTableFactoryDeployLocalScript is Script {

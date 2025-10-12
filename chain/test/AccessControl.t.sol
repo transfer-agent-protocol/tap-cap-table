@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./CapTable.t.sol";
+import { CapTableTest } from "./CapTable.t.sol";
+import { StockTransferParams } from "../src/lib/Structs.sol";
 
 contract RolesTests is CapTableTest {
     address RANDO_ADDR = address(0xf001);
@@ -38,16 +39,16 @@ contract RolesTests is CapTableTest {
 
         // will revert because we haven't performed an issuance, but it would have already verified operator
         // role working
-        StockTransferParams memory params = StockTransferParams(
-            stakeholderIds[0], // transferor
-            stakeholderIds[1], // transferee
-            stockClassId,
-            true,
-            100,
-            100,
-            0,
-            ""
-        );
+        StockTransferParams memory params = StockTransferParams({
+            transferor_stakeholder_id: stakeholderIds[0],
+            transferee_stakeholder_id: stakeholderIds[1],
+            stock_class_id: stockClassId,
+            is_buyer_verified: true,
+            quantity: 100,
+            share_price: 100,
+            nonce: 0,
+            custom_id: ""
+        });
         capTable.transferStock(
             params
         );
@@ -57,6 +58,8 @@ contract RolesTests is CapTableTest {
         vm.prank(RANDO_ADDR);
 
         vm.expectRevert("Does not have admin role");
+        // Safe: Test data - simple stakeholder ID (string literal fits in bytes16)
+        // forge-lint: disable-next-line(unsafe-typecast)
         capTable.createStakeholder(bytes16("0101"), "Individual", "Investor");
     }
 }

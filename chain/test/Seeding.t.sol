@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./CapTable.t.sol";
+import { CapTableTest } from "./CapTable.t.sol";
 import { InitialShares, IssuerInitialShares, StockClassInitialShares } from "../src/lib/Structs.sol";
 
 contract SeedingTest is CapTableTest {
@@ -23,12 +23,19 @@ contract SeedingTest is CapTableTest {
         uint256 expectedStockClassSharesIssued = 350000000000000000; // 35M
 
         StockClassInitialShares[] memory stockClassInitialShares = new StockClassInitialShares[](1);
-        stockClassInitialShares[0] = StockClassInitialShares(stockClassId, expectedStockClassSharesAuthorized, expectedStockClassSharesIssued);
+        stockClassInitialShares[0] = StockClassInitialShares({
+            id: stockClassId,
+            shares_authorized: expectedStockClassSharesAuthorized,
+            shares_issued: expectedStockClassSharesIssued
+        });
 
-        InitialShares memory params = InitialShares(
-            IssuerInitialShares(expectedIssuerSharesAuthorized, expectedIssuerSharesIssued),
-            stockClassInitialShares
-        );
+        InitialShares memory params = InitialShares({
+            issuerInitialShares: IssuerInitialShares({
+                shares_authorized: expectedIssuerSharesAuthorized,
+                shares_issued: expectedIssuerSharesIssued
+            }),
+            stockClassesInitialShares: stockClassInitialShares
+        });
 
         capTable.seedSharesAuthorizedAndIssued(params);
 
@@ -43,7 +50,10 @@ contract SeedingTest is CapTableTest {
 
     function testSeedingWithInvalidParameters() public {
         // Attempt to seed with zero shares authorized and issued
-        InitialShares memory params = InitialShares(IssuerInitialShares(0, 0), new StockClassInitialShares[](0));
+        InitialShares memory params = InitialShares({
+            issuerInitialShares: IssuerInitialShares({ shares_authorized: 0, shares_issued: 0 }),
+            stockClassesInitialShares: new StockClassInitialShares[](0)
+        });
 
         vm.expectRevert("Invalid Seeding Shares Params");
         capTable.seedSharesAuthorizedAndIssued(params);
@@ -72,6 +82,8 @@ contract SeedingTest is CapTableTest {
             stockClassIds[i] = stockClassId;
             quantities[i] = 1000; // Dummy quantities
             sharePrices[i] = 10000000000; // Dummy share prices
+            // Safe: block.timestamp fits in uint40 until year ~36,835 (1099511627775 seconds from epoch)
+            // forge-lint: disable-next-line(unsafe-typecast)
             timestamps[i] = uint40(block.timestamp + i); // Dummy timestamps
         }
 
@@ -106,6 +118,8 @@ contract SeedingTest is CapTableTest {
         stockClassIds[0] = 0x12345678901234567890123456789012; // Non-existent stock class
         quantities[0] = 1000;
         sharePrices[0] = 10000000000;
+        // Safe: block.timestamp fits in uint40 until year ~36,835 (1099511627775 seconds from epoch)
+        // forge-lint: disable-next-line(unsafe-typecast)
         timestamps[0] = uint40(block.timestamp);
 
         bytes memory expectedError = abi.encodeWithSignature("NoStakeholder(bytes16)", stakeholderIds[0]);

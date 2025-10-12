@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/console.sol";
-
-import "./CapTable.t.sol";
-import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockTransfer, StockParams } from "../src/lib/Structs.sol";
+import { CapTableTest } from "./CapTable.t.sol";
+import { StockIssuanceParams, ShareNumbersIssued, StockIssuance } from "../src/lib/Structs.sol";
 
 contract StockIssuanceTest is CapTableTest {
     function createDummyStockIssuance(bytes16 stockClassId, bytes16 stakeholderId, uint256 quantity) private pure returns (StockIssuance memory) {
         StockIssuanceParams memory params = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
+            share_numbers_issued: ShareNumbersIssued({ starting_share_number: 0, ending_share_number: 0 }),
             share_price: 10000000000,
             quantity: quantity,
             vesting_terms_id: 0x00000000000000000000000000000000,
@@ -77,7 +75,7 @@ contract StockIssuanceTest is CapTableTest {
         StockIssuanceParams memory params = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
+            share_numbers_issued: ShareNumbersIssued({ starting_share_number: 0, ending_share_number: 0 }),
             share_price: 10000000000,
             quantity: excessiveQuantity,
             vesting_terms_id: 0x00000000000000000000000000000000,
@@ -104,7 +102,7 @@ contract StockIssuanceTest is CapTableTest {
         StockIssuanceParams memory params = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
+            share_numbers_issued: ShareNumbersIssued({ starting_share_number: 0, ending_share_number: 0 }),
             share_price: 10000000000,
             quantity: excessiveQuantity,
             vesting_terms_id: 0x00000000000000000000000000000000,

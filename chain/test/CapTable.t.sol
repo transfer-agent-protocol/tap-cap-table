@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/Test.sol";
-import "../src/CapTable.sol";
-import "../src/CapTableFactory.sol";
-import { StockIssuanceParams } from "../src/lib/Structs.sol";
+import { Test } from "forge-std/Test.sol";
+import { CapTable } from "../src/CapTable.sol";
+import { CapTableFactory } from "../src/CapTableFactory.sol";
+import { StockIssuanceParams, ShareNumbersIssued } from "../src/lib/Structs.sol";
 
 contract CapTableTest is Test {
     CapTableFactory public factory;
@@ -44,7 +44,7 @@ contract CapTableTest is Test {
         StockIssuanceParams memory issuanceParams = StockIssuanceParams({
             stock_class_id: stockClassId,
             stock_plan_id: 0x00000000000000000000000000000000,
-            share_numbers_issued: ShareNumbersIssued(0, 0),
+            share_numbers_issued: ShareNumbersIssued({ starting_share_number: 0, ending_share_number: 0 }),
             share_price: 100,
             quantity: quantity,
             vesting_terms_id: 0x00000000000000000000000000000000,

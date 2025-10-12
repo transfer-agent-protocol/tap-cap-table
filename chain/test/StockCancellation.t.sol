@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/console.sol";
-
-import "./CapTable.t.sol";
-import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockTransfer, StockParams } from "../src/lib/Structs.sol";
+import { CapTableTest } from "./CapTable.t.sol";
+import { StockIssuance, StockCancellation, StockParams } from "../src/lib/Structs.sol";
 
 contract StockCancellationTest is CapTableTest {
     function testFullStockCancellation() public {
@@ -42,6 +40,8 @@ contract StockCancellationTest is CapTableTest {
 
         issueStock(stockClassId, stakeholderId, 1000);
 
+        // Safe: Test data - intentionally invalid security ID (string literal fits in bytes16)
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes16 nonExistentSecId = bytes16("0xd3373e0a4dd86");
 
         // Expecting the ActivePositionNotFound revert

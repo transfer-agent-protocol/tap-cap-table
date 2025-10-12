@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/Test.sol";
-import "../src/CapTableFactory.sol";
-import "../src/CapTable.sol";
-import "../src/interfaces/ICapTable.sol";
+import { Test } from "forge-std/Test.sol";
+import { CapTableFactory } from "../src/CapTableFactory.sol";
+import { CapTable } from "../src/CapTable.sol";
 
 contract CapTableFactoryTest is Test {
     CapTableFactory private _capTableFactory;

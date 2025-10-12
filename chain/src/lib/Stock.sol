@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { StockIssuance, ActivePosition, ShareNumbersIssued, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams } from "./Structs.sol";
-import "./TxHelper.sol";
-import "./DeleteContext.sol";
+import { StockIssuance, ActivePosition, ActivePositions, SecIdsStockClass, Issuer, StockClass, StockIssuanceParams, StockParams, StockTransferParams, StockCancellation, StockReissuance, StockRepurchase, StockRetraction, StockAcceptance, StockParamsQuantity, StockTransfer } from "./Structs.sol";
+import { TxHelper, TxType } from "./TxHelper.sol";
+import { DeleteContext } from "./DeleteContext.sol";
 
 library StockLib {
     error InsufficientShares(uint256 available, uint256 required);
@@ -99,16 +99,16 @@ library StockLib {
         bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
-            StockTransferParams memory transferParams = StockTransferParams(
-                params.stakeholder_id,
-                bytes16(0),
-                params.stock_class_id,
-                true,
-                remainingQuantity,
-                activePosition.share_price,
-                params.nonce,
-                ""
-            );
+            StockTransferParams memory transferParams = StockTransferParams({
+                transferor_stakeholder_id: params.stakeholder_id,
+                transferee_stakeholder_id: bytes16(0),
+                stock_class_id: params.stock_class_id,
+                is_buyer_verified: true,
+                quantity: remainingQuantity,
+                share_price: activePosition.share_price,
+                nonce: params.nonce,
+                custom_id: ""
+            });
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
                 transferParams.transferor_stakeholder_id
@@ -184,16 +184,16 @@ library StockLib {
         bytes16 balance_security_id = "";
 
         if (remainingQuantity > 0) {
-            StockTransferParams memory transferParams = StockTransferParams(
-                params.stakeholder_id,
-                bytes16(0),
-                params.stock_class_id,
-                true,
-                remainingQuantity,
-                activePosition.share_price,
-                params.nonce,
-                ""
-            );
+            StockTransferParams memory transferParams = StockTransferParams({
+                transferor_stakeholder_id: params.stakeholder_id,
+                transferee_stakeholder_id: bytes16(0),
+                stock_class_id: params.stock_class_id,
+                is_buyer_verified: true,
+                quantity: remainingQuantity,
+                share_price: activePosition.share_price,
+                nonce: params.nonce,
+                custom_id: ""
+            });
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
                 transferParams.transferor_stakeholder_id
@@ -252,12 +252,12 @@ library StockLib {
     ) internal {
         activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(issuance.security_id);
 
-        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
-            issuance.params.stock_class_id,
-            issuance.params.quantity,
-            issuance.params.share_price,
-            _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
-        );
+        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition({
+            stock_class_id: issuance.params.stock_class_id,
+            quantity: issuance.params.quantity,
+            share_price: issuance.params.share_price,
+            timestamp: _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
+        });
 
         issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
         stockClass.shares_issued = stockClass.shares_issued + issuance.params.quantity;
@@ -296,16 +296,16 @@ library StockLib {
 
         bytes16 balance_security_id = "";
 
-        StockTransferParams memory newParams = StockTransferParams(
-            params.transferor_stakeholder_id,
-            params.transferee_stakeholder_id,
-            params.stock_class_id,
-            params.is_buyer_verified,
-            params.quantity,
-            params.share_price,
-            params.nonce,
-            params.custom_id
-        );
+        StockTransferParams memory newParams = StockTransferParams({
+            transferor_stakeholder_id: params.transferor_stakeholder_id,
+            transferee_stakeholder_id: params.transferee_stakeholder_id,
+            stock_class_id: params.stock_class_id,
+            is_buyer_verified: params.is_buyer_verified,
+            quantity: params.quantity,
+            share_price: params.share_price,
+            nonce: params.nonce,
+            custom_id: params.custom_id
+        });
         newParams.quantity = balanceForTransferor;
         newParams.share_price = transferorActivePosition.share_price;
 

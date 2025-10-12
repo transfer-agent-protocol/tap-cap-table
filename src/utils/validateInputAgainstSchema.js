@@ -38,23 +38,33 @@ async function fetchRefsInSchema(schema) {
             }
 
             // Handle nested oneOf, allOf, etc. inside properties
-            for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
+            for (const keyword of ["allOf", "anyOf", "oneOf"]) {
                 if (prop[keyword]) {
                     for (const subSchema of prop[keyword]) {
                         await fetchRefsInSchema(subSchema);
                     }
                 }
             }
+            
+            // Handle 'not' separately as it's an object, not an array
+            if (prop.not) {
+                await fetchRefsInSchema(prop.not);
+            }
         }
     }
 
-    // Handle $ref references inside "allOf", "anyOf", "oneOf", or "not" keywords
-    for (const keyword of ["allOf", "anyOf", "oneOf", "not"]) {
+    // Handle $ref references inside "allOf", "anyOf", "oneOf" keywords
+    for (const keyword of ["allOf", "anyOf", "oneOf"]) {
         if (schema[keyword]) {
             for (const subSchema of schema[keyword]) {
                 await fetchRefsInSchema(subSchema);
             }
         }
+    }
+    
+    // Handle 'not' separately as it's an object, not an array
+    if (schema.not) {
+        await fetchRefsInSchema(schema.not);
     }
 }
 
