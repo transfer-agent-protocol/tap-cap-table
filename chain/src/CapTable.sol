@@ -448,14 +448,22 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     /* Role Based Access Control */
     modifier onlyOperator() {
-        /// @notice Admins are also considered Operators
-        require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
+        _checkOperatorRole();
         _;
     }
 
     modifier onlyAdmin() {
-        require(_isAdmin(), "Does not have admin role");
+        _checkAdminRole();
         _;
+    }
+
+    function _checkOperatorRole() internal view {
+        /// @notice Admins are also considered Operators
+        require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
+    }
+
+    function _checkAdminRole() internal view {
+        require(_isAdmin(), "Does not have admin role");
     }
 
     function _isAdmin() internal view returns (bool) {
