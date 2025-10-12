@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "forge-std/console.sol";
 
 import "./CapTable.t.sol";
-import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass, StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockTransfer, StockParams } from "../src/lib/Structs.sol";
+import { StockIssuanceParams, ShareNumbersIssued, StockIssuance } from "../src/lib/Structs.sol";
 
 contract StockIssuanceTest is CapTableTest {
     function createDummyStockIssuance(bytes16 stockClassId, bytes16 stakeholderId, uint256 quantity) private pure returns (StockIssuance memory) {

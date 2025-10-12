@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "forge-std/console.sol";
 
 import "./CapTable.t.sol";
-import { StockIssuanceParams, ShareNumbersIssued, StockIssuance, StockParams, StockRepurchase } from "../src/lib/Structs.sol";
+import { StockIssuance, StockParams, StockRepurchase } from "../src/lib/Structs.sol";
 
 contract StockRepurchaseTest is CapTableTest {
     function testPartialStockRepurchase() public {

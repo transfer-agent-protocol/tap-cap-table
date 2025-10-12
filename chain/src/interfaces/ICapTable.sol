@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { AccessControlDefaultAdminRules } from "openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
-import { Issuer, Stakeholder, StockClass, ActivePositions, SecIdsStockClass, StockLegendTemplate, InitialShares, ShareNumbersIssued, StockParams, StockParamsQuantity, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
+import { InitialShares, StockParams, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
 interface ICapTable {
     // @dev Transactions will be created on-chain then reflected off-chain.

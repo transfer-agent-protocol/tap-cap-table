@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "./CapTable.t.sol";
-import { InitialShares, IssuerInitialShares, StockClassInitialShares, Issuer, StockClass } from "../src/lib/Structs.sol";
 
 contract StockClassTest is CapTableTest {
     function createInitialDummyStockClassData() public pure returns (bytes16, string memory, uint256, uint256, uint256) {
