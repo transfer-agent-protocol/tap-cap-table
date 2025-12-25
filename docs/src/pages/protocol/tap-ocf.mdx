@@ -1,0 +1,31 @@
+import { FileTree } from 'nextra/components'
+
+# Open Cap Table Format
+
+The Open Cap Table Format ([OCF](https://github.com/transfer-agent-protocol/tap-ocf)) is a JSON-based open-source standard for storing and sharing cap table data. We use OCF to store data off chain. The format is maintained by the [Open Cap Table Coalition](https://www.opencaptablecoalition.com/). You'll find the OCF modules in the root folder:
+
+<FileTree>
+  <FileTree.Folder name="ocf" defaultOpen>
+  <FileTree.Folder name="schema" defaultOpen>
+			<FileTree.File name="enums" />
+			<FileTree.File name="files" />
+			<FileTree.File name="objects" />
+			<FileTree.File name="primitives" />
+		</FileTree.Folder>
+	</FileTree.Folder>
+</FileTree>
+
+# Our Database
+
+Using the OCF, we've created a [database](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/src/db) schema with a Mongo implementation. This schema is used by the Transfer Agent Protocol to store and share cap table data off chain. Also found in the root folder, our db schema and the server:
+
+<FileTree>
+  <FileTree.Folder name="src" defaultOpen>
+  <FileTree.Folder name="db" defaultOpen>
+			<FileTree.File name="config" />
+			<FileTree.File name="objects" />
+			<FileTree.File name="operations" />
+			<FileTree.File name="scripts" />
+		</FileTree.Folder>
+	</FileTree.Folder>
+</FileTree>

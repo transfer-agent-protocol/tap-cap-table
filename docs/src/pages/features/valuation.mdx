@@ -1,0 +1,53 @@
+# Valuation Routes
+
+Valuations are important for tax purposes and fair market value of common stock. These set the price of tokenized shares. They are created and tracked onchain and off with the specific `issuerId` (`92dddedd-251d-47cd-83ac-342f00e3d5a1`), and are recorded as 409A valuations.
+
+## `valuation/create`
+
+- **Description**: Creates a new valuation.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The valuation data (object with the following fields):
+    - `provider`: The valuation provider (string).
+    - `board_approval_date`: The board approval date (string, format: YYYY-MM-DD).
+    - `stockholder_approval_date`: The stockholder approval date (string, format: YYYY-MM-DD).
+    - `price_per_share`: The price per share (object with `currency` and `amount`).
+    - `effective_date`: The effective date of the valuation (string, format: YYYY-MM-DD).
+    - `stock_class_id`: The ID of the stock class (string).
+    - `valuation_type`: The type of valuation (string).
+    - `comments`: Additional comments (array of strings).
+
+````json
+{
+    "issuerId": "92dddedd-251d-47cd-83ac-342f00e3d5a1",
+    "data": {
+        "provider": "LOL Accountants",
+        "board_approval_date": "2024-04-20",
+        "stockholder_approval_date": "2024-04-20",
+        "price_per_share": {
+            "currency": "USD",
+            "amount": "4.20"
+        },
+        "effective_date": "2024-04-20",
+        "stock_class_id": "stock-class-12345", // important
+        "valuation_type": "409A",
+        "comments": [
+            "This valuation was conducted for 409A compliance purposes and reflects the fair market value of Transfer Agent Protocol's common stock as of the effective date."
+        ]
+    }
+}
+````
+
+
+## `valuation/id/:id`
+
+- **Description**: Retrieves details of a valuation by ID.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `id`: The ID of the valuation (string).
+
+## `valuation/total-number`
+
+- **Description**: Retrieves the total number of valuations.
+- **Method**: `GET`

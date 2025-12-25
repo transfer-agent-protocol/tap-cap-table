@@ -6,6 +6,7 @@
     "license": "MIT",
     "description": "Transfer Agent Protocol onchain cap table",
     "type": "module",
+    "packageManager": "pnpm@10.18.2",
     "scripts": {
         "prod": "tsx src/server.js --no-poller",
         "prod-poller": "tsx src/entry.ts --finalized-only",
@@ -17,7 +18,10 @@
         "typecheck:app": "tsc --noEmit",
         "deploy-factory": "./scripts/deployFactory.sh",
         "setup": "cd chain && foundryup && forge build --via-ir",
-        "test": "cd chain && forge test"
+        "test": "cd chain && forge test",
+        "docs:dev": "pnpm --filter tap-docs dev",
+        "docs:build": "pnpm --filter tap-docs build",
+        "docs:start": "pnpm --filter tap-docs start"
     },
     "dependencies": {
         "ajv": "^8.12.0",

@@ -1,0 +1,35 @@
+import { Cards, Card, Callout } from 'nextra/components';
+
+# Transfer Agent Protocol
+
+We use [Open Cap Table Format](/protocol/tap-ocf) and convert it into a smart contracts. This creates a full cap table onchain and offchain. The onchain cap table is the source of truth and the offchain cap table is its mirror.
+
+<Callout emoji="⏳">This documentation is currently in public preview</Callout>
+
+## Current Status
+
+The protocol is currently in development. It's being tested and developed on [Plume Testnet](https://docs.plumenetwork.xyz/plume/developer-resources/network-parameters).
+
+| Name             | Address |
+| ---------------- | ------- |
+| TAP Admin | [0x366aA809015061C101983900d0c2ebf7d71B96AF](https://plume-testnet.explorer.caldera.xyz/address/0x366aA809015061C101983900d0c2ebf7d71B96AF) |
+| CapTableFactory  | [0xB753930229Bf1Fe02189b4FEb20678Ba44312877](https://plume-testnet.explorer.caldera.xyz/address/0xB753930229Bf1Fe02189b4FEb20678Ba44312877) |
+| CapTable         | [0xE7f4bfa5eE90a8450Cf4f9410463C8D24102ce8A](https://plume-testnet.explorer.caldera.xyz/address/0xE7f4bfa5eE90a8450Cf4f9410463C8D24102ce8A) |
+| StockLib         | [0x0d2cfD82004aeD30A4Bd4Efe7b8810Bd86a53296](https://plume-testnet.explorer.caldera.xyz/address/0x0d2cfD82004aeD30A4Bd4Efe7b8810Bd86a53296) |
+| Adjustment       | [0x1E228a15a25F0bDe12132620A6aa152Baf12d36f](https://plume-testnet.explorer.caldera.xyz/address/0x1E228a15a25F0bDe12132620A6aa152Baf12d36f) |
+| DeleteContext    | [0xb960D1D1c9C39C1EA7CB452Bfd45B2799edAF33E](https://plume-testnet.explorer.caldera.xyz/address/0xb960D1D1c9C39C1EA7CB452Bfd45B2799edAF33E) |
+
+## Protocol Specification
+
+The protocol has three major components.
+
+- [Smart contracts](/protocol/tap-cap-table) create primary ownership records onchain first. These records are then synced with the offchain database.
+
+- [Offchain database](/protocol/tap-ocf) stores the cap table data. We're currently using a MongoDB that stores cap table data in the [Open Cap Table Format](/protocol/tap-ocf).
+
+- [Server](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/src/routes) that interacts with both the smart contracts and the offchain database. This server is responsible for syncing the data between the two.
+
+<Cards>
+	<Card title="Open Cap Table Format" href="/protocol/tap-ocf"/>
+	<Card title="Onchain Cap Table" href="/protocol/tap-cap-table" />
+</Cards>

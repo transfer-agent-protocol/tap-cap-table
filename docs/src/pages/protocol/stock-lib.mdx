@@ -1,0 +1,522 @@
+import { FileTree } from "nextra/components"
+
+# Stock Functions
+
+[Stock](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/lib/Stock.sol) library contains functions to manage stock transactions, including issuance, transfer, cancellation, reissuance, repurchase, and retraction. The library also includes error definitions and internal utility functions to support these operations. You'll find them here:
+
+<FileTree>
+  <FileTree.Folder name="chain" defaultOpen>
+  <FileTree.Folder name="src" defaultOpen>
+		<FileTree.Folder name="interfaces" defaultClosed>
+			<FileTree.File name="ICapTable.sol" />
+			<FileTree.File name="ICapTableFactory.sol" />
+		</FileTree.Folder>
+		<FileTree.Folder name="lib" defaultOpen>
+			<FileTree.File name="DeleteContext.sol" />
+			<FileTree.File name="Stock.sol" />
+			<FileTree.File name="Structs.sol" />
+			<FileTree.File name="TxHelper.sol" />
+		</FileTree.Folder>
+			<FileTree.File name="CapTable.sol" />
+			<FileTree.File name="CapTableFactory.sol" />
+		</FileTree.Folder>
+	</FileTree.Folder>
+</FileTree>
+
+## Errors
+
+-   `InsufficientShares(uint256 available, uint256 required)`: Thrown when there are not enough shares available for a transaction.
+-   `InvalidQuantityOrPrice(uint256 quantity, uint256 price)`: Thrown when the quantity or price provided is invalid (0 or less).
+-   `UnverifiedBuyer()`: Thrown when the buyer's identity cannot be verified.
+-   `ActivePositionNotFound(bytes16 stakeholderId, bytes16 securityId)`: Thrown when the active position for the given stakeholder and security ID is not found.
+
+## Functions
+
+### createIssuance
+
+When to use: Use this function when issuing new stock to stakeholders. This function validates the quantity and price, creates a StockIssuance struct, updates the context, and logs the transaction.
+
+```solidity
+function createIssuance(
+        uint256 nonce,
+        StockIssuanceParams memory issuanceParams,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) external {
+        _checkInvalidQuantityOrPrice(issuanceParams.quantity, issuanceParams.share_price);
+
+        StockIssuance memory issuance = TxHelper.createStockIssuanceStruct(issuanceParams, nonce);
+        _updateContext(issuance, positions, activeSecs, issuer, stockClass, transactions);
+    }
+```
+
+-   Creates a new stock issuance.
+-   Validates quantity and price.
+-   Creates a `StockIssuance` struct using `TxHelper`.
+-   Updates the context with the new issuance.
+-   Calls `_updateContext`.
+
+### createTransfer
+
+When to use: Use this function to transfer stock from one stakeholder to another. It validates the buyer, quantity, and price, checks for active security IDs, and handles the stock transfer across multiple security IDs if necessary.
+
+```solidity
+function createTransfer(
+        StockTransferParams memory params,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) external {
+        _checkBuyerVerified(params.is_buyer_verified);
+        _checkInvalidQuantityOrPrice(params.quantity, params.share_price);
+        require(
+            activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id].length > 0,
+            "No active security ids found"
+        );
+        bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[params.transferor_stakeholder_id][params.stock_class_id];
+
+        uint256 sum = 0;
+        uint256 numSecurityIds = 0;
+
+        for (uint256 index = 0; index < activeSecurityIDs.length; index++) {
+            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][activeSecurityIDs[index]];
+            sum += activePosition.quantity;
+
+            numSecurityIds += 1;
+            if (sum >= params.quantity) {
+                break;
+            }
+        }
+
+        _checkInsuffientAmount(sum, params.quantity);
+
+        uint256 remainingQuantity = params.quantity;
+
+        for (uint256 index = 0; index < numSecurityIds; index++) {
+            bytes16 active_security_id = activeSecurityIDs[index];
+
+            ActivePosition storage activePosition = positions.activePositions[params.transferor_stakeholder_id][active_security_id];
+
+            uint256 transferQuantity = remainingQuantity;
+
+            if (activePosition.quantity <= remainingQuantity) {
+                transferQuantity = activePosition.quantity;
+            }
+
+            params.quantity = transferQuantity;
+
+            _transferSingleStock(params, active_security_id, positions, activeSecs, transactions, issuer, stockClass);
+
+            remainingQuantity -= transferQuantity;
+
+            if (remainingQuantity == 0) {
+                break;
+            }
+        }
+    }
+```
+
+-   Creates a new stock transfer.
+-   Validates buyer verification, quantity, and price.
+-   Checks for active security IDs and sufficient quantity.
+-   Calls `_transferSingleStock` for each security ID involved in the transfer.
+
+### createCancellation
+
+When to use: Use this function to cancel a specific quantity of stock from a stakeholder's active position. It validates the existence and quantity, and handles any remaining balance if partial cancellation occurs.
+
+````solidity
+function createCancellation(
+        StockParamsQuantity memory params,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) external {
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
+        _checkInsuffientAmount(activePosition.quantity, params.quantity);
+
+        uint256 remainingQuantity = activePosition.quantity - params.quantity;
+        bytes16 balance_security_id = "";
+
+        if (remainingQuantity > 0) {
+            StockTransferParams memory transferParams = StockTransferParams(
+                params.stakeholder_id,
+                bytes16(0),
+                params.stock_class_id,
+                true,
+                remainingQuantity,
+                activePosition.share_price,
+                params.nonce,
+                ""
+            );
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                transferParams,
+                transferParams.transferor_stakeholder_id
+            );
+
+            _updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
+
+            balance_security_id = balanceIssuance.security_id;
+        }
+
+        StockCancellation memory cancellation = TxHelper.createStockCancellationStruct(
+            params.nonce,
+            params.quantity,
+            params.comments,
+            params.security_id,
+            params.reason_text,
+            balance_security_id
+        );
+
+        TxHelper.createTx(TxType.STOCK_CANCELLATION, abi.encode(cancellation), transactions);
+
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
+
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+    }
+````
+
+- Creates a stock cancellation.
+- Validates active position existence and sufficient quantity.
+- Updates context with a balance issuance if necessary.
+- Calls `TxHelper.createStockCancellationStruct` and `_subtractSharesIssued`.
+
+### createReissuance
+
+When to use: Use this function to reissue stock to a stakeholder. This can be used when stock is being replaced or split. It validates the existence of the active position and creates a new StockReissuance struct.
+
+````solidity
+function createReissuance(
+        StockParams memory params,
+        uint256 nonce,
+        bytes16[] memory resulting_security_ids,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) external {
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
+
+        StockReissuance memory reissuance = TxHelper.createStockReissuanceStruct(
+            nonce,
+            params.comments,
+            params.security_id,
+            resulting_security_ids,
+            params.reason_text
+        );
+
+        TxHelper.createTx(TxType.STOCK_REISSUANCE, abi.encode(reissuance), transactions);
+
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
+
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+    }
+````
+
+- Creates a stock reissuance.
+- Validates active position existence.
+- Creates a `StockReissuance` struct using `TxHelper`.
+- Calls `TxHelper.createStockReissuanceStruct` and `_subtractSharesIssued`.
+
+### createRepurchase
+
+When to use: Use this function to repurchase stock from a stakeholder. It validates the active position and quantity, and handles any remaining balance if partial repurchase occurs.
+
+````solidity
+function createRepurchase(
+        StockParamsQuantity memory params,
+        uint256 price,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) external {
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
+        _checkInsuffientAmount(activePosition.quantity, params.quantity);
+
+        uint256 remainingQuantity = activePosition.quantity - params.quantity;
+        bytes16 balance_security_id = "";
+
+        if (remainingQuantity > 0) {
+            StockTransferParams memory transferParams = StockTransferParams(
+                params.stakeholder_id,
+                bytes16(0),
+                params.stock_class_id,
+                true,
+                remainingQuantity,
+                activePosition.share_price,
+                params.nonce,
+                ""
+            );
+            StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                transferParams,
+                transferParams.transferor_stakeholder_id
+            );
+
+            _updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
+
+            balance_security_id = balanceIssuance.security_id;
+        }
+
+        StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(params, price);
+
+        TxHelper.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), transactions);
+
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
+
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+    }
+````
+
+- Creates a stock repurchase.
+- Validates active position existence and sufficient quantity.
+- Updates context with a balance issuance if necessary.
+- Calls `TxHelper.createStockRepurchaseStruct` and `_subtractSharesIssued`.
+
+### createRetraction
+
+When to use: Use this function to retract stock from a stakeholder (for example, when it was issued erroneously). The function will validate that the stakeholder has an activePosition, then delete it using the retraction helper.
+
+````solidity
+function createRetraction(
+        StockParams memory params,
+        uint256 nonce,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) external {
+        ActivePosition memory activePosition = positions.activePositions[params.stakeholder_id][params.security_id];
+
+        _checkActivePositionExists(activePosition, params.stakeholder_id, params.security_id);
+
+        StockRetraction memory retraction = TxHelper.createStockRetractionStruct(nonce, params.comments, params.security_id, params.reason_text);
+        TxHelper.createTx(TxType.STOCK_RETRACTION, abi.encode(retraction), transactions);
+
+        _subtractSharesIssued(issuer, stockClass, activePosition.quantity);
+
+        DeleteContext.deleteActivePosition(params.stakeholder_id, params.security_id, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.stakeholder_id, params.stock_class_id, params.security_id, activeSecs);
+    }
+````
+
+- Creates a stock retraction.
+- Validates active position existence.
+- Creates a `StockRetraction` struct using `TxHelper`.
+- Calls `TxHelper.createStockRetractionStruct` and `_subtractSharesIssued`.
+
+### createAcceptance
+
+When to use: Use when a stakeholder needs to accept stock that has been issued to them.
+
+````solidity
+function createAcceptance(uint256 nonce, bytes16 securityId, string[] memory comments, bytes[] storage transactions) external {
+        StockAcceptance memory acceptance = TxHelper.createStockAcceptanceStruct(nonce, comments, securityId);
+
+        TxHelper.createTx(TxType.STOCK_ACCEPTANCE, abi.encode(acceptance), transactions);
+    }
+````
+
+  - Creates a `StockAcceptance` struct using `TxHelper`.
+  - Calls `TxHelper.createStockAcceptanceStruct`.
+
+## Internal Utility Functions
+
+### _updateContext
+
+When to use: Use internally to update active security IDs and positions and increase shares issued for issuer and stock class after creating an issuance.
+
+````solidity
+function _updateContext(
+        StockIssuance memory issuance,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        Issuer storage issuer,
+        StockClass storage stockClass,
+        bytes[] storage transactions
+    ) internal {
+        activeSecs.activeSecurityIdsByStockClass[issuance.params.stakeholder_id][issuance.params.stock_class_id].push(issuance.security_id);
+
+        positions.activePositions[issuance.params.stakeholder_id][issuance.security_id] = ActivePosition(
+            issuance.params.stock_class_id,
+            issuance.params.quantity,
+            issuance.params.share_price,
+            _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
+        );
+
+        issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
+        stockClass.shares_issued = stockClass.shares_issued + issuance.params.quantity;
+
+        TxHelper.createTx(TxType.STOCK_ISSUANCE, abi.encode(issuance), transactions);
+    }
+````
+
+- Updates the context with the new issuance.
+- Updates active security IDs and positions.
+- Increases shares issued for issuer and stock class.
+- Calls `TxHelper.createTx`.
+
+### _safeNow()
+
+When to use: Use internally to get the current block timestamp.
+
+- `_safeNow() internal view returns (uint40)`: Returns the current block timestamp.
+
+### _subtractSharesIssued
+
+When to use: Use internally to decrease the shares issued for the issuer and stock class after a cancellation, retraction, or repurchase.
+
+````solidity
+function _subtractSharesIssued(Issuer storage issuer, StockClass storage stockClass, uint256 quantity) internal {
+        issuer.shares_issued = issuer.shares_issued - quantity;
+        stockClass.shares_issued = stockClass.shares_issued - quantity;
+    }
+````
+
+- Subtracts shares issued for the issuer and stock class.
+
+### _transferSingleStock
+
+When to use: Use internally to handle the transfer of stock for a single security ID.
+
+````solidity
+function _transferSingleStock(
+        StockTransferParams memory params,
+        bytes16 transferorSecurityId,
+        ActivePositions storage positions,
+        SecIdsStockClass storage activeSecs,
+        bytes[] storage transactions,
+        Issuer storage issuer,
+        StockClass storage stockClass
+    ) internal {
+        ActivePosition memory transferorActivePosition = positions.activePositions[params.transferor_stakeholder_id][transferorSecurityId];
+
+        _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
+
+        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.transferee_stakeholder_id);
+
+        _updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass, transactions);
+
+        uint256 balanceForTransferor = transferorActivePosition.quantity - params.quantity;
+
+        bytes16 balance_security_id = "";
+
+        StockTransferParams memory newParams = StockTransferParams(
+            params.transferor_stakeholder_id,
+            params.transferee_stakeholder_id,
+            params.stock_class_id,
+            params.is_buyer_verified,
+            params.quantity,
+            params.share_price,
+            params.nonce,
+            params.custom_id
+        );
+        newParams.quantity = balanceForTransferor;
+        newParams.share_price = transferorActivePosition.share_price;
+
+        if (balanceForTransferor > 0) {
+            StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
+                newParams,
+                newParams.transferor_stakeholder_id
+            );
+
+            _updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
+
+            balance_security_id = transferorBalanceIssuance.security_id;
+        }
+
+        StockTransfer memory transfer = TxHelper.createStockTransferStruct(
+            params.nonce,
+            params.quantity,
+            transferorSecurityId,
+            transfereeIssuance.security_id,
+            balance_security_id
+        );
+
+        TxHelper.createTx(TxType.STOCK_TRANSFER, abi.encode(transfer), transactions);
+
+        _subtractSharesIssued(issuer, stockClass, transferorActivePosition.quantity);
+
+        DeleteContext.deleteActivePosition(params.transferor_stakeholder_id, transferorSecurityId, positions);
+        DeleteContext.deleteActiveSecurityIdsByStockClass(params.transferor_stakeholder_id, params.stock_class_id, transferorSecurityId, activeSecs);
+    }
+````
+- Transfers a single stock.
+- Validates quantity.
+- Updates context with transferee issuance and balance issuance if necessary.
+- Calls `TxHelper.createStockTransferStruct` and `_subtractSharesIssued`.
+
+### _checkInvalidQuantityOrPrice
+
+When to use: Use internally to validate the quantity and price parameters.
+
+````solidity
+function _checkInvalidQuantityOrPrice(uint256 quantity, uint256 price) internal pure {
+        if (quantity <= 0 || price <= 0) {
+            revert InvalidQuantityOrPrice(quantity, price);
+        }
+    }
+````
+- Checks for invalid quantity or price.
+- Throws `InvalidQuantityOrPrice` if invalid.
+
+### _checkInsuffientAmount
+
+When to use: Use internally to ensure there are enough shares available for the transaction.
+
+````solidity
+function _checkInsuffientAmount(uint256 available, uint256 desired) internal pure {
+        if (available < desired) {
+            revert InsufficientShares(available, desired);
+        }
+    }
+````
+- Checks for insufficient shares.
+- Throws `InsufficientShares` if insufficient.
+
+### _checkActivePositionExists
+
+When to use: Use internally to ensure the active position exists before performing operations on it.
+
+````solidity
+function _checkActivePositionExists(ActivePosition memory activePosition, bytes16 stakeholderId, bytes16 securityId) internal pure {
+        if (activePosition.quantity == 0) {
+            revert ActivePositionNotFound(stakeholderId, securityId);
+        }
+    }
+````
+- Checks if an active position exists.
+- Throws `ActivePositionNotFound` if not found.
+
+### _checkBuyerVerified
+
+When to use: Use internally to validate that the buyer's identity has been verified.
+
+````solidity
+function _checkBuyerVerified(bool isBuyerVerified) internal pure {
+        if (!isBuyerVerified) {
+            revert UnverifiedBuyer();
+        }
+    }
+````
+- Checks if the buyer is verified.
+- Throws `UnverifiedBuyer` if not verified.

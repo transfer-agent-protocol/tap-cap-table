@@ -1,0 +1,17 @@
+{
+    "extends": ["next/core-web-vitals"],
+    "plugins": ["mdx"],
+    "overrides": [
+        {
+            "files": ["*.mdx"],
+            "extends": ["plugin:mdx/recommended"],
+            "rules": {
+                "semi": "off",
+                "react/no-unescaped-entities": "off"
+            }
+        }
+    ],
+    "rules": {
+        "react/no-unescaped-entities": "off"
+    }
+}

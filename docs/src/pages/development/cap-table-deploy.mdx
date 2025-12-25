@@ -1,0 +1,59 @@
+import { Steps } from 'nextra/components';
+
+# Cap table smart contract
+
+The cap table smart contract is responsible for minting the inital cap table onchain can be found in our repo under [CapTable.sol](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTable.sol).
+
+## Deploy cap table smart contract
+<Steps>
+
+### Run the server
+
+In the root folder, run the development server:
+
+```bash
+pnpm dev
+```
+
+### Open Postman, and create a new POST request
+
+Create a new request in Postman, and set the request type to `POST`. In the URL field, enter `http://localhost:{{PORT}}/issuer/create` - your port should be `8293` if you haven't changed it.
+
+### Set the request body
+
+In the request body, use this example JSON. You can change anything you like here. Every field is required and will first run through validation against the OCF schema using our [validateInputAgainstSchema](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/src/utils/validateInputAgainstSchema.js) script.
+
+```json
+{
+    "legal_name": "Transfer Agent Protocol",
+    "formation_date": "2022-08-23",
+    "country_of_formation": "US",
+    "country_subdivision_of_formation": "DE",
+    "initial_shares_authorized": "10000000",
+    "tax_ids": [
+        {
+            "tax_id": "88-3977591",
+            "country": "US"
+        }
+    ],
+    "email": {
+        "email_address": "dev@transferagentprotocol.xyz",
+        "email_type": "BUSINESS"
+    },
+    "address": {
+        "address_type": "LEGAL",
+        "street_suite": "447 Broadway\n2nd Fl #713",
+        "city": "New York",
+        "country_subdivision": "NY",
+        "country": "US",
+        "postal_code": "10013"
+    },
+    "comments": []
+}
+```
+
+### Send the request
+
+Your request should look like this. Notice that in the response, you get the `capTableAddress` which is the address of the cap table smart contract. Congratulations, you've deployed your first cap table smart contract!
+![Factories](../../../public/images/cap-table-issuer.png)
+</Steps>

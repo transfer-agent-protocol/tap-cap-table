@@ -1,0 +1,72 @@
+# Transaction Routes
+
+## `transactions/issuance/stock`
+
+- **Description**: Records a stock issuance transaction.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock issuance data (object with the following fields):
+    - `stakeholder_id`: The ID of the stakeholder (string).
+    - `stock_class_id`: The ID of the stock class (string).
+    - `quantity`: The number of shares issued (string).
+    - `share_price`: The price per share (object with `currency` and `amount`).
+    - `stock_legend_ids`: List of stock legend IDs (array of strings).
+    - `stock_plan_id`: The ID of the stock plan (string).
+    - `vesting_terms_id`: The ID of the vesting terms (string).
+    - `cost_basis`: The cost basis (object with `currency` and `amount`).
+    - `issuance_type`: The type of issuance (string).
+    - `comments`: Additional comments (array of strings).
+    - `custom_id`: A custom ID for the issuance (string).
+    - `consideration_text`: The consideration text (string).
+    - `security_law_exemptions`: List of security law exemptions (array of strings).
+
+## `transactions/transfer/stock`
+
+- **Description**: Records a stock transfer transaction.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock transfer data (object with the following fields):
+    - `quantity`: The number of shares transferred (string).
+    - `transferorId`: The ID of the transferor stakeholder (string).
+    - `transfereeId`: The ID of the transferee stakeholder (string).
+    - `stockClassId`: The ID of the stock class (string).
+    - `isBuyerVerified`: Whether the buyer is verified (boolean).
+    - `sharePrice`: The price per share (string).
+
+## `transactions/issuance/equity-compensation`
+
+- **Description**: Records an equity compensation issuance transaction.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The equity compensation issuance data (object with the following fields):
+    - `stakeholder_id`: The ID of the stakeholder (string).
+    - `stock_class_id`: The ID of the stock class (string).
+    - `quantity`: The number of shares issued (string).
+    - `price_per_share`: The price per share (object with `currency` and `amount`).
+    - `vesting_terms_id`: The ID of the vesting terms (string).
+    - `cost_basis`: The cost basis (object with `currency` and `amount`).
+    - `issuance_type`: The type of issuance (string).
+    - `comments`: Additional comments (array of strings).
+    - `custom_id`: A custom ID for the issuance (string).
+
+## `transactions/issuance/convertible`
+
+- **Description**: Records a convertible issuance transaction.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The convertible issuance data (object with the following fields):
+    - `security_law_exemptions`: List of security law exemptions (array of objects with `description` and `jurisdiction`).
+    - `board_approval_date`: The board approval date (string, format: YYYY-MM-DD).
+    - `stakeholder_id`: The ID of the stakeholder (string).
+    - `consideration_text`: The consideration text (string).
+    - `custom_id`: A custom ID for the issuance (string).
+    - `convertible_type`: The type of convertible (string).
+    - `investment_amount`: The investment amount (object with `amount` and `currency`).
+    - `conversion_triggers`: List of conversion triggers (array of objects with fields `trigger_id`, `nickname`, `trigger_description`, `type`, `trigger_condition`, `conversion_right`).
+    - `seniority`: The seniority of the convertible (string).
+    - `pro_rata`: The pro rata amount (string).
+    - `comments`: Additional comments (array of strings).

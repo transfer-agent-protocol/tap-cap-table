@@ -1,0 +1,40 @@
+# Stock Legend Templates Routes
+
+Stock legend template is a re-usable template for legal and regulatory review.
+
+## `stock-legend/create`
+
+- **Description**: Creates a new stock legend template.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock legend template data (object with the following fields):
+    - `name`: The name of the legend (string).
+    - `text`: The text of the legend (string).
+    - `comments`: Additional comments (array of strings).
+
+````json
+{
+    "issuerId": "92dddedd-251d-47cd-83ac-342f00e3d5a1",
+    "data": {
+        "name": "Restricted Stock Legend",
+        "text": "The shares represented by this certificate are subject to certain restrictions on transfer and may be subject to forfeiture under the terms of an agreement entered into between the registered owner and Winston Inc. Any attempted transfer of these shares in violation of the agreement is void and of no effect.",
+        "comments": [
+            "This legend is applied to restricted stock issued to early employees."
+        ]
+    }
+}
+````
+
+## `stock-legend/id/:id`
+
+- **Description**: Retrieves details of a stock legend template by ID.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `id`: The ID of the stock legend template (string).
+
+## `stock-legend/total-number`
+
+- **Description**: Retrieves the total number of stock legend templates.
+- **Method**: `GET`
+
