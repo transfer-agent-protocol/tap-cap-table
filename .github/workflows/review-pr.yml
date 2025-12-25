@@ -1,0 +1,25 @@
+name: PR Review
+on:
+    pull_request:
+        types: [opened, ready_for_review]
+jobs:
+    review:
+        name: Warp Agent Review
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - name: Review code changes in Warp
+              uses: warpdotdev/warp-agent-action@v1
+              with:
+                  prompt: |
+                      Review the code changes on this branch:
+                      1. Use the `git` command to identify changes from the base branch
+                      2. Thoroughly analyze all changes, and identify any issues with style, security, or correctness
+                      3. If you have suggestions, use the `gh` command to comment on the PR.
+                  warp_api_key: ${{ secrets.WARP_API_KEY }}
