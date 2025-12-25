@@ -144,6 +144,21 @@ pnpm format
 pnpm typecheck
 ```
 
+### Documentation
+
+```bash
+# Run docs dev server
+pnpm docs:dev
+
+# Build docs for production
+pnpm docs:build
+
+# Serve production build
+pnpm docs:start
+```
+
+The docs are a Nextra/Next.js site in the `docs/` workspace. See `docs/README.md` for more details.
+
 ### Deployment
 
 ```bash
@@ -185,6 +200,9 @@ tap-cap-table/
 │   ├── state-machines/ # XState stock lifecycle
 │   ├── tests/          # JavaScript tests
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
+├── docs/               # Developer documentation (Nextra/Next.js)
+│   ├── src/pages/      # MDX documentation pages
+│   └── public/         # Static assets (favicon, icons, images)
 ├── ocf/                # OCF standard (git submodule)
 ├── .env.example        # Environment template
 ├── docker-compose.yml  # MongoDB setup

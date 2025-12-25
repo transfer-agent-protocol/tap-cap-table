@@ -1,0 +1,47 @@
+# Stock Plan Routes
+
+Stock option plan is used to create and track stock plans for any given `issuedId`.
+
+## `stock-plan/create`
+
+- **Description**: Creates a new stock plan.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock plan data (object with the following fields):
+    - `plan_name`: The name of the stock plan (string).
+    - `board_approval_date`: The board approval date (string, format: YYYY-MM-DD).
+    - `stockholder_approval_date`: The stockholder approval date (string, format: YYYY-MM-DD).
+    - `initial_shares_reserved`: The number of initial shares reserved (string).
+    - `default_cancellation_behavior`: The default cancellation behavior (string).
+    - `stock_class_id`: The ID of the stock class (string).
+    - `comments`: Additional comments (array of strings).
+
+````json
+{
+    "issuerId": "92dddedd-251d-47cd-83ac-342f00e3d5a1",
+    "data": {
+        "plan_name": "Transfer Agent Protocol Employee Stock Option Plan",
+        "board_approval_date": "2023-08-15",
+        "stockholder_approval_date": "2023-08-20",
+        "initial_shares_reserved": "1000000",
+        "default_cancellation_behavior": "RETURN_TO_POOL",
+        "stock_class_id": "stock-class-12345", // important
+        "comments": [
+            "This stock plan is designed for TAP employees and provides options that can be converted to company stock."
+        ]
+    }
+}
+````
+
+## `stock-plan/id/:id`
+
+- **Description**: Retrieves details of a stock plan by ID.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `id`: The ID of the stock plan (string).
+
+## `stock-plan/total-number`
+
+- **Description**: Retrieves the total number of stock plans.
+- **Method**: `GET`

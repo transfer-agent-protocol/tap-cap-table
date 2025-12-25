@@ -1,0 +1,53 @@
+import { Card, Cards, Callout, FileTree } from 'nextra/components'
+
+# Install dependencies
+
+You'll need these installed to start building:
+
+- [Docker](https://docs.docker.com/get-docker/)
+
+- [Foundry](https://getfoundry.sh/)
+
+```sh
+curl -L https://foundry.paradigm.xyz | bash
+```
+
+- [Mongo Compass](https://www.mongodb.com/try/download/compass)
+
+- [Node.js v18.16.0](https://nodejs.org/en/download/)
+
+- [Postman App](https://www.postman.com/downloads/)
+
+- [pnpm](https://pnpm.io/installation)
+
+## Pull the repo
+
+This will include the [OCF](/protocol/tap-ocf) and [Foundry](https://book.getfoundry.sh/) repos as submodules.
+
+```sh
+git clone --recurse-submodules https://github.com/transfer-agent-protocol/tap-cap-table.git
+```
+
+
+## Learn the structure
+
+Everything you need to develop your onchain smart contracts lives under the `chain` folder in the repo.
+
+<FileTree>
+  <FileTree.Folder name="chain" defaultOpen>
+  <FileTree.Folder name="src" defaultOpen>
+		<FileTree.Folder name="interfaces" defaultOpen>
+			<FileTree.File name="ICapTable.sol" />
+			<FileTree.File name="ICapTableFactory.sol" />
+		</FileTree.Folder>
+		<FileTree.Folder name="lib" defaultOpen>
+			<FileTree.File name="DeleteContext.sol" />
+			<FileTree.File name="Stock.sol" />
+			<FileTree.File name="Structs.sol" />
+			<FileTree.File name="TxHelper.sol" />
+		</FileTree.Folder>
+			<FileTree.File name="CapTable.sol" />
+			<FileTree.File name="CapTableFactory.sol" />
+		</FileTree.Folder>
+	</FileTree.Folder>
+</FileTree>

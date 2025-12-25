@@ -1,0 +1,87 @@
+import { Steps } from 'nextra/components';
+
+# Initial setup
+
+Our `.env.example` files are setup for local development with Docker and Foundry. You'll need to copy them to a new `.env` and update the values with your own. You have to do this twice in the root of the project and inside of the `/chain` folder.
+
+While developing, you'll run Anvil in one terminal window, and the server in another. You'll also need to run Docker in the root folder.
+
+## Setup the server in the root folder
+
+<Steps>
+
+### 1. Setup your environment
+
+Copy the `.env.example` to `.env` in the root folder
+
+```bash
+cd tap-cap-table && cp .env.example .env
+```
+
+You'll also need to setup your `.env.test.local` file for testing. This will be used by the test suite to run tests. 
+
+```bash
+cp .env .env.test.local
+```
+
+### 2. Update the values
+
+We provide initial defaults for connecting to the database and running Docker. You can get your `PRIVATE_KEY` values from Anvil in a second. You can also use your own (be careful not to use your mainnet keys!)
+
+````md filename=".env"
+# Offchain db connection string for mongodb
+DATABASE_URL="mongodb://tap:tap@localhost:27017/mongo?authSource=admin&retryWrites=true&w=majority"
+DATABASE_OVERRIDE=""  # use a database other than the default in DATABASE_URL
+DATABASE_REPLSET="0"  # set to "1" if using --replSet option in mongo. this allows transactions
+
+# RPC url for testnet (defaults to Anvil's http://127.0.0.1:8545)
+RPC_URL=http://127.0.0.1:8545
+
+# Change this to the chain id of the network you are deploying to
+# Use 31337 for Anvil's, 161221135 for Plume's
+CHAIN_ID=161221135
+
+# Update with the private key of the account that will be used to deploy the contracts
+PRIVATE_KEY=UPDATE_ME
+
+# Etherscan API keys
+ETHERSCAN_L2_API_KEY=UPDATE_ME
+ETHERSCAN_L1_API_KEY=UPDATE_ME
+
+# Server port
+PORT=8293
+````
+
+### 3. Start Docker
+
+Start Docker in the root folder
+
+```bash
+docker compose up
+```
+
+</Steps>
+
+## Setup Anvil in the `/chain` folder
+
+This repo is onchain first. We use Anvil to run the local blockchain and deploy our cap table smart contracts there. At all times, you should have Anvil running alongside Docker and nodemon. With the mongo DB running on Docker you can start Anvil.
+
+<Steps>
+
+### 1. Setup Forge and Anvil in the `/chain` folder
+
+Install dependencies and setup Foundry and Forge with our setup script:
+
+```bash
+pnpm install && pnpm run setup
+```
+
+### 2. Start Anvil
+
+This will also give you the private key you need to update in your `.env` file.
+
+```bash
+anvil
+```
+
+</Steps>

@@ -1,0 +1,11 @@
+{
+    "index": "Introduction",
+    "development": "Development",
+    "protocol": "Protocol Specification",
+    "features": "Features",
+    "website": {
+        "title": "Website ↗",
+        "href": "https://transferagentprotocol.xyz",
+        "newWindow": true
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "install": "Install",
+    "setup": "Setup",
+    "factory-deploy": "Deploy Factory",
+    "cap-table-deploy": "Deploy Cap Table"
+}

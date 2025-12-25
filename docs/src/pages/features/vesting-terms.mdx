@@ -1,0 +1,25 @@
+# Vesting Terms Routes
+
+## `vesting-terms/create`
+
+- **Description**: Creates new vesting terms.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The vesting terms data (object with the following fields):
+    - `name`: The name of the vesting terms (string).
+    - `description`: The description of the vesting terms (string).
+    - `allocation_type`: The allocation type (string).
+    - `vesting_conditions`: The vesting conditions (array of objects with fields `id`, `description`, `trigger`, `quantity`, `next_condition_ids`).
+
+## `vesting-terms/id/:id`
+
+- **Description**: Retrieves details of vesting terms by ID.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `id`: The ID of the vesting terms (string).
+
+## `vesting-terms/total-number`
+
+- **Description**: Retrieves the total number of vesting terms.
+- **Method**: `GET`

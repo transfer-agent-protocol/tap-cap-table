@@ -1,0 +1,263 @@
+import { FileTree } from "nextra/components"
+
+# Cap Table Structs
+
+[Structs](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/lib/Structs.sol) manage various aspects of the cap table, including issuers, stock classes, stakeholders, and different types of stock transactions. You'll find them here:
+
+<FileTree>
+  <FileTree.Folder name="chain" defaultOpen>
+  <FileTree.Folder name="src" defaultOpen>
+		<FileTree.Folder name="interfaces" defaultClosed>
+			<FileTree.File name="ICapTable.sol" />
+			<FileTree.File name="ICapTableFactory.sol" />
+		</FileTree.Folder>
+		<FileTree.Folder name="lib" defaultOpen>
+			<FileTree.File name="DeleteContext.sol" />
+			<FileTree.File name="Stock.sol" />
+			<FileTree.File name="Structs.sol" />
+			<FileTree.File name="TxHelper.sol" />
+		</FileTree.Folder>
+			<FileTree.File name="CapTable.sol" />
+			<FileTree.File name="CapTableFactory.sol" />
+		</FileTree.Folder>
+	</FileTree.Folder>
+</FileTree>
+
+## Issuer
+
+Represents an issuer of shares.
+
+- `bytes16 id`: Unique identifier for the issuer.
+- `string legal_name`: Legal name of the issuer.
+- `uint256 shares_issued`: Total number of shares issued.
+- `uint256 shares_authorized`: Total number of shares authorized.
+
+## StockClass
+
+Represents a class of stock.
+
+- `bytes16 id`: Unique identifier for the stock class.
+- `string class_type`: Type of stock (e.g., "COMMON", "PREFERRED").
+- `uint256 price_per_share`: Per-share price at which this stock class was issued.
+- `uint256 shares_issued`: Total number of shares issued for this class.
+- `uint256 shares_authorized`: Total number of shares authorized for this class.
+
+## Stakeholder
+
+Represents a stakeholder in the company.
+
+- `bytes16 id`: Unique identifier for the stakeholder.
+- `string stakeholder_type`: Type of stakeholder (e.g., "INDIVIDUAL", "INSTITUTION").
+- `string current_relationship`: Current relationship of the stakeholder with the company (e.g., "ADVISOR", "BOARD_MEMBER").
+
+## ActivePosition
+
+Represents an active position of a stakeholder in a specific stock class.
+
+- `bytes16 stock_class_id`: Identifier of the stock class.
+- `uint256 quantity`: Number of shares held.
+- `uint256 share_price`: Price per share.
+- `uint40 timestamp`: Timestamp of the position.
+
+## ShareNumbersIssued
+
+Represents the range of share numbers issued.
+
+- `uint256 starting_share_number`: Starting share number.
+- `uint256 ending_share_number`: Ending share number.
+
+## IssuerInitialShares
+
+Initial share details for an issuer.
+
+- `uint256 shares_authorized`: Initial number of shares authorized.
+- `uint256 shares_issued`: Initial number of shares issued.
+
+## StockClassInitialShares
+
+Initial share details for a stock class.
+
+- `bytes16 id`: Identifier of the stock class.
+- `uint256 shares_authorized`: Initial number of shares authorized for the stock class.
+- `uint256 shares_issued`: Initial number of shares issued for the stock class.
+
+## InitialShares
+
+Initial share details for an issuer and its stock classes.
+
+- `IssuerInitialShares issuerInitialShares`: Initial shares for the issuer.
+- `StockClassInitialShares[] stockClassesInitialShares`: Initial shares for the stock classes.
+
+## StockCancellation
+
+Represents the cancellation of stock.
+
+- `bytes16 id`: Unique identifier for the cancellation.
+- `string object_type`: Type of object.
+- `uint256 quantity`: Quantity of stock cancelled.
+- `string[] comments`: Optional comments.
+- `bytes16 security_id`: Identifier of the security.
+- `string reason_text`: Optional reason for cancellation.
+- `bytes16 balance_security_id`: Optional balance security identifier.
+
+## StockRetraction
+
+Represents the retraction of stock.
+
+- `bytes16 id`: Unique identifier for the retraction.
+- `string object_type`: Type of object.
+- `string[] comments`: Optional comments.
+- `bytes16 security_id`: Identifier of the security.
+- `string reason_text`: Optional reason for retraction.
+
+## StockReissuance
+
+Represents the reissuance of stock.
+
+- `bytes16 id`: Unique identifier for the reissuance.
+- `string object_type`: Type of object.
+- `string[] comments`: Optional comments.
+- `bytes16 security_id`: Identifier of the security.
+- `bytes16[] resulting_security_ids`: Identifiers of the resulting securities.
+- `bytes16 split_transaction_id`: Split transaction identifier (not used in MVP).
+- `string reason_text`: Reason for reissuance.
+
+## StockRepurchase
+
+Represents the repurchase of stock.
+
+- `bytes16 id`: Unique identifier for the repurchase.
+- `string object_type`: Type of object.
+- `string[] comments`: Optional comments.
+- `bytes16 security_id`: Identifier of the security.
+- `string consideration_text`: Optional consideration text.
+- `bytes16 balance_security_id`: Optional balance security identifier.
+- `uint256 quantity`: Quantity of stock repurchased.
+- `uint256 price`: Price of the repurchase.
+
+## StockAcceptance
+
+Represents the acceptance of stock.
+
+- `bytes16 id`: Unique identifier for the acceptance.
+- `string object_type`: Type of object.
+- `bytes16 security_id`: Identifier of the security.
+- `string[] comments`: Optional comments.
+
+## IssuerAuthorizedSharesAdjustment
+
+Represents an adjustment to the authorized shares of an issuer.
+
+- `bytes16 id`: Unique identifier for the adjustment.
+- `string object_type`: Type of object.
+- `uint256 new_shares_authorized`: New number of authorized shares.
+- `string[] comments`: Optional comments.
+- `string board_approval_date`: Optional board approval date.
+- `string stockholder_approval_date`: Optional stockholder approval date.
+
+## StockClassAuthorizedSharesAdjustment
+
+Represents an adjustment to the authorized shares of a stock class.
+
+- `bytes16 id`: Unique identifier for the adjustment.
+- `string object_type`: Type of object.
+- `uint256 new_shares_authorized`: New number of authorized shares.
+- `string[] comments`: Optional comments.
+- `string board_approval_date`: Optional board approval date.
+- `string stockholder_approval_date`: Optional stockholder approval date.
+
+## StockIssuance
+
+Represents the issuance of stock.
+
+- `bytes16 id`: Unique identifier for the issuance.
+- `string object_type`: Type of object.
+- `bytes16 security_id`: Identifier of the security.
+- `StockIssuanceParams params`: Parameters of the stock issuance.
+
+## StockLegendTemplate
+
+Represents a stock legend template.
+
+- `bytes16 id`: Unique identifier for the legend template.
+
+## StockParamsQuantity
+
+Represents the parameters for stock quantity operations.
+
+- `uint256 nonce`: Nonce value.
+- `uint256 quantity`: Quantity of stock.
+- `bytes16 stakeholder_id`: Identifier of the stakeholder.
+- `bytes16 stock_class_id`: Identifier of the stock class.
+- `bytes16 security_id`: Identifier of the security.
+- `string[] comments`: Optional comments.
+- `string reason_text`: Reason for the operation.
+
+## StockParams
+
+Represents the parameters for stock operations.
+
+- `bytes16 stakeholder_id`: Identifier of the stakeholder.
+- `bytes16 stock_class_id`: Identifier of the stock class.
+- `bytes16 security_id`: Identifier of the security.
+- `string[] comments`: Optional comments.
+- `string reason_text`: Reason for the operation.
+
+## StockTransferParams
+
+Represents the parameters for a stock transfer.
+
+- `bytes16 transferor_stakeholder_id`: Identifier of the transferor stakeholder.
+- `bytes16 transferee_stakeholder_id`: Identifier of the transferee stakeholder.
+- `bytes16 stock_class_id`: Identifier of the stock class.
+- `bool is_buyer_verified`: Indicates if the buyer is verified.
+- `uint256 quantity`: Quantity of stock transferred.
+- `uint256 share_price`: Price per share.
+- `uint256 nonce`: Nonce value.
+- `string custom_id`: Custom identifier.
+
+## StockIssuanceParams
+
+Represents the parameters for stock issuance.
+
+- `bytes16 stock_class_id`: Identifier of the stock class.
+- `bytes16 stock_plan_id`: Optional identifier of the stock plan.
+- `ShareNumbersIssued share_numbers_issued`: Optional range of share numbers issued.
+- `uint256 share_price`: Price per share.
+- `uint256 quantity`: Quantity of stock.
+- `bytes16 vesting_terms_id`: Optional identifier of the vesting terms.
+- `uint256 cost_basis`: Optional cost basis.
+- `bytes16[] stock_legend_ids`: Optional identifiers of the stock legends.
+- `string issuance_type`: Optional type of issuance (e.g., "RSA", "FOUNDERS_STOCK").
+- `string[] comments`: Optional comments.
+- `string custom_id`: Optional custom identifier.
+- `bytes16 stakeholder_id`: Identifier of the stakeholder.
+- `string board_approval_date`: Optional board approval date.
+- `string stockholder_approval_date`: Optional stockholder approval date.
+- `string consideration_text`: Optional consideration text.
+- `string[] security_law_exemptions`: Optional security law exemptions.
+
+## StockTransfer
+
+Represents a stock transfer.
+
+- `bytes16 id`: Unique identifier for the transfer.
+- `string object_type`: Type of object.
+- `uint256 quantity`: Quantity of stock transferred.
+- `string[] comments`: Optional comments.
+- `bytes16 security_id`: Identifier of the security.
+- `string consideration_text`: Optional consideration text.
+- `bytes16 balance_security_id`: Optional balance security identifier.
+- `bytes16[] resulting_security_ids`: Identifiers of the resulting securities.
+
+## ActivePositions
+
+Represents active positions held by stakeholders.
+
+- `mapping(bytes16 => mapping(bytes16 => ActivePosition)) activePositions`: Mapping of active positions by stock class and stakeholder.
+
+## SecIdsStockClass
+
+Represents active security identifiers by stock class.
+
+- `mapping(bytes16 => mapping(bytes16 => bytes16[])) activeSecurityIdsByStockClass`: Mapping of active security identifiers by stock class.

@@ -1,0 +1,54 @@
+
+import { Card, Cards, Callout, FileTree } from 'nextra/components'
+
+# Onchain Cap Table Overview
+<Callout emoji="🫡">This doc has been recently updated</Callout>
+
+Here's where you'll find both the factory and the cap table implementation:
+
+<FileTree>
+  <FileTree.Folder name="chain" defaultOpen>
+  <FileTree.Folder name="src" defaultOpen>
+		<FileTree.Folder name="interfaces" defaultClosed>
+			<FileTree.File name="ICapTable.sol" />
+			<FileTree.File name="ICapTableFactory.sol" />
+		</FileTree.Folder>
+		<FileTree.Folder name="lib" defaultClosed>
+			<FileTree.File name="DeleteContext.sol" />
+			<FileTree.File name="Stock.sol" />
+			<FileTree.File name="Structs.sol" />
+			<FileTree.File name="TxHelper.sol" />
+		</FileTree.Folder>
+			<FileTree.File name="CapTable.sol" />
+			<FileTree.File name="CapTableFactory.sol" />
+		</FileTree.Folder>
+	</FileTree.Folder>
+</FileTree>
+
+## Factory
+
+The [CapTableFactory](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTableFactory.sol) smart contract uses OpenZeppelin's upgradeable beacon pattern to create and manage upgradeable instances of cap tables for tokenized stock records. It allows developers to update the underlying cap table implementation of all instances via the beacon. New cap table instances are created with specific initial parameters (`id`, `name`, and `initial_shares_authorized`).
+
+The contract tracks each cap table proxy created, offering a function to count the total number of cap tables managed. The contract also provides a function to retrieve the address of a cap table proxy by its index.
+
+## Cap Table
+
+The [CapTable](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTable.sol) contract manages tokenized stock with role-based access for secure operations. It tracks stakeholders, stock classes, and transactions, supporting stock issuance, repurchase, and adjustments using the [Structs Library](/protocol/structs-lib) and [Stock Functions](/protocol/stock-lib).
+
+## Delete Context
+
+[DeleteContext](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/lib/DeleteContext.sol): Deletes stakeholders' active positions by active security IDs, stakeholder IDs, and stock class IDs.
+
+## Adjustment
+[Adjustment](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/transactions/Adjustment.sol): Adjusts new shares authorized on a cap table (including tracking board approval date) after a round of funding or other event.
+
+<Cards>
+  <Card
+	title="Structs Library"
+	href="/protocol/structs-lib"
+	/>
+	<Card
+	title="Stock Functions"
+	href="/protocol/stock-lib"
+	/>
+</Cards>

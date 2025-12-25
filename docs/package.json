@@ -1,0 +1,31 @@
+{
+    "name": "tap-docs",
+    "version": "1.0.0",
+    "private": true,
+    "license": "MIT",
+    "description": "Developer documentation for Transfer Agent Protocol",
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
+        "lint": "pnpm eslint . --ext .js,.jsx,.ts,.tsx,.mdx"
+    },
+    "dependencies": {
+        "eslint-config-next": "^14.0.4",
+        "next": "^14.2.3",
+        "nextra": "^2.13.4",
+        "nextra-theme-docs": "^2.13.4",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    },
+    "resolutions": {
+        "flexsearch": "0.7.31"
+    },
+    "devDependencies": {
+        "@types/node": "20.10.8",
+        "eslint": "^8.56.0",
+        "eslint-plugin-mdx": "^2.3.2",
+        "typescript": "5.3.3"
+    }
+}

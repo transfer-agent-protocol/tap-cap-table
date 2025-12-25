@@ -1,0 +1,54 @@
+# Issuer Routes
+
+This is the very first thing to be created - issuer with the `issuerId`. To create one, you post this data to the specified route. Our server will generate an `issuerId` automatically and create a database replica of the onchain record.
+
+## `issuer/create`
+
+- **Description**: Creates a new issuer.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `legal_name`: The name of the issuer (string).
+  - `formation_date`: The date of formation (string, format: YYYY-MM-DD).
+  - `country_of_formation`: The country of formation (string).
+  - `country_subdivision_of_formation`: The country subdivision of formation (string).
+  - `initial_shares_authorized`: The number of initial shares authorized (string).
+  - `tax_ids`: List of tax IDs (array of objects with `tax_id` and `country`).
+  - `email`: The email address (object with `email_address` and `email_type`).
+  - `address`: The legal address (object with `address_type`, `street_suite`, `city`, `country_subdivision`, `country`, and `postal_code`).
+  - `comments`: Additional comments (array of strings).
+
+````json
+{
+    "legal_name": "Transfer Agent Protocol",
+    "formation_date": "2024-01-12",
+    "country_of_formation": "US",
+    "country_subdivision_of_formation": "DE",
+    "initial_shares_authorized": "10000000",
+    "tax_ids": [
+        {
+            "tax_id": "88-3977591",
+            "country": "US"
+        }
+    ],
+    "email": {
+        "email_address": "dev@transferagentprotocol.xyz",
+        "email_type": "BUSINESS"
+    },
+    "address": {
+        "address_type": "LEGAL",
+        "street_suite": "447 Broadway\n2nd Fl #713",
+        "city": "New York",
+        "country_subdivision": "NY",
+        "country": "US",
+        "postal_code": "10013"
+    },
+    "comments": []
+}
+````
+
+## `issuer/id/:id`
+
+- **Description**: Retrieves details of an issuer by ID. For example, if the server generated this as the `issuerId` `92dddedd-251d-47cd-83ac-342f00e3d5a1`, we'll have to use it throughout to modify records for this specific issuer.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `id`: The ID of the issuer (string).

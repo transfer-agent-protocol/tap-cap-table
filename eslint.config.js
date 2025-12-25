@@ -38,6 +38,6 @@ export default [
         },
     },
     {
-        ignores: ["node_modules/", "dist/", "chain/out/", "chain/lib/", "chain/cache/", "chain/broadcast/", "ocf/"],
+        ignores: ["node_modules/", "dist/", "chain/out/", "chain/lib/", "chain/cache/", "chain/broadcast/", "ocf/", "docs/"],
     },
 ];
