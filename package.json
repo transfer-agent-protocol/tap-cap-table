@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "author": "thatalexpalmer.eth",
-    "license": "MIT",
+    "license": "BUSL-1.1",
     "description": "Transfer Agent Protocol onchain cap table",
     "type": "module",
     "packageManager": "pnpm@10.18.2",
