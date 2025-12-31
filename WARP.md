@@ -6,6 +6,14 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 Transfer Agent Protocol (TAP) Cap Table is an on-chain cap table implementation that combines Solidity smart contracts with an off-chain Node.js API server. It implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard for representing cap table data.
 
+### Licensing
+
+This project uses a dual-license structure:
+
+- **Core Protocol (`chain/`)**: BUSL-1.1 (converts to AGPLv3 on January 1, 2028)
+- **Offchain Server (`src/`)**: AGPL-3.0
+- **Documentation (`docs/`)**: MIT
+
 ## Architecture
 
 ### Hybrid On-chain/Off-chain Design
