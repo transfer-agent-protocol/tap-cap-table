@@ -8,7 +8,13 @@
 
 Read official docs at [https://docs.transferagentprotocol.xyz](https://docs.transferagentprotocol.xyz/) to get started.
 
+The documentation source lives in the [`docs/`](./docs) directory and can be run locally with `pnpm docs:dev`.
+
 This repo is based on the [Open Cap Table Coalition](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard, with the license included in its entirety.
+
+## Development
+
+For developers using [Warp](https://warp.dev), see [`WARP.md`](./WARP.md) for AI-assisted development guidance.
 
 ## Contributing
 
