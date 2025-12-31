@@ -2,7 +2,6 @@
 Entrypoint for service
  */
 import { startServer } from "./app";
-import "./tracer";
 import { isFlagPresent } from "./utils/commandLine";
 
 const options = {
