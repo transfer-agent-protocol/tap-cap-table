@@ -22,4 +22,4 @@ jobs:
                       1. Use the `git` command to identify changes from the base branch
                       2. Thoroughly analyze all changes, and identify any issues with style, security, or correctness
                       3. If you have suggestions, use the `gh` command to comment on the PR.
-                  warp_api_key: ${{ secrets.WARP_API_KEY }}
+                  warp_api_key: ${{ secrets.WARP_AGENT_API_KEY }}
