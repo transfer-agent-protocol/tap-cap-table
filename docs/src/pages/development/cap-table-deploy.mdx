@@ -1,27 +1,14 @@
-import { Steps } from 'nextra/components';
+import { Steps, Callout } from 'nextra/components';
 
-# Cap table smart contract
+# Deploy a Cap Table
 
-The cap table smart contract is responsible for minting the inital cap table onchain can be found in our repo under [CapTable.sol](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTable.sol).
+With the server running, you can create your first cap table via the API. This deploys a new cap table contract through the factory and creates an issuer record.
 
-## Deploy cap table smart contract
 <Steps>
 
-### Run the server
+### Create an issuer via POST request
 
-In the root folder, run the development server:
-
-```bash
-pnpm dev
-```
-
-### Open Postman, and create a new POST request
-
-Create a new request in Postman, and set the request type to `POST`. In the URL field, enter `http://localhost:{{PORT}}/issuer/create` - your port should be `8293` if you haven't changed it.
-
-### Set the request body
-
-In the request body, use this example JSON. You can change anything you like here. Every field is required and will first run through validation against the OCF schema using our [validateInputAgainstSchema](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/src/utils/validateInputAgainstSchema.js) script.
+Using Postman or curl, send a POST request to `http://localhost:8293/issuer/create`:
 
 ```json
 {
@@ -52,8 +39,23 @@ In the request body, use this example JSON. You can change anything you like her
 }
 ```
 
-### Send the request
+All fields are validated against the [OCF schema](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF).
 
-Your request should look like this. Notice that in the response, you get the `capTableAddress` which is the address of the cap table smart contract. Congratulations, you've deployed your first cap table smart contract!
-![Factories](../../../public/images/cap-table-issuer.png)
+### Check the response
+
+The response includes the `capTableAddress` - this is your new cap table contract deployed on-chain:
+
+![Cap Table Issuer Response](../../../public/images/cap-table-issuer.png)
+
 </Steps>
+
+<Callout type="success">
+Congratulations! You've deployed your first cap table smart contract.
+</Callout>
+
+## What's next?
+
+With your cap table deployed, you can:
+- Create stakeholders via `POST /stakeholder/create`
+- Create stock classes via `POST /stock-class/create`
+- Issue stock via `POST /transactions/stock/issuance`
