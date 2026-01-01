@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
-import stockLegendSchema from "../../ocf/schema/objects/StockLegendTemplate.schema.json" assert { type: "json" };
+import stockLegendSchema from "../../ocf/schema/objects/StockLegendTemplate.schema.json" with { type: "json" };
 import { createStockLegendTemplate } from "../db/operations/create.js";
 import { countStockLegendTemplates, readIssuerById, readStockLegendTemplateById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";

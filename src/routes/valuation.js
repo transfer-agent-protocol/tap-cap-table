@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
-import valuationSchema from "../../ocf/schema/objects/Valuation.schema.json" assert { type: "json" };
+import valuationSchema from "../../ocf/schema/objects/Valuation.schema.json" with { type: "json" };
 import { createValuation } from "../db/operations/create.js";
 import { countValuations, readIssuerById, readValuationById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";

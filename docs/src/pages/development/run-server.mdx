@@ -1,0 +1,43 @@
+import { Steps, Callout, Tabs } from 'nextra/components';
+
+# Run the Server
+
+The Node.js server provides the REST API for managing cap tables. It connects to MongoDB for storage and to the blockchain for on-chain operations.
+
+## Development mode
+
+<Steps>
+
+### Start the server
+
+```bash
+pnpm dev
+```
+
+This runs the server with hot-reloading and the **event poller** enabled.
+
+### Verify it's running
+
+```bash
+curl http://localhost:8293/
+```
+
+You should see a response confirming the server is up.
+
+</Steps>
+
+## What is the event poller?
+
+The event poller watches the blockchain for contract events (like stock issuances, transfers, etc.) and syncs them to MongoDB. This keeps your off-chain database in sync with on-chain state.
+
+- **`pnpm dev`** - Server with event poller (recommended for development)
+- **`pnpm prod`** - Server without event poller
+- **`pnpm prod-poller`** - Standalone event poller only (for production, processes finalized blocks)
+
+<Callout type="info">
+For local development, use `pnpm dev` which includes the poller. In production, you'd typically run the server and poller as separate processes.
+</Callout>
+
+## Next steps
+
+With the server running, you can [deploy your first cap table](/development/cap-table-deploy) using the API.

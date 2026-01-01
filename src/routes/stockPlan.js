@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
-import stockPlanSchema from "../../ocf/schema/objects/StockPlan.schema.json" assert { type: "json" };
+import stockPlanSchema from "../../ocf/schema/objects/StockPlan.schema.json" with { type: "json" };
 import { createStockPlan } from "../db/operations/create.js";
 import { countStockPlans, readIssuerById, readStockPlanById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";

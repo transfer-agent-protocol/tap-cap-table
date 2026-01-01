@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 
-import issuerSchema from "../../ocf/schema/objects/Issuer.schema.json" assert { type: "json" };
+import issuerSchema from "../../ocf/schema/objects/Issuer.schema.json" with { type: "json" };
 import deployCapTable from "../chain-operations/deployCapTable.js";
 import { createIssuer } from "../db/operations/create.js";
 import { countIssuers, readIssuerById } from "../db/operations/read.js";

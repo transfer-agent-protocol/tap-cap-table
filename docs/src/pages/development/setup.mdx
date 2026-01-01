@@ -1,76 +1,71 @@
-import { Steps } from 'nextra/components';
+import { Steps, Callout } from 'nextra/components';
 
 # Initial setup
 
-Our `.env.example` files are setup for local development with Docker and Foundry. You'll need to copy them to a new `.env` and update the values with your own. You have to do this twice in the root of the project and inside of the `/chain` folder.
+This guide walks you through setting up your local development environment. You'll need three things running:
+1. **Docker** - for MongoDB
+2. **Anvil** - local blockchain
+3. **Server** - the Node.js API (covered in the next section)
 
-While developing, you'll run Anvil in one terminal window, and the server in another. You'll also need to run Docker in the root folder.
-
-## Setup the server in the root folder
+## Configure environment variables
 
 <Steps>
 
-### 1. Setup your environment
-
-Copy the `.env.example` to `.env` in the root folder
+### 1. Copy the example env file
 
 ```bash
-cd tap-cap-table && cp .env.example .env
-```
-
-You'll also need to setup your `.env.test.local` file for testing. This will be used by the test suite to run tests. 
-
-```bash
-cp .env .env.test.local
+cp .env.example .env
 ```
 
 ### 2. Update the values
 
-We provide initial defaults for connecting to the database and running Docker. You can get your `PRIVATE_KEY` values from Anvil in a second. You can also use your own (be careful not to use your mainnet keys!)
+The defaults work for local development. You'll get your `PRIVATE_KEY` from Anvil in the next section.
 
 ````md filename=".env"
-# Offchain db connection string for mongodb
+# MongoDB connection
 DATABASE_URL="mongodb://tap:tap@localhost:27017/mongo?authSource=admin&retryWrites=true&w=majority"
-DATABASE_OVERRIDE=""  # use a database other than the default in DATABASE_URL
-DATABASE_REPLSET="0"  # set to "1" if using --replSet option in mongo. this allows transactions
+DATABASE_REPLSET="0"  # set to "1" if using replica set
 
-# RPC url for testnet (defaults to Anvil's http://127.0.0.1:8545)
-RPC_URL=http://127.0.0.1:8545
+# Blockchain connection (Anvil local)
+RPC_URL=http://localhost:8545
+CHAIN_ID=31337
 
-# Change this to the chain id of the network you are deploying to
-# Use 31337 for Anvil's, 161221135 for Plume's
-CHAIN_ID=161221135
-
-# Update with the private key of the account that will be used to deploy the contracts
+# Deployer private key (get from Anvil output)
 PRIVATE_KEY=UPDATE_ME
-
-# Etherscan API keys
-ETHERSCAN_L2_API_KEY=UPDATE_ME
-ETHERSCAN_L1_API_KEY=UPDATE_ME
 
 # Server port
 PORT=8293
 ````
 
-### 3. Start Docker
-
-Start Docker in the root folder
-
-```bash
-docker compose up
-```
-
 </Steps>
 
-## Setup Anvil in the `/chain` folder
-
-This repo is onchain first. We use Anvil to run the local blockchain and deploy our cap table smart contracts there. At all times, you should have Anvil running alongside Docker and nodemon. With the mongo DB running on Docker you can start Anvil.
+## Start MongoDB with Docker
 
 <Steps>
 
-### 1. Setup Forge and Anvil in the `/chain` folder
+### 1. Start the container
 
-Install dependencies and setup Foundry and Forge with our setup script:
+```bash
+docker compose up -d
+```
+
+### 2. Verify MongoDB is running
+
+```bash
+docker ps
+```
+
+You should see `mongo:latest` running on port 27017.
+
+</Steps>
+
+## Start Anvil (local blockchain)
+
+Anvil is a local Ethereum node from Foundry. You'll run it in a separate terminal window.
+
+<Steps>
+
+### 1. Install dependencies and build contracts
 
 ```bash
 pnpm install && pnpm run setup
@@ -78,10 +73,22 @@ pnpm install && pnpm run setup
 
 ### 2. Start Anvil
 
-This will also give you the private key you need to update in your `.env` file.
-
 ```bash
 anvil
 ```
 
+### 3. Copy a private key
+
+Anvil outputs test accounts with private keys. Copy one and add it to your `.env` file:
+
+```
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+```
+
+<Callout type="warning">
+These are test keys only. Never use them on mainnet.
+</Callout>
+
 </Steps>
+
+With Docker and Anvil running, you're ready to [deploy the factory contract](/development/factory-deploy).
