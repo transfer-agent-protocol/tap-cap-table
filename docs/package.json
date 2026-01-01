@@ -4,10 +4,10 @@
     "private": true,
     "license": "MIT",
     "description": "Developer documentation for Transfer Agent Protocol",
-    "scripts": {
-        "dev": "next dev",
+"scripts": {
+        "dev": "next dev -p 3001",
         "build": "next build",
-        "start": "next start",
+        "start": "next start -p 3001",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "pnpm eslint . --ext .js,.jsx,.ts,.tsx,.mdx"
     },
