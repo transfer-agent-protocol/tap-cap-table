@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-Transfer Agent Protocol (TAP) Cap Table is an on-chain cap table implementation that combines Solidity smart contracts with an off-chain Node.js API server. It implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard for representing cap table data.
+Transfer Agent Protocol (TAP) Cap Table is an onchain cap table implementation that combines Solidity smart contracts with an off-chain Node.js API server. It implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard for representing cap table data.
 
 ### Licensing
 
@@ -16,11 +16,11 @@ This project uses a dual-license structure:
 
 ## Architecture
 
-### Hybrid On-chain/Off-chain Design
+### Hybrid onchain/Off-chain Design
 
 The system maintains a **dual-state architecture**:
 
-- **On-chain (Ethereum/L2)**: Smart contracts (CapTable.sol, CapTableFactory.sol) store authoritative transaction data and active positions
+- **Onchain (Ethereum/L2)**: Smart contracts (CapTable.sol, CapTableFactory.sol) store authoritative transaction data and active positions
 - **Off-chain (MongoDB + Node.js)**: Express API server stores OCF-compliant objects and metadata, processes blockchain events
 
 **Critical**: The blockchain is the source of truth for transactions. The off-chain database mirrors this state by listening to contract events via the transaction poller.
@@ -35,7 +35,7 @@ The system maintains a **dual-state architecture**:
 2. **Event Poller** (`src/chain-operations/transactionPoller.ts`):
     - Long-running process that polls blockchain for contract events
     - Processes events through XState state machines (`src/state-machines/`)
-    - Synchronizes on-chain state to MongoDB
+    - Synchronizes onchain state to MongoDB
     - Can run in two modes: `--finalized-only` (production) or latest blocks (testing)
 
 3. **Express API** (`src/app.js`, `src/routes/`):
@@ -65,13 +65,13 @@ The system maintains a **dual-state architecture**:
 1. API receives OCF-formatted transaction request
 2. Validates against OCF schema
 3. Converts to Solidity structs and submits to contract
-4. Transaction emits events on-chain
+4. Transaction emits events onchain
 5. Event poller picks up events and updates MongoDB
 
 **Seeding**:
 When a manifest is created, the system:
 
-1. Creates stakeholders and stock classes on-chain
+1. Creates stakeholders and stock classes onchain
 2. Seeds `shares_authorized` and `shares_issued` for issuer and stock classes
 3. Seeds active positions and security IDs from preprocessor cache
 
