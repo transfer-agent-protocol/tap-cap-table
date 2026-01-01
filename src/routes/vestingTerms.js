@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
-import vestingTermsSchema from "../../ocf/schema/objects/VestingTerms.schema.json" assert { type: "json" };
+import vestingTermsSchema from "../../ocf/schema/objects/VestingTerms.schema.json" with { type: "json" };
 import { createVestingTerms } from "../db/operations/create.js";
 import { countVestingTerms, readIssuerById, readVestingTermsById } from "../db/operations/read.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";

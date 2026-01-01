@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
+import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" with { type: "json" };
 import { setupEnv } from "../utils/env.js";
 import getTXLibContracts from "../utils/getLibrariesContracts.js";
 import getProvider from "./getProvider.js";

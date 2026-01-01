@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" assert { type: "json" };
-import CAP_TABLE_FACTORY from "../../chain/out/CapTableFactory.sol/CapTableFactory.json" assert { type: "json" };
+import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" with { type: "json" };
+import CAP_TABLE_FACTORY from "../../chain/out/CapTableFactory.sol/CapTableFactory.json" with { type: "json" };
 import { readfactories } from "../db/operations/read.js";
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import { setupEnv } from "../utils/env.js";

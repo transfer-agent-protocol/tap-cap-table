@@ -1,10 +1,10 @@
-import issuerSchema from "../../../ocf/schema/objects/Issuer.schema.json" assert { type: "json" };
-import stakeholderSchema from "../../../ocf/schema/objects/Stakeholder.schema.json" assert { type: "json" };
-import stockClassSchema from "../../../ocf/schema/objects/StockClass.schema.json" assert { type: "json" };
-import stockLegendTemplateSchema from "../../../ocf/schema/objects/StockLegendTemplate.schema.json" assert { type: "json" };
-import stockPlanSchema from "../../../ocf/schema/objects/StockPlan.schema.json" assert { type: "json" };
-import valuationSchema from "../../../ocf/schema/objects/Valuation.schema.json" assert { type: "json" };
-import vestingTermsSchema from "../../../ocf/schema/objects/VestingTerms.schema.json" assert { type: "json" };
+import issuerSchema from "../../../ocf/schema/objects/Issuer.schema.json" with { type: "json" };
+import stakeholderSchema from "../../../ocf/schema/objects/Stakeholder.schema.json" with { type: "json" };
+import stockClassSchema from "../../../ocf/schema/objects/StockClass.schema.json" with { type: "json" };
+import stockLegendTemplateSchema from "../../../ocf/schema/objects/StockLegendTemplate.schema.json" with { type: "json" };
+import stockPlanSchema from "../../../ocf/schema/objects/StockPlan.schema.json" with { type: "json" };
+import valuationSchema from "../../../ocf/schema/objects/Valuation.schema.json" with { type: "json" };
+import vestingTermsSchema from "../../../ocf/schema/objects/VestingTerms.schema.json" with { type: "json" };
 import {
     createIssuer,
     createStakeholder,
@@ -16,15 +16,15 @@ import {
 } from "../operations/create.js";
 import addTransactions from "../operations/transactions.js";
 
-import txStockIssuanceSchema from "../../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" assert { type: "json" };
-import txStockCancellationSchema from "../../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" assert { type: "json" };
-import txStockTransferSchema from "../../../ocf/schema/objects/transactions/transfer/StockTransfer.schema.json" assert { type: "json" };
-import txStockRetractionSchema from "../../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" assert { type: "json" };
-import txStockAcceptanceSchema from "../../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" assert { type: "json" };
-import txStockReissuanceSchema from "../../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" assert { type: "json" };
-import txStockRepurchaseSchema from "../../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" assert { type: "json" };
-import txStockClassAuthorizedSharesAdjustmentSchema from "../../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
-import txIssuerAuthorizedSharesAdjustmentSchema from "../../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" assert { type: "json" };
+import txStockIssuanceSchema from "../../../ocf/schema/objects/transactions/issuance/StockIssuance.schema.json" with { type: "json" };
+import txStockCancellationSchema from "../../../ocf/schema/objects/transactions/cancellation/StockCancellation.schema.json" with { type: "json" };
+import txStockTransferSchema from "../../../ocf/schema/objects/transactions/transfer/StockTransfer.schema.json" with { type: "json" };
+import txStockRetractionSchema from "../../../ocf/schema/objects/transactions/retraction/StockRetraction.schema.json" with { type: "json" };
+import txStockAcceptanceSchema from "../../../ocf/schema/objects/transactions/acceptance/StockAcceptance.schema.json" with { type: "json" };
+import txStockReissuanceSchema from "../../../ocf/schema/objects/transactions/reissuance/StockReissuance.schema.json" with { type: "json" };
+import txStockRepurchaseSchema from "../../../ocf/schema/objects/transactions/repurchase/StockRepurchase.schema.json" with { type: "json" };
+import txStockClassAuthorizedSharesAdjustmentSchema from "../../../ocf/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json" with { type: "json" };
+import txIssuerAuthorizedSharesAdjustmentSchema from "../../../ocf/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json" with { type: "json" };
 
 import validateInputAgainstOCF from "../../utils/validateInputAgainstSchema.js";
 import preProcessManifestTxs from "../../state-machines/process.js";

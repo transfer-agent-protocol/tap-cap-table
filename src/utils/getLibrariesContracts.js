@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import TX_HELPER from "../../chain/out/TxHelper.sol/TxHelper.json" assert { type: "json" };
+import TX_HELPER from "../../chain/out/TxHelper.sol/TxHelper.json" with { type: "json" };
 
 const getTXLibContracts = (contractTarget, wallet) => {
     const libraries = {
