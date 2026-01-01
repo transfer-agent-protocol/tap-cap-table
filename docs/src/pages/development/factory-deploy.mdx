@@ -20,12 +20,17 @@ pnpm run deploy-factory
 The script outputs two addresses you'll need:
 
 ```bash
-== Logs ==
-  Upgrading CapTableFactory with CapTable implementation
-  Deploying CapTableFactory and CapTable implementation
-  CapTable implementation deployed at: 0x5FbDB2315678afecb367f032d93F642f64180aa3
-  CapTableFactory deployed at: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+========================================
+🎉 Deployment Complete!
+========================================
+CapTable (implementation): <YOUR_IMPLEMENTATION_ADDRESS>
+CapTableFactory:           <YOUR_FACTORY_ADDRESS>
+========================================
 ```
+
+<Callout type="warning">
+These addresses are unique to your deployment. They're derived from your wallet address and transaction nonce, so every developer and issuer will see different values.
+</Callout>
 
 ### Add factory to MongoDB
 
@@ -34,18 +39,14 @@ Open MongoDB Compass and connect using:
 mongodb://tap:tap@localhost:27017
 ```
 
-Navigate to the `mongo` database, find (or create) the `factories` collection, and insert a new document:
+Navigate to the `mongo` database, find (or create) the `factories` collection, and insert a new document using **your** addresses from the deployment output:
 
 ```json
 {
-  "implementation_address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "factory_address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+  "implementation_address": "<YOUR_IMPLEMENTATION_ADDRESS>",
+  "factory_address": "<YOUR_FACTORY_ADDRESS>"
 }
 ```
-
-<Callout type="info">
-Use the addresses from your deployment output - they'll be different each time.
-</Callout>
 
 ![Factories](../../../public/images/mongo-factories.png)
 

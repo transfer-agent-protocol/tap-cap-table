@@ -1,14 +1,14 @@
 import { Steps, Callout } from 'nextra/components';
 
-# Deploy a Cap Table
+# Create an Issuer
 
-With the server running, you can create your first cap table via the API. This deploys a new cap table contract through the factory and creates an issuer record.
+With the server running, you can create your first issuer via the API. This deploys a new cap table contract through the factory and creates an issuer record. The issuer record is needed for every subsequent transaction.
 
 <Steps>
 
-### Create an issuer via POST request
+### Send a POST request
 
-Using Postman or curl, send a POST request to `http://localhost:8293/issuer/create`:
+Using Postman or curl, send a POST request to `http://localhost:8293/issuer/create`
 
 ```json
 {
@@ -24,16 +24,16 @@ Using Postman or curl, send a POST request to `http://localhost:8293/issuer/crea
         }
     ],
     "email": {
-        "email_address": "dev@transferagentprotocol.xyz",
+        "email_address": "alex@plume.org",
         "email_type": "BUSINESS"
     },
     "address": {
         "address_type": "LEGAL",
-        "street_suite": "447 Broadway\n2nd Fl #713",
+        "street_suite": "Empire State Building, 20 W 34th St. Suite 7700",
         "city": "New York",
         "country_subdivision": "NY",
         "country": "US",
-        "postal_code": "10013"
+        "postal_code": "10118"
     },
     "comments": []
 }
@@ -43,9 +43,59 @@ All fields are validated against the [OCF schema](https://github.com/Open-Cap-Ta
 
 ### Check the response
 
-The response includes the `capTableAddress` - this is your new cap table contract deployed on-chain:
+The response includes your new issuer with key fields:
 
-![Cap Table Issuer Response](../../../public/images/cap-table-issuer.png)
+- **`_id`**: The issuer ID (you'll need this for all subsequent API calls)
+- **`deployed_to`**: The cap table contract address onchain
+- **`tx_hash`**: The deployment transaction hash
+
+It will look like this, with your unique `_id`
+
+```json
+{
+    "issuer": {
+        "_id": "b6ca9d9c-1daa-4b30-830b-444561ef7806",
+        "object_type": "ISSUER",
+        "legal_name": "Transfer Agent Protocol",
+        "formation_date": "2022-08-23",
+        "country_of_formation": "US",
+        "country_subdivision_of_formation": "DE",
+        "tax_ids": [
+            {
+                "tax_id": "88-3977591",
+                "country": "US"
+            }
+        ],
+        "email": {
+            "email_address": "alex@plume.org",
+            "email_type": "BUSINESS"
+        },
+        "address": {
+            "address_type": "LEGAL",
+            "street_suite": "Empire State Building, 20 W 34th St. Suite 7700",
+            "city": "New York",
+            "country_subdivision": "NY",
+            "country": "US",
+            "postal_code": "10118"
+        },
+        "initial_shares_authorized": "10000000",
+        "comments": [],
+        "deployed_to": "0xC1727e917a2aAa3B200C44B21a4359F5e4eBC7c0",
+        "tx_hash": "0x99edbf81183d22bbf286ec3e8f74d0dfc40aa1b07036de8df7d37a5d216e6d5c",
+        "last_processed_block": null,
+        "is_manifest_created": false,
+        "createdAt": "2026-01-01T18:25:26.078Z",
+        "updatedAt": "2026-01-01T18:25:26.078Z",
+        "__v": 0
+    }
+}
+```
+
+![Issuer Response](../../../public/images/cap-table-issuer.png)
+
+<Callout type="warning">
+The `deployed_to` address is unique to your deployment—it's derived from your wallet and transaction nonce.
+</Callout>
 
 </Steps>
 
@@ -55,7 +105,6 @@ Congratulations! You've deployed your first cap table smart contract.
 
 ## What's next?
 
-With your cap table deployed, you can:
-- Create stakeholders via `POST /stakeholder/create`
-- Create stock classes via `POST /stock-class/create`
-- Issue stock via `POST /transactions/stock/issuance`
+With your issuer created, continue with:
+1. [Create a Stock Class](/development/create-stock-class) — define equity classes before issuing stock
+2. [Create a Stakeholder](/development/create-stakeholder) — add equity holders to your cap table
