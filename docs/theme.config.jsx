@@ -19,11 +19,15 @@ const themeConfig = {
 		text: (
 			<span>
 				Copyright {new Date().getFullYear()} © {' '}
-					thatalexpalmer.eth
+					PALMER.EARTH CORP
 			</span>
 		)
 	},
-	// TODO: Fix this https://github.com/shuding/nextra/issues/2546#issuecomment-1845615928
+	useNextSeoProps() {
+		return {
+			titleTemplate: '%s – Transfer Agent Protocol'
+		}
+	},
 	head: () => {
 	// eslint-disable-next-line react-hooks/rules-of-hooks
 	const { asPath, defaultLocale, locale } = useRouter()
