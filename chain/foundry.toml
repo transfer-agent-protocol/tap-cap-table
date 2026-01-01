@@ -8,14 +8,16 @@ cbor_metadata = false
 via_ir = true
 optimizer = true
 optimizer_runs = 200
+evm_version = 'cancun'
 
 
 [rpc_endpoints]
 rpc_url = "${RPC_URL}"
+plume_mainnet = "https://rpc.plume.org"
+plume_testnet = "https://testnet-rpc.plume.org"
 
 [etherscan]
-optimism_goerli_etherscan = { key = "${ETHERSCAN_L2_API_KEY}", chain = "goerli" }
-
-
+plume_mainnet = { key = "", chain = 98866, url = "https://explorer.plume.org/api/" }
+plume_testnet = { key = "", chain = 98867, url = "https://testnet-explorer.plume.org/api/" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

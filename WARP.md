@@ -274,7 +274,7 @@ The system supports multiple environments via `.env` files:
 - `DATABASE_URL`: MongoDB connection string
 - `DATABASE_REPLSET`: Set to "1" for replica set (enables transactions)
 - `RPC_URL`: Ethereum RPC endpoint
-- `CHAIN_ID`: Network chain ID (31337 for Anvil, 32586980208 for Arbitrum)
+- `CHAIN_ID`: Network chain ID (31337 for Anvil, 98866 for Plume Mainnet, 98867 for Plume Testnet)
 - `PRIVATE_KEY`: Deployer private key
 - `PORT`: API server port (default 8293)
 
