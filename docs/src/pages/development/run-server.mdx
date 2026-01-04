@@ -6,9 +6,13 @@ The Node.js server provides the REST API for managing cap tables. It connects to
 
 ## Development mode
 
+If you used `pnpm docker:up`, the server is already running in Docker. You can view logs with `pnpm docker:logs`.
+
+For local development with hot-reload, run the server outside Docker:
+
 <Steps>
 
-### Start the server
+### Start the server locally
 
 ```bash
 pnpm dev
@@ -25,6 +29,10 @@ curl http://localhost:8293/
 You should see a response confirming the server is up.
 
 </Steps>
+
+<Callout type="info">
+**Tip:** For local server development, use `./scripts/dev.sh --no-server` to run MongoDB + app in Docker, then run `pnpm dev` separately for hot-reload.
+</Callout>
 
 ## What is the event poller?
 

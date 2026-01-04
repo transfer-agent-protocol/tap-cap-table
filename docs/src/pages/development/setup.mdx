@@ -3,9 +3,13 @@ import { Steps, Callout } from 'nextra/components';
 # Initial setup
 
 This guide walks you through setting up your local development environment. You'll need three things running:
-1. **Docker** - for MongoDB
+1. **Docker** - for MongoDB, server, and app
 2. **Anvil** - local blockchain
 3. **Server** - the Node.js API (covered in the next section)
+
+<Callout type="info">
+**Quick start:** Run `pnpm install && pnpm setup && pnpm docker:up && pnpm dev` to get everything running.
+</Callout>
 
 ## Configure environment variables
 
@@ -39,25 +43,31 @@ PORT=8293
 
 </Steps>
 
-## Start MongoDB with Docker
+## Start services with Docker
 
 <Steps>
 
-### 1. Start the container
+### 1. Start all containers
 
 ```bash
-docker compose up -d
+pnpm docker:up
 ```
 
-### 2. Verify MongoDB is running
+This starts MongoDB, the server, and the frontend app.
+
+### 2. Verify services are running
 
 ```bash
 docker ps
 ```
 
-You should see `mongo:latest` running on port 27017.
+You should see three containers running: `mongodb`, `server`, and `app`.
 
 </Steps>
+
+<Callout type="info">
+**Other Docker commands:** `pnpm docker:down` (stop), `pnpm docker:logs` (view logs), `pnpm docker:build` (rebuild).
+</Callout>
 
 ## Start Anvil (local blockchain)
 

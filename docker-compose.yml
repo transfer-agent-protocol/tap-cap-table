@@ -1,14 +1,55 @@
-version: "3.7"
 services:
-    mongodb_container:
-        # This image automatically creates a replica set required for transactions
+    mongodb:
         image: mongo:latest
         restart: always
         environment:
             MONGO_INITDB_ROOT_USERNAME: tap
             MONGO_INITDB_ROOT_PASSWORD: tap
-            INIT_WAIT_SEC: 3
         ports:
             - 27017:27017
-        # Make sure log colors show up correctly
+        volumes:
+            - offchain-db:/data/db
+        healthcheck:
+            test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
         tty: true
+
+    server:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.server
+        restart: unless-stopped
+        ports:
+            - 8293:8293
+        environment:
+            DATABASE_URL: "mongodb://tap:tap@mongodb:27017/mongo?authSource=admin&retryWrites=true&w=majority"
+            DATABASE_REPLSET: "0"
+            RPC_URL: ${RPC_URL:-http://host.docker.internal:8545}
+            CHAIN_ID: ${CHAIN_ID:-31337}
+            PRIVATE_KEY: ${PRIVATE_KEY:-}
+            PORT: 8293
+        depends_on:
+            mongodb:
+                condition: service_healthy
+        tty: true
+
+    app:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.app
+        restart: unless-stopped
+        ports:
+            - 3000:3000
+        environment:
+            NODE_ENV: development
+        depends_on:
+            mongodb:
+                condition: service_healthy
+        tty: true
+
+volumes:
+    offchain-db:
+        external: true
