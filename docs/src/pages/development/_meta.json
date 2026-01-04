@@ -7,6 +7,7 @@
     "create-stock-class": "Create Stock Class",
     "create-stakeholder": "Create Stakeholder",
     "issue-stock": "Issue Stock",
+    "transfer-stock": "Transfer Stock",
     "historical-transactions": "Historical Transactions"
 }
 
