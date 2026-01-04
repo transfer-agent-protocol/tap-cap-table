@@ -1,0 +1,7 @@
+.next/
+.env
+.env.local
+.env.development
+.github
+.husky
+node_modules/

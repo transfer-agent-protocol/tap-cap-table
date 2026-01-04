@@ -6,12 +6,18 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 Transfer Agent Protocol (TAP) Cap Table is an onchain cap table implementation that combines Solidity smart contracts with an off-chain Node.js API server. It implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard for representing cap table data.
 
+This is a **pnpm monorepo** with the following workspaces:
+- `app/` - Next.js frontend (tap-app)
+- `docs/` - Nextra documentation site (tap-docs)
+- `ocf/` - OCF standard git submodule
+
 ### Licensing
 
 This project uses a dual-license structure:
 
 - **Core Protocol (`chain/`)**: BUSL-1.1 (converts to AGPLv3 on January 1, 2028)
-- **Offchain Server (`src/`)**: AGPL-3.0
+- **Offchain Server (`server/`)**: AGPL-3.0
+- **Frontend (`app/`)**: UNLICENSED (proprietary)
 - **Documentation (`docs/`)**: MIT
 
 ## Architecture
@@ -32,26 +38,26 @@ The system maintains a **dual-state architecture**:
     - `CapTableFactory.sol`: Deploys new CapTable instances for issuers
     - Supports: stock issuance, transfers, cancellations, repurchases, reissuances, adjustments
 
-2. **Event Poller** (`src/chain-operations/transactionPoller.ts`):
+2. **Event Poller** (`server/chain-operations/transactionPoller.ts`):
     - Long-running process that polls blockchain for contract events
-    - Processes events through XState state machines (`src/state-machines/`)
+    - Processes events through XState state machines (`server/state-machines/`)
     - Synchronizes onchain state to MongoDB
     - Can run in two modes: `--finalized-only` (production) or latest blocks (testing)
 
-3. **Express API** (`src/app.js`, `src/routes/`):
+3. **Express API** (`server/app.js`, `server/routes/`):
     - REST endpoints for issuers, stakeholders, stock classes, transactions, etc.
     - Validates input against OCF schemas (`ocf/schema/`)
     - Submits transactions to smart contracts
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
 
-4. **State Machines** (`src/state-machines/`):
+4. **State Machines** (`server/state-machines/`):
     - XState machines model stock lifecycle: Issued → Transferred/Cancelled/Retracted/Reissued/Repurchased
     - Used to maintain active positions and track security IDs by stock class
 
-5. **Database Layer** (`src/db/`):
+5. **Database Layer** (`server/db/`):
     - Mongoose models for OCF objects (Issuer, Stakeholder, StockClass, VestingTerms, etc.)
     - Atomic operations with MongoDB transactions when `DATABASE_REPLSET=1`
-    - Seeding utilities in `src/db/samples/`
+    - Seeding utilities in `server/db/samples/`
 
 6. **OCF Submodule** (`ocf/`):
     - Git submodule containing the Open Cap Format standard
@@ -109,8 +115,8 @@ pnpm prod-poller
 
 **Entry Points**:
 
-- `src/server.js`: Express server with optional poller
-- `src/entry.ts`: Standalone event poller
+- `server/server.js`: Express server with optional poller
+- `server/entry.ts`: Standalone event poller
 
 **Options**:
 
@@ -137,7 +143,7 @@ cd chain && forge test --match-test testStockIssuance
 **Test Files**:
 
 - Solidity: `chain/test/*.t.sol` (Foundry tests)
-- JavaScript: `src/tests/unit/` and `src/tests/integration/`
+- JavaScript: `server/tests/unit/` and `server/tests/integration/`
 
 ### Linting and Formatting
 
@@ -167,6 +173,21 @@ pnpm docs:start
 
 The docs are a Nextra/Next.js site in the `docs/` workspace. See `docs/README.md` for more details.
 
+### Frontend App
+
+```bash
+# Run frontend dev server
+pnpm app:dev
+
+# Build frontend for production
+pnpm app:build
+
+# Serve production build
+pnpm app:start
+```
+
+The frontend is a Next.js app in the `app/` workspace using styled-components.
+
 ### Deployment
 
 ```bash
@@ -184,12 +205,17 @@ pnpm deploy-factory
 
 ```
 tap-cap-table/
+├── app/                # Frontend (Next.js, workspace: tap-app)
+│   ├── src/
+│   │   ├── pages/      # Next.js pages
+│   │   └── components/ # React components
+│   └── package.json
 ├── chain/              # Foundry project (Solidity contracts)
 │   ├── src/            # Smart contracts
 │   ├── test/           # Solidity tests
 │   ├── script/         # Deploy scripts
 │   └── foundry.toml    # Foundry config
-├── src/
+├── server/             # API server (Express + Node.js)
 │   ├── app.js          # Express app setup
 │   ├── server.js       # Main entry point (server + poller)
 │   ├── entry.ts        # Standalone poller entry point
@@ -208,13 +234,14 @@ tap-cap-table/
 │   ├── state-machines/ # XState stock lifecycle
 │   ├── tests/          # JavaScript tests
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
-├── docs/               # Developer documentation (Nextra/Next.js)
+├── docs/               # Developer documentation (Nextra/Next.js, workspace: tap-docs)
 │   ├── src/pages/      # MDX documentation pages
-│   └── public/         # Static assets (favicon, icons, images)
-├── ocf/                # OCF standard (git submodule)
+│   └── public/         # Static assets
+├── ocf/                # OCF standard (git submodule, workspace)
 ├── .env.example        # Environment template
 ├── docker-compose.yml  # MongoDB setup
-└── package.json        # Node dependencies and scripts
+├── pnpm-workspace.yaml # Workspace config
+└── package.json        # Root scripts and server dependencies
 ```
 
 ## Important Patterns
@@ -318,7 +345,7 @@ Uses MongoDB with optional replica set for transactions:
 
 The Docker Compose file creates a single-node setup. For replica sets, use MongoDB's `--replSet` option.
 
-**Models**: Each OCF object type has a corresponding Mongoose model in `src/db/objects/`.
+**Models**: Each OCF object type has a corresponding Mongoose model in `server/db/objects/`.
 
 ## TypeScript Configuration
 

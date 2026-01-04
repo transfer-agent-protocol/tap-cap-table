@@ -1,6 +1,6 @@
 # Developer documentation for the Transfer Agent Protocol
 
-These are developer docs for the [Transfer Agent Protocol Cap Table](https://github.com/transfer-agent-protocol/tap-cap-table) that are published at [docs.transferagentprotocol.xyz](https://docs.transferagentprotocol.xyz).
+Developer docs for the [Transfer Agent Protocol Cap Table](https://github.com/transfer-agent-protocol/tap-cap-table) that are published at [docs.transferagentprotocol.xyz](https://docs.transferagentprotocol.xyz).
 
 ## Development
 
