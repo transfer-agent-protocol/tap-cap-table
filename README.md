@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/transfer-agent-protocol/tap-cap-table">
+    <img alt="License" src="https://img.shields.io/badge/license-BUSL--1.1-blue">
   </a>
 </div>
 
