@@ -1,0 +1,121 @@
+import { Steps, Callout } from 'nextra/components';
+
+# Transfer Stock
+
+Transfer shares from one stakeholder to another. The recipient (transferee) must already exist on the cap table before you can transfer stock to them.
+
+<Steps>
+
+### Create the transferee stakeholder
+
+Before transferring, ensure the recipient exists. Send a POST request to `http://localhost:8293/stakeholder/create`
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "name": {
+            "legal_name": "Zach McKinnon",
+            "first_name": "Zach",
+            "last_name": "McKinnon"
+        },
+        "issuer_assigned_id": "",
+        "stakeholder_type": "INDIVIDUAL",
+        "current_relationship": "INVESTOR",
+        "primary_contact": {
+            "name": {
+                "legal_name": "Zach McKinnon",
+                "first_name": "Zach",
+                "last_name": "McKinnon"
+            },
+            "emails": [
+                {
+                    "email_type": "BUSINESS",
+                    "email_address": "zachary@plume.org"
+                }
+            ],
+            "phone_numbers": [
+                {
+                    "phone_type": "MOBILE",
+                    "phone_number": "+1 ************"
+                }
+            ]
+        },
+        "contact_info": {
+            "emails": [
+                {
+                    "email_type": "BUSINESS",
+                    "email_address": "zachary@plume.org"
+                }
+            ],
+            "phone_numbers": [
+                {
+                    "phone_type": "MOBILE",
+                    "phone_number": "+1 ************"
+                }
+            ]
+        },
+        "comments": []
+    }
+}
+```
+
+![Create Transferee Stakeholder](../../../public/images/stakeholder-transferee.png)
+
+<Callout type="info">
+See [Create a Stakeholder](/development/create-stakeholder) for more details on stakeholder fields.
+</Callout>
+
+### Transfer the stock
+
+Send a POST request to `http://localhost:8293/transactions/transfer/stock`
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "transferorId": "<FROM_STAKEHOLDER_ID>",
+        "transfereeId": "<TO_STAKEHOLDER_ID>",
+        "stockClassId": "<STOCK_CLASS_ID>",
+        "quantity": "13",
+        "sharePrice": "4.20",
+        "isBuyerVerified": true
+    }
+}
+```
+
+The response returns `"success"` when the transfer is recorded on-chain.
+
+![Stock Transfer Response](../../../public/images/transfer-stock.png)
+
+### Verify the transfer
+
+Check historical transactions to confirm:
+
+```
+GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>
+```
+
+![Historical Transactions](../../../public/images/transfer-stock-history.png)
+
+</Steps>
+
+## Required fields
+
+| Field | Description |
+|-------|-------------|
+| `transferorId` | Stakeholder transferring the shares (seller) |
+| `transfereeId` | Stakeholder receiving the shares (buyer) |
+| `stockClassId` | The class of stock being transferred |
+| `quantity` | Number of shares to transfer |
+| `sharePrice` | Price per share |
+| `isBuyerVerified` | Whether the buyer has been verified |
+
+## What's next?
+
+After transferring stock, you can:
+- View all transactions via `GET /historical-transactions/issuer-id/:issuerId`
+- Cancel stock via `POST /transactions/cancel/stock`
+- Issue more stock via `POST /transactions/issuance/stock`
+
+See the [Transactions](/features/transactions) documentation for the full API reference.
