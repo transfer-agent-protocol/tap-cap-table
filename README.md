@@ -26,30 +26,37 @@ tap-cap-table/
 ## Quick Start
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Setup Foundry and build contracts
 pnpm setup
-
-# Start MongoDB
-docker-compose up -d
-
-# Configure environment
-cp .env.example .env
+pnpm docker:up
+pnpm dev
 ```
 
-## Running Services
+The setup script spins up these services:
+**Server** http://localhost:8293
+**App** http://localhost:3000 
+**MongoDB** localhost:27017
+
+Then go read official [docs](https://docs.transferagentprotocol.xyz/)
+
+> You'll need to run local blockchain using `anvil` in Foundry and copy a private key to `.env`. For Plume, set `RPC_URL` and `CHAIN_ID`.
+
+### Scripts
 
 ```bash
-# API server (development)
-pnpm dev
+# Docker
+pnpm docker:up              # Start all services
+pnpm docker:down            # Stop all services
+pnpm docker:logs            # Stream logs
+pnpm docker:build           # Rebuild and start
 
-# Frontend app
-pnpm app:dev
+# Development
+pnpm dev                    # API server (run locally for hot-reload)
+pnpm app:dev                # Frontend only
+pnpm docs:dev               # Docs site
 
-# Documentation site
-pnpm docs:dev
+# Hybrid (run server locally for hot-reload)
+./scripts/dev.sh --no-server   # MongoDB + app in Docker, then run 'pnpm dev'
 ```
 
 ## Development

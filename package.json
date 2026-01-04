@@ -24,7 +24,11 @@
         "docs:start": "pnpm --filter tap-docs start",
         "app:dev": "pnpm --filter tap-app dev",
         "app:build": "pnpm --filter tap-app build",
-        "app:start": "pnpm --filter tap-app start"
+        "app:start": "pnpm --filter tap-app start",
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose down",
+        "docker:logs": "docker compose logs -f",
+        "docker:build": "docker compose up -d --build"
     },
     "dependencies": {
         "ajv": "^8.12.0",

@@ -38,7 +38,17 @@ export const setupEnv = () => {
     if (_ALREADY_SETUP || process.env.NODE_ENV == "production") {
         return;
     }
+    // In Docker, env vars are passed directly via docker-compose
+    // Skip .env file loading if required vars are already set
+    if (process.env.DATABASE_URL && process.env.PORT) {
+        console.log("setupEnv: using environment variables (Docker mode)");
+        _ALREADY_SETUP = true;
+        return;
+    }
     const fileName = process.env.USE_ENV_FILE || ".env";
+    // Use process.cwd() as fallback when PWD is not set (common in Docker)
+    const cwd = process.env.PWD || process.cwd();
+    process.env.PWD = cwd; // Ensure PWD is set for getEnvFile
     const path = getEnvFile(fileName);
     console.log("setupEnv with:", path);
     config({ path });

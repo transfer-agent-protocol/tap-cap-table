@@ -1,0 +1,23 @@
+# TAP Cap Table - API Server
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files first for better caching
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY server/ ./server/
+COPY ocf/ ./ocf/
+COPY chain/out/ ./chain/out/
+
+# Install dependencies (server only, skip app/docs)
+RUN pnpm install --filter tap-cap-table --frozen-lockfile
+
+EXPOSE 8293
+
+# Run server with event poller enabled
+# Note: Using tsx directly instead of 'pnpm dev' (which uses tsx watch)
+# File watching causes high CPU in Docker containers
+CMD ["npx", "tsx", "server/server.js"]
