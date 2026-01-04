@@ -47,6 +47,11 @@
         "not IE 11",
         "maintained node versions"
     ],
+    "pnpm": {
+        "overrides": {
+            "flexsearch": "0.7.31"
+        }
+    },
     "devDependencies": {
         "@eslint/js": "^9.37.0",
         "@types/node": "^24.6.2",
