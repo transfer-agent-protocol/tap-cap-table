@@ -1,0 +1,15 @@
+{
+    // Extensions recommended for users of this workspace.
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "mikestead.dotenv",
+		"eamodio.gitlens",
+        "christian-kohler.npm-intellisense",
+        "esbenp.prettier-vscode",
+		"styled-components.vscode-styled-components",
+        "redhat.vscode-yaml",
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "ecmel.vscode-html-css"
+    ]
+}

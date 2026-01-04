@@ -9,8 +9,8 @@ setupEnv();
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.RPC_URL;
 const CHAIN_ID = process.env.CHAIN_ID;
-const rootDirectory = "./src/lib";
-const excludeDirectory = "./src/lib/transactions";
+const rootDirectory = "./chain/src/lib";
+const excludeDirectory = "./chain/src/lib/transactions";
 
 function extractImports(filePath) {
     const content = fs.readFileSync(filePath, "utf8");

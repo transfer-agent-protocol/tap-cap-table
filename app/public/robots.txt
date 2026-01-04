@@ -1,0 +1,15 @@
+# *
+User-agent: *
+Allow: /
+
+# *
+User-agent: *
+Allow: /
+Disallow: /app*
+Disallow: /_next/*
+
+# Host
+Host: https://transferagentprotocol.xyz
+
+# Sitemaps
+Sitemap: https://transferagentprotocol.xyz/sitemap.xml
