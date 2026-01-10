@@ -160,6 +160,21 @@ pnpm format
 pnpm typecheck
 ```
 
+### Static Analysis
+
+```bash
+# Run Aderyn security analysis on Solidity contracts
+aderyn .
+```
+
+Aderyn is a Solidity static analyzer that scans smart contracts for security vulnerabilities and code quality issues. The analysis is configured via `aderyn.toml` in the repository root:
+
+- **Scope**: Analyzes only production contracts in `chain/src/`
+- **Excludes**: Test files, scripts, build artifacts, and dependencies
+- **Remappings**: Auto-detected from `chain/remappings.txt`
+
+Run Aderyn before opening PRs that modify smart contracts to catch potential security issues early.
+
 ### Documentation
 
 ```bash
