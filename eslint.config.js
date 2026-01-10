@@ -38,6 +38,18 @@ export default [
         },
     },
     {
-        ignores: ["node_modules/", "dist/", "chain/out/", "chain/lib/", "chain/cache/", "chain/broadcast/", "ocf/", "docs/"],
+        ignores: [
+            "node_modules/",
+            "dist/",
+            "chain/out/",
+            "chain/lib/",
+            "chain/cache/",
+            "chain/broadcast/",
+            "ocf/",
+            "docs/",
+            "app/.next/",
+            "app/.eslintcache",
+            "docs/.next/",
+        ],
     },
 ];

@@ -60,7 +60,7 @@ const txMapper = {
 };
 // (idx => type name) derived from txMapper
 export const txTypes = Object.fromEntries(
-    // @ts-ignore
+    // @ts-expect-error - Destructuring tuple with unused first element
     Object.entries(txMapper).map(([i, [_, f]]) => [i, f.name.replace("handle", "")])
 );
 // (name => handler) derived from txMapper
@@ -122,7 +122,7 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
-    let { _id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash } = issuer;
+    const { _id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash } = issuer;
     console.log(`Processing for ${issuerId}: ${lastProcessedBlock}`); //, { lastProcessedBlock, deployedTxHash, latestBlock });
     const { number: latestBlock } = await pRetry(
         async () => provider.getBlock(finalizedOnly ? "finalized" : "latest"),
@@ -170,8 +170,8 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
         if (event.removed) {
             continue;
         }
-        const [_len, typeIdx, txData] = event.args;
-        const [structType, _] = txMapper[typeIdx];
+        const [, typeIdx, txData] = event.args;
+        const [structType] = txMapper[typeIdx];
         const decodedData = abiCoder.decode([structType], txData);
         const { timestamp } = await provider.getBlock(event.blockNumber);
         events.push({ type: txTypes[typeIdx], timestamp, data: decodedData[0], o: event });
@@ -216,7 +216,7 @@ const persistEvents = async (issuerId, events: QueuedEvent[]) => {
         const txHandleFunc = txFuncs[type];
         // console.log("persistEvent: ", {type, data, timestamp});
         if (txHandleFunc) {
-            // @ts-ignore
+            // @ts-expect-error - Dynamic transaction handler function types
             await txHandleFunc(data, issuerId, timestamp);
             continue;
         }
