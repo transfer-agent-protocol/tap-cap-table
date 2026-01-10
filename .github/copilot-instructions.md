@@ -52,6 +52,8 @@ Patterns to preserve (from `WARP.md`):
 - When `DATABASE_REPLSET=1`, use `withGlobalTransaction()` for atomic DB operations.
 - Event poller is critical: without it, onchain events won't sync to MongoDB. Poller can run via `server/entry.ts` with `--finalized-only`.
 
+Static analysis: Aderyn is used for smart-contract scanning. See `aderyn.toml` at the repository root (configured with `root = "chain"`). Run Aderyn locally or via CI to detect contract issues before opening PRs.
+
 ## Helpful files to inspect (examples)
 - Root README: [README.md](README.md)
 - Monorepo scripts & configuration: [package.json](package.json)

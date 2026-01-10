@@ -12,12 +12,9 @@ root = "chain"
 
 # Path of source directory containing the contracts, relative to root (above)
 # Aderyn will traverse all the nested files inside to scan and report vulnerabilities found inside.
-# - If not specified, Aderyn will try to extract it from the framework that is being used. (Foundry / Hardhat). 
-#   That would be "contracts/" in case of Hardhat and in case of Foundry, it depends on foundry.toml and
-#   many other factors like FOUNDRY_PROFILE environment variable, etc.
-# - If specified, Aderyn will override the above found `src`.
-# Example:
-# src = "src/"
+# If not specified, Aderyn will try to extract it from the framework that is being used.
+# Set a sensible default for this repo:
+src = "src/"
 
 # Path segments of contract files to include in the analysis.
 # - It can be a partial match like "/interfaces/", which will include all files with "/interfaces/" in the file path.
@@ -28,12 +25,8 @@ root = "chain"
 # include = ["/interfaces/"]
 
 # Path segments of contract files to exclude in the analysis.
-# - It can be a partial match like "/interfaces/", which will exclude all files with "/interfaces/" in the file path.
-#   Or it can be a full match like "src/counters/Counter.sol", which will exclude only the file with the exact path.
-# - If not specified, no contract files will be excluded.
-# Examples:
-# exclude = ["src/counters/Counter.sol", "src/others/"]
-# exclude = ["/interfaces/"]
+# Provide basic excludes for tests and scripts so analysis focuses on contracts.
+exclude = ["/test/", "/script/"]
 
 # For advanced use cases, leverage the following
 

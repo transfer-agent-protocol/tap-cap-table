@@ -64,6 +64,7 @@ export const txTypes = Object.fromEntries(
     Object.entries(txMapper).map(([i, [_, f]]) => [i, f.name.replace("handle", "")])
 );
 // (name => handler) derived from txMapper
+// @ts-expect-error - Destructuring tuple with unused first element
 export const txFuncs = Object.fromEntries(Object.entries(txMapper).map(([i, [_, f]]) => [txTypes[i], f]));
 
 // Globals enabling elegant poller process shutdown
@@ -122,7 +123,8 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
-    const { _id: issuerId, last_processed_block: lastProcessedBlock, tx_hash: deployedTxHash } = issuer;
+    const { _id: issuerId, tx_hash: deployedTxHash } = issuer;
+    let lastProcessedBlock = issuer.last_processed_block;
     console.log(`Processing for ${issuerId}: ${lastProcessedBlock}`); //, { lastProcessedBlock, deployedTxHash, latestBlock });
     const { number: latestBlock } = await pRetry(
         async () => provider.getBlock(finalizedOnly ? "finalized" : "latest"),

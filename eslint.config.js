@@ -46,7 +46,6 @@ export default [
             "chain/cache/",
             "chain/broadcast/",
             "ocf/",
-            "docs/",
             "app/.next/",
             "app/.eslintcache",
             "docs/.next/",

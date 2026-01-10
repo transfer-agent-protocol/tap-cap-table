@@ -16,6 +16,8 @@ jobs:
                   fetch-depth: 0
             - name: Review code changes in Warp
               uses: warpdotdev/warp-agent-action@v1
+              timeout-minutes: 10
+              continue-on-error: true
               with:
                   prompt: |
                       Review the code changes in this pull request:
