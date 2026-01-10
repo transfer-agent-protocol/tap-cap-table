@@ -12,7 +12,7 @@
         "prod-poller": "tsx server/entry.ts --finalized-only",
         "dev": "tsx watch server/server.js",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
-        "lint": "pnpm run eslint . --ext .js,.jsx,.ts,.tsx",
+        "lint": "pnpm run eslint .",
         "format": "prettier '**/*' --ignore-unknown --write",
         "typecheck": "concurrently --raw pnpm:typecheck:*",
         "typecheck:app": "tsc --noEmit",
