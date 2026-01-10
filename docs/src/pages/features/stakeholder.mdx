@@ -25,7 +25,7 @@ One of the most interesting and important routes - given the `issuerId`, stakeho
 
 ````json
 {
-  "issuerId": "92dddedd-251d-47cd-83ac-342f00e3d5a1",
+  "issuerId": "<YOUR_ISSUER_ID>",
   "data": {
     "name": {
       "legal_name": "Alex Palmer",
@@ -43,28 +43,28 @@ One of the most interesting and important routes - given the `issuerId`, stakeho
       },
       "emails": [
         {
-          "email_type": "PERSONAL",
-          "email_address": "alex@transferagentprotocol.xyz" // this is real, you can ping me with questions
+          "email_type": "BUSINESS",
+          "email_address": "alex@plume.org"
         }
       ],
       "phone_numbers": [
         {
           "phone_type": "MOBILE",
-          "phone_number": "+1 212 420 6994" // this is fake guys
+          "phone_number": "+1 ************"
         }
       ]
     },
     "contact_info": {
       "emails": [
         {
-          "email_type": "PERSONAL",
-          "email_address": "alex@transferagentprotocol.xyz"
+          "email_type": "BUSINESS",
+          "email_address": "alex@plume.org"
         }
       ],
       "phone_numbers": [
         {
           "phone_type": "MOBILE",
-          "phone_number": "+1 212 420 6994"
+          "phone_number": "+1 ************"
         }
       ]
     },
@@ -85,8 +85,8 @@ This is used to add a wallet that the stakeholder is using to custody shares on 
 
 ````json
 {
-	"issuerId": "92dddedd-251d-47cd-83ac-342f00e3d5a1",
-    "wallet": "0x3601a913fD3466f30f5ABb978E484d1B37Ce995D"
+	"issuerId": "<YOUR_ISSUER_ID>",
+    "wallet": "<YOUR_WALLET_ADDRESS>"
 }
 ````
 
@@ -102,8 +102,8 @@ Something bad happened to the wallet? Does the stakeholder want to use another o
 
 ````json
 {
-	"issuerId": "92dddedd-251d-47cd-83ac-342f00e3d5a1",
-    "wallet": "0x3601a913fD3466f30f5ABb978E484d1B37Ce995D"
+	"issuerId": "<YOUR_ISSUER_ID>",
+    "wallet": "<YOUR_WALLET_ADDRESS>"
 }
 ````
 
