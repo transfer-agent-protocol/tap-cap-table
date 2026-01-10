@@ -15,6 +15,17 @@ The Open Cap Table Format ([OCF](https://github.com/transfer-agent-protocol/tap-
 	</FileTree.Folder>
 </FileTree>
 
+## OCF Terminology
+
+The Open Cap Format uses specific terminology:
+
+- **Stakeholder**: An equity holder on the cap table (shareholder). Can be an individual (person) or institution (company/fund).
+- **Issuer**: The company whose cap table is being tracked.
+- **Security**: A specific equity position (shares, options, warrants, convertibles).
+- **Transaction**: Events that modify the cap table (issuances, transfers, cancellations, etc.).
+
+Note that "stakeholder" in OCF context is more specific than the general business term—it refers only to equity holders, not all parties with interest in the company.
+
 # Our Database
 
 Using the OCF, we've created a [database](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/src/db) schema with a Mongo implementation. This schema is used by the Transfer Agent Protocol to store and share cap table data off chain. Also found in the root folder, our db schema and the server:

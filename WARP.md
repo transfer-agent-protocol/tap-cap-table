@@ -35,6 +35,8 @@ The system maintains a **dual-state architecture**:
 
 ### Key Components
 
+**Terminology Note**: Throughout this codebase, "stakeholder" follows OCF standard terminology and specifically refers to equity holders on the cap table (those who own shares). This includes individuals (founders, employees, advisors) and institutions (VCs, investors) with equity positions.
+
 1. **Solidity Contracts** (`chain/src/`):
     - `CapTable.sol`: Core contract managing stakeholders, stock classes, transactions, and active positions
     - `CapTableFactory.sol`: Deploys new CapTable instances for issuers
