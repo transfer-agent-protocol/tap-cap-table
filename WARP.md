@@ -205,7 +205,7 @@ pnpm app:build
 pnpm app:start
 ```
 
-The frontend is a Next.js app in the `app/` workspace using styled-components.
+The frontend is a Next.js app in the `app/` workspace using styled-components v6.
 
 ### Deployment
 
@@ -365,6 +365,8 @@ Uses MongoDB with optional replica set for transactions:
 The Docker Compose file creates a single-node setup. For replica sets, use MongoDB's `--replSet` option.
 
 **Models**: Each OCF object type has a corresponding Mongoose model in `server/db/objects/`.
+
+**Note**: Legacy sample data (`server/db/samples/data/`) has been removed. Demo functionality will be provided through the frontend app in a future release.
 
 ## TypeScript Configuration
 
