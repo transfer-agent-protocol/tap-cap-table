@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import { InitialShares, StockParams, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
@@ -74,11 +74,11 @@ interface ICapTable {
     function getTotalActiveSecuritiesCount() external view returns (uint256);
 
     // Function to get the timestamp of an active position
-    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint, uint, uint40);
+    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint256, uint256, uint40);
 
     /// @notice Get the avg active position for the stakeholder by dividing the first return value (quantityPrice) by the second (quantity)
     ///  the timestamp is the time of the latest position
-    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint, uint, uint40);
+    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint256, uint256, uint40);
 
     function issueStock(StockIssuanceParams calldata params) external;
 

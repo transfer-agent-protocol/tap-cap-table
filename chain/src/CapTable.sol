@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import { AccessControlDefaultAdminRulesUpgradeable } from "openzeppelin-upgradeable/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 
@@ -41,11 +41,17 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     error StakeholderAlreadyExists(bytes16 stakeholder_id);
     error StockClassAlreadyExists(bytes16 stock_class_id);
+    /// @dev Reserved for future OCF validation
+    // solhint-disable-next-line no-unused-vars
     error StockClassDoesNotExist(bytes16 stock_class_id);
     error InvalidWallet(address wallet);
     error NoStakeholder(bytes16 stakeholder_id);
     error InvalidStockClass(bytes16 stock_class_id);
+    /// @dev Reserved for future OCF validation
+    // solhint-disable-next-line no-unused-vars
     error InsufficientIssuerSharesAuthorized();
+    /// @dev Reserved for future OCF validation
+    // solhint-disable-next-line no-unused-vars
     error InsufficientStockClassSharesAuthorized();
     error NoIssuanceFound();
     error WalletAlreadyExists(address wallet);
@@ -78,8 +84,10 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     /// @inheritdoc ICapTable
     function getTotalActiveSecuritiesCount() external view returns (uint256) {
         uint256 count = 0;
-        for (uint256 i = 0; i < stakeholders.length; i++) {
-            for (uint256 j = 0; j < stockClasses.length; j++) {
+        uint256 stakeholdersLen = stakeholders.length;
+        uint256 stockClassesLen = stockClasses.length;
+        for (uint256 i = 0; i < stakeholdersLen; i++) {
+            for (uint256 j = 0; j < stockClassesLen; j++) {
                 count += activeSecs.activeSecurityIdsByStockClass[stakeholders[i].id][stockClasses[j].id].length;
             }
         }
@@ -440,18 +448,18 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint, uint, uint40) {
+    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint256, uint256, uint40) {
         ActivePosition storage position = positions.activePositions[stakeholderId][securityId];
         return (position.stock_class_id, position.quantity, position.share_price, position.timestamp);
     }
 
     /// @inheritdoc ICapTable
-    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint, uint, uint40) {
+    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint256, uint256, uint40) {
         bytes16[] memory activeSecurityIDs = activeSecs.activeSecurityIdsByStockClass[stakeholderId][stockClassId];
-        uint quantityPrice = 0;
-        uint quantity = 0;
+        uint256 quantityPrice = 0;
+        uint256 quantity = 0;
         uint40 timestamp = 0;
-        for (uint i = 0; i < activeSecurityIDs.length; i++) {
+        for (uint256 i = 0; i < activeSecurityIDs.length; i++) {
             ActivePosition storage position = positions.activePositions[stakeholderId][activeSecurityIDs[i]];
             // Alley-oop the web2 caller to find the avg to avoid issues with fractions
             quantityPrice += position.quantity * position.share_price;
