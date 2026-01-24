@@ -29,8 +29,9 @@ pnpm lint
 
 ### Tech Stack
 - **Framework**: Next.js (Pages Router)
-- **Styling**: styled-components with ThemeProvider
+- **Styling**: styled-components v6 with ThemeProvider
 - **Font**: IBM Plex Mono (loaded via next/font)
+- **React**: v19
 
 ### Project Structure
 - `src/pages/` - Next.js pages (`_app.tsx` wraps all pages with theme/layout)
