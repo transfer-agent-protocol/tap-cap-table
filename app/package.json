@@ -10,7 +10,7 @@
         "postbuild": "next-sitemap",
         "start": "next start",
         "typecheck": "tsc --noEmit",
-"typecheck:watch": "pnpm run typecheck -- --watch",
+        "typecheck:watch": "pnpm run typecheck -- --watch",
         "start:ci": "INSECURE_AUTH=true pnpm run start",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "next lint"
@@ -18,17 +18,15 @@
     "dependencies": {
         "next": "^15.5.9",
         "next-sitemap": "^4.2.3",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
         "react-gtm-module": "^2.0.11",
-        "react-is": "^18.2.0",
-        "styled-components": "^5.3.9"
+        "styled-components": "^6.3.8"
     },
     "devDependencies": {
-        "@types/node": "^20.0.0",
-        "@types/react": "^18.3.0",
-        "@types/react-dom": "^18.3.0",
-        "@types/styled-components": "^5.1.26",
+        "@types/node": "^22.0.0",
+        "@types/react": "^19.1.0",
+        "@types/react-dom": "^19.1.0",
         "eslint": "^8.57.0",
         "eslint-config-next": "^15.5.9",
         "eslint-config-prettier": "^9.1.0",
