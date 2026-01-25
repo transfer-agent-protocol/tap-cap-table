@@ -1,0 +1,57 @@
+# Security Toolchain
+
+[![Security Scans](https://github.com/transfer-agent-protocol/tap-cap-table/actions/workflows/security.yml/badge.svg)](https://github.com/transfer-agent-protocol/tap-cap-table/actions/workflows/security.yml)
+
+Layered approach. See [WARP.md](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/WARP.md#static-analysis--security) for full details.
+
+**Verify locally:** `make security && make test-invariant` — should pass with 0 high findings.
+
+## Current Status
+
+| Tool | High | Medium | Low | Status |
+|------|------|--------|-----|--------|
+| Aderyn | 0 | 0 | 5 | ✅ All acceptable |
+| Slither | 0 | 0 | 3 | ✅ All acceptable |
+| Invariant Tests | - | - | - | ✅ 7 passing |
+| Unit Tests | - | - | - | ✅ 45 passing |
+
+## Tools
+
+### Aderyn
+Real-time static linting. Fast feedback while coding.
+- Reports: [`report.md`](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/report.md)
+
+### Slither
+Deeper static analysis (taint tracking, control-flow).
+- Reports: [`chain/slither-report.md`](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/slither-report.md)
+- CI: Fails on high severity, uploads SARIF to GitHub Security tab
+
+### Foundry Invariant Tests
+Stateful fuzzing for core accounting rules.
+- Tests: [`chain/test/invariants/`](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/chain/test/invariants)
+- Config: 256 runs / 50 depth baseline
+
+**Invariants tested:**
+- `shares_issued <= shares_authorized` (issuer and stock classes)
+- Stakeholder/stock class index mapping consistency
+- Count consistency between contract and tracked state
+- Stock class authorized never exceeds issuer authorized
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `make test` | Run all unit tests (45 tests) |
+| `make test-invariant` | Short invariant fuzz (256 runs, 50 depth) |
+| `make test-invariant-deep` | Deep invariant fuzz (2000 runs, 100 depth) |
+| `make aderyn` | Run Aderyn → `report.md` |
+| `make slither` | Run Slither → `chain/slither-report.md` |
+| `make security` | Run aderyn + slither |
+
+## Philosophy
+
+- Catch obvious stuff early (Aderyn)
+- Dig deeper statically (Slither)
+- Stress-test logic over sequences (Invariants)
+- Pre-audit cleanup → reduces noise for auditors
+- No single tool replaces a full audit

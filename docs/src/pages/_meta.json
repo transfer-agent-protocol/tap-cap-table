@@ -3,6 +3,7 @@
     "development": "Development",
     "protocol": "Protocol Specification",
     "features": "Features",
+    "security": "Security & Testing",
     "website": {
         "title": "Website ↗",
         "href": "https://transferagentprotocol.xyz",
