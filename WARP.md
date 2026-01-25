@@ -132,6 +132,7 @@ pnpm prod-poller
 # Solidity tests (Foundry)
 pnpm test
 # Or: cd chain && forge test
+# Or: make test
 
 # JavaScript unit tests
 pnpm test-js
@@ -141,11 +142,16 @@ pnpm test-js-integration
 
 # Run specific test
 cd chain && forge test --match-test testStockIssuance
+
+# Invariant tests (stateful fuzzing)
+make test-invariant           # Standard run (256 runs, 50 depth)
+make test-invariant-deep      # Deep run (2000 runs, 100 depth)
 ```
 
 **Test Files**:
 
 - Solidity: `chain/test/*.t.sol` (Foundry tests)
+- Invariant tests: `chain/test/invariants/*.sol`
 - JavaScript: `server/tests/unit/` and `server/tests/integration/`
 
 ### Linting and Formatting
@@ -161,31 +167,57 @@ pnpm format
 pnpm typecheck
 ```
 
-### Static Analysis
+### Static Analysis & Security
+
+We use a multi-layered security toolchain:
 
 ```bash
-# Run Aderyn security analysis on Solidity contracts
-aderyn .
+# Run all security checks
+make security
+
+# Individual tools:
+make aderyn     # Fast linting (Rust-based, real-time IDE integration)
+make slither    # Deep semantic analysis (Python-based, taint tracking)
+
+# Invariant testing (stateful fuzzing)
+make test-invariant
 ```
 
-[Aderyn](https://github.com/Cyfrin/aderyn) is a Rust-based Solidity static analyzer that detects vulnerabilities in smart contracts. The analysis is configured via `aderyn.toml` in the repository root:
+#### Aderyn
 
-- **Scope**: Analyzes only production contracts in `chain/src/`
-- **Excludes**: Test files, scripts, build artifacts, and dependencies
-- **Remappings**: Auto-detected from `chain/remappings.txt`
-- **Output**: Generates `report.md` with findings
+[Aderyn](https://github.com/Cyfrin/aderyn) is a Rust-based Solidity static analyzer. Configured via `aderyn.toml`:
 
-Run Aderyn before opening PRs that modify smart contracts to catch potential security issues early.
+- **Scope**: Production contracts in `chain/src/`
+- **Output**: `report.md`
+- **VS Code**: Install the [Aderyn Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time checks
 
-**VS Code Integration**: Install the [Aderyn VS Code Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time security checks as you code. The extension provides inline diagnostics, a tree view of vulnerabilities, and AI-assisted fixes.
+**Current Status**: 0 High, 5 Low severity findings (all acceptable):
+- L-1 (Centralization): Intentional admin-controlled design
+- L-2/L-3 (Loop issues): Acceptable for batch initialization
+- L-4 (State Change Without Event): False positives - events emitted via `TxHelper.createTx()`
+- L-5 (Unchecked Return): OpenZeppelin's `_grantRole`/`_revokeRole` are idempotent
 
-**Current Status**: 0 High, 5 Low severity findings. The remaining Low findings are:
-- **L-1 (Centralization Risk)**: Intentional admin-controlled design for cap table management
-- **L-2/L-3 (Loop issues)**: Acceptable for batch initialization functions
-- **L-4 (State Change Without Event)**: False positives - events are emitted via `TxHelper.createTx()` in library calls
-- **L-5 (Unchecked Return)**: OpenZeppelin's `_grantRole`/`_revokeRole` are designed to be idempotent
+#### Slither
 
-See `report.md` for details.
+[Slither](https://github.com/crytic/slither) (Trail of Bits) provides deeper semantic analysis:
+
+- **Requires**: Python 3.10+ (`pip install slither-analyzer`)
+- **Config**: `slither.config.json`
+- **Output**: `chain/slither-report.md`
+- **CI**: Runs automatically via GitHub Actions on PRs
+
+#### Invariant Testing
+
+Foundry's coverage-guided invariant testing validates protocol-wide properties:
+
+- **Tests**: `chain/test/invariants/CapTableInvariants.t.sol`
+- **Handler**: `chain/test/invariants/CapTableHandler.sol`
+- **Config**: `chain/foundry.toml` `[invariant]` section
+
+Key invariants tested:
+- `shares_issued <= shares_authorized` for issuer and all stock classes
+- Stakeholder/stock class index mapping consistency
+- Stock class authorized shares never exceed issuer authorized
 
 ### Documentation
 
