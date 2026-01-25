@@ -21,7 +21,7 @@ interface ICapTable {
     /// @notice Initializer for the CapTable, sets access control and initializes issuer struct.
     function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external;
 
-    function seedMultipleActivePositionsAndSecurityIds(
+    function mintActivePositions(
         bytes16[] calldata stakeholderIds,
         bytes16[] calldata securityIds,
         bytes16[] calldata stockClassIds,
@@ -30,7 +30,7 @@ interface ICapTable {
         uint40[] calldata timestamps
     ) external;
 
-    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external;
+    function mintSharesAuthorized(InitialShares calldata params) external;
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external;
 
