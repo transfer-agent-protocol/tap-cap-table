@@ -61,7 +61,6 @@ The system maintains a **dual-state architecture**:
 5. **Database Layer** (`server/db/`):
     - Mongoose models for OCF objects (Issuer, Stakeholder, StockClass, VestingTerms, etc.)
     - Atomic operations with MongoDB transactions when `DATABASE_REPLSET=1`
-    - Seeding utilities in `server/db/samples/`
 
 6. **OCF Submodule** (`ocf/`):
     - Git submodule containing the Open Cap Format standard
@@ -78,12 +77,12 @@ The system maintains a **dual-state architecture**:
 4. Transaction emits events onchain
 5. Event poller picks up events and updates MongoDB
 
-**Seeding**:
+**Minting**:
 When a manifest is created, the system:
 
 1. Creates stakeholders and stock classes onchain
-2. Seeds `shares_authorized` and `shares_issued` for issuer and stock classes
-3. Seeds active positions and security IDs from preprocessor cache
+2. Mints `shares_authorized` and `shares_issued` for issuer and stock classes
+3. Mints active positions and security IDs from preprocessor cache
 
 ## Development Commands
 
@@ -169,13 +168,24 @@ pnpm typecheck
 aderyn .
 ```
 
-Aderyn is a Solidity static analyzer that scans smart contracts for security vulnerabilities and code quality issues. The analysis is configured via `aderyn.toml` in the repository root:
+[Aderyn](https://github.com/Cyfrin/aderyn) is a Rust-based Solidity static analyzer that detects vulnerabilities in smart contracts. The analysis is configured via `aderyn.toml` in the repository root:
 
 - **Scope**: Analyzes only production contracts in `chain/src/`
 - **Excludes**: Test files, scripts, build artifacts, and dependencies
 - **Remappings**: Auto-detected from `chain/remappings.txt`
+- **Output**: Generates `report.md` with findings
 
 Run Aderyn before opening PRs that modify smart contracts to catch potential security issues early.
+
+**VS Code Integration**: Install the [Aderyn VS Code Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time security checks as you code. The extension provides inline diagnostics, a tree view of vulnerabilities, and AI-assisted fixes.
+
+**Current Status**: 0 High, 5 Low severity findings. The remaining Low findings are:
+- **L-1 (Centralization Risk)**: Intentional admin-controlled design for cap table management
+- **L-2/L-3 (Loop issues)**: Acceptable for batch initialization functions
+- **L-4 (State Change Without Event)**: False positives - events are emitted via `TxHelper.createTx()` in library calls
+- **L-5 (Unchecked Return)**: OpenZeppelin's `_grantRole`/`_revokeRole` are designed to be idempotent
+
+See `report.md` for details.
 
 ### Documentation
 
@@ -352,6 +362,14 @@ Follow conventional commits and branch from `main`:
 - PR titles: `feat(scope): description` or `fix(scope): description`
 - Commit messages: Descriptive, imperative mood
 - All PRs merge into `main` (no separate dev branch)
+
+### Pull Request Descriptions
+
+All PRs must include three sections:
+
+- **What?** - Concise summary of the changes made
+- **Why?** - Business or technical motivation for the change
+- **How?** - Brief explanation of the implementation approach (optional for trivial changes)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for full guidelines.
 
