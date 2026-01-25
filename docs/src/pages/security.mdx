@@ -38,29 +38,9 @@ Stateful fuzzing for core accounting rules.
 - Stock class authorized never exceeds issuer authorized
 
 ### Unit Tests
+45 tests covering core flows, edge cases, access control, factory logic. All passing.
 
-| File | Type | Purpose |
-|------|------|---------|
-| `CapTable.t.sol` | Base | Test helpers/fixtures |
-| `StockIssuance.t.sol` | Unit | Issuance logic, error cases |
-| `StockTransfer.t.sol` | Unit | Transfer mechanics, edge cases |
-| `StockCancellation.t.sol` | Unit | Cancel/partial cancel flows |
-| `StockRepurchase.t.sol` | Unit | Repurchase flows |
-| `StockReissuance.t.sol` | Unit | Reissuance mechanics |
-| `StockRetraction.t.sol` | Unit | Retraction flow |
-| `StockAcceptance.t.sol` | Unit | Acceptance flow |
-| `Adjustment.t.sol` | Unit | Share adjustment constraints |
-| `AccessControl.t.sol` | Unit | Role-based access |
-| `Issuer.t.sol` | Unit | Issuer initialization |
-| `Stakeholder.t.sol` | Unit | CRUD + duplicates |
-| `StockClass.t.sol` | Unit | CRUD + duplicates |
-| `Wallet.t.sol` | Unit | Wallet mapping |
-| `Minting.t.sol` | Unit | Batch minting |
-| `CapTableFactory.sol` | Unit | Factory + upgrades |
-
-**Why both unit + invariant tests?**
-- **Unit**: Specific function behavior, revert messages, single flows, edge cases
-- **Invariant**: Properties hold after random sequences of calls (emergent bugs)
+→ [Full test overview](/tests)
 
 ## Commands
 

@@ -1,0 +1,43 @@
+# Testing Overview
+
+Foundry unit tests + coverage-guided invariant fuzzing.
+
+## Unit Tests
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `CapTable.t.sol` | Test helpers/fixtures | ✅ Passing |
+| `StockIssuance.t.sol` | Issuance logic, error cases | ✅ Passing |
+| `StockTransfer.t.sol` | Transfer mechanics, edge cases | ✅ Passing |
+| `StockCancellation.t.sol` | Cancel/partial cancel flows | ✅ Passing |
+| `StockRepurchase.t.sol` | Repurchase flows | ✅ Passing |
+| `StockReissuance.t.sol` | Reissuance mechanics | ✅ Passing |
+| `StockRetraction.t.sol` | Retraction flow | ✅ Passing |
+| `StockAcceptance.t.sol` | Acceptance flow | ✅ Passing |
+| `Adjustment.t.sol` | Share adjustment constraints | ✅ Passing |
+| `AccessControl.t.sol` | Role-based access | ✅ Passing |
+| `Issuer.t.sol` | Issuer initialization | ✅ Passing |
+| `Stakeholder.t.sol` | CRUD + duplicates | ✅ Passing |
+| `StockClass.t.sol` | CRUD + duplicates | ✅ Passing |
+| `Wallet.t.sol` | Wallet mapping | ✅ Passing |
+| `Minting.t.sol` | Batch minting | ✅ Passing |
+| `CapTableFactory.sol` | Factory + upgrades | ✅ Passing |
+
+Run: `make test`
+
+## Invariant Tests
+
+Stateful fuzzing (7 invariants) validating:
+- `shares_issued <= shares_authorized` (issuer and stock classes)
+- Stakeholder/stock class index mapping consistency
+- Count consistency between contract and tracked state
+- Stock class authorized never exceeds issuer authorized
+
+Run: `make test-invariant` (256 runs) or `make test-invariant-deep` (2000 runs)
+
+## Why Both?
+
+- **Unit tests**: Specific function behavior, revert messages, single flows, edge cases
+- **Invariant tests**: Properties hold after random sequences of calls (emergent bugs)
+
+Together they provide broad coverage before audit.
