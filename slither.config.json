@@ -1,0 +1,17 @@
+{
+    "filter_paths": "node_modules,test,script,lib,out,cache",
+    "exclude_dependencies": true,
+    "solc_remaps": [
+        "ds-test/=lib/forge-std/lib/ds-test/src/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin/=lib/openzeppelin-contracts/",
+        "openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/"
+    ],
+    "detectors_to_exclude": [
+        "solc-version",
+        "naming-convention",
+        "assembly"
+    ],
+    "exclude_informational": false,
+    "exclude_low": false
+}
