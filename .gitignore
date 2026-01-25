@@ -47,3 +47,7 @@ yarn-error.log*
 # TypeScript
 tsconfig.tsbuildinfo
 .history
+
+# Security tools
+chain/crytic-export/
+chain/invariant-corpus/

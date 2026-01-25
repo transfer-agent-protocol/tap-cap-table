@@ -1,0 +1,58 @@
+name: Security
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+jobs:
+    slither:
+        name: Slither Analysis
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Run Slither
+              uses: crytic/slither-action@v0.4.1
+              id: slither
+              with:
+                  target: chain/
+                  slither-config: slither.config.json
+                  sarif: slither.sarif
+                  fail-on: high
+              continue-on-error: true
+
+            - name: Upload SARIF to GitHub Security tab
+              if: always()
+              uses: github/codeql-action/upload-sarif@v4
+              with:
+                  sarif_file: slither.sarif
+
+            - name: Upload Slither report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: slither-report
+                  path: slither.sarif
+
+    invariant-tests:
+        name: Invariant Tests
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+
+            - name: Run invariant tests
+              working-directory: chain
+              run: forge test --mt invariant -vvv
