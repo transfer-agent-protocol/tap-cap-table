@@ -37,6 +37,12 @@ Stateful fuzzing for core accounting rules.
 - Count consistency between contract and tracked state
 - Stock class authorized never exceeds issuer authorized
 
+### Unit Tests
+Comprehensive Foundry unit tests (45 tests across 16 contracts) covering:
+- Core flows: issuance, transfer, cancellation, repurchase, reissuance, retraction, acceptance
+- Edge cases: invalid quantities, insufficient authorized shares, duplicates, access control
+- Factory: creation, upgrades, role checks
+
 ## Commands
 
 | Command | Description |
@@ -53,5 +59,6 @@ Stateful fuzzing for core accounting rules.
 - Catch obvious stuff early (Aderyn)
 - Dig deeper statically (Slither)
 - Stress-test logic over sequences (Invariants)
+- Verify specific behaviors & errors (Unit tests)
 - Pre-audit cleanup → reduces noise for auditors
 - No single tool replaces a full audit
