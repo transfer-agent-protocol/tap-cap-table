@@ -49,6 +49,7 @@ export default [
             "docs/",
             "app/.next/",
             "app/.eslintcache",
+            "app/next-env.d.ts",
             "docs/.next/",
         ],
     },
