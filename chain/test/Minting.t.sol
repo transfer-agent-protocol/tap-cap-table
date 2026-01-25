@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import { CapTableTest } from "./CapTable.t.sol";
 import { InitialShares, IssuerInitialShares, StockClassInitialShares } from "../src/lib/Structs.sol";
 
-contract SeedingTest is CapTableTest {
+contract MintingTest is CapTableTest {
     function createInitialDummyStockClassData() private pure returns (bytes16, string memory, uint256, uint256) {
         bytes16 id = 0xd3373e0a4dd9430f8a563281f2454545;
         string memory classType = "Common";
@@ -37,7 +37,7 @@ contract SeedingTest is CapTableTest {
             stockClassesInitialShares: stockClassInitialShares
         });
 
-        capTable.seedSharesAuthorizedAndIssued(params);
+        capTable.mintSharesAuthorized(params);
 
         (, , uint256 actualIssuerSharesIssued, uint256 actualIssuerSharesAuthorized) = capTable.issuer();
         (, , , uint256 scSharesIssued, uint256 scSharesAuthorized) = capTable.getStockClassById(stockClassId);
@@ -55,11 +55,11 @@ contract SeedingTest is CapTableTest {
             stockClassesInitialShares: new StockClassInitialShares[](0)
         });
 
-        vm.expectRevert("Invalid Seeding Shares Params");
-        capTable.seedSharesAuthorizedAndIssued(params);
+        vm.expectRevert("Invalid mint params");
+        capTable.mintSharesAuthorized(params);
     }
 
-    function testSeedMultipleActivePositionsAndSecurityIds() public {
+    function testMintActivePositions() public {
         bytes16[] memory stakeholderIds = new bytes16[](5);
         bytes16[] memory securityIds = new bytes16[](5);
         bytes16[] memory stockClassIds = new bytes16[](5);
@@ -87,13 +87,13 @@ contract SeedingTest is CapTableTest {
             timestamps[i] = uint40(block.timestamp + i); // Dummy timestamps
         }
 
-        capTable.seedMultipleActivePositionsAndSecurityIds(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
+        capTable.mintActivePositions(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
 
         uint256 transactionCount = capTable.getTotalActiveSecuritiesCount();
         assertEq(transactionCount, 5);
     }
 
-    function testSeedingWithMismatchedArrayLengths() public {
+    function testMintWithMismatchedArrayLengths() public {
         bytes16[] memory stakeholderIds = new bytes16[](1);
         bytes16[] memory securityIds = new bytes16[](2); // Mismatched length
         bytes16[] memory stockClassIds = new bytes16[](1);
@@ -102,10 +102,10 @@ contract SeedingTest is CapTableTest {
         uint40[] memory timestamps = new uint40[](1);
 
         vm.expectRevert("Input arrays must have the same length");
-        capTable.seedMultipleActivePositionsAndSecurityIds(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
+        capTable.mintActivePositions(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
     }
 
-    function testSeedingWithNonExistentStakeholdersOrStockClasses() public {
+    function testMintWithNonExistentStakeholdersOrStockClasses() public {
         bytes16[] memory stakeholderIds = new bytes16[](1);
         bytes16[] memory securityIds = new bytes16[](1);
         bytes16[] memory stockClassIds = new bytes16[](1);
@@ -125,6 +125,6 @@ contract SeedingTest is CapTableTest {
         bytes memory expectedError = abi.encodeWithSignature("NoStakeholder(bytes16)", stakeholderIds[0]);
         vm.expectRevert(expectedError);
 
-        capTable.seedMultipleActivePositionsAndSecurityIds(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
+        capTable.mintActivePositions(stakeholderIds, securityIds, stockClassIds, quantities, sharePrices, timestamps);
     }
 }

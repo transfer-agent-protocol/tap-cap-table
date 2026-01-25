@@ -60,12 +60,11 @@ const txMapper = {
 };
 // (idx => type name) derived from txMapper
 export const txTypes = Object.fromEntries(
-    // @ts-expect-error - Destructuring tuple with unused first element
-    Object.entries(txMapper).map(([i, [_, f]]) => [i, f.name.replace("handle", "")])
+    // @ts-expect-error - Tuple destructuring with complex union types
+    Object.entries(txMapper).map(([i, [, f]]) => [i, f.name.replace("handle", "")])
 );
 // (name => handler) derived from txMapper
-// @ts-expect-error - Destructuring tuple with unused first element
-export const txFuncs = Object.fromEntries(Object.entries(txMapper).map(([i, [_, f]]) => [txTypes[i], f]));
+export const txFuncs = Object.fromEntries(Object.entries(txMapper).map(([i, [, f]]) => [txTypes[i], f]));
 
 // Globals enabling elegant poller process shutdown
 let _keepProcessing = true;
@@ -218,7 +217,6 @@ const persistEvents = async (issuerId, events: QueuedEvent[]) => {
         const txHandleFunc = txFuncs[type];
         // console.log("persistEvent: ", {type, data, timestamp});
         if (txHandleFunc) {
-            // @ts-expect-error - Dynamic transaction handler function types
             await txHandleFunc(data, issuerId, timestamp);
             continue;
         }

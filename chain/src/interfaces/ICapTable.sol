@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import { InitialShares, StockParams, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
@@ -21,7 +21,7 @@ interface ICapTable {
     /// @notice Initializer for the CapTable, sets access control and initializes issuer struct.
     function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external;
 
-    function seedMultipleActivePositionsAndSecurityIds(
+    function mintActivePositions(
         bytes16[] calldata stakeholderIds,
         bytes16[] calldata securityIds,
         bytes16[] calldata stockClassIds,
@@ -30,7 +30,7 @@ interface ICapTable {
         uint40[] calldata timestamps
     ) external;
 
-    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external;
+    function mintSharesAuthorized(InitialShares calldata params) external;
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external;
 
@@ -74,11 +74,11 @@ interface ICapTable {
     function getTotalActiveSecuritiesCount() external view returns (uint256);
 
     // Function to get the timestamp of an active position
-    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint, uint, uint40);
+    function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint256, uint256, uint40);
 
     /// @notice Get the avg active position for the stakeholder by dividing the first return value (quantityPrice) by the second (quantity)
     ///  the timestamp is the time of the latest position
-    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint, uint, uint40);
+    function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint256, uint256, uint40);
 
     function issueStock(StockIssuanceParams calldata params) external;
 

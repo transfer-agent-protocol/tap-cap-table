@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import { UpgradeableBeacon } from "openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -9,7 +9,7 @@ import { ICapTable } from "./interfaces/ICapTable.sol";
 
 contract CapTableFactory is ICapTableFactory, Ownable {
     address public capTableImplementation;
-    UpgradeableBeacon public capTableBeacon;
+    UpgradeableBeacon public immutable capTableBeacon;
     address[] public capTableProxies;
 
     constructor(address _capTableImplementation) Ownable(msg.sender) {
@@ -28,10 +28,16 @@ contract CapTableFactory is ICapTableFactory, Ownable {
         return address(capTableProxy);
     }
 
+    /// @notice Updates the CapTable implementation for all proxies
+    /// @dev Uses checks-effects-interactions pattern to prevent reentrancy
     function updateCapTableImplementation(address newImplementation) external onlyOwner {
         require(newImplementation != address(0), "Invalid implementation address");
-        capTableBeacon.upgradeTo(newImplementation);
+        address oldImplementation = capTableImplementation;
+        // Effects: Update state before external call (checks-effects-interactions)
         capTableImplementation = newImplementation;
+        // Interactions: External call after state update
+        capTableBeacon.upgradeTo(newImplementation);
+        emit CapTableImplementationUpdated(oldImplementation, newImplementation);
     }
 
     function getCapTableCount() external view returns (uint256) {
