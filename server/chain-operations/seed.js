@@ -16,28 +16,28 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     await initiateSeeding(uuid, contract);
     console.log(`✅ | Completed Seeding issuer ${uuid} on chain`);
 
-    // seed shares_authorized and issued for Issuer and Stock Classes
-    await seedSharesAuthorizedAndIssued(uuid, contract);
+    // mint shares_authorized and issued for Issuer and Stock Classes
+    await mintSharesAuthorized(uuid, contract);
 
     const arrays = extractArrays(preProcessorCache[uuid]);
 
-    await seedActivePositionsAndActiveSecurityIds(arrays, contract);
+    await mintActivePositions(arrays, contract);
 
     console.log("⏳ | Checking pre-processor cache ", JSON.stringify(preProcessorCache[uuid], null, 2));
 };
 
-const seedSharesAuthorizedAndIssued = async (uuid, contract) => {
-    const issuerToSeed = preProcessorCache[uuid].issuer;
-    const stockClassesToSeed = preProcessorCache[uuid].stockClasses;
+const mintSharesAuthorized = async (uuid, contract) => {
+    const issuerToMint = preProcessorCache[uuid].issuer;
+    const stockClassesToMint = preProcessorCache[uuid].stockClasses;
 
     // Construct IssuerInitialShares
     const issuerInitialShares = {
-        shares_authorized: toScaledBigNumber(issuerToSeed.shares_authorized),
-        shares_issued: toScaledBigNumber(issuerToSeed.shares_issued),
+        shares_authorized: toScaledBigNumber(issuerToMint.shares_authorized),
+        shares_issued: toScaledBigNumber(issuerToMint.shares_issued),
     };
 
     // Construct an array of StockClassInitialShares
-    const stockClassesInitialShares = stockClassesToSeed.map((stockClass) => ({
+    const stockClassesInitialShares = stockClassesToMint.map((stockClass) => ({
         id: convertUUIDToBytes16(stockClass.id),
         shares_authorized: toScaledBigNumber(stockClass.shares_authorized),
         shares_issued: toScaledBigNumber(stockClass.shares_issued),
@@ -50,10 +50,10 @@ const seedSharesAuthorizedAndIssued = async (uuid, contract) => {
     };
 
     // Pass the struct to the contract function
-    const tx = await contract.seedSharesAuthorizedAndIssued(initialShares);
+    const tx = await contract.mintSharesAuthorized(initialShares);
     await tx.wait();
 
-    console.log(`Seeded shares_authorized and shares_issued for Issuer and Stock Classes`);
+    console.log(`Minted shares_authorized and shares_issued for Issuer and Stock Classes`);
 };
 
 export const initiateSeeding = async (uuid, contract) => {
@@ -82,7 +82,7 @@ export const initiateSeeding = async (uuid, contract) => {
     await sleep(300);
 };
 
-export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) => {
+export const mintActivePositions = async (arrays, contract) => {
     const { stakeholders, stockClasses, quantities, securityIds, sharePrices, timestamps } = arrays;
 
     console.log("💾 | stakeholders ", stakeholders);
@@ -99,7 +99,7 @@ export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) 
     const sharePricesScaled = sharePrices.map((sharePrice) => toScaledBigNumber(sharePrice));
     const timestampsScaled = timestamps.map((timestamp) => convertTimeStampToUint40(timestamp));
 
-    const tx = await contract.seedMultipleActivePositionsAndSecurityIds(
+    const tx = await contract.mintActivePositions(
         stakeholderIdsBytes16,
         securityIdsBytes16,
         stockClassIdsBytes16,
@@ -110,5 +110,5 @@ export const seedActivePositionsAndActiveSecurityIds = async (arrays, contract) 
 
     await tx.wait();
 
-    console.log("Seeded Active Positions and Active Security Ids onchain");
+    console.log("Minted Active Positions onchain");
 };
