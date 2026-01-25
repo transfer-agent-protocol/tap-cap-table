@@ -38,21 +38,17 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     event IssuerCreated(bytes16 indexed id, string indexed _name);
     event StakeholderCreated(bytes16 indexed id);
     event StockClassCreated(bytes16 indexed id, string indexed classType, uint256 indexed pricePerShare, uint256 initialSharesAuthorized);
+    event StockLegendTemplateCreated(bytes16 indexed id);
+    event WalletAdded(bytes16 indexed stakeholderId, address indexed wallet);
+    event WalletRemoved(bytes16 indexed stakeholderId, address indexed wallet);
+    event SharesAuthorizedMinted(bytes16 indexed issuerId, uint256 sharesAuthorized, uint256 sharesIssued);
+    event ActivePositionMinted(bytes16 indexed stakeholderId, bytes16 indexed securityId, bytes16 indexed stockClassId, uint256 quantity);
 
     error StakeholderAlreadyExists(bytes16 stakeholder_id);
     error StockClassAlreadyExists(bytes16 stock_class_id);
-    /// @dev Reserved for future OCF validation
-    // solhint-disable-next-line no-unused-vars
-    error StockClassDoesNotExist(bytes16 stock_class_id);
     error InvalidWallet(address wallet);
     error NoStakeholder(bytes16 stakeholder_id);
     error InvalidStockClass(bytes16 stock_class_id);
-    /// @dev Reserved for future OCF validation
-    // solhint-disable-next-line no-unused-vars
-    error InsufficientIssuerSharesAuthorized();
-    /// @dev Reserved for future OCF validation
-    // solhint-disable-next-line no-unused-vars
-    error InsufficientStockClassSharesAuthorized();
     error NoIssuanceFound();
     error WalletAlreadyExists(address wallet);
     error NoActivePositionFound();
@@ -63,6 +59,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external initializer {
         __AccessControlDefaultAdminRules_init(0 seconds, admin);
+        // slither-disable-next-line unused-return
         _grantRole(ADMIN_ROLE, admin);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
@@ -95,12 +92,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function seedSharesAuthorizedAndIssued(InitialShares calldata params) external override {
+    function mintSharesAuthorized(InitialShares calldata params) external override {
         require(
             params.issuerInitialShares.shares_authorized > 0 &&
                 params.issuerInitialShares.shares_issued > 0 &&
                 params.stockClassesInitialShares.length > 0,
-            "Invalid Seeding Shares Params"
+            "Invalid mint params"
         );
 
         issuer.shares_authorized = params.issuerInitialShares.shares_authorized;
@@ -114,10 +111,12 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
             stockClasses[index].shares_authorized = params.stockClassesInitialShares[i].shares_authorized;
             stockClasses[index].shares_issued = params.stockClassesInitialShares[i].shares_issued;
         }
+
+        emit SharesAuthorizedMinted(issuer.id, issuer.shares_authorized, issuer.shares_issued);
     }
 
     /// @inheritdoc ICapTable
-    function seedMultipleActivePositionsAndSecurityIds(
+    function mintActivePositions(
         bytes16[] calldata stakeholderIds,
         bytes16[] calldata securityIds,
         bytes16[] calldata stockClassIds,
@@ -146,6 +145,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
             });
 
             activeSecs.activeSecurityIdsByStockClass[stakeholderIds[i]][stockClassIds[i]].push(securityIds[i]);
+
+            emit ActivePositionMinted(stakeholderIds[i], securityIds[i], stockClassIds[i], quantities[i]);
         }
     }
 
@@ -186,6 +187,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     // Basic functionality of Stock Legend Template, unclear how it ties to active positions.
     function createStockLegendTemplate(bytes16 _id) external override onlyAdmin {
         stockLegendTemplates.push(StockLegendTemplate({ id: _id }));
+        emit StockLegendTemplateCreated(_id);
     }
 
     /// @inheritdoc ICapTable
@@ -197,6 +199,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _checkWalletAlreadyExists(_wallet);
 
         walletsPerStakeholder[_wallet] = _stakeholder_id;
+        emit WalletAdded(_stakeholder_id, _wallet);
     }
 
     /// @inheritdoc ICapTable
@@ -206,6 +209,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _checkStakeholderIsStored(_stakeholder_id);
 
         delete walletsPerStakeholder[_wallet];
+        emit WalletRemoved(_stakeholder_id, _wallet);
     }
 
     /// @inheritdoc ICapTable
@@ -497,21 +501,25 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     /// @inheritdoc ICapTable
     function addAdmin(address addr) external override onlyAdmin {
+        // slither-disable-next-line unused-return
         _grantRole(ADMIN_ROLE, addr);
     }
 
     /// @inheritdoc ICapTable
     function removeAdmin(address addr) external override onlyAdmin {
+        // slither-disable-next-line unused-return
         _revokeRole(ADMIN_ROLE, addr);
     }
 
     /// @inheritdoc ICapTable
     function addOperator(address addr) external override onlyAdmin {
+        // slither-disable-next-line unused-return
         _grantRole(OPERATOR_ROLE, addr);
     }
 
     /// @inheritdoc ICapTable
     function removeOperator(address addr) external override onlyAdmin {
+        // slither-disable-next-line unused-return
         _revokeRole(OPERATOR_ROLE, addr);
     }
 
