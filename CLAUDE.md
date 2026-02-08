@@ -1,78 +1,99 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Transfer Agent Protocol (TAP) Cap Table — an onchain cap table implementing the [OCF standard](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF). Hybrid architecture: Solidity smart contracts (source of truth) + Express/Node.js API server + MongoDB (off-chain mirror).
+Transfer Agent Protocol (TAP) Cap Table — onchain cap table implementing the [OCF standard](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF). pnpm monorepo with Solidity smart contracts, Express API server, Next.js frontend, and Nextra docs site.
 
-**pnpm monorepo** with workspaces:
-- `chain/` — Foundry setup (Solidity 0.8.24, OpenZeppelin v5.4.0)
-- `server/` — Express API + event poller (TypeScript via tsx)
-- `app/` — Next.js frontend (styled-components v6)
-- `docs/` — Nextra documentation site
-- `ocf/` — OCF standard git submodule
+## Common Commands
 
-### Licensing
-
-- `chain/`: BUSL-1.1 (converts to AGPLv3 Jan 2028)
-- `server/`: AGPL-3.0
-- `app/`: UNLICENSED (proprietary)
-- `docs/`: MIT
-
-Do not make changes that alter licensing without explicit confirmation.
-
-## Key Patterns
-
-- **UUID ↔ bytes16**: Use `convertUUIDToBytes16()` / `convertBytes16ToUUID()` for all contract interactions.
-- **Fixed-point decimals**: Use `toScaledBigNumber(value)` (10^4 precision) for share quantities and prices.
-- **OCF validation**: All API inputs must be validated against OCF schemas via `validateInputAgainstSchema()`.
-- **Atomic DB operations**: When `DATABASE_REPLSET=1`, use `withGlobalTransaction()` for multi-document writes.
-- **Event poller**: The poller (`server/chain-operations/transactionPoller.ts`) syncs onchain events to MongoDB. Without it, state won't sync.
-
-## Development Commands
-
+### Build & Test
 ```bash
-pnpm install              # Install deps
-pnpm setup                # Foundry + build contracts
-pnpm dev                  # Dev server with event poller
-pnpm test                 # Solidity tests (forge test)
-pnpm test-js              # JS unit tests
-pnpm lint                 # Lint TypeScript/JavaScript
-pnpm format               # Format all files
-pnpm typecheck            # Type check
-make security             # Run all security checks (Aderyn + Slither)
-make test-invariant       # Foundry invariant tests
+pnpm install                    # Install all workspace deps
+pnpm setup                      # foundryup + forge build --via-ir
+pnpm test                       # Solidity tests (cd chain && forge test)
+pnpm test-js                    # JS unit tests
+pnpm test-js-integration        # JS integration tests
+cd chain && forge test --match-test testStockIssuance  # Single Solidity test
+make test-invariant             # Invariant fuzzing (256 runs, 50 depth)
+make test-invariant-deep        # Deep invariant fuzzing (2000 runs, 100 depth)
 ```
 
-## Coding Conventions
+### Lint, Format, Typecheck
+```bash
+pnpm lint                       # ESLint across root, docs, app
+pnpm format                     # Prettier formatting
+pnpm typecheck                  # TypeScript validation (concurrent)
+```
 
-- **Package manager**: pnpm (never yarn or npm)
-- **Solidity tests**: Foundry `.t.sol` files in `chain/test/`
-- **TypeScript**: Run via `tsx`, `strict: false` (legacy), `isolatedModules: true`
-- **Commits**: Conventional commits, imperative mood (`feat(scope): description`)
-- **Branching**: Never commit to `main` directly; branch from `main`
-- **Secrets**: Never commit `.env` files or API keys
+### Run Services
+```bash
+pnpm dev                        # Server + event poller (tsx watch)
+pnpm app:dev                    # Frontend dev server
+pnpm docs:dev                   # Docs dev server (port 3001)
+pnpm docker:up                  # Start MongoDB + server + app via Docker
+pnpm docker:down                # Stop Docker services
+```
 
-## Security
+### Deploy & Security
+```bash
+pnpm deploy-factory             # Deploy CapTableFactory (calls scripts/deployFactory.sh)
+make security                   # Run Aderyn + Slither static analysis
+make aderyn                     # Aderyn only → report.md
+make slither                    # Slither only → chain/slither-report.md
+```
 
-- Run `make aderyn` and `make slither` before PRs that modify smart contracts.
-- Invariant tests in `chain/test/invariants/` validate protocol-wide properties (shares_issued ≤ shares_authorized, index consistency).
-- See `SECURITY.md` for vulnerability reporting.
+## Architecture
 
-## PR Review Instructions
+### Hybrid Onchain/Off-chain Design
+- **Blockchain (source of truth)**: `CapTable.sol` and `CapTableFactory.sol` store authoritative transactions and active positions
+- **MongoDB + Express API** (`server/`): Mirrors onchain state via event poller, stores OCF-compliant metadata, validates input against OCF schemas
+- **Event poller** (`server/chain-operations/transactionPoller.ts`): Long-running process polls blockchain events, processes them through XState state machines (`server/state-machines/`), and syncs to MongoDB
 
-When reviewing pull requests:
+### Three-Tier Access Control
+- **ADMIN_ROLE** (asset manager wallet): Governance — grants/revokes roles. `msg.sender` of `createCapTable()` gets ADMIN. Admins are implicitly operators.
+- **OPERATOR_ROLE** (TAP server): Day-to-day operations — stock issuance, transfers, cancellations, stakeholder/stock class management.
+- **Factory owner**: Controls `UpgradeableBeacon` — can upgrade CapTable implementation for all proxies. No access to individual cap tables.
 
-1. Analyze all changes for potential issues with style, security, correctness, and best practices
-2. Check for common bugs, edge cases, and potential vulnerabilities
-3. Verify code follows the project conventions documented in this file
-4. Provide inline comments on specific lines that need attention
-5. Include a summary comment with overall feedback if applicable
+Cap table creation is permissionless via `createCapTable()` on the factory.
 
-### Review focus areas
+### Monorepo Structure
+- `chain/` — Foundry project. Solidity 0.8.30, via-ir, optimizer 200 runs. OpenZeppelin v5.4.0. Tests in `chain/test/*.t.sol`, invariants in `chain/test/invariants/`.
+- `server/` — Express API + event poller. Entry: `server/server.js` (server+poller) or `server/entry.ts` (standalone poller). Routes in `server/routes/`, Mongoose models in `server/db/objects/`, XState machines in `server/state-machines/`.
+- `app/` — Next.js 16, React 19, styled-components v6, wagmi v3 + @reown/appkit. Workspace name: `tap-app`. API calls rewritten via Next.js rewrites to `NEXT_PUBLIC_API_URL`.
+- `docs/` — Nextra docs site. Workspace name: `tap-docs`.
+- `ocf/` — Git submodule with OCF standard schemas and samples.
 
-- Solidity: access control, reentrancy, integer overflow, event emission, gas efficiency
-- Server: OCF schema validation, UUID/bytes16 conversions, scaled BigNumbers, atomic DB operations
-- Frontend: styled-components theming consistency, Next.js patterns
-- General: no hardcoded secrets, proper error handling, test coverage for new functionality
+### Data Flow
+1. API receives OCF-formatted request → validates against OCF schema
+2. Converts to Solidity structs → submits transaction to contract
+3. Contract emits events onchain
+4. Event poller picks up events → XState state machines process → updates MongoDB
+
+### Key Patterns
+- **UUID ↔ bytes16**: Use `convertUUIDToBytes16()` / `convertBytes16ToUUID()` for all contract interactions
+- **Fixed-point scaling**: Use `toScaledBigNumber(value)` for quantities/prices (1e10 precision)
+- **OCF validation**: All API inputs validated with `validateInputAgainstSchema(data, type, "object")`
+- **Atomic DB ops**: When `DATABASE_REPLSET=1`, use `withGlobalTransaction()` for multi-document operations
+- **Contract middleware**: Routes needing contract access use `contractMiddleware` (requires `issuerId` in body, attaches `req.contract` and `req.provider`)
+
+## Environment
+
+Key variables (see `.env.example`):
+- `RPC_URL`, `CHAIN_ID`, `PRIVATE_KEY` — blockchain connection
+- `DATABASE_URL`, `DATABASE_REPLSET` — MongoDB (replset=1 enables transactions)
+- `NEXT_PUBLIC_FACTORY_ADDRESS`, `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_OPERATOR_ADDRESS`, `NEXT_PUBLIC_REOWN_PROJECT_ID` — frontend config
+
+Supported networks: Anvil (31337), Plume Mainnet (98866), Plume Testnet (98867).
+
+## Conventions
+
+- **Commits**: Conventional Commits format — `feat(scope): description`, `fix(scope): description`
+- **Branching**: Never commit to `main`. Feature branches from `main`, PRs back to `main`.
+- **PR descriptions**: Must include What?, Why?, and How? sections.
+- **Solidity tests**: Prefer `.t.sol` Foundry tests over JS wrappers unless testing off-chain integration.
+- **Formatting**: 4-space indent, 150 char line width, double quotes, trailing commas (es5). Pre-commit hook runs lint-staged via husky.
+- **License split**: `chain/` is BUSL-1.1, `server/` is AGPL-3.0, `app/` is proprietary, `docs/` is MIT. Do not alter licensing without confirmation.
+- **Mixed TS/JS**: Server uses both `.js` and `.ts` files. `tsx` runs TypeScript directly without a build step.
+- **Event poller**: Known technical debt — prefer proposing migration plans over incremental fixes.
