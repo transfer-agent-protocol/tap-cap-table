@@ -11,6 +11,11 @@ export const verifyIssuerAndSeed = async (contract, id) => {
     const uuid = convertBytes16ToUUID(id);
     const issuer = await readIssuerById(uuid);
 
+    if (!issuer) {
+        console.log(`⏭️ | Issuer ${uuid} not found in DB (may be registered externally), skipping seed`);
+        return;
+    }
+
     if (!issuer.is_manifest_created) return;
 
     await initiateSeeding(uuid, contract);
