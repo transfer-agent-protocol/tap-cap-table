@@ -27,7 +27,8 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
 
     const capTableFactory = new ethers.Contract(factoryAddress, CAP_TABLE_FACTORY.abi, wallet);
 
-    const tx = await capTableFactory.createCapTable(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized));
+    // Server is msg.sender → gets ADMIN. No separate operator needed (admin is implicitly operator).
+    const tx = await capTableFactory.createCapTable(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized), "0x0000000000000000000000000000000000000000");
     await tx.wait();
 
     const capTableCount = await capTableFactory.getCapTableCount();

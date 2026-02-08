@@ -5,7 +5,7 @@ import issuerSchema from "../../ocf/schema/objects/Issuer.schema.json" with { ty
 import deployCapTable from "../chain-operations/deployCapTable.js";
 import { createIssuer } from "../db/operations/create.js";
 import { countIssuers, readIssuerById } from "../db/operations/read.js";
-import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
+import { convertBytes16ToUUID, convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const issuer = Router();
@@ -70,6 +70,47 @@ issuer.post("/create", async (req, res) => {
         console.log("✅ | Issuer created offchain:", issuer);
 
         res.status(200).send({ issuer });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
+// Register an externally-deployed cap table (e.g. from the frontend wallet flow)
+issuer.post("/register", async (req, res) => {
+    try {
+        const { id: bytes16Id, deployed_to, tx_hash, ...ocfFields } = req.body;
+
+        if (!deployed_to || !tx_hash) {
+            return res.status(400).send("deployed_to and tx_hash are required");
+        }
+
+        // Use the same ID that was sent to the contract (bytes16 → UUID)
+        // so the event poller can match the IssuerCreated event to this DB record.
+        // Falls back to a random UUID for backwards compatibility.
+        const issuerId = bytes16Id ? convertBytes16ToUUID(bytes16Id) : uuid();
+
+        const incomingIssuerToValidate = {
+            id: issuerId,
+            object_type: "ISSUER",
+            ...ocfFields,
+        };
+
+        console.log("⏳ | Issuer to validate (register)", incomingIssuerToValidate);
+
+        await validateInputAgainstOCF(incomingIssuerToValidate, issuerSchema);
+
+        const incomingIssuerForDB = {
+            ...incomingIssuerToValidate,
+            deployed_to,
+            tx_hash,
+        };
+
+        const issuerRecord = await createIssuer(incomingIssuerForDB);
+
+        console.log("✅ | Issuer registered offchain:", issuerRecord);
+
+        res.status(200).send({ issuer: issuerRecord });
     } catch (error) {
         console.error(error);
         res.status(500).send(`${error}`);
