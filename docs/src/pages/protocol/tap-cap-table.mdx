@@ -25,11 +25,51 @@ Here's where you'll find both the factory and the cap table implementation:
 	</FileTree.Folder>
 </FileTree>
 
+## Ownership & Role Model
+
+The protocol uses a three-tier access model for cap table management:
+
+- **ADMIN_ROLE** — the asset manager's wallet. This is the issuer who owns the cap table. They mint onchain cap tables, grant/revoke roles, and make governance decisions. When a cap table is created via the factory, `msg.sender` receives ADMIN.
+- **OPERATOR_ROLE** — Transfer Agent Protocol's server wallet. Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Admins are implicitly operators.
+- **Factory owner** — the protocol deployer. Controls the `UpgradeableBeacon` and can upgrade the `CapTable` implementation for all proxies via `updateCapTableImplementation()`. Has no access to individual cap tables.
+
+This separation means: **asset managers own their cap tables**, the protocol operates them, and the protocol deployer can ship upgrades to all cap tables via the beacon pattern.
+
+`createCapTable` accepts an `operator` address so the protocol server can receive `OPERATOR_ROLE` in a single transaction during creation. Pass `address(0)` to skip the operator grant.
+
+### UpgradeableBeacon Pattern
+
+The factory uses OpenZeppelin's `UpgradeableBeacon` proxy pattern:
+
+- Each cap table created via `createCapTable` is a `BeaconProxy` pointing to a shared beacon
+- The beacon stores the address of the current `CapTable` implementation
+- The factory owner can call `updateCapTableImplementation(address newImpl)` to upgrade **all** existing cap tables at once — no per-proxy migration needed
+- Individual cap table admins/operators cannot change their implementation — only the factory owner can
+
+This means the protocol can ship contract upgrades to every cap table in a single transaction.
+
+### Access Control
+
+Functions gated by `onlyOperator` (server wallet + admins):
+
+- `createStockClass`, `createStakeholder`, `createStockLegendTemplate` — structural setup
+- `issueStock`, `transferStock`, `repurchaseStock`, `retractStockIssuance`, `reissueStock`, `cancelStock` — stock lifecycle
+- `addWalletToStakeholder`, `removeWalletFromStakeholder` — wallet management
+- `mintActivePositions`, `mintSharesAuthorized` — initial seeding
+- `adjustIssuerAuthorizedShares` — post-round adjustments
+
+Functions gated by `onlyAdmin` (asset manager wallet only):
+
+- `addAdmin`, `removeAdmin` — admin role management
+- `addOperator`, `removeOperator` — operator role management
+
+The operator (Transfer Agent Protocol) handles all cap table operations, while the admin (asset manager) controls who has access.
+
 ## Factory
 
-The [CapTableFactory](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTableFactory.sol) smart contract uses OpenZeppelin's upgradeable beacon pattern to create and manage upgradeable instances of cap tables for tokenized stock records. It allows developers to update the underlying cap table implementation of all instances via the beacon. New cap table instances are created with specific initial parameters (`id`, `name`, and `initial_shares_authorized`).
+The [CapTableFactory](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTableFactory.sol) smart contract uses OpenZeppelin's upgradeable beacon pattern to create and manage upgradeable instances of cap tables for tokenized stock records. It allows developers to update the underlying cap table implementation of all instances via the beacon. New cap table instances are created with specific initial parameters (`id`, `name`, `initial_shares_authorized`, and `operator`).
 
-The contract tracks each cap table proxy created, offering a function to count the total number of cap tables managed. The contract also provides a function to retrieve the address of a cap table proxy by its index.
+The factory is **permissionless** — any wallet can call `createCapTable` and become the admin of the resulting cap table. The contract tracks each cap table proxy created, offering a function to count the total number of cap tables managed.
 
 ## Cap Table
 

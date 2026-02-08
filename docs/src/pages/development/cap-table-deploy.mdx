@@ -103,6 +103,18 @@ The `deployed_to` address is unique to your deployment—it's derived from your 
 Congratulations! You've deployed your first cap table smart contract.
 </Callout>
 
+## Alternative: Frontend Wallet Flow
+
+Instead of using the API, issuers can deploy cap tables directly from the frontend at `/mint`:
+
+1. Connect a wallet via the navigation bar
+2. Fill in the issuer details (legal name, formation date, shares authorized, etc.)
+3. Click **Mint Cap Table** — the connected wallet calls `createCapTable` on the factory
+4. The issuer's wallet becomes **ADMIN** and the protocol server wallet receives **OPERATOR** role
+5. After onchain confirmation, the frontend automatically registers the issuer in the server database via `POST /issuer/register`
+
+In this flow, the issuer pays gas and owns their cap table. The protocol server can still manage operations (create stakeholders, issue stock, etc.) as an operator.
+
 ## What's next?
 
 With your issuer created, continue with:
