@@ -33,6 +33,22 @@ The system maintains a **dual-state architecture**:
 
 **Critical**: The blockchain is the source of truth for transactions. The off-chain database mirrors this state by listening to contract events via the transaction poller.
 
+### Ownership & Role Architecture
+
+The protocol uses a three-tier access model:
+
+- **ADMIN_ROLE** (asset manager's wallet): Grants/revokes roles, manages cap table governance. When created via the factory, `msg.sender` receives ADMIN. Admins are implicitly operators (`_checkOperatorRole` checks both roles).
+- **OPERATOR_ROLE** (Transfer Agent Protocol server): Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Granted during cap table creation if an operator address is provided.
+- **Factory owner** (protocol deployer): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies via `updateCapTableImplementation()`. Has no access to individual cap tables.
+
+**Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally designate an OPERATOR address (typically the TAP server) at creation time.
+
+**Access control split:**
+- `onlyOperator` (server + admins): `createStockClass`, `createStakeholder`, `createStockLegendTemplate`, `issueStock`, `transferStock`, `repurchaseStock`, `retractStockIssuance`, `reissueStock`, `cancelStock`, `addWalletToStakeholder`, `removeWalletFromStakeholder`, `mintActivePositions`, `mintSharesAuthorized`, `adjustIssuerAuthorizedShares`
+- `onlyAdmin` (asset manager only): `addAdmin`, `removeAdmin`, `addOperator`, `removeOperator`
+
+The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `BeaconProxy`. The factory owner can upgrade all cap tables at once via `updateCapTableImplementation()`.
+
 ### Key Components
 
 **Terminology Note**: Throughout this codebase, "stakeholder" follows OCF standard terminology and specifically refers to equity holders on the cap table (those who own shares). This includes individuals (founders, employees, advisors) and institutions (VCs, investors) with equity positions.
@@ -95,12 +111,12 @@ pnpm install
 # Setup Foundry and build contracts
 pnpm setup
 
-# Start local MongoDB (via Docker)
-docker-compose up -d
+# Start all services via Docker (MongoDB, server, app)
+pnpm docker:up
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your DATABASE_URL, RPC_URL, PRIVATE_KEY, CHAIN_ID
+# Edit .env with your DATABASE_URL, RPC_URL, PRIVATE_KEY, CHAIN_ID, and NEXT_PUBLIC_* vars
 ```
 
 ### Running the Application
@@ -192,9 +208,9 @@ make test-invariant
 - **VS Code**: Install the [Aderyn Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time checks
 
 **Current Status**: 0 High, 5 Low severity findings (all acceptable):
-- L-1 (Centralization): Intentional admin-controlled design
+- L-1 (Centralization): Factory owner controls beacon upgrades — intentional design
 - L-2/L-3 (Loop issues): Acceptable for batch initialization
-- L-4 (State Change Without Event): False positives - events emitted via `TxHelper.createTx()`
+- L-4 (State Change Without Event): False positives — events emitted via `TxHelper.createTx()`
 - L-5 (Unchecked Return): OpenZeppelin's `_grantRole`/`_revokeRole` are idempotent
 
 #### Slither
@@ -300,7 +316,7 @@ tap-cap-table/
 │   └── public/         # Static assets
 ├── ocf/                # OCF standard (git submodule, workspace)
 ├── .env.example        # Environment template
-├── docker-compose.yml  # MongoDB setup
+├── docker-compose.yml  # Docker services (MongoDB, server, app)
 ├── pnpm-workspace.yaml # Workspace config
 └── package.json        # Root scripts and server dependencies
 ```
@@ -316,7 +332,7 @@ UUIDs (128-bit) are stored as `bytes16` in Solidity. Use:
 
 ### Fixed-Point Decimals
 
-Share quantities and prices use scaled BigNumbers (10^4 precision):
+Share quantities and prices use scaled BigNumbers (1e10 precision):
 
 - `toScaledBigNumber(value)` to convert before contract calls
 - Always scale quantities and prices in transaction parameters
@@ -365,6 +381,11 @@ The system supports multiple environments via `.env` files:
 - `CHAIN_ID`: Network chain ID (31337 for Anvil, 98866 for Plume Mainnet, 98867 for Plume Testnet)
 - `PRIVATE_KEY`: Deployer private key
 - `PORT`: API server port (default 8293)
+- `NEXT_PUBLIC_REOWN_PROJECT_ID`: WalletConnect project ID from https://cloud.reown.com
+- `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
+- `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
+- `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Server wallet address to receive OPERATOR_ROLE on new cap tables
 
 ## Working with OCF
 
@@ -443,7 +464,7 @@ If you encounter "Source file requires different compiler version" errors in VS 
 
 ## Foundry (Solidity)
 
-- **Compiler**: Solidity 0.8.24
+- **Compiler**: Solidity 0.8.30
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
 - **Tests**: Use `forge test` with optional filters: `--match-test`, `--match-contract`
@@ -456,7 +477,7 @@ Libraries:
 
 **Recent Migration (Oct 2025)**:
 - Migrated from OpenZeppelin v4.9.2 to v5.4.0
-- Updated Solidity from 0.8.20 to 0.8.24 (required for OZ v5)
+- Updated Solidity from 0.8.20 to 0.8.30 (required for OZ v5)
 - Breaking changes addressed:
   - `Ownable` constructor now requires `initialOwner` parameter
   - `UpgradeableBeacon` constructor includes owner parameter

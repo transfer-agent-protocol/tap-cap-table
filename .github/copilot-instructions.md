@@ -26,15 +26,16 @@ Use `pnpm --filter <package>` when targeting a workspace package.
 
 ## Development workflows & gotchas
 - Local blockchain: many workflows expect a Foundry `anvil` node. The README notes you must run `anvil` and copy a private key into `.env` for local testing.
-- `pnpm setup` runs `foundryup` and a `forge build --via-ir` (see top-level `package.json` scripts). Foundry uses `via_ir` and `solc_version = '0.8.24'` (see [chain/foundry.toml](chain/foundry.toml)).
+- `pnpm setup` runs `foundryup` and a `forge build --via-ir` (see top-level `package.json` scripts). Foundry uses `via_ir` and `solc_version = '0.8.30'` (see [chain/foundry.toml](chain/foundry.toml)).
 - Server process in production uses `tsx server/server.js` (`prod` script). The poller uses [server/entry.ts](server/entry.ts) for long-running event processing; flags: `--finalized-only`.
 - Tests: Solidity tests live under `chain/test` and are run with `forge test`. JS/TS unit tests are not present in root — prioritize Foundry tests for contract logic.
 
 Additional test notes: `WARP.md` documents JS unit/integration test locations under `server/tests/` and how to run filtered Foundry tests (e.g., `cd chain && forge test --match-test testStockIssuance`).
 
 ## Project-specific conventions
+- **Role architecture**: ADMIN_ROLE (asset manager's wallet) handles governance — mints cap tables, grants/revokes roles. OPERATOR_ROLE (Transfer Agent Protocol server) handles operations — creates stock classes, stakeholders, issues/transfers/cancels stock. Factory owner controls the UpgradeableBeacon for implementation upgrades. See `WARP.md` for the full access control split.
 - Monorepo package names: `tap-app` (frontend), `tap-docs` (docs), etc. Use `pnpm --filter` to target them.
-- Smart contract tests are Solidity-based (`.t.sol`) using Forge. Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
+- Smart contract tests are Solidity-based (`.t.sol`) using Forge (62 tests). Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
 - The project uses `tsx` to run TypeScript files without a separate build step in dev; be careful when editing runtime entry files (server/server.js vs entry.ts).
 - License split is intentional: `chain/` is BUSL-1.1, `server/` AGPL-3.0, `app/` proprietary. Avoid changes that would alter licensing without confirmation.
 
@@ -47,7 +48,7 @@ Security & reporting: See `SECURITY.md`. If you find a vulnerability, do not ope
 
 Patterns to preserve (from `WARP.md`):
 - UUID <-> `bytes16` conversions: use provided helpers before contract calls.
-- Fixed-point scaling: use `toScaledBigNumber(value)` for quantities/prices (10^4 precision).
+- Fixed-point scaling: use `toScaledBigNumber(value)` for quantities/prices (1e10 precision).
 - OCF schema validation is authoritative for API inputs; reference `ocf/` schemas.
 - When `DATABASE_REPLSET=1`, use `withGlobalTransaction()` for atomic DB operations.
 - Event poller is critical: without it, onchain events won't sync to MongoDB. Poller can run via `server/entry.ts` with `--finalized-only`.
