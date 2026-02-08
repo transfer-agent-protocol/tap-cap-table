@@ -31,7 +31,7 @@
         "wagmi": "3.4.2"
     },
     "devDependencies": {
-        "@types/node": "^22.0.0",
+        "@types/node": "^25.2.2",
         "@types/react": "^19.1.0",
         "@types/react-dom": "^19.1.0",
         "@wagmi/cli": "^2.9.0",
