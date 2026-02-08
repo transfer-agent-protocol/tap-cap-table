@@ -8,6 +8,12 @@ const theme: DefaultTheme = {
 		accent: "#FFD700",
 		text: "#0C0B0C",
 		outline: "#11202D",
+		success: "#16a34a",
+		successBg: "rgba(22, 163, 74, 0.08)",
+		error: "#dc2626",
+		errorBg: "rgba(220, 38, 38, 0.08)",
+		pending: "#d97706",
+		pendingBg: "rgba(217, 119, 6, 0.08)",
 	},
 	fontSizes: {
 		H1: "2rem",
