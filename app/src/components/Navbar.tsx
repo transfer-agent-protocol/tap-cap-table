@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import dynamic from "next/dynamic";
 import { Nav } from "./wrappers";
-import { LogoRouter, StyledA } from "./buttons";
+import { LogoRouter, StyledA, WalletButtonStyled } from "./buttons";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -14,7 +14,10 @@ const NavActions = styled.span`
 `;
 
 // Client-only: useAppKit requires createAppKit to have been called (client-side only)
-const WalletButton = dynamic(() => import("./WalletButton"), { ssr: false });
+const WalletButton = dynamic(() => import("./WalletButtonClient"), {
+	ssr: false,
+	loading: () => <WalletButtonStyled>Connect Wallet</WalletButtonStyled>,
+});
 
 export default function Navbar() {
 	const { pathname } = useRouter();

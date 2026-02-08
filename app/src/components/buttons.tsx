@@ -67,4 +67,56 @@ const PrimaryButton = styled.button`
     }
 `;
 
-export { LogoRouter, StyledA, PrimaryButton }
+const WalletButtonStyled = styled.button`
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: center;
+	align-items: center;
+	background: ${({ theme }) => theme.colors.main};
+	height: 2.25rem;
+	padding: 0 1rem;
+	margin-left: 1rem;
+	border: none;
+	border-radius: 0;
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-weight: bold;
+	font-family: inherit;
+	color: ${({ theme }) => theme.colors.background};
+	cursor: pointer;
+	transition: opacity 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
+	white-space: nowrap;
+
+	&:hover {
+		opacity: 0.85;
+	}
+`;
+
+const MintButton = styled.button`
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: center;
+	align-items: center;
+	background: ${({ theme }) => theme.colors.main};
+	width: 100%;
+	height: 3rem;
+	margin-top: 1rem;
+	border: none;
+	border-radius: 4px;
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-weight: bold;
+	font-family: inherit;
+	color: ${({ theme }) => theme.colors.background};
+	cursor: pointer;
+	transition: all 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
+
+	&:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+`;
+
+export { LogoRouter, StyledA, PrimaryButton, WalletButtonStyled, MintButton }
