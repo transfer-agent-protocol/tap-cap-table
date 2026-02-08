@@ -9,6 +9,12 @@ declare module "styled-components" {
             text: string;
             accent: string;
             outline: string;
+            success: string;
+            successBg: string;
+            error: string;
+            errorBg: string;
+            pending: string;
+            pendingBg: string;
         };
         fontSizes: {
             H1: string;

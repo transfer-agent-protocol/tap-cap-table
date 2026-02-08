@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
 import { CapTableTest } from "./CapTable.t.sol";
 import { StockTransferParams } from "../src/lib/Structs.sol";
@@ -54,10 +54,10 @@ contract RolesTests is CapTableTest {
         );
     }
 
-    function testNotAdminReverting() public {
+    function testNotOperatorReverting() public {
         vm.prank(RANDO_ADDR);
 
-        vm.expectRevert("Does not have admin role");
+        vm.expectRevert("Does not have operator role");
         // Safe: Test data - simple stakeholder ID (string literal fits in bytes16)
         // forge-lint: disable-next-line(unsafe-typecast)
         capTable.createStakeholder(bytes16("0101"), "Individual", "Investor");

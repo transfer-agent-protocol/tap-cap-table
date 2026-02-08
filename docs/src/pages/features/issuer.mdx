@@ -46,6 +46,17 @@ This is the very first thing to be created - issuer with the `issuerId`. To crea
 }
 ````
 
+## `issuer/register`
+
+- **Description**: Registers an externally-deployed cap table in the database. Used when the frontend wallet deploys the cap table directly onchain, and only the database record needs to be created.
+- **Method**: `POST`
+- **Parameters** (body): Same OCF fields as `issuer/create`, plus:
+  - `id`: The bytes16 ID used in the contract call (string, e.g. `0x8176c3c2abfb4c0f856ddbc59b64b54a`). The server converts this to UUID format so the event poller can match the `IssuerCreated` event to the database record. If omitted, a random UUID is generated.
+  - `deployed_to`: The contract address of the deployed cap table (string).
+  - `tx_hash`: The deployment transaction hash (string).
+
+This endpoint validates the OCF data the same way `issuer/create` does, but does **not** deploy a cap table onchain — it only creates the database record.
+
 ## `issuer/id/:id`
 
 - **Description**: Retrieves details of an issuer by ID. For example, if the server generated `b6ca9d9c-1daa-4b30-830b-444561ef7806` as the `issuerId`, you'll use this ID for all subsequent API calls to manage this issuer's cap table.

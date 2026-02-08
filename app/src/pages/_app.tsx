@@ -1,14 +1,14 @@
+import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
 import type { NextPage } from 'next';
 import Head from "next/head";
-import { useEffect } from "react";
 import { ThemeProvider } from "styled-components";
 import theme from "../components/theme";
 import GlobalStyle from "../components/globalstyle";
 import { IBM_Plex_Mono } from 'next/font/google';
-import TagManager from "react-gtm-module";
 
 import Layout from "../components/layout";
+import Web3Provider from "../config/Web3Provider";
 
 // Configure our font object
 const plex = IBM_Plex_Mono({
@@ -22,11 +22,29 @@ const plex = IBM_Plex_Mono({
 });
 
 export default function App({ Component, pageProps }: AppProps & { Component: NextPage<any> }) {
+	// Suppress unhandled rejections from wallet SDK analytics blocked by ad blockers
+	useEffect(() => {
+	const handler = (e: PromiseRejectionEvent) => {
+			const msg = e.reason?.message || String(e.reason || "");
+			if (
+				msg.includes("Failed to fetch") ||
+				msg.includes("ERR_BLOCKED_BY_CLIENT") ||
+				msg.includes("AnalyticsSDK") ||
+				msg.includes("pulse.walletconnect")
+			) {
+				e.preventDefault();
+			}
+		};
+		window.addEventListener("unhandledrejection", handler);
+		return () => window.removeEventListener("unhandledrejection", handler);
+	}, []);
+
 	return (
-		<ThemeProvider theme={theme}>
-			<GlobalStyle />
-			<Layout className={plex.className}>
-				<Head>
+		<Web3Provider>
+			<ThemeProvider theme={theme}>
+				<GlobalStyle />
+				<Layout className={plex.className}>
+					<Head>
 					<meta charSet="utf-8" />
 					<meta httpEquiv="X-UA-Compatible" content="IE=edge" />
 					<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,user-scalable=yes" />
@@ -63,8 +81,9 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 					<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
 				</Head>
-				<Component {...pageProps} />
-			</Layout>
-		</ThemeProvider>
+					<Component {...pageProps} />
+				</Layout>
+			</ThemeProvider>
+		</Web3Provider>
 	);
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
 import { Test } from "forge-std/Test.sol";
 import { CapTable } from "../../src/CapTable.sol";
@@ -24,7 +24,7 @@ contract CapTableInvariants is Test {
         factory = new CapTableFactory(address(implementation));
 
         // Create a cap table via factory
-        address capTableAddr = factory.createCapTable(issuerId, "Test Issuer Inc.", initialSharesAuthorized);
+        address capTableAddr = factory.createCapTable(issuerId, "Test Issuer Inc.", initialSharesAuthorized, address(0));
         capTable = CapTable(capTableAddr);
 
         // Deploy handler

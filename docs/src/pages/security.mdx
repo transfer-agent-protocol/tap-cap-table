@@ -11,7 +11,7 @@
 | Aderyn | 0 | 0 | 5 | ✅ All acceptable |
 | Slither | 0 | 0 | 3 | ✅ All acceptable |
 | Invariant Tests | - | - | - | ✅ 7 passing |
-| Unit Tests | - | - | - | ✅ 45 passing |
+| Unit Tests | - | - | - | ✅ 62 passing |
 
 ## Tools
 
@@ -31,7 +31,7 @@ Stateful fuzzing for core accounting rules (256 runs / 50 depth).
 - Stock class authorized never exceeds issuer authorized
 
 ### Unit Tests
-45 tests covering core flows, edge cases, access control, factory logic. All passing.
+62 tests covering core flows, edge cases, access control, factory logic, and operator role verification. All passing.
 
 → [Full test overview](/tests)
 
@@ -39,7 +39,7 @@ Stateful fuzzing for core accounting rules (256 runs / 50 depth).
 
 | Command | Description |
 |---------|-------------|
-| `make test` | Run all unit tests (45 tests) |
+| `make test` | Run all unit tests (62 tests) |
 | `make test-invariant` | Short invariant fuzz (256 runs, 50 depth) |
 | `make test-invariant-deep` | Deep invariant fuzz (2000 runs, 100 depth) |
 | `make aderyn` | Run Aderyn → `report.md` |
