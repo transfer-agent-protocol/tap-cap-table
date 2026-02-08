@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.24;
+pragma solidity 0.8.30;
 
 import { InitialShares, StockParams, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
@@ -19,7 +19,8 @@ interface ICapTable {
     function OPERATOR_ROLE() external returns (bytes32);
 
     /// @notice Initializer for the CapTable, sets access control and initializes issuer struct.
-    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external;
+    /// @param operator Address to grant OPERATOR_ROLE (pass address(0) to skip)
+    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin, address operator) external;
 
     function mintActivePositions(
         bytes16[] calldata stakeholderIds,

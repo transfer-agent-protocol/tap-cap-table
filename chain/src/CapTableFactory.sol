@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.24;
+pragma solidity 0.8.30;
 
 import { UpgradeableBeacon } from "openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BeaconProxy } from "openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -18,10 +18,10 @@ contract CapTableFactory is ICapTableFactory, Ownable {
         capTableBeacon = new UpgradeableBeacon(capTableImplementation, address(this));
     }
 
-    function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized) external onlyOwner returns (address) {
+    function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized, address operator) external returns (address) {
         require(id != bytes16(0) && initial_shares_authorized != 0, "Invalid issuer params");
 
-        bytes memory initializationData = abi.encodeCall(ICapTable.initialize, (id, name, initial_shares_authorized, msg.sender));
+        bytes memory initializationData = abi.encodeCall(ICapTable.initialize, (id, name, initial_shares_authorized, msg.sender, operator));
         BeaconProxy capTableProxy = new BeaconProxy(address(capTableBeacon), initializationData);
         capTableProxies.push(address(capTableProxy));
         emit CapTableCreated(address(capTableProxy));

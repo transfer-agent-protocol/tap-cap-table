@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.24;
+pragma solidity 0.8.30;
 
 import { AccessControlDefaultAdminRulesUpgradeable } from "openzeppelin-upgradeable/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 
@@ -57,12 +57,17 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin) external initializer {
+    function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin, address operator) external initializer {
         __AccessControlDefaultAdminRules_init(0 seconds, admin);
         // slither-disable-next-line unused-return
         _grantRole(ADMIN_ROLE, admin);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
+
+        if (operator != address(0)) {
+            // slither-disable-next-line unused-return
+            _grantRole(OPERATOR_ROLE, operator);
+        }
 
         issuer = Issuer({
             id: id,
@@ -92,7 +97,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function mintSharesAuthorized(InitialShares calldata params) external override {
+    function mintSharesAuthorized(InitialShares calldata params) external override onlyOperator {
         require(
             params.issuerInitialShares.shares_authorized > 0 &&
                 params.issuerInitialShares.shares_issued > 0 &&
@@ -123,7 +128,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         uint256[] calldata quantities,
         uint256[] calldata sharePrices,
         uint40[] calldata timestamps
-    ) external override onlyAdmin {
+    ) external override onlyOperator {
         require(
             stakeholderIds.length == securityIds.length &&
                 securityIds.length == stockClassIds.length &&
@@ -151,7 +156,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external override onlyAdmin {
+    function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external override onlyOperator {
         _checkStakeholderExists(_id);
 
         stakeholders.push(Stakeholder({
@@ -169,7 +174,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         string memory _class_type,
         uint256 _price_per_share,
         uint256 _initial_share_authorized
-    ) external override onlyAdmin {
+    ) external override onlyOperator {
         _checkStockClassExists(_id);
 
         stockClasses.push(StockClass({
@@ -185,7 +190,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     /// @inheritdoc ICapTable
     // Basic functionality of Stock Legend Template, unclear how it ties to active positions.
-    function createStockLegendTemplate(bytes16 _id) external override onlyAdmin {
+    function createStockLegendTemplate(bytes16 _id) external override onlyOperator {
         stockLegendTemplates.push(StockLegendTemplate({ id: _id }));
         emit StockLegendTemplateCreated(_id);
     }
