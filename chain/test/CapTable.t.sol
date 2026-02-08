@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
 import { Test } from "forge-std/Test.sol";
 import { CapTable } from "../src/CapTable.sol";
@@ -18,7 +18,7 @@ contract CapTableTest is Test {
 
         factory = new CapTableFactory(address(capTableImplementation));
 
-        capTable = CapTable(factory.createCapTable(issuerId, issuerName, issuerInitialSharesAuthorized));
+        capTable = CapTable(factory.createCapTable(issuerId, issuerName, issuerInitialSharesAuthorized, address(0)));
     }
 
     // HELPERS //
@@ -26,7 +26,7 @@ contract CapTableTest is Test {
     function createPranksterAndExpectRevert() public {
         address prankster = address(0);
         vm.prank(prankster);
-        vm.expectRevert("Does not have admin role");
+        vm.expectRevert("Does not have operator role");
     }
 
     function createStockClassAndStakeholder(uint256 stockClassInitialSharesAuthorized) public returns (bytes16, bytes16) {
