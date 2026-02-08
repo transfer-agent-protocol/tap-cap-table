@@ -89,15 +89,19 @@ If anything above is unclear or you'd like me to include extra examples (PR chec
 	- `pnpm install --frozen-lockfile`
 	- `pnpm lint` (root, docs, app) and `pnpm --filter tap-app typecheck`
 - Dependabot (`.github/dependabot.yml`) keeps deps updated for root and `app/` workspaces and GH Actions.
-- PR review workflow (`.github/workflows/review-pr.yml`) runs a Warp agent (`warpdotdev/warp-agent-action`) to auto-review new PRs:
-	- Automatically posts inline comments on PR diffs for potential issues
-	- Provides general summary comments with overall feedback
-	- Checks style, security, correctness, and project conventions
-	- Requires `secrets.WARP_AGENT_API_KEY` and `pull-requests: write` permission
+- Claude Code Review (`.github/workflows/claude-code-review.yml`) auto-reviews PRs opened by `ThatAlexPalmer` using Claude Opus 4.6:
+	- Uses the `code-review` plugin from `anthropics/claude-code`
+	- Automatically posts inline comments and summary feedback
+	- Checks style, security, correctness, and project conventions per `CLAUDE.md`
+	- Requires `secrets.ANTHROPIC_API_KEY` and `pull-requests: write` permission
+	- Skips dependabot and other bot PRs
+- Claude interactive assistant (`.github/workflows/claude.yml`) responds to `@claude` mentions in issues and PR comments:
+	- Can answer questions, implement code changes, and review on demand
+	- Uses Claude Opus 4.6 model
 
 ## Agent/tooling preferences
-- Owner preference: Claude Opus 4.5 for high-level reasoning and design; GPT-4.2 or Grok Code acceptable for heavy codegen or large-context analysis. Document model choice in PR descriptions when an agent (or human) made substantive code changes.
-- Warp: The repo includes a Warp review action. When using Warp for automated code changes, ensure the generated commits follow the PR checklist above and note the Warp run in the PR body.
+- Owner preference: Claude Opus 4.6 for high-level reasoning, design, and PR reviews. Document model choice in PR descriptions when an agent (or human) made substantive code changes.
+- Claude: The repo uses Claude Code GitHub Actions for automated PR review and interactive assistance. Claude reads `CLAUDE.md` at the repo root for project context and review guidelines.
 
 ## Notes & TODOs
 - Poller: the onchain `event poller` (in `server/chain-operations/transactionPoller.ts` / `server/entry.ts`) is known technical debt and should be replaced soon — prefer proposing a migration plan rather than incremental fixes.
