@@ -24,9 +24,14 @@ const plex = IBM_Plex_Mono({
 export default function App({ Component, pageProps }: AppProps & { Component: NextPage<any> }) {
 	// Suppress unhandled rejections from wallet SDK analytics blocked by ad blockers
 	useEffect(() => {
-		const handler = (e: PromiseRejectionEvent) => {
+	const handler = (e: PromiseRejectionEvent) => {
 			const msg = e.reason?.message || String(e.reason || "");
-			if (msg.includes("Failed to fetch") || msg.includes("ERR_BLOCKED_BY_CLIENT")) {
+			if (
+				msg.includes("Failed to fetch") ||
+				msg.includes("ERR_BLOCKED_BY_CLIENT") ||
+				msg.includes("AnalyticsSDK") ||
+				msg.includes("pulse.walletconnect")
+			) {
 				e.preventDefault();
 			}
 		};

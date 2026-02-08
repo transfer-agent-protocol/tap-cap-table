@@ -1,5 +1,5 @@
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { createAppKit } from "@reown/appkit";
+import { createAppKit } from "@reown/appkit/react";
 import { type AppKitNetwork } from "@reown/appkit/networks";
 
 // Plume Mainnet (98866)
@@ -47,7 +47,13 @@ const networks: [AppKitNetwork, ...AppKitNetwork[]] = [plumeMainnet, plumeTestne
 export const wagmiAdapter = new WagmiAdapter({
 	networks,
 	projectId,
+	ssr: true,
 });
+
+// Wallet IDs (Reown explorer)
+const RABBY = "18388be9ac2d02726dbac9777c96efaac06d744b2f6d580fccdd4127a6d01fd1";
+const ZERION = "ecc4036f814562b41a5268adc86270fba1365471402006302e70169465b7ac18";
+const BINANCE = "8a0ee50d1f22f6651afcae7eb4253e52a3310b90af5daef78a8c4929a9bb99d4";
 
 if (typeof window !== "undefined") {
 	createAppKit({
@@ -60,8 +66,21 @@ if (typeof window !== "undefined") {
 			url: "https://transferagentprotocol.xyz",
 			icons: ["/tap-logo.svg"],
 		},
+		featuredWalletIds: [RABBY, ZERION],
+		excludeWalletIds: [BINANCE],
+		allWallets: "HIDE",
+		themeMode: "light" as const,
+		themeVariables: {
+			"--w3m-accent": "#0C0B0C",
+			"--w3m-color-mix": "#0C0B0C",
+			"--w3m-color-mix-strength": 0,
+			"--w3m-border-radius-master": "0px",
+			"--w3m-font-family": "inherit",
+		},
 		features: {
 			analytics: false,
+			email: false,
+			socials: false,
 		},
 	});
 }

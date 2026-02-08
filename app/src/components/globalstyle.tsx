@@ -60,6 +60,7 @@ button:focus {
 	background: ${({ theme }) => theme.colors.main};
 	color: ${({ theme }) => theme.colors.background};
   }
+
 `;
 
 export default GlobalStyle;

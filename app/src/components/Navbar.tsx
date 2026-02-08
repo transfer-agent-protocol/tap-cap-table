@@ -1,8 +1,10 @@
 import styled from "styled-components";
+import dynamic from "next/dynamic";
 import { Nav } from "./wrappers";
 import { LogoRouter, StyledA } from "./buttons";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 const NavActions = styled.span`
 	display: flex;
@@ -11,13 +13,13 @@ const NavActions = styled.span`
 	gap: 0.25rem;
 `;
 
-const WalletWrapper = styled.div`
-	display: flex;
-	align-items: center;
-	padding-left: 1rem;
-`;
+// Client-only: useAppKit requires createAppKit to have been called (client-side only)
+const WalletButton = dynamic(() => import("./WalletButton"), { ssr: false });
 
 export default function Navbar() {
+	const { pathname } = useRouter();
+	const showWallet = pathname === "/mint";
+
 	return (
 		<Nav>
 			<LogoRouter>
@@ -32,11 +34,8 @@ export default function Navbar() {
 				<StyledA>
 					<Link href="https://github.com/transfer-agent-protocol/tap-cap-table" target="_blank">Github</Link>
 				</StyledA>
-				<WalletWrapper>
-				{/* @ts-expect-error — Reown web component */}
-					<appkit-button size="sm" />
-				</WalletWrapper>
+				{showWallet && <WalletButton />}
 			</NavActions>
 		</Nav>
 	);
-};
+}
