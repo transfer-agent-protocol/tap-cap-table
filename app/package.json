@@ -13,22 +13,30 @@
         "typecheck:watch": "pnpm run typecheck -- --watch",
         "start:ci": "INSECURE_AUTH=true pnpm run start",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
-        "lint": "next lint"
+        "lint": "eslint src/",
+        "generate:wagmi": "wagmi generate"
     },
     "dependencies": {
-        "next": "^15.5.9",
+        "@reown/appkit": "^1.8.17",
+        "@reown/appkit-adapter-wagmi": "^1.8.17",
+        "@tanstack/react-query": "^5.90.20",
+        "@wagmi/core": "^3.3.2",
+        "next": "^16.1.6",
         "next-sitemap": "^4.2.3",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "react-gtm-module": "^2.0.11",
-        "styled-components": "^6.3.8"
+        "styled-components": "^6.3.8",
+        "viem": "^2.45.1",
+        "wagmi": "3.4.2"
     },
     "devDependencies": {
         "@types/node": "^22.0.0",
         "@types/react": "^19.1.0",
         "@types/react-dom": "^19.1.0",
-        "eslint": "^8.57.0",
-        "eslint-config-next": "^15.5.9",
+        "@wagmi/cli": "^2.9.0",
+        "eslint": "^9.37.0",
+        "eslint-config-next": "^16.1.6",
         "eslint-config-prettier": "^9.1.0",
         "prettier": "^3.4.0",
         "typescript": "^5.7.0"
