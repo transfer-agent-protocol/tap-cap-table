@@ -69,7 +69,7 @@ We welcome all contributions. Please give a quick read to our [CONTRIBUTING](./C
 This project uses a multi-license structure:
 
 - **Core Protocol** (`chain/`): [BUSL-1.1](LICENSE) (converts to AGPLv3 on January 1, 2028)
-- **API Server** (`server/`): [AGPL-3.0](LICENSE-AGPL)
+- **API Server** (`server/`): [AGPL-3.0](server/LICENSE)
 - **Frontend** (`app/`): Proprietary
 - **Documentation** (`docs/`): MIT
 
