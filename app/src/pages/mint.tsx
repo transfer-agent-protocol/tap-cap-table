@@ -302,11 +302,7 @@ export default function MintPage() {
 	return (
 		<>
 			<H2>Mint Cap Table</H2>
-			<StatusBox $variant="pending">
-				This feature is not live yet — the hosted server and database are not deployed.
-				Do not use, this will fail. But thanks for paying attention to development.
-			</StatusBox>
-			<P>Deploy a new cap table onchain. Connect your wallet to begin.</P>
+			<P>Deploy a new cap table onchain using your connected wallet. This feature is not yet live, this is dev only preview. The server is not yet deployed so if you do this, it will fail. Thanks for paying attention to development.</P>
 
 			<MintLayout>
 				{/* Left: Form */}

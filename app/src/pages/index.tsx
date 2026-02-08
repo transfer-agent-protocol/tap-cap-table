@@ -12,7 +12,6 @@ export default function Home() {
 				<a href="https://paragraph.com/@thatalexpalmer/rwa-tokenization-protocol-stack-1" target="_blank" rel="noopener">Read why this exists</a>
 				
 			</Heading>
-			<Link href="/mint"><P>Mint a cap table →</P></Link>
 			<H2>
 				Demo Deployments:
 			</H2>
