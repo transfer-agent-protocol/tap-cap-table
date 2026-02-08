@@ -3,7 +3,19 @@ name: Security
 on:
     push:
         branches: [main]
+        paths:
+            - 'chain/src/**/*.sol'
+            - 'chain/test/**/*.sol'
+            - 'chain/script/**/*.sol'
+            - 'chain/foundry.toml'
+            - 'slither.config.json'
     pull_request:
+        paths:
+            - 'chain/src/**/*.sol'
+            - 'chain/test/**/*.sol'
+            - 'chain/script/**/*.sol'
+            - 'chain/foundry.toml'
+            - 'slither.config.json'
 
 jobs:
     slither:
