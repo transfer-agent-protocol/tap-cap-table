@@ -118,6 +118,28 @@ Something bad happened to the wallet? Does the stakeholder want to use another o
 - **Parameters** (URL):
   - `id`: The ID of the stakeholder (string).
 
+## `stakeholder/issuer_assigned_id/:id`
+
+- **Description**: Looks up a stakeholder by the issuer-assigned ID stored in the database.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `id`: The issuer-assigned ID of the stakeholder (string).
+
+## `stakeholder/issuer/:issuerId/issuer_assigned_id/:id`
+
+- **Description**: Looks up a stakeholder by issuer-assigned ID, scoped to a specific issuer.
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `issuerId`: The ID of the issuer (string).
+  - `id`: The issuer-assigned ID of the stakeholder (string).
+
+## `stakeholder/wallet/:address`
+
+- **Description**: Retrieves a stakeholder by their wallet address (onchain lookup).
+- **Method**: `GET`
+- **Parameters** (URL):
+  - `address`: The wallet address associated with the stakeholder (string).
+
 ## `stakeholder/total-number`
 
 - **Description**: Retrieves the total number of stakeholders.

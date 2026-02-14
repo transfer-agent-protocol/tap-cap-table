@@ -52,6 +52,94 @@
     - `comments`: Additional comments (array of strings).
     - `custom_id`: A custom ID for the issuance (string).
 
+## `transactions/cancel/stock`
+
+- **Description**: Records a stock cancellation transaction.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock cancellation data (object with the following fields):
+    - `stakeholderId`: The ID of the stakeholder (string).
+    - `stockClassId`: The ID of the stock class (string).
+    - `quantity`: The number of shares to cancel (string).
+    - `reason_text`: The reason for cancellation (string).
+    - `comments`: Additional comments (array of strings).
+
+## `transactions/retract/stock`
+
+- **Description**: Records a stock retraction transaction. Retracts a previously issued stock position.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock retraction data (object with the following fields):
+    - `stakeholderId`: The ID of the stakeholder (string).
+    - `stockClassId`: The ID of the stock class (string).
+    - `security_id`: The security ID of the position to retract (string).
+    - `reason_text`: The reason for retraction (string).
+    - `comments`: Additional comments (array of strings).
+
+## `transactions/reissue/stock`
+
+- **Description**: Records a stock reissuance transaction. Reissues a previously retracted or cancelled stock position.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock reissuance data (object with the following fields):
+    - `stakeholderId`: The ID of the stakeholder (string).
+    - `stockClassId`: The ID of the stock class (string).
+    - `resulting_security_ids`: List of new security IDs created by the reissuance (array of strings).
+    - `security_id`: The original security ID being reissued (string).
+    - `comments`: Additional comments (array of strings).
+
+## `transactions/repurchase/stock`
+
+- **Description**: Records a stock repurchase transaction.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock repurchase data (object with the following fields):
+    - `stakeholderId`: The ID of the stakeholder (string).
+    - `stockClassId`: The ID of the stock class (string).
+    - `quantity`: The number of shares to repurchase (string).
+    - `price`: The repurchase price per share (object with `currency` and `amount`).
+    - `security_id`: The security ID of the position being repurchased (string).
+    - `comments`: Additional comments (array of strings).
+
+## `transactions/accept/stock`
+
+- **Description**: Records a stock acceptance transaction. Marks a stock position as accepted by the stakeholder.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The stock acceptance data (object with the following fields):
+    - `stakeholderId`: The ID of the stakeholder (string).
+    - `stockClassId`: The ID of the stock class (string).
+    - `security_id`: The security ID of the position being accepted (string).
+    - `comments`: Additional comments (array of strings).
+
+## `transactions/adjust/issuer/authorized-shares`
+
+- **Description**: Adjusts the total authorized shares for an issuer.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The adjustment data (object with the following fields):
+    - `issuer_id`: The ID of the issuer (string).
+    - `new_shares_authorized`: The new total authorized shares (string).
+    - `comments`: Additional comments (array of strings).
+
+## `transactions/adjust/stock-class/authorized-shares`
+
+- **Description**: Adjusts the authorized shares for a specific stock class.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
+  - `data`: The adjustment data (object with the following fields):
+    - `stockClassId`: The ID of the stock class (string).
+    - `stock_class_id`: The OCF stock class ID (string).
+    - `new_shares_authorized`: The new authorized shares for the stock class (string).
+    - `comments`: Additional comments (array of strings).
+
 ## `transactions/issuance/convertible`
 
 - **Description**: Records a convertible issuance transaction.

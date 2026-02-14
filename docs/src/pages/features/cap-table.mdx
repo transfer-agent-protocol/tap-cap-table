@@ -1,0 +1,15 @@
+# Cap Table Routes
+
+Routes for querying aggregated cap table data across stakeholders and stock classes.
+
+## `cap-table/holdings/stock`
+
+- **Description**: Returns current stock holdings for all stakeholders on a cap table. This is a hybrid query that reads issuance records from the database and verifies active positions onchain via `getAveragePosition`. Only positions with a non-zero onchain quantity are returned.
+- **Method**: `GET`
+- **Parameters** (query):
+  - `issuerId`: The ID of the issuer whose cap table to query (string).
+
+**Response** includes:
+- `holdings`: Array of active positions, each containing `stockClass`, `stakeholder`, `quantity`, `sharePrice`, and `timestamp`.
+- `stockClasses`: All stock classes for the issuer.
+- `issuer`: The issuer record.
