@@ -185,8 +185,7 @@ export function useMintIssuer(): UseMintIssuerReturn {
 				setIsRegistering(false);
 			}
 		})();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [receipt, txHash]);
+	}, [receipt, txHash]); // intentionally limited deps — runs only when receipt/txHash change
 
 	return {
 		isConnected,
