@@ -1,0 +1,18 @@
+# Factory Routes
+
+The factory is the entry point for deploying and tracking cap table contracts. Once a `CapTableFactory` is deployed, its address and the underlying implementation address need to be registered with the server so it can track new cap tables.
+
+## `factory/register`
+
+- **Description**: Registers the factory and implementation contract addresses in the database. This is called after deploying the `CapTableFactory` contract so the server knows where to look for new cap table creation events.
+- **Method**: `POST`
+- **Parameters** (body):
+  - `factory_address`: The deployed CapTableFactory contract address (string).
+  - `implementation_address`: The CapTable implementation contract address used by the beacon (string).
+
+````json
+{
+    "factory_address": "<YOUR_FACTORY_ADDRESS>",
+    "implementation_address": "<YOUR_IMPLEMENTATION_ADDRESS>"
+}
+````
