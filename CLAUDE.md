@@ -13,8 +13,6 @@ Transfer Agent Protocol (TAP) Cap Table — onchain cap table implementing the [
 pnpm install                    # Install all workspace deps
 pnpm setup                      # foundryup + forge build --via-ir
 pnpm test                       # Solidity tests (cd chain && forge test)
-pnpm test-js                    # JS unit tests
-pnpm test-js-integration        # JS integration tests
 cd chain && forge test --match-test testStockIssuance  # Single Solidity test
 make test-invariant             # Invariant fuzzing (256 runs, 50 depth)
 make test-invariant-deep        # Deep invariant fuzzing (2000 runs, 100 depth)

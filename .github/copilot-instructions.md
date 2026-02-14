@@ -30,12 +30,12 @@ Use `pnpm --filter <package>` when targeting a workspace package.
 - Server process in production uses `tsx server/server.js` (`prod` script). The poller uses [server/entry.ts](server/entry.ts) for long-running event processing; flags: `--finalized-only`.
 - Tests: Solidity tests live under `chain/test` and are run with `forge test`. JS/TS unit tests are not present in root — prioritize Foundry tests for contract logic.
 
-Additional test notes: `WARP.md` documents JS unit/integration test locations under `server/tests/` and how to run filtered Foundry tests (e.g., `cd chain && forge test --match-test testStockIssuance`).
+Additional test notes: `WARP.md` documents filtered Foundry test usage (e.g., `cd chain && forge test --match-test testStockIssuance`) and invariant testing via `make test-invariant`.
 
 ## Project-specific conventions
 - **Role architecture**: ADMIN_ROLE (asset manager's wallet) handles governance — mints cap tables, grants/revokes roles. OPERATOR_ROLE (Transfer Agent Protocol server) handles operations — creates stock classes, stakeholders, issues/transfers/cancels stock. Factory owner controls the UpgradeableBeacon for implementation upgrades. See `WARP.md` for the full access control split.
 - Monorepo package names: `tap-app` (frontend), `tap-docs` (docs), etc. Use `pnpm --filter` to target them.
-- Smart contract tests are Solidity-based (`.t.sol`) using Forge (62 tests). Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
+- Smart contract tests are Solidity-based (`.t.sol`) using Forge. Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
 - The project uses `tsx` to run TypeScript files without a separate build step in dev; be careful when editing runtime entry files (server/server.js vs entry.ts).
 - License split is intentional: `chain/` is BUSL-1.1, `server/` AGPL-3.0, `app/` proprietary. Avoid changes that would alter licensing without confirmation.
 
@@ -78,7 +78,7 @@ If anything above is unclear or you'd like me to include extra examples (PR chec
 - **Branching**: Don't commit to `main`; create feature branch from `main`.
 - **Format & Lint**: Run `pnpm format` and `pnpm lint` (or ensure CI covers it).
 - **Typecheck**: Run `pnpm typecheck` or `pnpm --filter tap-app typecheck` for frontend changes.
-- **Tests**: Run `cd chain && forge test` for contract changes; run JS tests under `server/tests/` when present.
+- **Tests**: Run `cd chain && forge test` for contract changes; run `make test-invariant` for critical accounting or role/permission changes.
 - **Secrets**: Never add keys or `.env` files to commits. If needed, suggest using secrets or secure storage.
 - **Docs**: If behavior or API changes, update `docs/` or `README.md` and include a short changelog entry.
 - **CI**: Ensure changes pass the CI steps in `.github/workflows/ci.yml` (lint + typecheck + submodule checkout).
