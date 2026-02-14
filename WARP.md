@@ -150,12 +150,6 @@ pnpm test
 # Or: cd chain && forge test
 # Or: make test
 
-# JavaScript unit tests
-pnpm test-js
-
-# JavaScript integration tests
-pnpm test-js-integration
-
 # Run specific test
 cd chain && forge test --match-test testStockIssuance
 
@@ -168,7 +162,6 @@ make test-invariant-deep      # Deep run (2000 runs, 100 depth)
 
 - Solidity: `chain/test/*.t.sol` (Foundry tests)
 - Invariant tests: `chain/test/invariants/*.sol`
-- JavaScript: `server/tests/unit/` and `server/tests/integration/`
 
 ### Linting and Formatting
 
@@ -274,8 +267,8 @@ pnpm deploy-factory
 
 # The script:
 # 1. Sources environment variables
-# 2. Runs forge script in chain/ directory
-# 3. Uses script/CapTableFactory.s.sol
+# 2. Runs forge create commands in chain/ directory
+# 3. Deploys and links libraries before deploying CapTable and CapTableFactory
 ```
 
 ## Project Structure
@@ -306,10 +299,8 @@ tap-cap-table/
 │   ├── db/
 │   │   ├── objects/    # Mongoose models
 │   │   ├── operations/ # CRUD operations
-│   │   └── samples/    # Sample OCF data
 │   ├── routes/         # Express routes
 │   ├── state-machines/ # XState stock lifecycle
-│   ├── tests/          # JavaScript tests
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
 ├── docs/               # Developer documentation (Nextra/Next.js, workspace: tap-docs)
 │   ├── src/pages/      # MDX documentation pages

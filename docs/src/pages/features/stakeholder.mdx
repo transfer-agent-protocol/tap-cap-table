@@ -81,11 +81,13 @@ This is used to add a wallet that the stakeholder is using to custody shares on 
 - **Method**: `POST`
 - **Parameters** (body):
   - `issuerId`: The ID of the issuer (string).
+  - `id`: The ID of the stakeholder (string).
   - `wallet`: The wallet address to add (string).
 
 ````json
 {
 	"issuerId": "<YOUR_ISSUER_ID>",
+    "id": "<YOUR_STAKEHOLDER_ID>",
     "wallet": "<YOUR_WALLET_ADDRESS>"
 }
 ````
@@ -97,17 +99,19 @@ Something bad happened to the wallet? Does the stakeholder want to use another o
 - **Description**: Removes a wallet from a stakeholder.
 - **Method**: `POST`
 - **Parameters** (body):
+  - `issuerId`: The ID of the issuer (string).
   - `id`: The ID of the stakeholder (string).
   - `wallet`: The wallet address to remove (string).
 
 ````json
 {
 	"issuerId": "<YOUR_ISSUER_ID>",
+    "id": "<YOUR_STAKEHOLDER_ID>",
     "wallet": "<YOUR_WALLET_ADDRESS>"
 }
 ````
 
-## `stakeholder/onchain/id/:id`
+## `stakeholder/id/:id`
 
 - **Description**: Retrieves onchain details of a stakeholder by ID.
 - **Method**: `GET`
