@@ -101,4 +101,3 @@ const addTransactions = async (inputTransactions, issuerId) => {
 };
 
 export default addTransactions;
-export { typeToModelType };
