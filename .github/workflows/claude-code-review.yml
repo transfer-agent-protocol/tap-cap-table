@@ -14,7 +14,7 @@ jobs:
   claude-review:
     if: github.event.pull_request.user.login == 'ThatAlexPalmer'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write
