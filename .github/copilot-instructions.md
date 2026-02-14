@@ -1,112 +1,45 @@
 # Copilot / AI Agent Instructions for tap-cap-table
 
-Short, focused guidance to help an AI coding assistant be immediately productive.
+Focused guidance to help coding agents work effectively in this repository.
 
 ## Quick orientation
-- Monorepo using `pnpm` (workspace). Top-level `package.json` coordinates scripts for `app/`, `server/`, `chain/`, and `docs/`.
-- Frontend: [app/README.md](app/README.md) — Next.js app (`tap-app`).
-- API server: `server/` — Express + TypeScript; dev uses `tsx` for hot reload. Entry points: [server/entry.ts](server/entry.ts) (poller) and `server/server.js` (server runtime).
-- Smart contracts: `chain/` — Foundry (`forge`) project. Contracts in `chain/src`, tests in `chain/test` (Solidity `.t.sol`).
+- Monorepo using `pnpm` workspaces. Root scripts coordinate `app/`, `server/`, `chain/`, and `docs/`.
+- Frontend: [app/README.md](app/README.md) (Next.js workspace `tap-app`).
+- API + poller: `server/` (Express + TypeScript; runtime entry points are `server/server.js` and [server/entry.ts](server/entry.ts)).
+- Smart contracts: `chain/` (Foundry project; contracts in `chain/src`, tests in `chain/test`).
+- Deeper architecture and runbook details: [CLAUDE.md](CLAUDE.md) and [WARP.md](WARP.md).
 
-Note: See `WARP.md` for extended agent-focused developer guidance (architecture, dataflow, and runbook).
+## Most important commands
+- Install dependencies: `pnpm install`
+- Full local setup: `pnpm setup`
+- Server dev: `pnpm dev`
+- Frontend dev: `pnpm app:dev` or `pnpm --filter tap-app dev`
+- Frontend build: `pnpm app:build`
+- Solidity tests: `cd chain && forge test`
+- Solidity build: `cd chain && forge build --via-ir`
+- Lint: `pnpm lint`
+- Typecheck frontend: `pnpm --filter tap-app typecheck`
 
-## Most important commands (examples)
-- Install deps: `pnpm install`
-- Run full local dev environment: `pnpm setup` then `pnpm docker:up` then `pnpm dev`
-- Run server only (dev): `pnpm dev` (top-level runs `tsx watch server/server.js`)
-- Run frontend only: `pnpm app:dev` or `pnpm --filter tap-app dev`
-- Build frontend: `pnpm app:build`
-- Foundry build/test: `cd chain && forge build --via-ir` and `cd chain && forge test`
-- Deploy factory script: `pnpm deploy-factory` (calls `./scripts/deployFactory.sh`)
-- Docker: `pnpm docker:up|docker:down|docker:logs|docker:build`
+Use `pnpm --filter <workspace>` when targeting a single workspace package.
 
-Docker compose notes: `docker-compose.yml` creates services `mongodb`, `server`, `app`. `offchain-db` volume is external; `DATABASE_REPLSET` defaults to `0` in compose. The `server` container depends on the `mongodb` healthcheck and exposes port `8293`.
+## Project conventions
+- Access model is role-based: `ADMIN_ROLE` for governance actions; `OPERATOR_ROLE` for daily cap-table operations.
+- Preserve key conversion and math helpers used by contract/server integration:
+  - UUID <-> `bytes16` conversion helpers
+  - `toScaledBigNumber(value)` fixed-point scaling (1e10)
+- OCF schema validation is authoritative for API inputs.
+- For Solidity logic changes, prefer updating/adding `.t.sol` tests in `chain/test`.
+- Do not alter license boundaries without explicit confirmation (`chain/` BUSL-1.1, `server/` AGPL-3.0, `app/` proprietary, `docs/` MIT).
 
-Use `pnpm --filter <package>` when targeting a workspace package.
+## Security and secrets
+- Never commit secrets or `.env` files.
+- If you find a vulnerability, follow [SECURITY.md](SECURITY.md) and report privately.
+- Keep keys/endpoints in environment variables (`RPC_URL`, `PRIVATE_KEY`, etc.).
 
-## Development workflows & gotchas
-- Local blockchain: many workflows expect a Foundry `anvil` node. The README notes you must run `anvil` and copy a private key into `.env` for local testing.
-- `pnpm setup` runs `foundryup` and a `forge build --via-ir` (see top-level `package.json` scripts). Foundry uses `via_ir` and `solc_version = '0.8.30'` (see [chain/foundry.toml](chain/foundry.toml)).
-- Server process in production uses `tsx server/server.js` (`prod` script). The poller uses [server/entry.ts](server/entry.ts) for long-running event processing; flags: `--finalized-only`.
-- Tests: Solidity tests live under `chain/test` and are run with `forge test`. JS/TS unit tests are not present in root — prioritize Foundry tests for contract logic.
+## Model preference
+- Preferred model for design/review and high-level reasoning: **Claude Opus 4.6**.
 
-Additional test notes: `WARP.md` documents filtered Foundry test usage (e.g., `cd chain && forge test --match-test testStockIssuance`) and invariant testing via `make test-invariant`.
-
-## Project-specific conventions
-- **Role architecture**: ADMIN_ROLE (asset manager's wallet) handles governance — mints cap tables, grants/revokes roles. OPERATOR_ROLE (Transfer Agent Protocol server) handles operations — creates stock classes, stakeholders, issues/transfers/cancels stock. Factory owner controls the UpgradeableBeacon for implementation upgrades. See `WARP.md` for the full access control split.
-- Monorepo package names: `tap-app` (frontend), `tap-docs` (docs), etc. Use `pnpm --filter` to target them.
-- Smart contract tests are Solidity-based (`.t.sol`) using Forge. Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
-- The project uses `tsx` to run TypeScript files without a separate build step in dev; be careful when editing runtime entry files (server/server.js vs entry.ts).
-- License split is intentional: `chain/` is BUSL-1.1, `server/` AGPL-3.0, `app/` proprietary. Avoid changes that would alter licensing without confirmation.
-
-Security & reporting: See `SECURITY.md`. If you find a vulnerability, do not open public issues — email maintainers. Known vulnerabilities exist in the `ocf/` submodule documentation tooling; they do not affect runtime code. Prefer `pnpm audit` for dependency checks and never suggest committing real `.env` files.
-
-## Integration points to watch
-- MongoDB: server expects Mongo at `localhost:27017` when running locally (Docker compose spins up Mongo).
-- RPC endpoints and Etherscan keys: configured in [chain/foundry.toml](chain/foundry.toml) (`RPC_URL`, `plume_*` endpoints). Use environment variables for keys and endpoints.
-- Off-chain <-> on-chain: server `chain-operations` folder contains the event poller and transaction handling. When changing contract ABIs or deploy flow, update server handlers accordingly.
-
-Patterns to preserve (from `WARP.md`):
-- UUID <-> `bytes16` conversions: use provided helpers before contract calls.
-- Fixed-point scaling: use `toScaledBigNumber(value)` for quantities/prices (1e10 precision).
-- OCF schema validation is authoritative for API inputs; reference `ocf/` schemas.
-- When `DATABASE_REPLSET=1`, use `withGlobalTransaction()` for atomic DB operations.
-- Event poller is critical: without it, onchain events won't sync to MongoDB. Poller can run via `server/entry.ts` with `--finalized-only`.
-
-Static analysis: Aderyn is used for Solidity security scanning. Configuration: `aderyn.toml` at repository root (points to `chain/` Foundry project). Run `aderyn .` from the repository root to scan production contracts in `chain/src/` for vulnerabilities. Aderyn excludes test files, scripts, and build artifacts. Currently run manually (not in CI). Recommended before opening PRs that modify smart contracts.
-
-## Helpful files to inspect (examples)
-- Root README: [README.md](README.md)
-- Monorepo scripts & configuration: [package.json](package.json)
-- Frontend package.json: [app/package.json](app/package.json)
-- Foundry config: [chain/foundry.toml](chain/foundry.toml)
-- Server poller entry: [server/entry.ts](server/entry.ts)
-- Dev helper scripts: `scripts/dev.sh`, `scripts/deployFactory.sh`
-
-Contributing & PRs: follow `CONTRIBUTING.md` — never commit to `main`, branch from `main`, and use Conventional Commit style for PR titles (`feat(scope): description`).
-
-Model preferences: the repository owner prefers outputs from Claude Opus 4.5 for high-level reasoning; for heavy code-generation or large-context code reasoning, it's acceptable to use GPT-4.2 or Grok code. Document this preference in the agent guide so human reviewers can choose the model when running agent tooling.
-
-## How to propose changes (for the agent)
-- Keep diffs minimal and target the correct workspace package.
-- For contract changes: update `chain/src`, run `cd chain && forge test`, then run integration checks against the server handlers that use those contracts.
-- For frontend changes: run `pnpm app:dev` to verify UI behavior locally.
-
-If anything above is unclear or you'd like me to include extra examples (PR checklist, CI notes, or sample commands for running `anvil` + poller), tell me which area to expand.
-
-## PR Checklist (for agents)
-- **Branching**: Don't commit to `main`; create feature branch from `main`.
-- **Format & Lint**: Run `pnpm format` and `pnpm lint` (or ensure CI covers it).
-- **Typecheck**: Run `pnpm typecheck` or `pnpm --filter tap-app typecheck` for frontend changes.
-- **Tests**: Run `cd chain && forge test` for contract changes; run `make test-invariant` for critical accounting or role/permission changes.
-- **Secrets**: Never add keys or `.env` files to commits. If needed, suggest using secrets or secure storage.
-- **Docs**: If behavior or API changes, update `docs/` or `README.md` and include a short changelog entry.
-- **CI**: Ensure changes pass the CI steps in `.github/workflows/ci.yml` (lint + typecheck + submodule checkout).
-
-## CI & automation notes
-- CI (`.github/workflows/ci.yml`) runs on `push` and executes:
-	- Checkout (with submodules)
-	- Install Node and `pnpm`
-	- `pnpm install --frozen-lockfile`
-	- `pnpm lint` (root, docs, app) and `pnpm --filter tap-app typecheck`
-- Dependabot (`.github/dependabot.yml`) keeps deps updated for root and `app/` workspaces and GH Actions.
-- Claude Code Review (`.github/workflows/claude-code-review.yml`) auto-reviews PRs opened by `ThatAlexPalmer` using Claude Opus 4.6:
-	- Uses the `code-review` plugin from `anthropics/claude-code`
-	- Automatically posts inline comments and summary feedback
-	- Checks style, security, correctness, and project conventions per `CLAUDE.md`
-	- Requires `secrets.ANTHROPIC_API_KEY` and `pull-requests: write` permission
-	- Skips dependabot and other bot PRs
-- Claude interactive assistant (`.github/workflows/claude.yml`) responds to `@claude` mentions in issues and PR comments:
-	- Can answer questions, implement code changes, and review on demand
-	- Uses Claude Opus 4.6 model
-
-## Agent/tooling preferences
-- Owner preference: Claude Opus 4.6 for high-level reasoning, design, and PR reviews. Document model choice in PR descriptions when an agent (or human) made substantive code changes.
-- Claude: The repo uses Claude Code GitHub Actions for automated PR review and interactive assistance. Claude reads `CLAUDE.md` at the repo root for project context and review guidelines.
-
-## Notes & TODOs
-- Poller: the onchain `event poller` (in `server/chain-operations/transactionPoller.ts` / `server/entry.ts`) is known technical debt and should be replaced soon — prefer proposing a migration plan rather than incremental fixes.
-
----
-
-If you'd like, I can: add an `examples/` snippet showing how to run `anvil` + the poller locally, or append a short PR template that expands the minimal `pull_request_template.md` into a checklist-style template. Which would you prefer?
+## PR and change hygiene
+- Keep diffs minimal and scoped.
+- Follow Conventional Commits for PR titles (`type(scope): description`).
+- If behavior or API changes, update docs (`README.md` or `docs/`) in the same PR.
