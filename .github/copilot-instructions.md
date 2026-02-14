@@ -35,7 +35,7 @@ Additional test notes: `WARP.md` documents filtered Foundry test usage (e.g., `c
 ## Project-specific conventions
 - **Role architecture**: ADMIN_ROLE (asset manager's wallet) handles governance — mints cap tables, grants/revokes roles. OPERATOR_ROLE (Transfer Agent Protocol server) handles operations — creates stock classes, stakeholders, issues/transfers/cancels stock. Factory owner controls the UpgradeableBeacon for implementation upgrades. See `WARP.md` for the full access control split.
 - Monorepo package names: `tap-app` (frontend), `tap-docs` (docs), etc. Use `pnpm --filter` to target them.
-- Smart contract tests are Solidity-based (`.t.sol`) using Forge (62 tests). Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
+- Smart contract tests are Solidity-based (`.t.sol`) using Forge. Prefer modifying/adding `.t.sol` tests rather than creating JS wrappers unless integration with off-chain logic is required.
 - The project uses `tsx` to run TypeScript files without a separate build step in dev; be careful when editing runtime entry files (server/server.js vs entry.ts).
 - License split is intentional: `chain/` is BUSL-1.1, `server/` AGPL-3.0, `app/` proprietary. Avoid changes that would alter licensing without confirmation.
 
