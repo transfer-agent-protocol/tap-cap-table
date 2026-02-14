@@ -35,5 +35,8 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          claude_args: "--model claude-opus-4-6 --max-turns 5"
+          claude_args: |
+            --model claude-opus-4-6
+            --max-turns 5
+            --allowedTools "Bash(gh pr diff *),Bash(gh pr view *),Bash(git diff *),Bash(git log *),Bash(git show *)"
 
