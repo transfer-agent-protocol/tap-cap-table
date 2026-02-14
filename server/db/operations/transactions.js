@@ -101,4 +101,4 @@ const addTransactions = async (inputTransactions, issuerId) => {
 };
 
 export default addTransactions;
-export { typeToModelType }; // Export the typeToModelType object to delete all transactions using the deseed script
+export { typeToModelType };
