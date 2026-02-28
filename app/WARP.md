@@ -28,13 +28,17 @@ pnpm lint
 ## Architecture
 
 ### Tech Stack
-- **Framework**: Next.js (Pages Router)
-- **Styling**: styled-components v6 with ThemeProvider
-- **Font**: IBM Plex Mono (loaded via next/font)
+- **Framework**: Next.js (App Router)
+- **Styling**: styled-components v6 with ThemeProvider; SSR handled by `compiler: { styledComponents: true }` in `next.config.js`
+- **Font**: IBM Plex Mono (loaded via next/font in root layout)
 - **React**: v19
 
 ### Project Structure
-- `src/pages/` - Next.js pages (`_app.tsx` wraps all pages with theme/layout)
+- `src/app/` - Next.js App Router
+  - `layout.tsx` - Root server layout; exports `metadata`/`viewport`; renders `<Providers>`
+  - `providers.tsx` - Client component wrapping `Web3Provider`, `ThemeProvider`, `GlobalStyle`, `Layout`
+  - `page.tsx` - Home page
+  - `mint/page.tsx` - Mint page (`"use client"`)
 - `src/components/` - Reusable styled components
   - `theme.tsx` - Design tokens (colors, fontSizes, lineHeights, borderRadius)
   - `typography.tsx` - Text components (H1, H2, H3, P, etc.)
@@ -93,7 +97,7 @@ The theme is defined in `src/components/theme.tsx` and typed in `styled.d.ts`. A
 - Tab indentation, double quotes for strings.
 - Named exports for styled-component files; `default export` for page/component files with logic.
 - Use `type` keyword for type-only exports (`export type { ... }`).
-- Keep page components in `src/pages/`, reusable UI in `src/components/`, config in `src/config/`, sample data in `src/samples/`.
+- Keep page components in `src/app/`, reusable UI in `src/components/`, config in `src/config/`, sample data in `src/samples/`.
 - Avoid creating `features/` directories for styled components or config — those belong in `components/` and `config/` respectively.
 
 ### Solidity

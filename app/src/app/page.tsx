@@ -1,4 +1,5 @@
-import Link from "next/link";
+"use client";
+
 import { Heading, Content, StyledTable } from "../components/wrappers";
 import { H1, H2, P } from "../components/typography";
 

@@ -20,13 +20,6 @@ const GlobalStyle = createGlobalStyle`
     scroll-behavior: smooth;
   }
 
-  #__next {
-    flex: 1;
-    width: 100%;
-    height: auto;
-	display: flex;
-}
-
 a {
 	color: ${({ theme }) => theme.colors.text};
 	font-family: "IBM Plex Mono", monospace;
