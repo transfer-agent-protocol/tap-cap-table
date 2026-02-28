@@ -11,7 +11,6 @@ export default function Home() {
 				<P>Tokenize RWAs, and handle post-trade settlement.</P>
 				<P>Based on the <a href="https://www.opencaptablecoalition.com/" target="_blank">Open Cap Table</a> data format, transfer agent protocol is being used by SEC-registered entities.</P>
 				<a href="https://paragraph.com/@thatalexpalmer/rwa-tokenization-protocol-stack-1" target="_blank" rel="noopener">Read why this exists</a>
-				
 			</Heading>
 			<H2>
 				Demo Deployments:

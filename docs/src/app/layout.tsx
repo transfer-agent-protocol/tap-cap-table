@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Layout, Navbar } from "nextra-theme-docs";
 import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
+import Image from "next/image";
 import "nextra-theme-docs/style.css";
-import themeConfig from "../../theme.config";
 
 export const metadata: Metadata = {
     title: {
@@ -52,13 +52,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Layout
                     navbar={
                         <Navbar
-                            logo={themeConfig.logo}
-                            projectLink={themeConfig.project.link}
+                            logo={
+                                <>
+                                    <Image src="/tap-logo.svg" alt="Transfer Agent Protocol" width={48} height={48} />
+                                    <span style={{ marginLeft: "0.4rem", fontWeight: 800 }}>
+                                        Transfer Agent Protocol
+                                    </span>
+                                </>
+                            }
+                            projectLink="https://github.com/transfer-agent-protocol/tap-cap-table"
                         />
                     }
                     pageMap={pageMap}
-                    docsRepositoryBase={themeConfig.docsRepositoryBase}
-                    footer={themeConfig.footer.text}
+                    docsRepositoryBase="https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/docs"
+                    footer={
+                        <span>
+                            Copyright {new Date().getFullYear()} &copy;{" "}
+                            PALMER.EARTH CORP
+                        </span>
+                    }
                 >
                     {children}
                 </Layout>
