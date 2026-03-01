@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { ThemeProvider } from "styled-components";
 import theme from "../components/theme";
 import GlobalStyle from "../components/globalstyle";
-import Layout from "../components/layout";
+import Layout from "../components/Layout";
 import Web3Provider from "../config/Web3Provider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
