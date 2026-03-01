@@ -29,7 +29,8 @@ pnpm lint
 
 ### Tech Stack
 - **Framework**: Next.js (App Router)
-- **Styling**: styled-components v6 with ThemeProvider; SSR handled by `compiler: { styledComponents: true }` in `next.config.js`
+- **Styling**: styled-components v6 with ThemeProvider; `compiler: { styledComponents: true }` in `next.config.js`
+- **Linting**: ESLint 9 flat config (`eslint.config.mjs`) with `eslint-config-next/core-web-vitals`
 - **Font**: IBM Plex Mono (loaded via next/font in root layout)
 - **React**: v19
 
@@ -41,9 +42,10 @@ pnpm lint
   - `mint/page.tsx` - Mint page (`"use client"`)
 - `src/components/` - Reusable styled components
   - `theme.tsx` - Design tokens (colors, fontSizes, lineHeights, borderRadius)
-  - `typography.tsx` - Text components (H1, H2, H3, P, etc.)
-  - `layout.tsx` - Main layout wrapper with Navbar and Footer
-  - `wrappers.tsx` - Layout containers
+  - `typography.tsx` - Text components (H1, H2, H3, P)
+  - `Layout.tsx` - Main layout wrapper with Navbar and Footer
+  - `wrappers.tsx` - Layout containers (FullWidth, Nav, Main, Heading, Content, StyledTable, Footer)
+  - `mint.tsx` - Mint-page styled components (MintLayout, Panel, StatusBox, ResponseBlock)
 
 ### Theming
 
@@ -85,7 +87,8 @@ The theme is defined in `src/components/theme.tsx` and typed in `styled.d.ts`. A
 - Buttons → `buttons.tsx`
 - Form inputs, labels, field layouts → `forms.tsx`
 - Typography (headings, paragraphs) → `typography.tsx`
-- Layout containers, wrappers, panels → `wrappers.tsx`
+- Layout containers, generic wrappers → `wrappers.tsx`
+- Mint-page containers (MintLayout, Panel, StatusBox, ResponseBlock) → `mint.tsx`
 - Global styles → `globalstyle.tsx`
 - Theme definition → `theme.tsx`
 - Sample/seed data → `src/samples/`
