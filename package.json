@@ -31,19 +31,19 @@
         "docker:build": "docker compose up -d --build"
     },
     "dependencies": {
-        "ajv": "^8.12.0",
+        "ajv": "^8.18.0",
         "ajv-formats": "^3.0.1",
-        "axios": "^1.4.0",
+        "axios": "^1.13.6",
         "busboy": "^1.6.0",
         "date-fns": "^4.1.0",
-        "dotenv": "^17.2.3",
-        "ethers": "^6.11.1",
-        "express": "^4.18.2",
-        "mongoose": "^7.4.2",
-        "p-retry": "^6.2.0",
-        "solc": "^0.8.20",
-        "tsx": "^4.7.0",
-        "xstate": "^4.38.2",
+        "dotenv": "^17.3.1",
+        "ethers": "^6.16.0",
+        "express": "^4.22.1",
+        "mongoose": "^7.8.9",
+        "p-retry": "^6.2.1",
+        "solc": "^0.8.34",
+        "tsx": "^4.21.0",
+        "xstate": "^4.38.3",
         "yauzl": "^2.10.0"
     },
     "browserslist": [
@@ -57,18 +57,18 @@
         }
     },
     "devDependencies": {
-        "@eslint/js": "^9.37.0",
-        "@types/node": "^24.6.2",
-        "eslint": "^9.37.0",
+        "@eslint/js": "^9.39.3",
+        "@types/node": "^24.11.0",
+        "eslint": "^9.39.3",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-import": "^2.32.0",
-        "globals": "^16.4.0",
+        "globals": "^16.5.0",
         "husky": "^9.1.7",
-        "lint-staged": "^16.2.3",
-        "prettier": "^3.6.2",
-        "solhint": "^3.4.1",
-        "typescript": "^5.3.3",
-        "typescript-eslint": "^8.45.0",
-        "uuid": "^9.0.0"
+        "lint-staged": "^16.3.1",
+        "prettier": "^3.8.1",
+        "solhint": "^3.6.2",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.56.1",
+        "uuid": "^9.0.1"
     }
 }
