@@ -71,30 +71,6 @@ const H3 = styled.h3`
 	}
 `;
 
-// blockquote element with a border-left
-const Blockquote = styled.blockquote`
-    position: relative;
-    max-width: 748px;
-    font-size: ${({ theme }) => theme.fontSizes.large};
-    font-weight: 400;
-	text-align: left;
-    line-height: 1.618rem;
-    word-wrap: break-word;
-    padding: 0;
-	margin-block-start: 0;
-    margin-block-end: 4rem;
-    margin-inline-start: 0;
-    margin-inline-end: 0;
-	border-left: 2px solid ${({ theme }) => theme.colors.main};
-	padding-left: 1.618rem;
-	left: -1.618rem;
-
-	a:hover {
-		color: ${({ theme }) => theme.colors.background};
-		background: ${({ theme }) => theme.colors.main};
-	}
-`;
-
 const P = styled.p`
     max-width: 40rem;
     font-size: ${({ theme }) => theme.fontSizes.medium};
@@ -111,37 +87,4 @@ const P = styled.p`
 	}
 `;
 
-const Label = styled.label`
-    max-width: 40rem;
-    font-size: ${({ theme }) => theme.fontSizes.large};
-    font-weight: 400;
-    line-height: 1.58rem;
-    word-wrap: break-word;
-    text-align: center;
-    padding: 0;
-    margin: 0 auto;
-
-    /** iPad portrait mode and equivalent devices */
-    @media only screen and (max-width: 768px) {
-        max-width: 30rem;
-        text-align: justify;
-    }
-
-    /** iPhone portrait mode and equivalent devices */
-    @media only screen and (max-width: 512px) {
-        max-width: 100%;
-    }
-`;
-
-const OrderedList = styled.ol`
-	width: auto;
-	font-size: 1.5rem;
-	font-weight: 600;
-    margin-block-start: 2rem;
-    margin-block-end: 1rem;
-    margin-inline-start: 6.618%;
-    margin-inline-end: 1rem;
-    padding-inline-start: 1rem;
-`;
-
-export { H1, H2, H3, Blockquote, P, Label, OrderedList };
+export { H1, H2, H3, P };

@@ -17,12 +17,19 @@
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "isolatedModules": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

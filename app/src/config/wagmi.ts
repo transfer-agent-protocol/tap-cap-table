@@ -47,7 +47,6 @@ const networks: [AppKitNetwork, ...AppKitNetwork[]] = [plumeMainnet, plumeTestne
 export const wagmiAdapter = new WagmiAdapter({
 	networks,
 	projectId,
-	ssr: true,
 });
 
 // Wallet IDs (Reown explorer)

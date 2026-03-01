@@ -18,17 +18,6 @@ const Nav = styled.nav`
 	padding: 1rem 0;
 `;
 
-const Logotype = styled.span`
-	display: flex;
-	flex-flow: row wrap;
-	justify-content: flex-start;
-	align-items: flex-start;
-	text-align: left;
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-weight: 600;
-	width: 8rem;
-`;
-
 const Main = styled.main`
     display: flex;
     flex-flow: column nowrap;
@@ -95,43 +84,6 @@ const Content = styled.div`
 	justify-content: flex-start;
 `;
 
-const Article = styled.article`
-    display: flex;
-    flex-flow: column nowrap;
-    align-items: center;
-    align-self: flex-start;
-    justify-content: flex-start;
-    flex: 1;
-    width: auto;
-    max-width: 46rem;
-    height: auto;
-    margin: 0 auto;
-    text-align: left;
-
-    /** iPad Air and equivalent devices */
-    @media (max-width: 820px) {
-        width: 100%;
-    }
-    /** Generic tablet and equivalent devices */
-    @media (max-width: 768px) {
-        width: 98%;
-        align-items: center;
-    }
-    /** iPhone portrait mode and equivalent devices */
-    @media screen and (max-width: 512px) {
-        width: 96%;
-    }
-`;
-
-const Credits = styled.div`
-	display: flex;
-	flex-flow: row nowrap;
-	justify-content: flex-start;
-	align-items: flex-start;
-	font-size: ${({ theme }) => theme.fontSizes.large};
-	margin-bottom: 4rem;
-`;
-
 const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -177,7 +129,7 @@ const FooterWrapper = styled.footer`
     display: flex;
     flex-flow: column nowrap;
     flex-shrink: 0;
-   	align-items: flext-start;
+   	align-items: flex-start;
     align-self: center;
     justify-content: flex-start;
     margin: 4rem auto;
@@ -192,95 +144,4 @@ const FooterContent = styled.div`
 	margin: 0 auto;
 `;
 
-const FooterAside = styled.aside`
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: flex-end;
-    width: 100%;
-    margin: 0;
-
-    /** iPhone portrait mode and equivalent devices */
-    @media only screen and (max-width: 475px) {
-        font-size: ${({ theme }) => theme.fontSizes.small};
-    }
-
-    p {
-        font-size: ${({ theme }) => theme.fontSizes.baseline};
-        margin: 0;
-
-        /** iPhone portrait mode and equivalent devices */
-        @media only screen and (max-width: 475px) {
-            font-size: ${({ theme }) => theme.fontSizes.small};
-        }
-    }
-`;
-
-const MintLayout = styled.div`
-	display: flex;
-	flex-flow: row nowrap;
-	gap: 2rem;
-	width: 100%;
-	margin-top: 2rem;
-	align-items: flex-start;
-
-	/* Form panel (first child) gets 2x width, actions panel gets 1x */
-	& > *:first-child {
-		flex: 2;
-	}
-	& > *:last-child {
-		flex: 1;
-	}
-
-	@media only screen and (max-width: 900px) {
-		flex-flow: column nowrap;
-		gap: 2rem;
-
-		& > *:first-child,
-		& > *:last-child {
-			flex: 1;
-		}
-	}
-`;
-
-const Panel = styled.section`
-	display: flex;
-	flex-flow: column nowrap;
-	gap: 1rem;
-	min-width: 0;
-`;
-
-const StatusBox = styled.div<{ $variant?: "success" | "error" | "pending" }>`
-	padding: 0.75rem;
-	border-radius: ${({ theme }) => theme.borderRadius.main};
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	word-break: break-all;
-	border: 1px solid
-		${({ theme, $variant }) =>
-			$variant === "success"
-				? theme.colors.success
-				: $variant === "error"
-					? theme.colors.error
-					: theme.colors.pending};
-	background: ${({ theme, $variant }) =>
-		$variant === "success"
-			? theme.colors.successBg
-			: $variant === "error"
-				? theme.colors.errorBg
-				: theme.colors.pendingBg};
-`;
-
-const ResponseBlock = styled.pre`
-	padding: 0.75rem;
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	font-family: inherit;
-	background: ${({ theme }) => theme.colors.input};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.borderRadius.main};
-	color: ${({ theme }) => theme.colors.text};
-	word-break: break-all;
-	white-space: pre-wrap;
-	overflow-x: auto;
-	margin: 0;
-`;
-
-export { FullWidth, Nav, Logotype, Main, Heading, Content, Article, Credits, StyledTable, FooterWrapper, FooterContent, FooterAside, MintLayout, Panel, StatusBox, ResponseBlock };
+export { FullWidth, Nav, Main, Heading, Content, StyledTable, FooterWrapper, FooterContent };

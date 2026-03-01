@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useConnection, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import { parseEventLogs } from "viem";
 import { generateBytes16Id } from "../utils/uuid";
 import {
@@ -63,10 +63,10 @@ export interface UseMintIssuerReturn {
 
 export function useMintIssuer(): UseMintIssuerReturn {
 	// --- Connection ---
-	const { address } = useConnection();
+	const { address, isConnected: walletConnected } = useAccount();
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => { setMounted(true); }, []);
-	const isConnected = mounted && !!address;
+	const isConnected = mounted && walletConnected;
 
 	// --- Form fields ---
 	const [fields, setFields] = useState<IssuerFormFields>({

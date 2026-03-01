@@ -1,5 +1,5 @@
 import { MintButton } from "./buttons";
-import { StatusBox, ResponseBlock } from "./wrappers";
+import { StatusBox, ResponseBlock } from "./mint";
 import { FieldGroup, FieldLabel } from "./forms";
 import type { IssuerResponse } from "../services/registerIssuer";
 
