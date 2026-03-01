@@ -3,7 +3,7 @@ import styled from "styled-components";
 const LogoRouter = styled.button`
     position: relative;
     display: inline-flex;
-    flex-direction: row nowrap;
+    flex-flow: row nowrap;
     justify-content: center;
     align-items: center;
     min-width: 48px;
@@ -41,30 +41,6 @@ const StyledA = styled.button`
 	&:nth-last-child(1){
 		padding-right: 1rem;
 	}
-`;
-
-const PrimaryButton = styled.button`
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    align-items: center;
-    background: ${({ theme }) => theme.colors.main};
-    width: 9.875rem;
-    height: 3rem;
-	margin: 2rem 0 1rem 0;
-    border: none;
-    box-sizing: border-box;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: bold;
-    font-family: "IBM Plex Mono", sans-serif;
-    color: #FFFFFF;
-    cursor: pointer;
-    transition: all 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
-
-    &:hover {
-        opacity: 0.9;
-    }
 `;
 
 const WalletButtonStyled = styled.button`
@@ -119,4 +95,4 @@ const MintButton = styled.button`
 	}
 `;
 
-export { LogoRouter, StyledA, PrimaryButton, WalletButtonStyled, MintButton }
+export { LogoRouter, StyledA, WalletButtonStyled, MintButton }

@@ -1,7 +1,7 @@
 "use client";
 
 import { H2, P } from "../../components/typography";
-import { MintLayout, Panel } from "../../components/wrappers";
+import { MintLayout, Panel } from "../../components/mint";
 import { IssuerForm } from "../../components/IssuerForm";
 import { MintActions } from "../../components/MintActions";
 import { useMintIssuer } from "../../hooks/useMintIssuer";
