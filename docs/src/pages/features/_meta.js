@@ -1,0 +1,13 @@
+const meta = {
+    issuer: 'Issuer',
+    'stock-class': 'Stock Class',
+    'stock-legend': 'Stock Legend',
+    'stock-plan': 'Stock Plan',
+    valuation: 'Valuation',
+    'vesting-terms': 'Vesting Terms',
+    stakeholder: 'Stakeholder',
+    transactions: 'Transactions',
+    'historical-transactions': 'Historical Transactions',
+};
+
+export default meta;
