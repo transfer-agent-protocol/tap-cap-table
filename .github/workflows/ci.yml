@@ -26,8 +26,6 @@ jobs:
                   key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
                   restore-keys: |
                       ${{ runner.os }}-pnpm-store-
-            - name: Exclude ocf from CI workspace
-              run: sed -i '/"ocf"/d' pnpm-workspace.yaml
             - name: Install
               run: pnpm install --frozen-lockfile
             - name: Lint main
