@@ -1,0 +1,46 @@
+import { Callout } from 'nextra/components';
+
+# Issue and Accept Stock
+
+Use [Issue Stock](/development/issue-stock) for the `POST /transactions/issuance/stock` request and response. That route creates the `StockIssuance` transaction record. This page covers `StockAcceptance`, `security_id`, and what changes after the issuance lands.
+
+## Accept stock
+
+Use `POST /transactions/accept/stock` when you want a separate acceptance event for an existing stock security.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "stakeholderId": "<YOUR_STAKEHOLDER_ID>",
+        "stockClassId": "<YOUR_STOCK_CLASS_ID>",
+        "security_id": "<YOUR_SECURITY_ID>",
+        "comments": ["Accepted by stakeholder"]
+    }
+}
+```
+
+The response returns `{ "stockAcceptance": ... }` with a generated `id`, `date`, and `object_type`.
+
+<Callout type="info">
+Send `stakeholderId` and `stockClassId` in the request body. TAP uses those helper fields for the contract call, then validates the OCF stock acceptance object around `security_id`.
+</Callout>
+
+## Keep the security_id
+
+The `security_id` identifies the block of shares created by the original issuance. You use it again for:
+
+- `POST /transactions/accept/stock`
+- `POST /transactions/cancel/stock`
+- `POST /transactions/retract/stock`
+- `POST /transactions/reissue/stock`
+- `POST /transactions/repurchase/stock`
+
+## What changes after issuance or acceptance
+
+- `GET /cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>` shows the active position once the contract state is updated.
+- `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` shows issuance and acceptance as separate history rows after the event poller runs.
+
+## What's next?
+
+Use [View Cap Table](/features/cap-table-management/view-cap-table) to read current holdings, or move to [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock).

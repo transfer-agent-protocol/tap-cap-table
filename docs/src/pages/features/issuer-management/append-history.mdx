@@ -1,0 +1,45 @@
+import { Callout } from 'nextra/components';
+
+# Append History
+
+Historical transactions are append-only. You do not edit old history rows directly. To add new history, you send a new contract-backed action and let the event poller write the next row.
+
+<Callout type="warning">
+You can add new events to the history feed. You cannot rewrite past events through the TAP API.
+</Callout>
+
+## Routes that add new history
+
+These routes send contract transactions and later create `HistoricalTransaction` rows:
+
+- `POST /transactions/issuance/stock`
+- `POST /transactions/transfer/stock`
+- `POST /transactions/cancel/stock`
+- `POST /transactions/retract/stock`
+- `POST /transactions/reissue/stock`
+- `POST /transactions/repurchase/stock`
+- `POST /transactions/accept/stock`
+- `POST /transactions/adjust/issuer/authorized-shares`
+- `POST /transactions/adjust/stock-class/authorized-shares`
+
+## Routes that do not add history on their own
+
+These routes save records offchain but do not create `HistoricalTransaction` rows by themselves:
+
+- `POST /transactions/issuance/equity-compensation`
+- `POST /transactions/issuance/convertible`
+- `POST /stock-legend/create`
+- `POST /stock-plan/create`
+- `POST /valuation/create`
+- `POST /vesting-terms/create`
+
+## How to verify a history update
+
+1. Send one of the contract-backed routes listed above.
+2. Wait for the event poller to process the transaction.
+3. Fetch `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` again.
+4. Confirm that the new transaction appears as a new history row.
+
+## What's next?
+
+Use [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock) for the onchain routes that create new history. Use [Save Offchain Corporate Actions](/features/corporate-actions/save-offchain-corporate-actions) for routes that save data without updating historical transactions.

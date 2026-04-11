@@ -1,0 +1,45 @@
+import { Callout } from 'nextra/components';
+
+# Create Stock Class and Shareholders
+
+Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholder](/development/create-stakeholder) for the main create requests. This page covers the supporting records around that setup.
+
+## Add supporting records
+
+- `POST /stock-legend/create` saves a reusable stock legend template in Mongo.
+- `POST /stock-plan/create` saves the plan record that later equity compensation issuances can reference.
+
+Use [Update Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for the request bodies and read routes for those offchain records.
+
+## Add or remove a stakeholder wallet
+
+Use `POST /stakeholder/add-wallet` or `POST /stakeholder/remove-wallet` with this body:
+
+```json
+{
+    "id": "<YOUR_STAKEHOLDER_ID>",
+    "wallet": "<YOUR_WALLET_ADDRESS>"
+}
+```
+
+Both routes return `"Success"` when the wallet update is accepted. `POST /stakeholder/add-wallet` can also return `"Wallet already added"`.
+
+<Callout type="info">
+Stock classes and stakeholders are created onchain and then mirrored into Mongo. Stock legends and stock plans are offchain records only.
+</Callout>
+
+## Read these records
+
+- `GET /stock-class/id/:id` returns the onchain stock class summary.
+- `GET /stock-class/total-number` returns the stock class count.
+- `GET /stakeholder/id/:id` returns the onchain stakeholder summary.
+- `GET /stakeholder/issuer_assigned_id/:id`
+- `GET /stakeholder/issuer/:issuerId/issuer_assigned_id/:id`
+- `GET /stakeholder/wallet/:address`
+- `GET /stakeholder/total-number`
+- `GET /stock-legend/id/:id` and `GET /stock-legend/total-number`
+- `GET /stock-plan/id/:id` and `GET /stock-plan/total-number`
+
+## What's next?
+
+Use [Issue and Accept Stock](/features/cap-table-management/issue-and-accept-stock).

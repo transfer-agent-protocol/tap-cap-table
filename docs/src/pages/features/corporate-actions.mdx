@@ -1,0 +1,32 @@
+import { Cards } from 'nextra/components';
+
+# Corporate Actions
+
+Use this section for stock actions, offchain issuances, and maintenance records that change the cap table after the first stock issuance.
+
+Current repo surface: 11 public transaction POST routes, 43 Mongo transaction models, and 47 OCF transaction formats.
+
+<Cards>
+  <Cards.Card title="Transfer, Cancel, and Reissue Stock" href="/features/corporate-actions/transfer-cancel-and-reissue-stock" />
+  <Cards.Card title="Save Offchain Corporate Actions" href="/features/corporate-actions/save-offchain-corporate-actions" />
+  <Cards.Card title="Update Valuations and Terms" href="/features/corporate-actions/update-valuations-and-terms" />
+</Cards>
+
+## Available through the API today
+
+- Stock transfer, cancellation, retraction, reissuance, repurchase, acceptance, and authorized-share adjustments.
+- Equity compensation issuance.
+- Convertible issuance.
+
+## Stored offchain today
+
+- Stock conversion and stock class split.
+- Equity compensation, plan security, convertible, and warrant follow-on transaction objects.
+- Vesting start, vesting event, vesting acceleration, stock plan pool adjustment, and stock class conversion ratio adjustment.
+
+## OCF only today
+
+- `EquityCompensationRepricing`
+- `StakeholderStatusChangeEvent`
+- `StakeholderRelationshipChangeEvent`
+- `StockConsolidation`

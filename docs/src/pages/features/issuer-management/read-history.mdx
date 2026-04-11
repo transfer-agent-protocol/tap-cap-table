@@ -1,0 +1,65 @@
+import { Steps, Callout } from 'nextra/components';
+
+# Read History
+
+Use the historical transactions route to see the event history for an issuer. This is the main read path for stock issuances, transfers, cancellations, repurchases, reissuances, retractions, acceptances, and authorized-share adjustments that were recorded through the onchain flow.
+
+<Steps>
+
+### Send a GET request
+
+```text
+GET http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
+```
+
+<Callout type="info">
+Replace `<YOUR_ISSUER_ID>` with the issuer `_id` from your issuer creation response.
+</Callout>
+
+### Check the response
+
+The response is an array. Each item includes:
+
+- `transaction` - the populated transaction document
+- `transactionType` - the Mongo model name, such as `StockIssuance`
+- `issuer` - the issuer ID
+
+```json
+[
+    {
+        "transactionType": "StockIssuance",
+        "issuer": "<YOUR_ISSUER_ID>",
+        "transaction": {
+            "object_type": "TX_STOCK_ISSUANCE",
+            "security_id": "<YOUR_SECURITY_ID>"
+        }
+    }
+]
+```
+
+</Steps>
+
+## What appears here today
+
+The event poller currently writes historical rows for:
+
+- stock issuance
+- stock transfer
+- stock cancellation
+- stock retraction
+- stock reissuance
+- stock repurchase
+- stock acceptance
+- issuer authorized shares adjustments
+- stock class authorized shares adjustments
+
+## What does not appear automatically
+
+Routes that only save Mongo documents do not create history rows by themselves. That includes:
+
+- `POST /transactions/issuance/equity-compensation`
+- `POST /transactions/issuance/convertible`
+
+## What's next?
+
+Read [Append History](/features/issuer-management/append-history) to see which routes add new history entries.

@@ -1,0 +1,121 @@
+import { Callout } from 'nextra/components';
+
+# Update Valuations and Terms
+
+These objects are the maintenance records around the cap table. They help explain pricing, vesting, legends, and plan structure, but they do not edit old history rows. In practice, you create a new record when terms change.
+
+<Callout type="info">
+Valuations, vesting terms, stock legend templates, and stock plans are saved offchain today. Stock class authorized share changes use a contract-backed adjustment route instead of editing the original stock class record.
+</Callout>
+
+## Add a new 409A valuation
+
+Use `POST /valuation/create` when the fair market value changes and you want the new valuation saved offchain.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "provider": "Example Valuation Firm",
+        "board_approval_date": "2026-04-20",
+        "stockholder_approval_date": "2026-04-20",
+        "price_per_share": {
+            "currency": "USD",
+            "amount": "4.20"
+        },
+        "effective_date": "2026-04-20",
+        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
+        "valuation_type": "409A",
+        "comments": []
+    }
+}
+```
+
+The response returns `{ "valuation": ... }`.
+
+## Add new vesting terms
+
+Use `POST /vesting-terms/create` to save a vesting schedule that future issuances can reference.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "name": "Founder Vesting",
+        "description": "Full vesting at the vesting commencement date.",
+        "allocation_type": "CUMULATIVE_ROUNDING",
+        "vesting_conditions": [
+            {
+                "id": "founder-start",
+                "description": "Fully vested at start date.",
+                "quantity": "100000",
+                "trigger": {
+                    "type": "VESTING_START_DATE"
+                },
+                "next_condition_ids": []
+            }
+        ]
+    }
+}
+```
+
+The response returns `{ "vestingTerms": ... }`.
+
+## Add a stock legend template
+
+Use `POST /stock-legend/create` to save reusable legend text.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "name": "Restricted Stock Legend",
+        "text": "The shares represented by this certificate are subject to transfer restrictions.",
+        "comments": []
+    }
+}
+```
+
+The response returns `{ "stockLegend": ... }`.
+
+## Add a stock plan record
+
+Use `POST /stock-plan/create` to save the stock plan metadata used by future equity compensation issuances.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "plan_name": "Transfer Agent Protocol 2026 Plan",
+        "board_approval_date": "2026-01-15",
+        "stockholder_approval_date": "2026-01-20",
+        "initial_shares_reserved": "1000000",
+        "default_cancellation_behavior": "RETURN_TO_POOL",
+        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
+        "comments": []
+    }
+}
+```
+
+The response returns `{ "stockPlan": ... }`.
+
+## Stock class maintenance
+
+For stock classes, the current maintenance flow is:
+
+- use `GET /stock-class/id/:id` to read the onchain stock class summary
+- use `GET /stock-class/total-number` to count stock classes
+- use `POST /transactions/adjust/stock-class/authorized-shares` when the authorized share count changes
+
+There is no general metadata update route for stock classes today. If you need a new authorized share count, create a new adjustment event instead of editing history.
+
+## Read routes for offchain maintenance records
+
+- `GET /valuation/id/:id` and `GET /valuation/total-number`
+- `GET /vesting-terms/id/:id` and `GET /vesting-terms/total-number`
+- `GET /stock-legend/id/:id` and `GET /stock-legend/total-number`
+- `GET /stock-plan/id/:id` and `GET /stock-plan/total-number`
+
+## What's next?
+
+Use [Save Offchain Corporate Actions](/features/corporate-actions/save-offchain-corporate-actions) when those records need to be tied to equity compensation or convertible transactions.

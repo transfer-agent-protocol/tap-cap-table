@@ -1,0 +1,119 @@
+import { Callout } from 'nextra/components';
+
+# Transfer, Cancel, and Reissue Stock
+
+Use [Transfer Stock](/development/transfer-stock) for the full transfer walkthrough. This page covers the rest of the stock action routes that operate on an existing stock `security_id`.
+
+<Callout type="info">
+Every route on this page is mounted under `/transactions` and creates a new onchain event instead of editing old history.
+</Callout>
+
+## Transfer stock
+
+Use `POST /transactions/transfer/stock` to move shares from one stakeholder to another.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "transferorId": "<FROM_STAKEHOLDER_ID>",
+        "transfereeId": "<TO_STAKEHOLDER_ID>",
+        "stockClassId": "<YOUR_STOCK_CLASS_ID>",
+        "quantity": "13",
+        "sharePrice": "4.20",
+        "isBuyerVerified": true
+    }
+}
+```
+
+The route returns `"success"`. This is a TAP payload for the contract call, not a raw OCF `StockTransfer` document. The poller later creates the `StockTransfer` record and history row.
+
+## Keep these helper fields handy
+
+For cancel, retract, reissue, repurchase, and accept routes, send:
+
+- `stakeholderId`
+- `stockClassId`
+- `security_id`
+
+TAP uses `stakeholderId` and `stockClassId` for the contract call, then validates the OCF transaction object without those helper fields.
+
+## Cancel stock
+
+Use `POST /transactions/cancel/stock` to cancel all or part of an existing stock security.
+
+- Required data: `stakeholderId`, `stockClassId`, `security_id`, `quantity`
+- Optional data: `balance_security_id`, `reason_text`, `comments`
+- Response: `{ "stockCancellation": ... }`, which becomes a `StockCancellation` record
+
+## Retract stock
+
+Use `POST /transactions/retract/stock` to retract an existing stock issuance.
+
+- Required data: `stakeholderId`, `stockClassId`, `security_id`
+- Optional data: `reason_text`, `comments`
+- Response: `{ "stockRetraction": ... }`, which becomes a `StockRetraction` record
+
+## Reissue stock
+
+Use `POST /transactions/reissue/stock` to replace an existing stock security with one or more resulting securities.
+
+- Required data: `stakeholderId`, `stockClassId`, `security_id`, `resulting_security_ids`
+- Optional data: `split_transaction_id`, `reason_text`, `comments`
+- Response: `{ "stockReissuance": ... }`, which becomes a `StockReissuance` record
+
+## Repurchase stock
+
+Use `POST /transactions/repurchase/stock` to record a company repurchase.
+
+- Required data: `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `price`
+- Optional data: `consideration_text`, `balance_security_id`, `comments`
+- Response: `{ "stockRepurchase": ... }`, which becomes a `StockRepurchase` record
+
+## Adjust issuer authorized shares
+
+Use `POST /transactions/adjust/issuer/authorized-shares` to change the issuer-level authorized share count.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "new_shares_authorized": "25000000",
+        "board_approval_date": "2026-03-15",
+        "stockholder_approval_date": "2026-03-20",
+        "comments": ["Approved after financing"]
+    }
+}
+```
+
+The route returns `{ "issuerAuthorizedSharesAdj": ... }`, which becomes an `IssuerAuthorizedSharesAdjustment` record.
+
+## Adjust stock class authorized shares
+
+Use `POST /transactions/adjust/stock-class/authorized-shares` to change the authorized share count for a stock class.
+
+- Required data: `stock_class_id`, `new_shares_authorized`
+- Optional data: `board_approval_date`, `stockholder_approval_date`, `comments`
+- Response: `{ "stockClassAdjustment": ... }`, which becomes a `StockClassAuthorizedSharesAdjustment` record
+
+## What shows up in historical transactions
+
+Each route on this page creates a new history row after the event poller processes the contract event:
+
+- stock transfer
+- stock cancellation
+- stock retraction
+- stock reissuance
+- stock repurchase
+- issuer authorized shares adjustments
+- stock class authorized shares adjustments
+
+## Other stock objects TAP understands
+
+- `StockConversion` is stored offchain today.
+- `StockClassSplit` is stored offchain today.
+- `StockConsolidation` is currently an OCF-only format.
+
+## What's next?
+
+Use [Read History](/features/issuer-management/read-history) to verify the new event, or move to [Save Offchain Corporate Actions](/features/corporate-actions/save-offchain-corporate-actions).
