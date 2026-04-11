@@ -1,10 +1,11 @@
 {
     "name": "tap-docs",
-    "version": "1.0.0",
+    "version": "1.5.0",
     "private": true,
-    "license": "MIT",
+    "license": "UNLICENSED",
     "description": "Developer documentation for Transfer Agent Protocol",
 "scripts": {
+        "predev": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
         "dev": "next dev -p 3001",
         "build": "next build",
         "start": "next start -p 3001",
