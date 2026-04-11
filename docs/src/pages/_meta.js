@@ -1,13 +1,13 @@
 const meta = {
-    index: 'Introduction',
-    development: 'Development',
-    protocol: 'Protocol Specification',
-    features: 'Features',
-    security: 'Security',
-    tests: 'Testing',
+    index: "Introduction",
+    development: "Development",
+    protocol: "Protocol Specification",
+    features: "Features",
+    security: "Security",
+    tests: "Testing",
     website: {
-        title: 'Website ↗',
-        href: 'https://transferagentprotocol.xyz',
+        title: "Website ↗",
+        href: "https://transferagentprotocol.xyz",
         newWindow: true,
     },
 };

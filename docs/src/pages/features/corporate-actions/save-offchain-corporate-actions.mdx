@@ -1,0 +1,160 @@
+import { Callout } from 'nextra/components';
+
+# Save Offchain Corporate Actions
+
+These are the corporate actions TAP can save offchain today without sending a contract transaction. Use them when the OCF record matters now, even if the smart contract path is not yet wired up.
+
+<Callout type="info">
+The two public routes on this page save Mongo transaction documents but do not create `HistoricalTransaction` rows by themselves.
+</Callout>
+
+## Issue equity compensation
+
+Use `POST /transactions/issuance/equity-compensation` to save an option, RSU, or SAR issuance in Mongo.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "stakeholder_id": "<YOUR_STAKEHOLDER_ID>",
+        "stock_plan_id": "<YOUR_STOCK_PLAN_ID>",
+        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
+        "compensation_type": "OPTION_NSO",
+        "quantity": "10000",
+        "exercise_price": {
+            "amount": "1.00",
+            "currency": "USD"
+        },
+        "expiration_date": "2036-01-01",
+        "termination_exercise_windows": [
+            {
+                "reason": "VOLUNTARY_OTHER",
+                "period": 90,
+                "period_type": "DAYS"
+            }
+        ],
+        "custom_id": "OPTION-001",
+        "security_law_exemptions": [],
+        "comments": []
+    }
+}
+```
+
+The response returns `{ "equityCompensationIssuance": ... }` and saves an `EquityCompensationIssuance` record.
+
+Required OCF fields:
+
+- `compensation_type`
+- `quantity`
+- `expiration_date`
+- `termination_exercise_windows`
+
+Options require `exercise_price`. SARs require `base_price`.
+
+## Issue a convertible
+
+Use `POST /transactions/issuance/convertible` to save a SAFE, note, or other convertible issuance in Mongo.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "stakeholder_id": "<YOUR_STAKEHOLDER_ID>",
+        "convertible_type": "SAFE",
+        "investment_amount": {
+            "amount": "250000",
+            "currency": "USD"
+        },
+        "conversion_triggers": [
+            {
+                "trigger_id": "SAFE-TRIGGER-001",
+                "type": "UNSPECIFIED",
+                "conversion_right": {
+                    "type": "CONVERTIBLE_CONVERSION_RIGHT",
+                    "conversion_mechanism": {
+                        "type": "SAFE_CONVERSION",
+                        "conversion_mfn": false,
+                        "conversion_valuation_cap": {
+                            "amount": "10000000",
+                            "currency": "USD"
+                        },
+                        "conversion_discount": "0.2"
+                    },
+                    "converts_to_future_round": true
+                }
+            }
+        ],
+        "seniority": 1,
+        "custom_id": "SAFE-001",
+        "security_law_exemptions": [],
+        "comments": []
+    }
+}
+```
+
+The response returns `{ "convertibleIssuance": ... }` and saves a `ConvertibleIssuance` record.
+
+Required OCF fields:
+
+- `convertible_type`
+- `investment_amount`
+- `conversion_triggers`
+- `seniority`
+
+## Other offchain objects TAP already stores
+
+### Equity compensation and plan securities
+
+TAP already stores these Mongo transaction objects:
+
+- `EquityCompensationAcceptance`
+- `EquityCompensationCancellation`
+- `EquityCompensationTransfer`
+- `EquityCompensationExercise`
+- `EquityCompensationRelease`
+- `EquityCompensationRetraction`
+- `PlanSecurityIssuance`
+- `PlanSecurityAcceptance`
+- `PlanSecurityCancellation`
+- `PlanSecurityTransfer`
+- `PlanSecurityExercise`
+- `PlanSecurityRelease`
+- `PlanSecurityRetraction`
+- `StockPlanReturnToPool`
+
+### Convertibles and warrants
+
+TAP already stores these Mongo transaction objects:
+
+- `ConvertibleAcceptance`
+- `ConvertibleCancellation`
+- `ConvertibleTransfer`
+- `ConvertibleRetraction`
+- `ConvertibleConversion`
+- `WarrantIssuance`
+- `WarrantAcceptance`
+- `WarrantCancellation`
+- `WarrantTransfer`
+- `WarrantRetraction`
+- `WarrantExercise`
+
+### Vesting and related adjustments
+
+TAP already stores these Mongo transaction objects:
+
+- `VestingStart`
+- `VestingEvent`
+- `VestingAcceleration`
+- `StockPlanPoolAdjustment`
+- `StockClassConversionRatioAdjustment`
+
+## OCF formats that are not stored offchain yet
+
+- `EquityCompensationRepricing`
+- `StakeholderStatusChangeEvent`
+- `StakeholderRelationshipChangeEvent`
+- `StockConsolidation`
+
+## What's next?
+
+Use [Update Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for the offchain setup and maintenance records that support these transactions.

@@ -1,13 +1,7 @@
 const meta = {
-    issuer: 'Issuer',
-    'stock-class': 'Stock Class',
-    'stock-legend': 'Stock Legend',
-    'stock-plan': 'Stock Plan',
-    valuation: 'Valuation',
-    'vesting-terms': 'Vesting Terms',
-    stakeholder: 'Stakeholder',
-    transactions: 'Transactions',
-    'historical-transactions': 'Historical Transactions',
+    "issuer-management": "Manage Issuer",
+    "cap-table-management": "Create Cap Table",
+    "corporate-actions": "Corporate Actions",
 };
 
 export default meta;

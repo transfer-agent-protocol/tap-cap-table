@@ -1,0 +1,47 @@
+import { Callout } from 'nextra/components';
+
+# Create Issuer
+
+Use [Create Issuer](/development/cap-table-deploy) for the main `POST /issuer/create` flow. This page covers the issuer routes around that first deployment.
+
+## Register the factory if needed
+
+Use `POST /factory/register` once for each factory deployment.
+
+```json
+{
+    "factory_address": "<YOUR_FACTORY_ADDRESS>",
+    "implementation_address": "<YOUR_IMPLEMENTATION_ADDRESS>"
+}
+```
+
+The response returns `{ "factory": ... }`.
+
+## Register an issuer that was already deployed
+
+Use `POST /issuer/register` when a wallet or another system already deployed the cap table and you only need the TAP record.
+
+<Callout type="info">
+Send the issuer fields from [Create Issuer](/development/cap-table-deploy), plus `deployed_to` and `tx_hash`.
+</Callout>
+
+If you have the original contract `id`, send it as the bytes16 issuer ID that was used onchain. TAP converts that value back into the UUID form it uses in Mongo. If you omit `id`, the route falls back to a random UUID.
+
+Using the original onchain `id` matters most when TAP needs to line the registered issuer up with the initial `IssuerCreated` event and any manifest seeding tied to that issuer.
+
+## Read issuer records
+
+- `GET /issuer/id/:id` exists, but it is not a full issuer detail route today.
+- `GET /issuer/total-number` returns the issuer count.
+
+The `POST /issuer/create` or `POST /issuer/register` response is still the main issuer record you use in later API calls.
+
+## Import an existing OCF cap table
+
+Use `POST /mint-cap-table` when you already have an OCF manifest and want TAP to seed Mongo, deploy the cap table, and save the resulting `deployed_to` address on the issuer.
+
+This route expects a `multipart/form-data` upload with a zip file that contains one or more `ocf.json` files.
+
+## What's next?
+
+Use [Read History](/features/issuer-management/read-history) to check what has already been recorded for the issuer.

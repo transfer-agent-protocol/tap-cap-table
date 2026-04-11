@@ -1,0 +1,52 @@
+import { Steps, Callout } from 'nextra/components';
+
+# View Cap Table
+
+Use the cap table holdings route to see the current stock positions for an issuer. This is a hybrid read: the server starts from Mongo issuance records and then checks active positions onchain before returning the result.
+
+<Steps>
+
+### Send a GET request
+
+```text
+GET http://localhost:8293/cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>
+```
+
+### Check the response
+
+The response returns:
+
+- `holdings` - active stock positions only
+- `stockClasses` - stock classes for the issuer
+- `issuer` - the issuer record
+
+```json
+{
+    "holdings": [
+        {
+            "quantity": 100000,
+            "sharePrice": 4.2
+        }
+    ],
+    "stockClasses": [],
+    "issuer": {
+        "_id": "<YOUR_ISSUER_ID>"
+    }
+}
+```
+
+</Steps>
+
+<Callout type="info">
+Only positions with a non-zero onchain quantity are returned. This route is currently focused on stock holdings, not option, warrant, or convertible positions.
+</Callout>
+
+## What this route reads
+
+- Mongo is used to find the latest stock issuances by stakeholder and stock class.
+- The cap table contract is used to confirm which positions are still active.
+- The response combines the current onchain holding with the related stakeholder and stock class records.
+
+## What's next?
+
+Use [Read History](/features/issuer-management/read-history) to see how the cap table got to its current state.

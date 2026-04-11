@@ -16,7 +16,7 @@ const themeConfig = {
 	},
 	docsRepositoryBase: 'https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/docs',
 	footer: {
-		text: (
+		content: (
 			<span>
 				Copyright {new Date().getFullYear()} © {' '}
 					PALMER.EARTH CORP
