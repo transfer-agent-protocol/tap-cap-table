@@ -1,6 +1,6 @@
-{
-    "install": "Install",
-    "setup": "Setup",
+const meta = {
+    install: "Install",
+    setup: "Setup",
     "run-server": "Run Server",
     "factory-deploy": "Deploy Factory",
     "cap-table-deploy": "Create Issuer",
@@ -8,6 +8,7 @@
     "create-stakeholder": "Create Stakeholder",
     "issue-stock": "Issue Stock",
     "transfer-stock": "Transfer Stock",
-    "historical-transactions": "Historical Transactions"
-}
+    "historical-transactions": "Historical Transactions",
+};
 
+export default meta;
