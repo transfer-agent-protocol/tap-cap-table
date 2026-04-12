@@ -1,8 +1,8 @@
 import { Steps, Callout } from 'nextra/components';
 
-# Read History
+# View History
 
-Use the historical transactions route to see the event history for an issuer. This is the main read path for stock issuances, transfers, cancellations, repurchases, reissuances, retractions, acceptances, and authorized-share adjustments that were recorded through the onchain flow.
+Use this page when you want to check whether a stock action or share adjustment has already been recorded for an issuer.
 
 <Steps>
 
@@ -21,16 +21,16 @@ Replace `<YOUR_ISSUER_ID>` with the issuer `_id` from your issuer creation respo
 The response is an array. Each item includes:
 
 - `transaction` - the populated transaction document
-- `transactionType` - the Mongo model name, such as `StockIssuance`
 - `issuer` - the issuer ID
+
+Start with `transaction.date`, `transaction.security_id`, and the transaction body itself.
 
 ```json
 [
     {
-        "transactionType": "StockIssuance",
         "issuer": "<YOUR_ISSUER_ID>",
         "transaction": {
-            "object_type": "TX_STOCK_ISSUANCE",
+            "date": "2026-01-01",
             "security_id": "<YOUR_SECURITY_ID>"
         }
     }
@@ -39,27 +39,27 @@ The response is an array. Each item includes:
 
 </Steps>
 
-## What appears here today
+## Use this route to answer common checks
 
-The event poller currently writes historical rows for:
+- did my stock action land yet
+- did an authorized shares adjustment show up
+- am I looking at the right issuer history
 
-- stock issuance
-- stock transfer
-- stock cancellation
-- stock retraction
-- stock reissuance
-- stock repurchase
-- stock acceptance
-- issuer authorized shares adjustments
-- stock class authorized shares adjustments
+## Quick verification recipe
 
-## What does not appear automatically
+1. Send the stock action or share adjustment route.
+2. Fetch this history endpoint again.
+3. Look for the new `date`, `security_id`, and transaction entry.
 
-Routes that only save Mongo documents do not create history rows by themselves. That includes:
+## Why you might not see a record
+
+These routes save data but do not show up here on their own:
 
 - `POST /transactions/issuance/equity-compensation`
 - `POST /transactions/issuance/convertible`
 
+For the full list of routes that do and do not appear here, read [Add New History](/features/issuer-management/append-history).
+
 ## What's next?
 
-Read [Append History](/features/issuer-management/append-history) to see which routes add new history entries.
+Read [Add New History](/features/issuer-management/append-history) to see which routes add new history entries.

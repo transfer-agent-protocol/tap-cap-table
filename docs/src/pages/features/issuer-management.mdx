@@ -2,10 +2,18 @@ import { Cards } from 'nextra/components';
 
 # Manage Issuer
 
-Use [Create Issuer](/development/cap-table-deploy) for the first deployment. These pages cover issuer registration, reads, and history after that initial step.
+Use this section when the issuer already exists and you need one of three answers:
+
+- register or import an existing issuer
+- see what happened already
+- understand which routes create new history
 
 <Cards>
-  <Cards.Card title="Create Issuer" href="/features/issuer-management/create-issuer" />
-  <Cards.Card title="Read History" href="/features/issuer-management/read-history" />
-  <Cards.Card title="Append History" href="/features/issuer-management/append-history" />
+  <Cards.Card title="Register or Import Issuer" href="/features/issuer-management/create-issuer" />
+  <Cards.Card title="View History" href="/features/issuer-management/read-history" />
+  <Cards.Card title="Add New History" href="/features/issuer-management/append-history" />
 </Cards>
+
+- [Register or Import Issuer](/features/issuer-management/create-issuer) is for externally deployed cap tables, factory registration, and manifest imports.
+- [View History](/features/issuer-management/read-history) is for checking whether a stock action or adjustment has already been recorded.
+- [Add New History](/features/issuer-management/append-history) is for understanding which routes create a new history entry and which ones only save data.
