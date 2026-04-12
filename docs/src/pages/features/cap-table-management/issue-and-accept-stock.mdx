@@ -2,11 +2,24 @@ import { Callout } from 'nextra/components';
 
 # Issue and Accept Stock
 
-Use [Issue Stock](/development/issue-stock) for the `POST /transactions/issuance/stock` request and response. That route creates the `StockIssuance` transaction record. This page covers `StockAcceptance`, `security_id`, and what changes after the issuance lands.
+Use this page when stock has already been issued and you want to add a separate acceptance event.
+
+Use [Issue Stock](/development/issue-stock) for the `POST /transactions/issuance/stock` request and response.
+
+## Before you use this route
+
+Acceptance is optional. Use it when you want the acceptance recorded as its own event after the original issuance.
+If the original issuance event is enough for your workflow, you do not need a separate acceptance event.
+
+- keep `stakeholderId`
+- keep `stockClassId`
+- keep `security_id`
+
+`security_id` comes from the original issuance response.
 
 ## Accept stock
 
-Use `POST /transactions/accept/stock` when you want a separate acceptance event for an existing stock security.
+Use `POST /transactions/accept/stock` when you want a separate acceptance event for an existing issuance.
 
 ```json
 {
@@ -20,26 +33,16 @@ Use `POST /transactions/accept/stock` when you want a separate acceptance event 
 }
 ```
 
-The response returns `{ "stockAcceptance": ... }` with a generated `id`, `date`, and `object_type`.
+The response returns `{ "stockAcceptance": ... }`.
 
 <Callout type="info">
-Send `stakeholderId` and `stockClassId` in the request body. TAP uses those helper fields for the contract call, then validates the OCF stock acceptance object around `security_id`.
+Keep the same `security_id` for later accept, cancel, retract, reissue, and repurchase calls on that issuance.
 </Callout>
 
-## Keep the security_id
-
-The `security_id` identifies the block of shares created by the original issuance. You use it again for:
-
-- `POST /transactions/accept/stock`
-- `POST /transactions/cancel/stock`
-- `POST /transactions/retract/stock`
-- `POST /transactions/reissue/stock`
-- `POST /transactions/repurchase/stock`
-
-## What changes after issuance or acceptance
+## Verify the result
 
 - `GET /cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>` shows the active position once the contract state is updated.
-- `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` shows issuance and acceptance as separate history rows after the event poller runs.
+- `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` shows issuance and acceptance as separate history rows after processing.
 
 ## What's next?
 

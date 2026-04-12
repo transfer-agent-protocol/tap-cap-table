@@ -1,15 +1,33 @@
-import { Callout } from 'nextra/components';
+# Add Supporting Records
 
-# Create Stock Class and Shareholders
+## When to use this page
 
-Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholder](/development/create-stakeholder) for the main create requests. This page covers the supporting records around that setup.
+Use this page when the stock class and stakeholder already exist and you need the supporting records around them.
 
-## Add supporting records
+Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholder](/development/create-stakeholder) for the first create flow.
 
-- `POST /stock-legend/create` saves a reusable stock legend template in Mongo.
-- `POST /stock-plan/create` saves the plan record that later equity compensation issuances can reference.
+## Save a stock legend or stock plan
 
-Use [Update Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for the request bodies and read routes for those offchain records.
+Use `POST /stock-legend/create` to save reusable legend text.
+
+Use `POST /stock-plan/create` to save plan details that later equity compensation issuances can reference.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "plan_name": "Transfer Agent Protocol 2026 Plan",
+        "board_approval_date": "2026-01-15",
+        "stockholder_approval_date": "2026-01-20",
+        "initial_shares_reserved": "1000000",
+        "default_cancellation_behavior": "RETURN_TO_POOL",
+        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
+        "comments": []
+    }
+}
+```
+
+Use [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for fuller examples of both create routes.
 
 ## Add or remove a stakeholder wallet
 
@@ -24,15 +42,11 @@ Use `POST /stakeholder/add-wallet` or `POST /stakeholder/remove-wallet` with thi
 
 Both routes return `"Success"` when the wallet update is accepted. `POST /stakeholder/add-wallet` can also return `"Wallet already added"`.
 
-<Callout type="info">
-Stock classes and stakeholders are created onchain and then mirrored into Mongo. Stock legends and stock plans are offchain records only.
-</Callout>
+## Read the records back
 
-## Read these records
-
-- `GET /stock-class/id/:id` returns the onchain stock class summary.
+- `GET /stock-class/id/:id` returns the stock class summary.
 - `GET /stock-class/total-number` returns the stock class count.
-- `GET /stakeholder/id/:id` returns the onchain stakeholder summary.
+- `GET /stakeholder/id/:id` returns the stakeholder summary.
 - `GET /stakeholder/issuer_assigned_id/:id`
 - `GET /stakeholder/issuer/:issuerId/issuer_assigned_id/:id`
 - `GET /stakeholder/wallet/:address`
@@ -40,6 +54,8 @@ Stock classes and stakeholders are created onchain and then mirrored into Mongo.
 - `GET /stock-legend/id/:id` and `GET /stock-legend/total-number`
 - `GET /stock-plan/id/:id` and `GET /stock-plan/total-number`
 
-## What's next?
+If you created a legend or plan, read it back by ID. If you changed a wallet, read the stakeholder by wallet address.
+
+## What to do next
 
 Use [Issue and Accept Stock](/features/cap-table-management/issue-and-accept-stock).
