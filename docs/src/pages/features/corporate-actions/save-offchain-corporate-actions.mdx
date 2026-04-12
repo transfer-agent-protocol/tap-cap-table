@@ -1,16 +1,22 @@
 import { Callout } from 'nextra/components';
 
-# Save Offchain Corporate Actions
+# Save Equity Compensation and Convertibles
 
-These are the corporate actions TAP can save offchain today without sending a contract transaction. Use them when the OCF record matters now, even if the smart contract path is not yet wired up.
+Use this page when you need to save an equity compensation or convertible issuance through the API.
+
+## Before you use these routes
+
+- keep your issuer, stakeholder, and stock class IDs ready
+- equity compensation usually also needs a stock plan
+- some workflows also depend on vesting terms or valuation data
 
 <Callout type="info">
-The two public routes on this page save Mongo transaction documents but do not create `HistoricalTransaction` rows by themselves.
+These routes save the issuance for later use. They do not create a history row.
 </Callout>
 
 ## Issue equity compensation
 
-Use `POST /transactions/issuance/equity-compensation` to save an option, RSU, or SAR issuance in Mongo.
+Use `POST /transactions/issuance/equity-compensation` to save an option, RSU, or SAR issuance.
 
 ```json
 {
@@ -40,20 +46,20 @@ Use `POST /transactions/issuance/equity-compensation` to save an option, RSU, or
 }
 ```
 
-The response returns `{ "equityCompensationIssuance": ... }` and saves an `EquityCompensationIssuance` record.
+The response returns `{ "equityCompensationIssuance": ... }`.
 
-Required OCF fields:
+- Required fields:
 
-- `compensation_type`
-- `quantity`
-- `expiration_date`
-- `termination_exercise_windows`
+  - `compensation_type`
+  - `quantity`
+  - `expiration_date`
+  - `termination_exercise_windows`
 
 Options require `exercise_price`. SARs require `base_price`.
 
 ## Issue a convertible
 
-Use `POST /transactions/issuance/convertible` to save a SAFE, note, or other convertible issuance in Mongo.
+Use `POST /transactions/issuance/convertible` to save a SAFE, note, or other convertible issuance.
 
 ```json
 {
@@ -92,69 +98,21 @@ Use `POST /transactions/issuance/convertible` to save a SAFE, note, or other con
 }
 ```
 
-The response returns `{ "convertibleIssuance": ... }` and saves a `ConvertibleIssuance` record.
+The response returns `{ "convertibleIssuance": ... }`.
 
-Required OCF fields:
+- Required fields:
 
-- `convertible_type`
-- `investment_amount`
-- `conversion_triggers`
-- `seniority`
+  - `convertible_type`
+  - `investment_amount`
+  - `conversion_triggers`
+  - `seniority`
 
-## Other offchain objects TAP already stores
+## Verify the result
 
-### Equity compensation and plan securities
-
-TAP already stores these Mongo transaction objects:
-
-- `EquityCompensationAcceptance`
-- `EquityCompensationCancellation`
-- `EquityCompensationTransfer`
-- `EquityCompensationExercise`
-- `EquityCompensationRelease`
-- `EquityCompensationRetraction`
-- `PlanSecurityIssuance`
-- `PlanSecurityAcceptance`
-- `PlanSecurityCancellation`
-- `PlanSecurityTransfer`
-- `PlanSecurityExercise`
-- `PlanSecurityRelease`
-- `PlanSecurityRetraction`
-- `StockPlanReturnToPool`
-
-### Convertibles and warrants
-
-TAP already stores these Mongo transaction objects:
-
-- `ConvertibleAcceptance`
-- `ConvertibleCancellation`
-- `ConvertibleTransfer`
-- `ConvertibleRetraction`
-- `ConvertibleConversion`
-- `WarrantIssuance`
-- `WarrantAcceptance`
-- `WarrantCancellation`
-- `WarrantTransfer`
-- `WarrantRetraction`
-- `WarrantExercise`
-
-### Vesting and related adjustments
-
-TAP already stores these Mongo transaction objects:
-
-- `VestingStart`
-- `VestingEvent`
-- `VestingAcceleration`
-- `StockPlanPoolAdjustment`
-- `StockClassConversionRatioAdjustment`
-
-## OCF formats that are not stored offchain yet
-
-- `EquityCompensationRepricing`
-- `StakeholderStatusChangeEvent`
-- `StakeholderRelationshipChangeEvent`
-- `StockConsolidation`
+- keep the returned `equityCompensationIssuance` or `convertibleIssuance` object
+- read the related stock plan, vesting terms, or valuation back if the issuance depends on those inputs
+- do not expect either route to appear in [View History](/features/issuer-management/read-history)
 
 ## What's next?
 
-Use [Update Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for the offchain setup and maintenance records that support these transactions.
+Use [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for the supporting records around these issuances.

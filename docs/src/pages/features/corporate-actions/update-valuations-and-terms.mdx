@@ -1,16 +1,16 @@
 import { Callout } from 'nextra/components';
 
-# Update Valuations and Terms
+# Save Valuations and Terms
 
-These objects are the maintenance records around the cap table. They help explain pricing, vesting, legends, and plan structure, but they do not edit old history rows. In practice, you create a new record when terms change.
+Use this page when you need to save pricing, vesting, legend, plan, or stock class support data.
 
 <Callout type="info">
-Valuations, vesting terms, stock legend templates, and stock plans are saved offchain today. Stock class authorized share changes use a contract-backed adjustment route instead of editing the original stock class record.
+When terms change, create a new record. These routes do not rewrite past transactions.
 </Callout>
 
-## Add a new 409A valuation
+## Save a 409A valuation
 
-Use `POST /valuation/create` when the fair market value changes and you want the new valuation saved offchain.
+Use `POST /valuation/create` when the fair market value changes.
 
 ```json
 {
@@ -33,7 +33,9 @@ Use `POST /valuation/create` when the fair market value changes and you want the
 
 The response returns `{ "valuation": ... }`.
 
-## Add new vesting terms
+Read it back with `GET /valuation/id/:id` or `GET /valuation/total-number`.
+
+## Save vesting terms
 
 Use `POST /vesting-terms/create` to save a vesting schedule that future issuances can reference.
 
@@ -61,7 +63,9 @@ Use `POST /vesting-terms/create` to save a vesting schedule that future issuance
 
 The response returns `{ "vestingTerms": ... }`.
 
-## Add a stock legend template
+Read it back with `GET /vesting-terms/id/:id` or `GET /vesting-terms/total-number`.
+
+## Save stock legends and stock plans
 
 Use `POST /stock-legend/create` to save reusable legend text.
 
@@ -78,9 +82,9 @@ Use `POST /stock-legend/create` to save reusable legend text.
 
 The response returns `{ "stockLegend": ... }`.
 
-## Add a stock plan record
+Read it back with `GET /stock-legend/id/:id` or `GET /stock-legend/total-number`.
 
-Use `POST /stock-plan/create` to save the stock plan metadata used by future equity compensation issuances.
+Use `POST /stock-plan/create` to save the stock plan details used by future equity compensation issuances.
 
 ```json
 {
@@ -99,23 +103,20 @@ Use `POST /stock-plan/create` to save the stock plan metadata used by future equ
 
 The response returns `{ "stockPlan": ... }`.
 
-## Stock class maintenance
+Read it back with `GET /stock-plan/id/:id` or `GET /stock-plan/total-number`.
 
-For stock classes, the current maintenance flow is:
+## Maintain a stock class
 
-- use `GET /stock-class/id/:id` to read the onchain stock class summary
+Use this part of the page when you need to check the stock class record or change its authorized share count.
+
+- use `GET /stock-class/id/:id` to read the stock class summary
 - use `GET /stock-class/total-number` to count stock classes
 - use `POST /transactions/adjust/stock-class/authorized-shares` when the authorized share count changes
 
 There is no general metadata update route for stock classes today. If you need a new authorized share count, create a new adjustment event instead of editing history.
 
-## Read routes for offchain maintenance records
-
-- `GET /valuation/id/:id` and `GET /valuation/total-number`
-- `GET /vesting-terms/id/:id` and `GET /vesting-terms/total-number`
-- `GET /stock-legend/id/:id` and `GET /stock-legend/total-number`
-- `GET /stock-plan/id/:id` and `GET /stock-plan/total-number`
+Read the stock class back with `GET /stock-class/id/:id`, and use the adjustment route when the authorized share count changes.
 
 ## What's next?
 
-Use [Save Offchain Corporate Actions](/features/corporate-actions/save-offchain-corporate-actions) when those records need to be tied to equity compensation or convertible transactions.
+Use [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions) when those records need to be tied to equity compensation or convertible transactions.
