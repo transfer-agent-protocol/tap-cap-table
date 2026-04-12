@@ -241,6 +241,18 @@ pnpm docs:start
 
 The docs are a Nextra/Next.js site in the `docs/` workspace. See `docs/README.md` for more details.
 
+### Documentation DX conventions
+
+When editing pages under `docs/src/pages/`, follow these conventions established during a readability/DX review:
+
+- **Intro paragraphs**: Use plain language. Avoid unexplained implementation terms (e.g. "beacon proxy pattern") unless the page is specifically about that concept.
+- **Price/scaling gotchas**: Surface `share_price.amount` scaling rules (÷10000) in a `<Callout type="warning">` immediately after the response overview — never only at the bottom of a page.
+- **Dependency lists**: Each tool in an install/setup page should have a one-line purpose annotation so readers understand why it is required.
+- **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
+- **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
+- **OCF import routes**: Any `multipart/form-data` route should include a concrete `curl -F` example, not just prose.
+- **Factory deploy page**: Keep changes to this page minimal — the MongoDB Compass GUI flow is intentional and should not be replaced with a CLI alternative.
+
 ### Frontend App
 
 ```bash
