@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 # Deploy the Factory Contract
 
-The factory contract deploys new cap tables and manages their addresses. It uses a beacon proxy pattern so all cap tables can be upgraded together.
+The factory contract is the onchain entry point for creating new cap tables. You deploy it once, then every issuer cap table is created from that single factory address.
 
 <Steps>
 

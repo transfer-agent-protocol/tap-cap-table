@@ -4,21 +4,21 @@ import { Callout, FileTree } from 'nextra/components'
 
 You'll need these installed to start building:
 
-- [Docker](https://docs.docker.com/get-docker/)
+- [Docker](https://docs.docker.com/get-docker/) — runs MongoDB, the server, and the frontend app locally
 
-- [Foundry](https://getfoundry.sh/)
+- [Foundry](https://getfoundry.sh/) — compiles and deploys the Solidity contracts; also provides Anvil, the local blockchain
 
 ```sh
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-- [Mongo Compass](https://www.mongodb.com/try/download/compass)
+- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — GUI for inspecting the database during development
 
-- [Node.js](https://nodejs.org/en/download/)
+- [Node.js](https://nodejs.org/en/download/) — required to run the server and app
 
-- [Postman App](https://www.postman.com/downloads/)
+- [Postman](https://www.postman.com/downloads/) — for sending API requests during the walkthrough (curl works too)
 
-- [pnpm](https://pnpm.io/installation)
+- [pnpm](https://pnpm.io/installation) — the package manager used throughout this project
 
 ## Pull the repo
 
@@ -28,6 +28,11 @@ This will include the [OCF](/protocol/tap-ocf) and [Foundry](https://book.getfou
 git clone --recurse-submodules https://github.com/transfer-agent-protocol/tap-cap-table.git
 ```
 
+Then install workspace dependencies:
+
+```sh
+pnpm install
+```
 
 ## Learn the structure
 

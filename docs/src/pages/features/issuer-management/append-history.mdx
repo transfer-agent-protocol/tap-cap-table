@@ -1,8 +1,8 @@
 import { Callout } from 'nextra/components';
 
-# Append History
+# Add New History
 
-Historical transactions are append-only. You do not edit old history rows directly. To add new history, you send a new contract-backed action and let the event poller write the next row.
+Use this page when you need to know whether a route creates a new history entry or only saves data for later use.
 
 <Callout type="warning">
 You can add new events to the history feed. You cannot rewrite past events through the TAP API.
@@ -10,36 +10,43 @@ You can add new events to the history feed. You cannot rewrite past events throu
 
 ## Routes that add new history
 
-These routes send contract transactions and later create `HistoricalTransaction` rows:
+These routes add new history entries.
 
-- `POST /transactions/issuance/stock`
-- `POST /transactions/transfer/stock`
-- `POST /transactions/cancel/stock`
-- `POST /transactions/retract/stock`
-- `POST /transactions/reissue/stock`
-- `POST /transactions/repurchase/stock`
-- `POST /transactions/accept/stock`
-- `POST /transactions/adjust/issuer/authorized-shares`
-- `POST /transactions/adjust/stock-class/authorized-shares`
+- Stock actions:
+  - `POST /transactions/issuance/stock`
+  - `POST /transactions/transfer/stock`
+  - `POST /transactions/cancel/stock`
+  - `POST /transactions/retract/stock`
+  - `POST /transactions/reissue/stock`
+  - `POST /transactions/repurchase/stock`
+  - `POST /transactions/accept/stock`
+- Authorized share adjustments:
+  - `POST /transactions/adjust/issuer/authorized-shares`
+  - `POST /transactions/adjust/stock-class/authorized-shares`
 
-## Routes that do not add history on their own
+## Routes that only save data
 
-These routes save records offchain but do not create `HistoricalTransaction` rows by themselves:
+These routes save data for later use but do not add history on their own.
 
-- `POST /transactions/issuance/equity-compensation`
-- `POST /transactions/issuance/convertible`
-- `POST /stock-legend/create`
-- `POST /stock-plan/create`
-- `POST /valuation/create`
-- `POST /vesting-terms/create`
+- Equity compensation and convertibles:
+  - `POST /transactions/issuance/equity-compensation`
+  - `POST /transactions/issuance/convertible`
+- Supporting records:
+  - `POST /stock-legend/create`
+  - `POST /stock-plan/create`
+  - `POST /valuation/create`
+  - `POST /vesting-terms/create`
 
-## How to verify a history update
+## How to verify a new history entry
 
-1. Send one of the contract-backed routes listed above.
-2. Wait for the event poller to process the transaction.
+- If the route changes holdings or authorized share counts, it should appear in history.
+- If the route only saves a supporting input, it will not appear there by itself.
+
+1. Send the route.
+2. Wait for it to be processed.
 3. Fetch `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` again.
-4. Confirm that the new transaction appears as a new history row.
+4. Look for the new `date`, `security_id`, and transaction entry.
 
 ## What's next?
 
-Use [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock) for the onchain routes that create new history. Use [Save Offchain Corporate Actions](/features/corporate-actions/save-offchain-corporate-actions) for routes that save data without updating historical transactions.
+Use [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock) for routes that add new history. Use [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions) for routes that save data without adding history.

@@ -1,6 +1,6 @@
 const meta = {
     "issuer-management": "Manage Issuer",
-    "cap-table-management": "Create Cap Table",
+    "cap-table-management": "Manage Cap Table",
     "corporate-actions": "Corporate Actions",
 };
 

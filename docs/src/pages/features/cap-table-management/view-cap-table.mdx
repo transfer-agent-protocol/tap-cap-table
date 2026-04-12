@@ -2,7 +2,7 @@ import { Steps, Callout } from 'nextra/components';
 
 # View Cap Table
 
-Use the cap table holdings route to see the current stock positions for an issuer. This is a hybrid read: the server starts from Mongo issuance records and then checks active positions onchain before returning the result.
+Use this page when you want to answer one question: who currently holds stock for this issuer?
 
 <Steps>
 
@@ -24,11 +24,22 @@ The response returns:
 {
     "holdings": [
         {
+            "stockClass": {
+                "_id": "<YOUR_STOCK_CLASS_ID>"
+            },
+            "stakeholder": {
+                "_id": "<YOUR_STAKEHOLDER_ID>"
+            },
             "quantity": 100000,
-            "sharePrice": 4.2
+            "sharePrice": 4.2,
+            "timestamp": 1767225600
         }
     ],
-    "stockClasses": [],
+    "stockClasses": [
+        {
+            "_id": "<YOUR_STOCK_CLASS_ID>"
+        }
+    ],
     "issuer": {
         "_id": "<YOUR_ISSUER_ID>"
     }
@@ -38,15 +49,26 @@ The response returns:
 </Steps>
 
 <Callout type="info">
-Only positions with a non-zero onchain quantity are returned. This route is currently focused on stock holdings, not option, warrant, or convertible positions.
+This route returns active stock positions only. It does not show option, warrant, or convertible positions.
 </Callout>
 
-## What this route reads
+## What this route answers
 
-- Mongo is used to find the latest stock issuances by stakeholder and stock class.
-- The cap table contract is used to confirm which positions are still active.
-- The response combines the current onchain holding with the related stakeholder and stock class records.
+- which stock positions are still active
+- which stock classes belong to the issuer
+- which issuer record the holdings belong to
+
+## What is excluded
+
+- positions with zero remaining quantity
+- non-stock instruments
+
+## How to read the result
+
+- use `holdings` to see the active stock positions
+- use `stockClasses` to map those holdings back to the stock classes
+- use `issuer` to confirm you are looking at the right cap table
 
 ## What's next?
 
-Use [Read History](/features/issuer-management/read-history) to see how the cap table got to its current state.
+Use this page for the current state. Use [View History](/features/issuer-management/read-history) when you want to see how the cap table got to that state.

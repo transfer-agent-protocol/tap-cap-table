@@ -28,21 +28,13 @@ Note that "stakeholder" in OCF context is more specific than the general busines
 
 ## How TAP Uses OCF Offchain
 
-OCF schemas are the validation source for TAP's offchain records. Public create routes build an OCF-shaped payload, validate it with AJV against the matching schema in `ocf/schema`, and then either call the cap table contract or save a Mongo document.
+OCF defines the JSON shapes TAP uses for offchain records. The API routes on this site use those shapes for issuers, stakeholders, stock classes, transactions, and supporting records.
 
-The current transaction surface is easiest to read in developer terms:
-
-- **Available through the API**: a REST endpoint can create or initiate the object today.
-- **Stored offchain**: TAP has a Mongo transaction object under `server/db/objects/transactions`, but no public create route for that specific action yet.
-- **OCF format available**: OCF defines the object shape, but TAP does not currently expose it as a Mongo transaction object or route.
-
-The current repo includes 47 OCF transaction object schemas and 43 TAP Mongo transaction models. The OCF transaction schemas without TAP Mongo models are `EquityCompensationRepricing`, `StakeholderRelationshipChangeEvent`, `StakeholderStatusChangeEvent`, and `StockConsolidation`.
-
-The generated OCF property reference lives under `ocf/docs/schema_markdown`. Nextra summarizes the TAP-specific API and offchain availability in the [Cap Table API](/features) guides, especially [Corporate Actions](/features/corporate-actions).
+Use the [Cap Table API](/features) guides for the routes you can call today. If you want the raw field-by-field reference, the generated schema docs live under `ocf/docs/schema_markdown`.
 
 ## Our Database
 
-Using the OCF, we've created a [database](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/server/db) schema with a Mongo implementation. This schema is used by the Transfer Agent Protocol to store and share cap table data off chain. Also found in the root folder, our db schema and the server:
+TAP stores OCF-shaped records in a [database layer](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/server/db). Also found in the root folder, our db schema and the server:
 
 <FileTree>
   <FileTree.Folder name="server" defaultOpen>
