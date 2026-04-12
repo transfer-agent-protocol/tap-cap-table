@@ -33,7 +33,7 @@ Add these fields to the same issuer body used in [Create Issuer](/development/ca
 }
 ```
 
-If you have the original contract `id`, send the original bytes16 value from the deployment. That keeps the registered issuer lined up with the deployed contract. If you omit `id`, the route creates a new UUID.
+If you have the original contract `id` from the deployment — a 32-hex-character value like `b6ca9d9c1daa4b30830b444561ef7806` (the UUID without dashes) — send it as the `id` field. This keeps the TAP record aligned with the deployed contract. If you omit `id`, TAP generates a new UUID, which means the TAP record won’t share the same ID as the deployed contract.
 
 <Callout type="info">
 Send the same issuer fields used in [Create Issuer](/development/cap-table-deploy), plus `deployed_to` and `tx_hash`.
@@ -46,6 +46,11 @@ The response returns `{ "issuer": ... }`. Use that issuer object in later API ca
 Use `POST /mint-cap-table` when you already have an OCF manifest and want TAP to import the cap table, deploy it, and save the resulting `deployed_to` address on the issuer.
 
 This route expects a `multipart/form-data` upload with a zip file that contains one or more `ocf.json` files.
+
+```bash
+curl -X POST http://localhost:8293/mint-cap-table \
+  -F "file=@/path/to/your-ocf-manifest.zip"
+```
 
 After the import finishes, use the returned issuer record for later API calls, then check [View History](/features/issuer-management/read-history) to confirm what was created.
 
