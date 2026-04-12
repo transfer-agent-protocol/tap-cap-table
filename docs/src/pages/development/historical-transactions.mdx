@@ -26,6 +26,10 @@ The response is an array of historical transactions, each containing:
 - **`transactionType`**: The type of transaction (e.g., `StockIssuance`, `StockTransfer`)
 - **`issuer`**: The issuer ID this transaction belongs to
 
+<Callout type="warning">
+**Price scaling:** `share_price.amount` is stored as a scaled integer for onchain precision. Divide by `10000` to get the human-readable value — for example, `42000` means `$4.20`. This applies to all monetary fields in transaction responses.
+</Callout>
+
 ![Historical Transactions Response](../../../public/images/fetch-historical-transactions.png)
 
 </Steps>
@@ -51,56 +55,20 @@ The `transactionType` field indicates what kind of transaction occurred:
 ```json
 [
     {
-        "_id": "6956c8d19bfa150bf9b44b42",
-        "transaction": {
-            "_id": "ba4292ef-8234-90b7-7307-a075f2f42f5f",
-            "__v": 0,
-            "board_approval_date": "",
-            "comments": [
-                "Founder stock issuance"
-            ],
-            "consideration_text": "",
-            "cost_basis": {
-                "amount": "0",
-                "currency": "USD"
-            },
-            "createdAt": "2026-01-01T19:19:45.441Z",
-            "custom_id": "CS-A-001",
-            "date": "2026-01-01",
-            "is_onchain_synced": true,
-            "issuance_type": "",
-            "issuer": "b6ca9d9c-1daa-4b30-830b-444561ef7806",
-            "object_type": "TX_STOCK_ISSUANCE",
-            "quantity": "100000",
-            "security_id": "56d14df5-6b04-7d93-1976-5e3f0d1703de",
-            "security_law_exemptions": [],
-            "share_numbers_issued": [
-                {
-                    "starting_share_number": "0",
-                    "ending_share_number": "0"
-                }
-            ],
-            "share_price": {
-                "amount": "42000",
-                "currency": "USD"
-            },
-            "stakeholder_id": "bf40d29d-3493-4348-98a6-c69554a4b263",
-            "stock_class_id": "17dc6b51-bbfc-4f4f-8fb9-a76c167322d2",
-            "stock_legend_ids": [],
-            "stock_plan_id": "00000000-0000-0000-0000-000000000000",
-            "stockholder_approval_date": "",
-            "updatedAt": "2026-01-01T19:19:45.441Z",
-            "vesting_terms_id": "00000000-0000-0000-0000-000000000000"
-        },
         "transactionType": "StockIssuance",
-        "issuer": "b6ca9d9c-1daa-4b30-830b-444561ef7806",
-        "createdAt": "2026-01-01T19:19:45.449Z",
-        "updatedAt": "2026-01-01T19:19:45.449Z",
-        "__v": 0
+        "issuer": "<YOUR_ISSUER_ID>",
+        "transaction": {
+            "date": "2026-01-01",
+            "security_id": "56d14df5-6b04-7d93-1976-5e3f0d1703de",
+            "quantity": "100000",
+            "share_price": { "amount": "42000", "currency": "USD" },
+            "is_onchain_synced": true
+        }
     }
 ]
 ```
 
-<Callout type="info">
-Note that `share_price.amount` is stored as a scaled integer (42000 = $4.20 with 10^4 precision) for onchain accuracy.
-</Callout>
+## What's next?
+
+- Use `security_id` from a `StockIssuance` row to [transfer, cancel, or reissue](/features/corporate-actions/transfer-cancel-and-reissue-stock) that block of shares.
+- See [View Cap Table](/features/cap-table-management/view-cap-table) to read current holdings rather than full history.
