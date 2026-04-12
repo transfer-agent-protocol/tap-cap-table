@@ -1,7 +1,7 @@
 const meta = {
-    "create-issuer": "Create Issuer",
-    "read-history": "Read History",
-    "append-history": "Append History",
+    "create-issuer": "Register or Import Issuer",
+    "read-history": "View History",
+    "append-history": "Add New History",
 };
 
 export default meta;

@@ -1,5 +1,5 @@
 const meta = {
-    "create-stock-class-and-shareholders": "Create Stock Class and Shareholders",
+    "create-stock-class-and-shareholders": "Add Supporting Records",
     "issue-and-accept-stock": "Issue and Accept Stock",
     "view-cap-table": "View Cap Table",
 };
