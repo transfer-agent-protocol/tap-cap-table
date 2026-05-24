@@ -1,0 +1,130 @@
+import { Callout } from 'nextra/components';
+
+# API Reference
+
+Base URL: `http://localhost:8293`.
+
+<Callout type="info">
+`/stakeholder`, `/stock-class`, and `/transactions` pass through contract middleware. Include `issuerId` in the JSON body, even on `GET` requests.
+</Callout>
+
+## Behavior
+
+| Label | Meaning |
+| --- | --- |
+| Onchain + DB | Sends a contract transaction and stores, or later syncs, the OCF record. |
+| Onchain read | Reads the cap table contract. |
+| DB-only | Reads or writes MongoDB. |
+| History | Appears in `GET /historical-transactions/issuer-id/:issuerId` after polling. |
+
+## Health routes
+
+Each router mounts a `GET` that returns text so you can confirm it's up: `GET /`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/cap-table`, `/stock-legend`, `/stock-plan`, `/valuation`, `/vesting-terms`.
+
+## Root, factory, issuer
+
+| Method | Route | Behavior | Request | Returns |
+| --- | --- | --- | --- | --- |
+| `POST` | `/mint-cap-table` | Onchain + DB | OCF manifest zip as `multipart/form-data` field `file`. | `{ issuer }` |
+| `POST` | `/factory/register` | DB-only | `factory_address`, `implementation_address` | `{ factory }` |
+| `GET` | `/issuer/id/:id` | DB-only | Path `id`. | Small issuer lookup. |
+| `GET` | `/issuer/total-number` | DB-only | None. | Count. |
+| `POST` | `/issuer/create` | Onchain + DB | OCF issuer fields. | `{ issuer }` |
+| `POST` | `/issuer/register` | DB-only | OCF issuer fields plus `deployed_to`, `tx_hash`, optional bytes16 `id`. | `{ issuer }` |
+
+```json
+{
+    "factory_address": "<FACTORY_ADDRESS>",
+    "implementation_address": "<IMPLEMENTATION_ADDRESS>"
+}
+```
+
+## Stakeholder
+
+| Method | Route | Behavior | Request | Returns |
+| --- | --- | --- | --- | --- |
+| `GET` | `/stakeholder/id/:id` | Onchain read | `issuerId`, path `id`. | `stakeholderId`, `type`, `role`. |
+| `GET` | `/stakeholder/issuer_assigned_id/:id` | DB-only | `issuerId`, path `id`. | Stakeholder document. |
+| `GET` | `/stakeholder/issuer/:issuerId/issuer_assigned_id/:id` | DB-only | Body `issuerId`, path `issuerId` and `id`. | Stakeholder documents. |
+| `GET` | `/stakeholder/wallet/:address` | Onchain read | `issuerId`, path `address`. | Stakeholder ID. |
+| `GET` | `/stakeholder/total-number` | Onchain read | `issuerId`. | Count. |
+| `POST` | `/stakeholder/create` | Onchain + DB | `issuerId`, `data`. | `{ stakeholder }` |
+| `POST` | `/stakeholder/add-wallet` | Onchain | `issuerId`, `id`, `wallet`. | `"Success"` or `"Wallet already added"`. |
+| `POST` | `/stakeholder/remove-wallet` | Onchain | `issuerId`, `id`, `wallet`. | `"Success"` |
+
+## Stock class
+
+| Method | Route | Behavior | Request | Returns |
+| --- | --- | --- | --- | --- |
+| `GET` | `/stock-class/id/:id` | Onchain read | `issuerId`, path `id`. | `stockClassId`, `classType`, `pricePerShare`, `initialSharesAuthorized`. |
+| `GET` | `/stock-class/total-number` | Onchain read | `issuerId`. | Count. |
+| `POST` | `/stock-class/create` | Onchain + DB | `issuerId`, `data`. | `{ stockClass }` |
+
+## Cap table
+
+| Method | Route | Behavior | Request | Returns |
+| --- | --- | --- | --- | --- |
+| `GET` | `/cap-table/holdings/stock` | DB + onchain read | Query `issuerId`. | `{ holdings, stockClasses, issuer }` |
+
+## Supporting records
+
+These are DB-only and do not create history rows.
+
+| Group | Read | Count | Create | Create request | Create returns |
+| --- | --- | --- | --- | --- | --- |
+| Stock legend | `GET /stock-legend/id/:id` | `GET /stock-legend/total-number` | `POST /stock-legend/create` | `issuerId`, `data` | `{ stockLegend }` |
+| Stock plan | `GET /stock-plan/id/:id` | `GET /stock-plan/total-number` | `POST /stock-plan/create` | `issuerId`, `data` | `{ stockPlan }` |
+| Valuation | `GET /valuation/id/:id` | `GET /valuation/total-number` | `POST /valuation/create` | `issuerId`, `data` | `{ valuation }` |
+| Vesting terms | `GET /vesting-terms/id/:id` | `GET /vesting-terms/total-number` | `POST /vesting-terms/create` | `issuerId`, `data` | `{ vestingTerms }` |
+
+## Historical transactions
+
+| Method | Route | Behavior | Request | Returns |
+| --- | --- | --- | --- | --- |
+| `GET` | `/historical-transactions/issuer-id/:issuerId` | DB-only | Path `issuerId`. | Populated transaction history. |
+
+## Controllers
+
+Routes hand off to controllers, which convert OCF data into onchain parameters (UUID → `bytes16`, prices and quantities scaled by 10000) before calling `CapTable.sol`. See the [Controllers Reference](/api-reference/controllers) for per-function detail.
+
+## Stock transactions
+
+All require `issuerId`.
+
+<Callout type="warning">
+API examples use human `share_price.amount` or `sharePrice` values. Raw contract values are scaled by 10000; divide before comparing.
+</Callout>
+
+| Route | Behavior | History | Request | Returns |
+| --- | --- | --- | --- | --- |
+| `POST /transactions/issuance/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockIssuance }` |
+| `POST /transactions/transfer/stock` | Onchain | Yes | `issuerId`, `data`. | `"success"` |
+| `POST /transactions/cancel/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockCancellation }` |
+| `POST /transactions/retract/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockRetraction }` |
+| `POST /transactions/reissue/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockReissuance }` |
+| `POST /transactions/repurchase/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockRepurchase }` |
+| `POST /transactions/accept/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockAcceptance }` |
+| `POST /transactions/adjust/issuer/authorized-shares` | Onchain | Yes | `issuerId`, `data.new_shares_authorized`. | `{ issuerAuthorizedSharesAdj }` |
+| `POST /transactions/adjust/stock-class/authorized-shares` | Onchain | Yes | `issuerId`, `data.stock_class_id`, `data.new_shares_authorized`. | `{ stockClassAdjustment }` |
+
+## Offchain issuance records
+
+These are mounted under `/transactions`, so they need `issuerId`. They save MongoDB records and do not create history rows.
+
+| Route | Behavior | Request | Returns |
+| --- | --- | --- | --- |
+| `POST /transactions/issuance/equity-compensation` | DB-only | `issuerId`, `data`. | `{ equityCompensationIssuance }` |
+| `POST /transactions/issuance/convertible` | DB-only | `issuerId`, `data`. | `{ convertibleIssuance }` |
+
+## Request wrapper
+
+Most create routes use:
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {}
+}
+```
+
+`POST /issuer/create` is the exception. Send issuer fields directly.
