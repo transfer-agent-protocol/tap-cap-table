@@ -1,6 +1,7 @@
 const meta = {
     index: "Introduction",
     development: "Development",
+    "api-reference": "API Reference",
     protocol: "Protocol Specification",
     features: "Features",
     security: "Security",
