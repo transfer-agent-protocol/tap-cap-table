@@ -6,13 +6,13 @@ You'll need these installed to start building:
 
 - [Docker](https://docs.docker.com/get-docker/) — runs MongoDB, the server, and the frontend app locally
 
-- [Foundry](https://getfoundry.sh/) — compiles and deploys the Solidity contracts; also provides Anvil, the local blockchain
+- [Foundry](https://getfoundry.sh/) — compiles and deploys the Solidity contracts
 
-```sh
+```bash
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — GUI for inspecting the database during development
+- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — GUI for registering the factory and inspecting the database during development
 
 - [Node.js](https://nodejs.org/en/download/) — required to run the server and app
 
@@ -22,15 +22,15 @@ curl -L https://foundry.paradigm.xyz | bash
 
 ## Pull the repo
 
-This will include the [OCF](/protocol/tap-ocf) and [Foundry](https://book.getfoundry.sh/) repos as submodules.
-
-```sh
+```bash
 git clone --recurse-submodules https://github.com/transfer-agent-protocol/tap-cap-table.git
 ```
 
 Then install workspace dependencies:
 
-```sh
+```bash
+cd tap-cap-table
+git switch -c <your-branch-name>
 pnpm install
 ```
 
@@ -41,11 +41,11 @@ Everything you need to develop your onchain smart contracts lives under the `cha
 <FileTree>
   <FileTree.Folder name="chain" defaultOpen>
   <FileTree.Folder name="src" defaultOpen>
-		<FileTree.Folder name="interfaces" defaultOpen>
+		<FileTree.Folder name="interfaces" defaultClosed>
 			<FileTree.File name="ICapTable.sol" />
 			<FileTree.File name="ICapTableFactory.sol" />
 		</FileTree.Folder>
-		<FileTree.Folder name="lib" defaultOpen>
+		<FileTree.Folder name="lib" defaultClosed>
 			<FileTree.File name="DeleteContext.sol" />
 			<FileTree.File name="Stock.sol" />
 			<FileTree.File name="Structs.sol" />
@@ -56,3 +56,9 @@ Everything you need to develop your onchain smart contracts lives under the `cha
 		</FileTree.Folder>
 	</FileTree.Folder>
 </FileTree>
+
+<Callout type="info">
+Missing submodules: `git submodule update --init --recursive`.
+</Callout>
+
+Next: [Initial setup](/development/setup).

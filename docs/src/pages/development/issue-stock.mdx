@@ -4,6 +4,8 @@ import { Steps, Callout } from 'nextra/components';
 
 With an issuer, stock class, and stakeholder created, you can now issue stock to stakeholders. This is the first actual transaction on your cap table.
 
+Behind the scenes, the route calls `issuanceController.js`, which converts the OCF data and invokes the `issueStock` method on the cap table contract. See the [Controllers Reference](/api-reference/controllers) for conversion details.
+
 <Steps>
 
 ### Send a POST request
@@ -37,6 +39,10 @@ Replace the IDs with the `_id` values from your previous creation responses.
 
 The response includes your stock issuance with a generated `id` and `security_id`:
 
+<Callout type="warning">
+API examples use human `share_price.amount` values. Raw contract values are scaled; divide raw chain values by 10000 before comparing them to the docs.
+</Callout>
+
 ```json
 {
     "stockIssuance": {
@@ -63,23 +69,27 @@ The response includes your stock issuance with a generated `id` and `security_id
 
 ![Stock Issuance Response](../../../public/images/issue-stock.png)
 
-<Callout type="info">
-The `security_id` uniquely identifies this specific block of shares. You'll need it for future transactions like transfers or cancellations.
-</Callout>
-
 </Steps>
+
+## Outputs
+
+| Field | What it identifies |
+| --- | --- |
+| `id` | The issuance transaction's OCF ID. |
+| `security_id` | The unique block of shares created by this issuance. **Save this** — every later transfer, cancellation, retraction, reissuance, repurchase, or acceptance reuses it. |
+| `date` | Onchain timestamp at the issuance block. |
 
 ## Required fields
 
 | Field | Description |
-|-------|-------------|
-| `stakeholder_id` | The stakeholder receiving the shares |
-| `stock_class_id` | The class of stock being issued |
-| `quantity` | Number of shares to issue |
-| `share_price` | Price per share with currency |
-| `stock_legend_ids` | Array of legend IDs (can be empty) |
-| `custom_id` | A custom identifier (e.g. "CS-A-001") |
-| `security_law_exemptions` | Array of exemptions (can be empty) |
+| --- | --- |
+| `stakeholder_id` | The stakeholder receiving the shares. |
+| `stock_class_id` | The class of stock being issued. |
+| `quantity` | Number of shares to issue, as a string integer. |
+| `share_price` | Object with human `amount` and `currency`. The contract stores `amount * 10000`. |
+| `stock_legend_ids` | Legend IDs from `POST /stock-legend/create`. Pass `[]` if you don't need any. |
+| `custom_id` | Issuance label (e.g. `CS-A-001`). Free-form, but unique custom IDs make support workflows easier. |
+| `security_law_exemptions` | Reg D / Reg S exemptions cited by the issuance. Pass `[]` if none apply. |
 
 ## Viewing historical transactions
 

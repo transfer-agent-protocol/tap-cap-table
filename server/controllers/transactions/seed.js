@@ -1,7 +1,11 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
-// TODO: date is missing onchain, we need a deeper dive into a fix
+/**
+ * Seed helpers for bulk initialization / testing.
+ * Use special *FromSeed contract methods that bypass some validation.
+ * TODO: date is missing onchain — requires deeper investigation into contract and seed flow.
+ */
 export const convertAndSeedTransferStockOnchain = async (contract, transfer) => {
     const {
         id,

@@ -1,19 +1,23 @@
-import { Cards } from 'nextra/components'
+import { Cards, Callout } from 'nextra/components'
 
 # Start Building
 
-This guide walks you through setting up a local development environment and deploying your first cap table. We use a Docker container with a local MongoDB instance.
+Clone. Run Docker. Register the Plume factory. Create a cap table. Test the branch.
 
-## Setup
+<Callout type="info">
+Default path: Docker runs MongoDB, the API server, and the app. Plume Mainnet is the chain target. Use Anvil only for local-chain work.
+</Callout>
+
+## Working path
 
 <Cards>
   <Cards.Card title="Install dependencies" href="/development/install" />
   <Cards.Card title="Initial setup" href="/development/setup" />
-  <Cards.Card title="Run the server" href="/development/run-server" />
-  <Cards.Card title="Deploy factory" href="/development/factory-deploy" />
+  <Cards.Card title="Run server, app, and docs" href="/development/run-server" />
+  <Cards.Card title="Register or deploy factory" href="/development/factory-deploy" />
 </Cards>
 
-## Create a Cap Table
+## First cap table
 
 <Cards>
   <Cards.Card title="Create issuer" href="/development/cap-table-deploy" />
@@ -23,3 +27,17 @@ This guide walks you through setting up a local development environment and depl
   <Cards.Card title="Transfer stock" href="/development/transfer-stock" />
   <Cards.Card title="View transactions" href="/development/historical-transactions" />
 </Cards>
+
+## Verify
+
+| Goal | Command |
+| --- | --- |
+| Build contracts | `make build` |
+| Solidity tests | `make test` or `pnpm test` |
+| Invariants | `make test-invariant` |
+| Docs dev server | `pnpm docs:dev` |
+| Docs build | `pnpm docs:build` |
+| API only | `pnpm prod` |
+| Poller only | `pnpm prod-poller` |
+
+Read [Testing](/tests) before opening a protocol PR.

@@ -2,25 +2,24 @@ import { Callout } from 'nextra/components';
 
 # Transfer, Cancel, and Reissue Stock
 
-Use this page after a stock issuance already exists and you have its `security_id`. Use [Transfer Stock](/development/transfer-stock) for the full transfer walkthrough.
+Use after stock issuance. Keep the issuance `security_id` from the original `POST /transactions/issuance/stock` response — every route on this page reuses it.
 
 <Callout type="info">
-Each route on this page adds a new history entry once it has been processed.
+All routes here are `/transactions` routes and require `issuerId` in the body. Each one emits a contract event, so the row appears in [View History](/features/issuer-management/read-history) once the poller catches up (~20 s on Plume Mainnet).
 </Callout>
 
-## Before you use these routes
+## Inputs
 
-For transfer, cancel, retract, reissue, repurchase, and accept routes, keep these IDs ready:
-
-- `stakeholderId`
-- `stockClassId`
-- `security_id`
-
-`security_id` comes from the original stock issuance response. The routes below use these IDs unless noted otherwise.
+| Field | Source |
+| --- | --- |
+| `issuerId` | `POST /issuer/create` or `POST /issuer/register` |
+| `stakeholderId` | `POST /stakeholder/create` |
+| `stockClassId` | `POST /stock-class/create` |
+| `security_id` | `POST /transactions/issuance/stock` response |
 
 ## Transfer stock
 
-Use `POST /transactions/transfer/stock` to move shares from one stakeholder to another.
+`POST /transactions/transfer/stock`
 
 ```json
 {
@@ -36,45 +35,33 @@ Use `POST /transactions/transfer/stock` to move shares from one stakeholder to a
 }
 ```
 
-The route returns `"success"`. Check [View Cap Table](/features/cap-table-management/view-cap-table) or [View History](/features/issuer-management/read-history) after processing to confirm the transfer.
+Returns: `"success"`.
 
-## Change an existing security
+<Callout type="warning">
+`sharePrice` is the human price per share. Raw contract values are scaled; divide raw chain values by 10000 before comparing them to docs examples.
+</Callout>
 
-### Cancel stock
+- `isBuyerVerified` must be `true` or the contract rejects the transfer with `UnverifiedBuyer`. Set it once the buyer has cleared whatever KYC/eligibility check your application requires.
+- **Partial transfers**: if `quantity` is less than the current position on `security_id`, the contract automatically issues a *balance security* to the transferor for the leftover shares. Treat that new `security_id` (visible in history) as the active one going forward.
 
-- Use when: you need to cancel all or part of an existing issuance.
-- Required: `stakeholderId`, `stockClassId`, `security_id`, `quantity`
-- Optional: `balance_security_id`, `reason_text`, `comments`
-- Response: `stockCancellation`
+## Change a security
 
-### Retract stock
+| Action | Route | Required | Optional | Returns |
+| --- | --- | --- | --- | --- |
+| Cancel | `POST /transactions/cancel/stock` | `stakeholderId`, `stockClassId`, `security_id`, `quantity` | `balance_security_id`, `reason_text`, `comments` | `stockCancellation` |
+| Retract | `POST /transactions/retract/stock` | `stakeholderId`, `stockClassId`, `security_id` | `reason_text`, `comments` | `stockRetraction` |
+| Reissue | `POST /transactions/reissue/stock` | `stakeholderId`, `stockClassId`, `security_id`, `resulting_security_ids` | `split_transaction_id`, `reason_text`, `comments` | `stockReissuance` |
+| Repurchase | `POST /transactions/repurchase/stock` | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `price` | `consideration_text`, `balance_security_id`, `comments` | `stockRepurchase` |
 
-- Use when: you need to retract an existing issuance.
-- Required: `stakeholderId`, `stockClassId`, `security_id`
-- Optional: `reason_text`, `comments`
-- Response: `stockRetraction`
-
-### Reissue stock
-
-- Use when: you need to replace an existing issuance with one or more resulting securities.
-- Required: `stakeholderId`, `stockClassId`, `security_id`, `resulting_security_ids`
-- Optional: `split_transaction_id`, `reason_text`, `comments`
-- Response: `stockReissuance`
-
-### Repurchase stock
-
-- Use when: you need to record a company repurchase.
-- Required: `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `price`
-- Optional: `consideration_text`, `balance_security_id`, `comments`
-- Response: `stockRepurchase`
+Partial cancellation and partial repurchase also create balance securities, just like partial transfer.
 
 ## Adjust authorized shares
 
-Use these routes when the company or a stock class needs a new authorized share count.
+Use these to raise or lower how many shares the issuer (or a single stock class) can issue.
 
-### Adjust issuer authorized shares
+### Issuer-level
 
-Use `POST /transactions/adjust/issuer/authorized-shares` to change the issuer-level authorized share count.
+`POST /transactions/adjust/issuer/authorized-shares`
 
 ```json
 {
@@ -88,31 +75,30 @@ Use `POST /transactions/adjust/issuer/authorized-shares` to change the issuer-le
 }
 ```
 
-The route returns `{ "issuerAuthorizedSharesAdj": ... }`.
+Returns: `{ "issuerAuthorizedSharesAdj": ... }`.
 
-### Adjust stock class authorized shares
+### Stock-class-level
 
-Use `POST /transactions/adjust/stock-class/authorized-shares` to change the authorized share count for a stock class.
+`POST /transactions/adjust/stock-class/authorized-shares`
 
-- Required fields: `stock_class_id`, `new_shares_authorized`
-- Optional fields: `board_approval_date`, `stockholder_approval_date`, `comments`
-- Response key: `stockClassAdjustment`
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
+        "new_shares_authorized": "5000000",
+        "board_approval_date": "2026-04-20",
+        "stockholder_approval_date": "2026-04-20",
+        "comments": []
+    }
+}
+```
 
-## Verify the result
+Returns: `{ "stockClassAdjustment": ... }`. The class authorized cap can never exceed the issuer authorized cap.
 
-- Check [View Cap Table](/features/cap-table-management/view-cap-table) to confirm the current holdings.
-- Check [View History](/features/issuer-management/read-history) to confirm the new event.
+## Verify
 
-After processing, each route on this page appears as a separate history entry:
+- Holdings: [View Cap Table](/features/cap-table-management/view-cap-table)
+- History: [View History](/features/issuer-management/read-history)
 
-- stock transfer
-- stock cancellation
-- stock retraction
-- stock reissuance
-- stock repurchase
-- issuer authorized shares adjustments
-- stock class authorized shares adjustments
-
-## What's next?
-
-Use [View History](/features/issuer-management/read-history) to verify the new event, or move to [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions).
+Next: [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions).

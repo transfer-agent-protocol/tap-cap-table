@@ -101,4 +101,21 @@ These are test keys only. Never use them on mainnet.
 
 </Steps>
 
+## Targeting Plume Mainnet
+
+To point the stack at Plume Mainnet instead of Anvil, override these values in `.env`:
+
+```md filename=".env"
+RPC_URL=https://rpc.plume.org
+CHAIN_ID=98866
+PRIVATE_KEY=<PLUME_FUNDED_SERVER_PRIVATE_KEY>
+NEXT_PUBLIC_FACTORY_ADDRESS=0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
+NEXT_PUBLIC_CHAIN_ID=98866
+NEXT_PUBLIC_OPERATOR_ADDRESS=<SERVER_WALLET_ADDRESS>
+```
+
+<Callout type="warning">
+Use a Plume-funded server wallet. The API signs onchain transactions with `PRIVATE_KEY`.
+</Callout>
+
 With Docker and Anvil running, you're ready to [deploy the factory contract](/development/factory-deploy).

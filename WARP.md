@@ -252,6 +252,7 @@ When editing pages under `docs/src/pages/`, follow these conventions established
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
 - **OCF import routes**: Any `multipart/form-data` route should include a concrete `curl -F` example, not just prose.
 - **Factory deploy page**: Keep changes to this page minimal — the MongoDB Compass GUI flow is intentional and should not be replaced with a CLI alternative.
+- **Diagrams**: Prefer Mermaid fenced blocks (```` ```mermaid ````) over JPG/PNG diagrams for new content. Mermaid renders inline in Nextra, respects light/dark theme, and stays editable in MDX. Existing screenshots stay — do not delete them.
 
 ### Frontend App
 

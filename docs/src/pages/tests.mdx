@@ -1,43 +1,42 @@
 # Testing Overview
 
-Foundry unit tests + coverage-guided invariant fuzzing.
+## Commands
 
-## Unit Tests
+| Goal | Command |
+| --- | --- |
+| Build contracts | `make build` |
+| Solidity tests | `make test` or `pnpm test` |
+| Verbose tests | `make test-v` |
+| Invariants | `make test-invariant` |
+| Deep invariants | `make test-invariant-deep` |
+| Docs build | `pnpm docs:build` |
+| Frontend build | `pnpm app:build` |
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `CapTable.t.sol` | Test helpers/fixtures | ✅ Passing |
-| `StockIssuance.t.sol` | Issuance logic, error cases | ✅ Passing |
-| `StockTransfer.t.sol` | Transfer mechanics, edge cases | ✅ Passing |
-| `StockCancellation.t.sol` | Cancel/partial cancel flows | ✅ Passing |
-| `StockRepurchase.t.sol` | Repurchase flows | ✅ Passing |
-| `StockReissuance.t.sol` | Reissuance mechanics | ✅ Passing |
-| `StockRetraction.t.sol` | Retraction flow | ✅ Passing |
-| `StockAcceptance.t.sol` | Acceptance flow | ✅ Passing |
-| `Adjustment.t.sol` | Share adjustment constraints | ✅ Passing |
-| `AccessControl.t.sol` | Role-based access | ✅ Passing |
-| `Issuer.t.sol` | Issuer initialization | ✅ Passing |
-| `Stakeholder.t.sol` | CRUD + duplicates | ✅ Passing |
-| `StockClass.t.sol` | CRUD + duplicates | ✅ Passing |
-| `Wallet.t.sol` | Wallet mapping | ✅ Passing |
-| `Minting.t.sol` | Batch minting | ✅ Passing |
-| `CapTableFactory.sol` | Factory + upgrades | ✅ Passing |
+## Solidity coverage
 
-Run: `make test`
+| Area | Files |
+| --- | --- |
+| Cap table setup | `CapTable.t.sol`, `CapTableFactory.sol`, `Issuer.t.sol` |
+| Access control | `AccessControl.t.sol`, `Wallet.t.sol` |
+| Stock lifecycle | `StockIssuance.t.sol`, `StockTransfer.t.sol`, `StockCancellation.t.sol`, `StockRepurchase.t.sol`, `StockReissuance.t.sol`, `StockRetraction.t.sol`, `StockAcceptance.t.sol` |
+| Setup records | `Stakeholder.t.sol`, `StockClass.t.sol`, `Minting.t.sol` |
+| Share adjustments | `Adjustment.t.sol` |
+| Invariants | `test/invariants/CapTableInvariants.t.sol` |
 
-## Invariant Tests
+## Invariants
 
-Stateful fuzzing (7 invariants) validating:
-- `shares_issued <= shares_authorized` (issuer and stock classes)
-- Stakeholder/stock class index mapping consistency
-- Count consistency between contract and tracked state
-- Stock class authorized never exceeds issuer authorized
+| Property | Purpose |
+| --- | --- |
+| Issuer `shares_issued <= shares_authorized` | Prevent issuer over-issuance. |
+| Class `shares_issued <= shares_authorized` | Prevent class over-issuance. |
+| Stakeholder and stock class counts stay consistent. | Catch index drift. |
+| Active position tracking stays consistent. | Catch stale securities and missing deletes. |
 
-Run: `make test-invariant` (256 runs) or `make test-invariant-deep` (2000 runs)
+## Before a PR
 
-## Why Both?
-
-- **Unit tests**: Specific function behavior, revert messages, single flows, edge cases
-- **Invariant tests**: Properties hold after random sequences of calls (emergent bugs)
-
-Together they provide broad coverage before audit.
+| Change | Minimum check |
+| --- | --- |
+| Docs | `pnpm docs:build` |
+| Solidity logic | `make test` |
+| Share accounting or lifecycle | `make test && make test-invariant` |
+| Frontend | `pnpm app:build` |

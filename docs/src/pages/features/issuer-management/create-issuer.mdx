@@ -2,9 +2,15 @@ import { Callout } from 'nextra/components';
 
 # Register or Import Issuer
 
-Use this page when the issuer already exists outside the main `POST /issuer/create` flow.
+Use this page when the issuer already exists outside the main `POST /issuer/create` flow. For the standard create-and-deploy path, use [Create an Issuer](/development/cap-table-deploy).
 
-Use [Create Issuer](/development/cap-table-deploy) for the main deployment flow.
+## Which route do I need?
+
+| Situation | Route | What it does |
+| --- | --- | --- |
+| You have nothing yet and want TAP to deploy the cap table | `POST /issuer/create` (see [Create an Issuer](/development/cap-table-deploy)) | Deploys a cap table through the factory and saves the issuer in MongoDB. |
+| The cap table was already deployed (frontend wallet, separate script, another system) | `POST /issuer/register` | Saves a TAP record that points at the existing onchain cap table. |
+| You have an OCF manifest zip and want TAP to import it end-to-end | `POST /mint-cap-table` | Validates the manifest, deploys a cap table, seeds stakeholders/classes/positions, and returns the issuer. |
 
 ## Before you use these routes
 
@@ -23,23 +29,27 @@ The response returns `{ "factory": ... }`.
 
 Use `POST /issuer/register` when a wallet or another system already deployed the cap table and you only need the TAP record.
 
-Add these fields to the same issuer body used in [Create Issuer](/development/cap-table-deploy):
+Send the same issuer fields used in [Create an Issuer](/development/cap-table-deploy), plus `id`, `deployed_to`, and `tx_hash`. A complete body looks like:
 
 ```json
 {
-    "id": "<BYTES16_ISSUER_ID>",
+    "id": "b6ca9d9c1daa4b30830b444561ef7806",
+    "legal_name": "Transfer Agent Protocol",
+    "formation_date": "2022-08-23",
+    "country_of_formation": "US",
+    "country_subdivision_of_formation": "DE",
+    "initial_shares_authorized": "10000000",
     "deployed_to": "<CAP_TABLE_ADDRESS>",
-    "tx_hash": "<DEPLOY_TX_HASH>"
+    "tx_hash": "<DEPLOY_TX_HASH>",
+    "comments": []
 }
 ```
 
-If you have the original contract `id` from the deployment — a 32-hex-character value like `b6ca9d9c1daa4b30830b444561ef7806` (the UUID without dashes) — send it as the `id` field. This keeps the TAP record aligned with the deployed contract. If you omit `id`, TAP generates a new UUID, which means the TAP record won’t share the same ID as the deployed contract.
-
-<Callout type="info">
-Send the same issuer fields used in [Create Issuer](/development/cap-table-deploy), plus `deployed_to` and `tx_hash`.
+<Callout type="warning">
+`id` must be the 32-hex-character UUID-without-dashes that the cap table contract was initialized with (for example `b6ca9d9c1daa4b30830b444561ef7806`). If you omit `id`, TAP generates a new UUID and the TAP record will *not* match the onchain ID, which breaks event polling.
 </Callout>
 
-The response returns `{ "issuer": ... }`. Use that issuer object in later API calls.
+The response returns `{ "issuer": ... }`. Keep that issuer object — you'll use `_id` for every later API call.
 
 ## Import an existing OCF cap table
 
@@ -61,6 +71,12 @@ After the import finishes, use the returned issuer record for later API calls, t
 
 For most workflows, the response from `POST /issuer/create` or `POST /issuer/register` is still the main issuer record you keep.
 
+## Verify
+
+1. Confirm the response contains `_id`, `deployed_to`, and `tx_hash`.
+2. `GET /issuer/id/:id` with the returned `_id` should succeed.
+3. After ~20 seconds, `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` should include any seeded transactions (manifest imports only).
+
 ## What's next?
 
-Use [View History](/features/issuer-management/read-history) to check what has already been recorded for the issuer.
+Use [View History](/features/issuer-management/read-history) to confirm what was recorded for the issuer.

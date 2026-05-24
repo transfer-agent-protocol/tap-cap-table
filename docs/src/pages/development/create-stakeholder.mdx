@@ -8,6 +8,23 @@ import { Steps, Callout } from 'nextra/components';
 
 Stakeholders are the equity holders on your cap table — founders, employees, investors, or any entity that holds shares.
 
+## Minimal request
+
+The smallest valid body identifies the issuer and the stakeholder's name, type, and relationship:
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "name": { "legal_name": "Alex Palmer" },
+        "stakeholder_type": "INDIVIDUAL",
+        "current_relationship": "FOUNDER"
+    }
+}
+```
+
+Use the full body below when you also want to capture contact details.
+
 <Steps>
 
 ### Send a POST request
@@ -132,6 +149,16 @@ The `is_onchain_synced` field starts as `false`. The event poller will update it
 </Callout>
 
 </Steps>
+
+## Required fields
+
+| Field | Description |
+| --- | --- |
+| `issuerId` | Issuer `_id` from the [Create an Issuer](/development/cap-table-deploy) response. |
+| `data.name.legal_name` | Stakeholder's full legal name. `first_name`/`last_name` are optional. |
+| `data.stakeholder_type` | `INDIVIDUAL` or `INSTITUTION`. |
+| `data.current_relationship` | Relationship enum (see below). |
+| `data.issuer_assigned_id` | Optional. Pass `""` when you have no internal stakeholder ID yet — the field still appears on the record so you can update it later. Leaving it as `""` is the convention used by `mint-cap-table` imports. |
 
 ## Stakeholder types
 

@@ -1,0 +1,98 @@
+import { Callout } from 'nextra/components';
+
+# Solidity Reference
+
+First-party Solidity only: `chain/src`. Vendor code under `chain/lib` is out of scope.
+
+## CapTable writes
+
+`CapTable.sol` stores issuer, stock class, stakeholder, wallet, active position, and transaction state.
+
+| Function | Access | Inputs | Effect | API |
+| --- | --- | --- | --- | --- |
+| `initialize` | Initializer | Issuer ID, name, authorized shares, admin, operator. | Sets roles and issuer; emits `IssuerCreated`. | Factory/frontend deploy. |
+| `mintSharesAuthorized` | Operator | `InitialShares`. | Seeds issued/authorized counts. | OCF import. |
+| `mintActivePositions` | Operator | Stakeholder, security, class, quantity, price, timestamp arrays. | Seeds positions; emits `ActivePositionMinted`. | OCF import. |
+| `createStakeholder` | Operator | ID, type, relationship. | Adds stakeholder; emits `StakeholderCreated`. | `POST /stakeholder/create` |
+| `createStockClass` | Operator | ID, type, price, authorized shares. | Adds stock class; emits `StockClassCreated`. | `POST /stock-class/create` |
+| `createStockLegendTemplate` | Operator | Legend ID. | Adds onchain legend ID. | Direct contract call. |
+| `addWalletToStakeholder` | Operator | Stakeholder ID, wallet. | Maps wallet; emits `WalletAdded`. | `POST /stakeholder/add-wallet` |
+| `removeWalletFromStakeholder` | Operator | Stakeholder ID, wallet. | Deletes mapping; emits `WalletRemoved`. | `POST /stakeholder/remove-wallet` |
+| `issueStock` | Operator | `StockIssuanceParams`. | Adds position, increments nonce and issued shares. | `POST /transactions/issuance/stock` |
+| `transferStock` | Operator | `StockTransferParams`. | Moves shares; may create balance/resulting issuances. | `POST /transactions/transfer/stock` |
+| `cancelStock` | Operator | `StockParams`, quantity. | Cancels shares; may create balance issuance. | `POST /transactions/cancel/stock` |
+| `retractStockIssuance` | Operator | `StockParams`. | Records retraction; removes active position. | `POST /transactions/retract/stock` |
+| `reissueStock` | Operator | `StockParams`, resulting IDs. | Records reissue; removes original position. | `POST /transactions/reissue/stock` |
+| `repurchaseStock` | Operator | `StockParams`, quantity, price. | Records repurchase; subtracts issued shares. | `POST /transactions/repurchase/stock` |
+| `acceptStock` | Operator | Stakeholder, class, security, comments. | Records acceptance only. | `POST /transactions/accept/stock` |
+| `adjustIssuerAuthorizedShares` | Admin | New authorized shares, comments, approval dates. | Updates issuer authorized shares. | `POST /transactions/adjust/issuer/authorized-shares` |
+| `adjustStockClassAuthorizedShares` | Admin | Class ID, new authorized shares, comments, approval dates. | Updates class authorized shares. | `POST /transactions/adjust/stock-class/authorized-shares` |
+| `addAdmin` / `removeAdmin` | Admin | Address. | Grants/revokes admin. | Direct contract call. |
+| `addOperator` / `removeOperator` | Admin | Address. | Grants/revokes operator. | Direct contract call. |
+
+## CapTable reads
+
+| Function | Returns |
+| --- | --- |
+| `transactions(uint256)` | Encoded transaction bytes. |
+| `getTransactionsCount` | Transaction count. |
+| `getTotalActiveSecuritiesCount` | Active security count. |
+| `getStakeholderById` | Stakeholder ID, type, relationship. |
+| `getStockClassById` | Class ID, type, price, issued, authorized. |
+| `getStakeholderIdByWallet` | Stakeholder ID. |
+| `getTotalNumberOfStakeholders` | Stakeholder count. |
+| `getTotalNumberOfStockClasses` | Stock class count. |
+| `getActivePosition` | Class ID, quantity, price, timestamp. |
+| `getAveragePosition` | Quantity-price sum, quantity, latest timestamp. |
+
+## CapTable events and errors
+
+| Kind | Names |
+| --- | --- |
+| Events | `IssuerCreated`, `StakeholderCreated`, `StockClassCreated`, `StockLegendTemplateCreated`, `WalletAdded`, `WalletRemoved`, `SharesAuthorizedMinted`, `ActivePositionMinted` |
+| Errors | `StakeholderAlreadyExists`, `StockClassAlreadyExists`, `InvalidWallet`, `NoStakeholder`, `InvalidStockClass`, `NoIssuanceFound`, `WalletAlreadyExists`, `NoActivePositionFound` |
+
+## CapTableFactory
+
+| Function | Access | Effect |
+| --- | --- | --- |
+| `constructor` | Deploy-time | Stores implementation and deploys the beacon. |
+| `createCapTable` | Public | Deploys a beacon proxy, initializes it, stores it, emits `CapTableCreated`, returns proxy address. |
+| `updateCapTableImplementation` | Owner | Updates the beacon implementation; emits `CapTableImplementationUpdated`. |
+| `getCapTableCount` | Public view | Returns created proxy count. |
+
+## Interfaces
+
+| Interface | Exposes |
+| --- | --- |
+| `ICapTable` | Roles, public mappings, initializer, lifecycle writes, admin writes, reads. |
+| `ICapTableFactory` | Create, upgrade, count, factory events. |
+
+## Libraries
+
+| Library | Function | Purpose |
+| --- | --- | --- |
+| `StockLib` | `createIssuance` | Create issuance and active position. |
+| `StockLib` | `createTransfer` | Move quantity across transferor securities. |
+| `StockLib` | `createCancellation` | Cancel quantity; maybe create balance issuance. |
+| `StockLib` | `createReissuance` | Record reissue; remove original security. |
+| `StockLib` | `createRepurchase` | Record repurchase; maybe create balance issuance. |
+| `StockLib` | `createRetraction` | Record retraction; remove original security. |
+| `StockLib` | `createAcceptance` | Record acceptance only. |
+| `TxHelper` | `createTx` | Store encoded tx and emit `TxCreated`. |
+| `TxHelper` | `generateDeterministicUniqueID` | Derive bytes16 IDs. |
+| `TxHelper` | `create*Struct` / `adjust*` | Build encoded transaction payload structs. |
+| `DeleteContext` | `deleteActivePosition` | Delete one active position. |
+| `DeleteContext` | `deleteActiveSecurityIdsByStockClass` | Remove one security ID from a class list. |
+| `Adjustment` | `adjustIssuerAuthorizedShares` | Record and apply issuer authorized-share changes. |
+| `Adjustment` | `adjustStockClassAuthorizedShares` | Record and apply class authorized-share changes. |
+
+StockLib errors: `InsufficientShares`, `InvalidQuantityOrPrice`, `UnverifiedBuyer`, `ActivePositionNotFound`.
+
+`TxType`: issuer/class authorized-share adjustments, stock acceptance, cancellation, issuance, reissuance, repurchase, retraction, transfer.
+
+Struct fields live in [Structs Library](/protocol/structs-lib). Lifecycle notes live in [Stock Functions](/protocol/stock-lib).
+
+<Callout type="warning">
+Before public deployment, review role custody, factory ownership, and upgrade custody.
+</Callout>

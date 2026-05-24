@@ -2,21 +2,25 @@ import { Callout } from 'nextra/components';
 
 # Save Equity Compensation and Convertibles
 
-Use this page when you need to save an equity compensation or convertible issuance through the API.
-
-## Before you use these routes
-
-- keep your issuer, stakeholder, and stock class IDs ready
-- equity compensation usually also needs a stock plan
-- some workflows also depend on vesting terms or valuation data
+Save options, RSUs, SARs, SAFEs, notes, and other offchain issuances.
 
 <Callout type="info">
-These routes save the issuance for later use. They do not create a history row.
+These `/transactions` routes require `issuerId`, but they only save MongoDB records. They never produce a row in [View History](/features/issuer-management/read-history).
 </Callout>
 
-## Issue equity compensation
+## Inputs
 
-Use `POST /transactions/issuance/equity-compensation` to save an option, RSU, or SAR issuance.
+| ID | Notes |
+| --- | --- |
+| `issuerId` | Required. |
+| `stakeholder_id` | Required. |
+| `stock_class_id` | Usually needed for equity compensation. |
+| `stock_plan_id` | Usually needed for options (the plan caps the pool). |
+| `vesting_terms_id` | Optional. Reference a record from [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms). |
+
+## Equity compensation
+
+`POST /transactions/issuance/equity-compensation`
 
 ```json
 {
@@ -46,20 +50,20 @@ Use `POST /transactions/issuance/equity-compensation` to save an option, RSU, or
 }
 ```
 
-The response returns `{ "equityCompensationIssuance": ... }`.
+Returns: `{ "equityCompensationIssuance": ... }`.
 
-- Required fields:
+### `compensation_type` values
 
-  - `compensation_type`
-  - `quantity`
-  - `expiration_date`
-  - `termination_exercise_windows`
+| Value | Use for |
+| --- | --- |
+| `OPTION_NSO` | Non-qualified stock options. Requires `exercise_price`. |
+| `OPTION_ISO` | Incentive stock options (US tax-advantaged). Requires `exercise_price`. |
+| `RSU` | Restricted stock units. No `exercise_price`. |
+| `SAR` | Stock appreciation rights. Requires `base_price` instead of `exercise_price`. |
 
-Options require `exercise_price`. SARs require `base_price`.
+## Convertible
 
-## Issue a convertible
-
-Use `POST /transactions/issuance/convertible` to save a SAFE, note, or other convertible issuance.
+`POST /transactions/issuance/convertible`
 
 ```json
 {
@@ -98,21 +102,25 @@ Use `POST /transactions/issuance/convertible` to save a SAFE, note, or other con
 }
 ```
 
-The response returns `{ "convertibleIssuance": ... }`.
+Returns: `{ "convertibleIssuance": ... }`.
 
-- Required fields:
+### `convertible_type` values
 
-  - `convertible_type`
-  - `investment_amount`
-  - `conversion_triggers`
-  - `seniority`
+| Value | Use for |
+| --- | --- |
+| `SAFE` | Simple Agreement for Future Equity. |
+| `NOTE` | Convertible promissory note (interest, maturity). |
+| `OTHER` | Anything that converts but doesn't fit SAFE or NOTE shape. |
 
-## Verify the result
+## Read these records back
 
-- keep the returned `equityCompensationIssuance` or `convertibleIssuance` object
-- read the related stock plan, vesting terms, or valuation back if the issuance depends on those inputs
-- do not expect either route to appear in [View History](/features/issuer-management/read-history)
+| Record | Route |
+| --- | --- |
+| Stock plan | `GET /stock-plan/id/:id` |
+| Vesting terms | `GET /vesting-terms/id/:id` |
+| Valuation | `GET /valuation/id/:id` |
+| Equity compensation / convertible | Currently only available via direct database queries. |
 
-## What's next?
+Do not expect these records in [View History](/features/issuer-management/read-history) — they're DB-only by design.
 
-Use [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for the supporting records around these issuances.
+Next: [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms).

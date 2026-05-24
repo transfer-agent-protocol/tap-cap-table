@@ -2,15 +2,23 @@ import { Callout } from 'nextra/components';
 
 # Save Valuations and Terms
 
-Use this page when you need to save pricing, vesting, legend, plan, or stock class support data.
+Save pricing, vesting, legends, plans, and stock-class support data. Each create route writes a MongoDB record only — history rows come from the [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock) routes.
 
 <Callout type="info">
-When terms change, create a new record. These routes do not rewrite past transactions.
+Records are immutable in TAP. When terms change, create a new record and reference it by ID from the next issuance.
 </Callout>
 
-## Save a 409A valuation
+## Inputs
 
-Use `POST /valuation/create` when the fair market value changes.
+| ID | Used by |
+| --- | --- |
+| `issuerId` | Every create route. |
+| `stock_class_id` | Valuations, plans, stock-class adjustments. |
+| `vesting_terms_id` | Later issuance workflows. |
+
+## Valuation
+
+`POST /valuation/create`
 
 ```json
 {
@@ -31,13 +39,19 @@ Use `POST /valuation/create` when the fair market value changes.
 }
 ```
 
-The response returns `{ "valuation": ... }`.
+Returns: `{ "valuation": ... }`.
 
-Read it back with `GET /valuation/id/:id` or `GET /valuation/total-number`.
+### `valuation_type` values
 
-## Save vesting terms
+| Value | Use for |
+| --- | --- |
+| `409A` | IRS §409A common-stock fair-market valuations (US-only). |
+| `COMMON_STOCK` | Generic common-stock valuation outside the 409A framework. |
+| `FUNDING_ROUND` | Preferred-stock pricing for a specific financing round. |
 
-Use `POST /vesting-terms/create` to save a vesting schedule that future issuances can reference.
+## Vesting terms
+
+`POST /vesting-terms/create`
 
 ```json
 {
@@ -61,30 +75,26 @@ Use `POST /vesting-terms/create` to save a vesting schedule that future issuance
 }
 ```
 
-The response returns `{ "vestingTerms": ... }`.
+Returns: `{ "vestingTerms": ... }`.
 
-Read it back with `GET /vesting-terms/id/:id` or `GET /vesting-terms/total-number`.
+### `vesting_conditions[]` fields
 
-## Save stock legends and stock plans
+| Field | Required | Description |
+| --- | --- | --- |
+| `id` | Yes | Unique within this set of conditions. Used by `next_condition_ids` to chain. |
+| `description` | No | Human-readable explanation. |
+| `quantity` | Yes | Shares released when this condition fires. |
+| `trigger.type` | Yes | OCF trigger type — e.g. `VESTING_START_DATE`, `VESTING_SCHEDULE_RELATIVE`, `VESTING_SCHEDULE_ABSOLUTE`, `VESTING_EVENT`. |
+| `next_condition_ids` | Yes | IDs of conditions that fire after this one. Empty array marks a leaf. |
 
-Use `POST /stock-legend/create` to save reusable legend text.
+## Legends and plans
 
-```json
-{
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": "Restricted Stock Legend",
-        "text": "The shares represented by this certificate are subject to transfer restrictions.",
-        "comments": []
-    }
-}
-```
+| Route | Saves | Returns |
+| --- | --- | --- |
+| `POST /stock-legend/create` | Transfer restriction text. | `{ "stockLegend": ... }` |
+| `POST /stock-plan/create` | Plan terms for future equity comp. | `{ "stockPlan": ... }` |
 
-The response returns `{ "stockLegend": ... }`.
-
-Read it back with `GET /stock-legend/id/:id` or `GET /stock-legend/total-number`.
-
-Use `POST /stock-plan/create` to save the stock plan details used by future equity compensation issuances.
+Stock plan body:
 
 ```json
 {
@@ -101,22 +111,23 @@ Use `POST /stock-plan/create` to save the stock plan details used by future equi
 }
 ```
 
-The response returns `{ "stockPlan": ... }`.
+## Stock class
 
-Read it back with `GET /stock-plan/id/:id` or `GET /stock-plan/total-number`.
+There is no general stock-class metadata update route. To change a stock class, use:
 
-## Maintain a stock class
+| Goal | Route |
+| --- | --- |
+| Read | `GET /stock-class/id/:id` with `issuerId` body |
+| Count | `GET /stock-class/total-number` with `issuerId` body |
+| Change authorized shares | See [Adjust authorized shares](/features/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares) on the Transfer, Cancel, and Reissue Stock page — those are history-producing routes that live with the rest of the corporate-action flows. |
 
-Use this part of the page when you need to check the stock class record or change its authorized share count.
+## Read back
 
-- use `GET /stock-class/id/:id` to read the stock class summary
-- use `GET /stock-class/total-number` to count stock classes
-- use `POST /transactions/adjust/stock-class/authorized-shares` when the authorized share count changes
+| Record | Route |
+| --- | --- |
+| Valuation | `GET /valuation/id/:id` |
+| Vesting terms | `GET /vesting-terms/id/:id` |
+| Stock legend | `GET /stock-legend/id/:id` |
+| Stock plan | `GET /stock-plan/id/:id` |
 
-There is no general metadata update route for stock classes today. If you need a new authorized share count, create a new adjustment event instead of editing history.
-
-Read the stock class back with `GET /stock-class/id/:id`, and use the adjustment route when the authorized share count changes.
-
-## What's next?
-
-Use [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions) when those records need to be tied to equity compensation or convertible transactions.
+Next: [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions).
