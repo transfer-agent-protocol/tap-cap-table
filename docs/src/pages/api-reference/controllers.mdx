@@ -1,10 +1,17 @@
 import { Callout } from 'nextra/components';
 
-![Route → Controller → Contract → Poller](/images/controller-flow-bw.jpg)
-
 # Controllers
 
 Controllers bridge the Express routes and `CapTable.sol`. They convert OCF data into the structs the contract expects and send the transaction; the event poller then syncs the resulting events back into MongoDB.
+
+```mermaid
+flowchart TD
+    A["API route<br/><small>OCF JSON + issuerId</small>"] --> B["Schema validation"]
+    B --> C["Controller<br/><small>UUID → bytes16, scale ×10000, build struct</small>"]
+    C --> D["Contract call<br/><small>issueStock / transferStock / …</small>"]
+    D --> E["tx.wait() + events"]
+    E --> F[("Event poller → MongoDB")]
+```
 
 <Callout type="warning">
 Quantities and prices are scaled by 10000 via `toScaledBigNumber()`. Divide raw onchain values by 10000 to match the numbers in API examples.
@@ -12,11 +19,26 @@ Quantities and prices are scaled by 10000 via `toScaledBigNumber()`. Divide raw 
 
 ## Conversion
 
-![OCF JSON → bytes16 IDs and scaled values → Solidity call](/images/conversion-bw.jpg)
+```mermaid
+flowchart LR
+    subgraph OCF["OCF JSON"]
+        A["stakeholder_id: UUID string<br/>share_price.amount: 4.20"]
+    end
+    subgraph SOL["Solidity call"]
+        B["stakeholder_id: bytes16<br/>share_price: uint256 42000"]
+    end
+    OCF -- "convertUUIDToBytes16<br/>toScaledBigNumber" --> SOL
+```
 
 ## Lifecycle
 
-![API → controller → contract event → poller → MongoDB](/images/lifecycle-bw.jpg)
+```mermaid
+flowchart LR
+    API["Express route"] --> CTRL["Controller"]
+    CTRL --> SOL["CapTable.sol"]
+    SOL -- "emit event" --> POLL["Event poller"]
+    POLL --> DB[("MongoDB OCF record")]
+```
 
 ## Common patterns
 
