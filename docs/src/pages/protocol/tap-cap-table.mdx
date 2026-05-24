@@ -1,92 +1,68 @@
-import { Cards, FileTree } from 'nextra/components'
+import { Cards, FileTree, Callout } from 'nextra/components'
 
-# Onchain Cap Table Overview
+# Solidity Cap Table
 
-Here's where you'll find both the factory and the cap table implementation:
+Contracts store issuer, stock class, stakeholder, position, and transaction state. The API calls them. The poller syncs their events to MongoDB.
 
 <FileTree>
   <FileTree.Folder name="chain" defaultOpen>
-  <FileTree.Folder name="src" defaultOpen>
-		<FileTree.Folder name="interfaces" defaultClosed>
-			<FileTree.File name="ICapTable.sol" />
-			<FileTree.File name="ICapTableFactory.sol" />
-		</FileTree.Folder>
-		<FileTree.Folder name="lib" defaultClosed>
-			<FileTree.File name="DeleteContext.sol" />
-			<FileTree.File name="Stock.sol" />
-			<FileTree.File name="Structs.sol" />
-			<FileTree.File name="TxHelper.sol" />
-		</FileTree.Folder>
-			<FileTree.File name="CapTable.sol" />
-			<FileTree.File name="CapTableFactory.sol" />
-		</FileTree.Folder>
-	</FileTree.Folder>
+    <FileTree.Folder name="src" defaultOpen>
+      <FileTree.File name="CapTable.sol" />
+      <FileTree.File name="CapTableFactory.sol" />
+      <FileTree.Folder name="interfaces" defaultClosed>
+        <FileTree.File name="ICapTable.sol" />
+        <FileTree.File name="ICapTableFactory.sol" />
+      </FileTree.Folder>
+      <FileTree.Folder name="lib" defaultClosed>
+        <FileTree.File name="DeleteContext.sol" />
+        <FileTree.File name="Stock.sol" />
+        <FileTree.File name="Structs.sol" />
+        <FileTree.File name="TxHelper.sol" />
+        <FileTree.Folder name="transactions" defaultClosed>
+          <FileTree.File name="Adjustment.sol" />
+        </FileTree.Folder>
+      </FileTree.Folder>
+    </FileTree.Folder>
+  </FileTree.Folder>
 </FileTree>
 
-## Ownership & Role Model
+## Roles
 
-The protocol uses a three-tier access model for cap table management:
+| Role | Holder | Power |
+| --- | --- | --- |
+| `ADMIN_ROLE` | Issuer or asset manager. | Manage roles; adjust authorized shares. Admins count as operators. |
+| `OPERATOR_ROLE` | Server wallet or delegate. | Create records, move stock, link wallets, seed imports. |
+| Factory owner | Factory deployer. | Upgrade the beacon implementation. |
 
-- **ADMIN_ROLE** — the asset manager's wallet. This is the issuer who owns the cap table. They mint onchain cap tables, grant/revoke roles, and make governance decisions. When a cap table is created via the factory, `msg.sender` receives ADMIN.
-- **OPERATOR_ROLE** — Transfer Agent Protocol's server wallet. Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Admins are implicitly operators.
-- **Factory owner** — the protocol deployer. Controls the `UpgradeableBeacon` and can upgrade the `CapTable` implementation for all proxies via `updateCapTableImplementation()`. Has no access to individual cap tables.
+<Callout type="info">
+`createCapTable` makes `msg.sender` admin and can grant an operator in the same transaction.
+</Callout>
 
-This separation means: **asset managers own their cap tables**, the protocol operates them, and the protocol deployer can ship upgrades to all cap tables via the beacon pattern.
+## Upgrade model
 
-`createCapTable` accepts an `operator` address so the protocol server can receive `OPERATOR_ROLE` in a single transaction during creation. Pass `address(0)` to skip the operator grant.
+| Contract | Pattern | Notes |
+| --- | --- | --- |
+| `CapTableFactory` | Ownable `UpgradeableBeacon` factory. | One beacon, many proxies. |
+| `CapTable` | Beacon implementation. | Initialized per issuer. |
+| Cap table proxy | `BeaconProxy`. | Reads implementation from the beacon. |
 
-### UpgradeableBeacon Pattern
+Only the factory owner can upgrade the implementation.
 
-The factory uses OpenZeppelin's `UpgradeableBeacon` proxy pattern:
+## Surfaces
 
-- Each cap table created via `createCapTable` is a `BeaconProxy` pointing to a shared beacon
-- The beacon stores the address of the current `CapTable` implementation
-- The factory owner can call `updateCapTableImplementation(address newImpl)` to upgrade **all** existing cap tables at once — no per-proxy migration needed
-- Individual cap table admins/operators cannot change their implementation — only the factory owner can
-
-This means the protocol can ship contract upgrades to every cap table in a single transaction.
-
-### Access Control
-
-Functions gated by `onlyOperator` (server wallet + admins):
-
-- `createStockClass`, `createStakeholder`, `createStockLegendTemplate` — structural setup
-- `issueStock`, `transferStock`, `repurchaseStock`, `retractStockIssuance`, `reissueStock`, `cancelStock` — stock lifecycle
-- `addWalletToStakeholder`, `removeWalletFromStakeholder` — wallet management
-- `mintActivePositions`, `mintSharesAuthorized` — initial seeding
-- `adjustIssuerAuthorizedShares` — post-round adjustments
-
-Functions gated by `onlyAdmin` (asset manager wallet only):
-
-- `addAdmin`, `removeAdmin` — admin role management
-- `addOperator`, `removeOperator` — operator role management
-
-The operator (Transfer Agent Protocol) handles all cap table operations, while the admin (asset manager) controls who has access.
-
-## Factory
-
-The [CapTableFactory](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTableFactory.sol) smart contract uses OpenZeppelin's upgradeable beacon pattern to create and manage upgradeable instances of cap tables for tokenized stock records. It allows developers to update the underlying cap table implementation of all instances via the beacon. New cap table instances are created with specific initial parameters (`id`, `name`, `initial_shares_authorized`, and `operator`).
-
-The factory is **permissionless** — any wallet can call `createCapTable` and become the admin of the resulting cap table. The contract tracks each cap table proxy created, offering a function to count the total number of cap tables managed.
-
-## Cap Table
-
-The [CapTable](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/CapTable.sol) contract manages tokenized stock with role-based access for secure operations. It tracks stakeholders, stock classes, and transactions, supporting stock issuance, repurchase, and adjustments using the [Structs Library](/protocol/structs-lib) and [Stock Functions](/protocol/stock-lib).
-
-## Delete Context
-
-[DeleteContext](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/lib/DeleteContext.sol): Deletes stakeholders' active positions by active security IDs, stakeholder IDs, and stock class IDs.
-
-## Adjustment
-[Adjustment](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/chain/src/lib/transactions/Adjustment.sol): Adjusts new shares authorized on a cap table (including tracking board approval date) after a round of funding or other event.
+| Surface | File | Purpose |
+| --- | --- | --- |
+| `CapTable` | `chain/src/CapTable.sol` | Issuer-level state and writes. |
+| `CapTableFactory` | `chain/src/CapTableFactory.sol` | Proxy creation and beacon upgrades. |
+| `ICapTable` | `chain/src/interfaces/ICapTable.sol` | Cap table interface. |
+| `ICapTableFactory` | `chain/src/interfaces/ICapTableFactory.sol` | Factory interface. |
+| `Structs` | `chain/src/lib/Structs.sol` | Shared structs. |
+| `StockLib` | `chain/src/lib/Stock.sol` | Stock lifecycle logic. |
+| `TxHelper` | `chain/src/lib/TxHelper.sol` | Transaction payloads and `TxCreated`. |
+| `DeleteContext` | `chain/src/lib/DeleteContext.sol` | Active position deletes. |
+| `Adjustment` | `chain/src/lib/transactions/Adjustment.sol` | Authorized-share changes. |
 
 <Cards>
-  <Cards.Card
-	title="Structs Library"
-	href="/protocol/structs-lib"
-	/>
-	<Cards.Card
-	title="Stock Functions"
-	href="/protocol/stock-lib"
-	/>
+  <Cards.Card title="Structs Library" href="/protocol/structs-lib" />
+  <Cards.Card title="Stock Functions" href="/protocol/stock-lib" />
 </Cards>
