@@ -2,7 +2,11 @@ import { Steps, Callout } from 'nextra/components';
 
 # Historical Transactions
 
-View all transactions that have occurred on a cap table. This endpoint returns the complete history of stock issuances, transfers, cancellations, and other equity events.
+Returns every stock issuance, transfer, cancellation, and other equity event recorded for a cap table.
+
+<Callout type="info">
+History is populated by the event poller, not by the route that submits the contract transaction. Allow ~20 seconds on Plume Mainnet between an onchain transaction and a successful read. `pnpm dev` and `pnpm docker:up` both run a poller; `pnpm prod` does not — pair it with `pnpm prod-poller`.
+</Callout>
 
 <Steps>
 
@@ -10,36 +14,34 @@ View all transactions that have occurred on a cap table. This endpoint returns t
 
 Using Postman or curl:
 
-```
-GET http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
+```bash
+curl http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
 ```
 
-<Callout type="info">
 Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
-</Callout>
 
 ### Check the response
 
 The response is an array of historical transactions, each containing:
 
-- **`transaction`**: The full transaction object (populated from the referenced document)
-- **`transactionType`**: The type of transaction (e.g., `StockIssuance`, `StockTransfer`)
-- **`issuer`**: The issuer ID this transaction belongs to
+- `transaction`: the full transaction object (populated from the referenced document)
+- `transactionType`: the type of transaction (e.g., `StockIssuance`, `StockTransfer`)
+- `issuer`: the issuer ID this transaction belongs to
 
-<Callout type="warning">
-**Price scaling:** `share_price.amount` is stored as a scaled integer for onchain precision. Divide by `10000` to get the human-readable value — for example, `42000` means `$4.20`. This applies to all monetary fields in transaction responses.
-</Callout>
-
-![Historical Transactions Response](../../../public/images/fetch-historical-transactions.png)
+![Historical Transactions](../../../public/images/fetch-historical-transactions.png)
 
 </Steps>
 
+<Callout type="warning">
+**Price scaling:** `share_price.amount` is stored as a scaled integer. Divide by `10000` for the human value — `42000` means `$4.20`. The same rule applies to every monetary field.
+</Callout>
+
 ## Transaction types
 
-The `transactionType` field indicates what kind of transaction occurred:
+`transactionType` is one of:
 
 | Type | Description |
-|------|-------------|
+| --- | --- |
 | `StockIssuance` | New shares issued to a stakeholder |
 | `StockTransfer` | Shares transferred between stakeholders |
 | `StockCancellation` | Shares cancelled |
@@ -68,7 +70,11 @@ The `transactionType` field indicates what kind of transaction occurred:
 ]
 ```
 
+## Sorting and pagination
+
+The response is a flat array in MongoDB insertion order. No pagination is built in today — sort on the client by `transaction.date` (with the populated transaction's `_id` as a stable tiebreaker) if you need ordering.
+
 ## What's next?
 
-- Use `security_id` from a `StockIssuance` row to [transfer, cancel, or reissue](/features/corporate-actions/transfer-cancel-and-reissue-stock) that block of shares.
+- Use `security_id` from a `StockIssuance` row to [transfer stock](/development/transfer-stock) or [change an existing security](/features/corporate-actions/transfer-cancel-and-reissue-stock).
 - See [View Cap Table](/features/cap-table-management/view-cap-table) to read current holdings rather than full history.
