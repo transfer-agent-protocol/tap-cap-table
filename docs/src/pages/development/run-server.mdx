@@ -1,51 +1,93 @@
-import { Steps, Callout, Tabs } from 'nextra/components';
+import { Steps, Callout } from 'nextra/components';
 
-# Run the Server
+# Run Server, App, and Docs
 
-The Node.js server provides the REST API for managing cap tables. It connects to MongoDB for storage and to the blockchain for on-chain operations.
+Docker is the default runtime. It starts MongoDB, the API server, the app, and the event poller.
 
-## Development mode
-
-If you used `pnpm docker:up`, the server is already running in Docker. You can view logs with `pnpm docker:logs`.
-
-For local development with hot-reload, run the server outside Docker:
+## Docker stack
 
 <Steps>
 
-### Start the server locally
+### Start services
 
 ```bash
-pnpm dev
+pnpm docker:up
 ```
 
-This runs the server with hot-reloading and the **event poller** enabled.
+Use `pnpm docker:build` after dependency, contract artifact, or Dockerfile changes.
 
-### Verify it's running
+### Check containers
+
+```bash
+docker ps
+```
+
+You should see MongoDB, server, and app containers.
+
+### Check the API
 
 ```bash
 curl http://localhost:8293/
 ```
 
-You should see a response confirming the server is up.
-
 </Steps>
 
+The Docker server runs with the event poller enabled.
+
+## App and docs
+
+| Goal | Command | URL |
+| --- | --- | --- |
+| App in Docker | `pnpm docker:up` | `http://localhost:3000` |
+| Local app dev | `pnpm app:dev` | `http://localhost:3000` |
+| Docs | `pnpm docs:dev` | `http://localhost:3001` |
+| Docs build | `pnpm docs:build` | None |
+
 <Callout type="info">
-**Tip:** For local server development, use `./scripts/dev.sh --no-server` to run MongoDB + app in Docker, then run `pnpm dev` separately for hot-reload.
+Use local app dev for wallet mint work that depends on `NEXT_PUBLIC_*` env vars. The API-first guide works with the Docker app/server path.
 </Callout>
+
+## Local server dev
+
+Use this only when editing server code:
+
+```bash
+pnpm docker:down
+docker compose up -d mongodb
+pnpm dev
+```
+
+`pnpm dev` starts the API with hot reload and the poller. Run `pnpm app:dev` in another terminal if you also need the app outside Docker.
 
 ## What is the event poller?
 
-The event poller watches the blockchain for contract events (like stock issuances, transfers, etc.) and syncs them to MongoDB. This keeps your off-chain database in sync with on-chain state.
+The event poller watches the blockchain for contract events (issuances, transfers, cancellations, and so on) and writes them into MongoDB. It is what keeps the off-chain database in sync with onchain state — if it isn't running, your history endpoint will go stale.
 
-- **`pnpm dev`** - Server with event poller (recommended for development)
-- **`pnpm prod`** - Server without event poller
-- **`pnpm prod-poller`** - Standalone event poller only (for production, processes finalized blocks)
+Three commands wrap it differently:
+
+- `pnpm dev` — server with the event poller, hot reload on. Use this for local development.
+- `pnpm prod` — server only, no poller. Use this when you run the poller as a separate process.
+- `pnpm prod-poller` — standalone poller against finalized blocks. Pair this with `pnpm prod` in production so the poller can restart without taking the API with it.
 
 <Callout type="info">
-For local development, use `pnpm dev` which includes the poller. In production, you'd typically run the server and poller as separate processes.
+For local development, `pnpm dev` already includes the poller. In production, run the server and the poller as two separate processes.
 </Callout>
 
-## Next steps
+A healthy boot logs roughly:
 
-With the server running, you can [deploy your first cap table](/development/cap-table-deploy) using the API.
+```text
+✅ Mongo connected
+✅ Express listening on :8293
+⏳ Poller starting (finalized-only=false)
+```
+
+## Fixes
+
+| Symptom | Check |
+| --- | --- |
+| `EADDRINUSE` | Another process uses `PORT=8293`. |
+| History does not update | Docker server is running, or run `pnpm prod-poller`. |
+| Contract reads fail | Issuer has `deployed_to`; `.env` points at Plume Mainnet. |
+| Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293`. |
+
+Next: [Register the factory](/development/factory-deploy), then [create an issuer](/development/cap-table-deploy).
