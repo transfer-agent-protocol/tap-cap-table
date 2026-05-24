@@ -2,16 +2,20 @@ import { Cards } from 'nextra/components';
 
 # Manage Cap Table
 
-Use this section when the issuer already exists and you need supporting records, optional acceptance, or a read of the current cap table.
+Use this section after first-time setup, when you need supporting records, an optional acceptance event, or a read of current holdings.
 
-Use [Create Stock Class](/development/create-stock-class), [Create Stakeholder](/development/create-stakeholder), and [Issue Stock](/development/issue-stock) for the first setup flow.
+For first-time setup, use [Create Stock Class](/development/create-stock-class), [Create Stakeholder](/development/create-stakeholder), and [Issue Stock](/development/issue-stock).
+
+## Choose a page
+
+| If you want to... | Go to | Outcome |
+| --- | --- | --- |
+| Save legends, plans, or update stakeholder wallets | [Add Supporting Records](/features/cap-table-management/create-stock-class-and-shareholders) | Supporting records saved or wallet linked to a stakeholder. |
+| Record acceptance after an issuance | [Issue and Accept Stock](/features/cap-table-management/issue-and-accept-stock) | Standalone `stockAcceptance` event for an existing `security_id`. |
+| See who currently holds stock for an issuer | [View Cap Table](/features/cap-table-management/view-cap-table) | Active stock positions, stock classes, and the issuer record. |
 
 <Cards>
   <Cards.Card title="Add Supporting Records" href="/features/cap-table-management/create-stock-class-and-shareholders" />
   <Cards.Card title="Issue and Accept Stock" href="/features/cap-table-management/issue-and-accept-stock" />
   <Cards.Card title="View Cap Table" href="/features/cap-table-management/view-cap-table" />
 </Cards>
-
-- [Add Supporting Records](/features/cap-table-management/create-stock-class-and-shareholders) is for stock legends, stock plans, stakeholder wallet changes, and related read routes.
-- [Issue and Accept Stock](/features/cap-table-management/issue-and-accept-stock) is for separate stock acceptance events after issuance.
-- [View Cap Table](/features/cap-table-management/view-cap-table) is for current stock holdings by issuer.
