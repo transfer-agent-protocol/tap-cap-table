@@ -2,6 +2,8 @@ import { Steps, Callout } from 'nextra/components';
 
 # Transfer Stock
 
+Behind the scenes the route uses `transferController.js` to convert IDs and scaled values before calling `transferStock` on the contract. Full details are in the [Controllers Reference](/api-reference/controllers).
+
 Transfer shares from one stakeholder to another. The recipient (transferee) must already exist on the cap table before you can transfer stock to them.
 
 <Steps>
@@ -86,6 +88,10 @@ Send a POST request to `http://localhost:8293/transactions/transfer/stock`
 
 The response returns `"success"` when the transfer is recorded onchain.
 
+<Callout type="warning">
+`sharePrice` is the human price per share. Raw contract values are scaled; divide raw chain values by 10000 before comparing them to the docs.
+</Callout>
+
 ![Stock Transfer Response](../../../public/images/transfer-stock.png)
 
 ### Verify the transfer
@@ -103,13 +109,17 @@ GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>
 ## Required fields
 
 | Field | Description |
-|-------|-------------|
-| `transferorId` | Stakeholder transferring the shares (seller) |
-| `transfereeId` | Stakeholder receiving the shares (buyer) |
-| `stockClassId` | The class of stock being transferred |
-| `quantity` | Number of shares to transfer |
-| `sharePrice` | Price per share |
-| `isBuyerVerified` | Whether the buyer has been verified |
+| --- | --- |
+| `transferorId` | Stakeholder transferring the shares (seller). |
+| `transfereeId` | Stakeholder receiving the shares (buyer). |
+| `stockClassId` | The class of stock being transferred. |
+| `quantity` | Number of shares to transfer, as a string integer. |
+| `sharePrice` | Human price per share. The contract stores `sharePrice * 10000`. |
+| `isBuyerVerified` | `true` once the buyer has cleared whatever KYC/eligibility check your application requires. The contract reverts with `UnverifiedBuyer` if this is `false`. |
+
+## Partial transfers
+
+If `quantity` is less than the current position on `security_id`, the contract automatically issues a *balance security* back to the transferor for the leftover shares. The new `security_id` shows up in [history](/development/historical-transactions); use it for any later action on the leftover position.
 
 ## What's next?
 

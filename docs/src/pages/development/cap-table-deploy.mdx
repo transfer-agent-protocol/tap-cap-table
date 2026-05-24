@@ -2,7 +2,21 @@ import { Steps, Callout } from 'nextra/components';
 
 # Create an Issuer
 
-With the server running, you can create your first issuer via the API. This deploys a new cap table contract through the factory and creates an issuer record. The issuer record is needed for every subsequent transaction.
+With the server running, you can create your first issuer via the API. `POST /issuer/create` does two things in one call:
+
+1. Calls `createCapTable` on the registered factory, deploying a new beacon-proxy cap table contract whose address shows up as `deployed_to`.
+2. Inserts the OCF issuer record into MongoDB, returning the `_id` you'll reuse for every subsequent transaction.
+
+## Required fields
+
+| Field | Description |
+| --- | --- |
+| `legal_name` | Issuer's full legal name. |
+| `formation_date` | ISO date the issuer was formed. |
+| `country_of_formation` | ISO 3166-1 alpha-2 country code (`US`, `GB`, etc.). |
+| `country_subdivision_of_formation` | ISO 3166-2 subdivision (`DE` for Delaware, `CA` for California). |
+| `initial_shares_authorized` | Total authorized shares for the issuer as a string integer. |
+| `tax_ids[]`, `email`, `address`, `comments` | OCF-shaped fields validated against the [OCF schema](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF). |
 
 <Steps>
 
@@ -48,6 +62,8 @@ The response includes your new issuer with key fields:
 - **`_id`**: The issuer ID (you'll need this for all subsequent API calls)
 - **`deployed_to`**: The cap table contract address onchain
 - **`tx_hash`**: The deployment transaction hash
+
+If these fields are present, the API found the factory, sent the transaction, and saved the issuer.
 
 It will look like this, with your unique `_id`
 
@@ -114,6 +130,10 @@ Instead of using the API, issuers can deploy cap tables directly from the fronte
 5. After onchain confirmation, the frontend automatically registers the issuer in the server database via `POST /issuer/register`
 
 In this flow, the issuer pays gas and owns their cap table. The protocol server can still manage operations (create stakeholders, issue stock, etc.) as an operator.
+
+<Callout type="info">
+The frontend sends the same bytes16 issuer ID to the factory and to `POST /issuer/register`. Do not change it between the wallet transaction and server registration, or the poller cannot match the issuer event to the database record.
+</Callout>
 
 ## What's next?
 
