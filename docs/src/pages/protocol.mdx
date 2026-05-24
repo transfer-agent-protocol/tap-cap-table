@@ -1,12 +1,23 @@
 import { Cards } from 'nextra/components'
 
-# Learn TAP
+# Protocol Specification
 
-TAP's smart contracts are designed to be modular. You can interact with them directly or via an API. The protocol is designed to be upgradable, supporting creation of new cap tables, as well as the ability to upgrade existing ones. To learn how this works, you should start with the [Open Cap Table Format](/protocol/tap-ocf) and then move on to the [Onchain Cap Table](/protocol/tap-cap-table).
+How OCF records, the API, contracts, and poller fit.
 
 <Cards>
-	<Cards.Card title="Open Cap Table Format" href="/protocol/tap-ocf" />
-	<Cards.Card title="Onchain Cap Table" href="/protocol/tap-cap-table" />
-	<Cards.Card title="Cap Table Structs" href="/protocol/structs-lib" />
-	<Cards.Card title="Stock Functions" href="/protocol/stock-lib" />
+  <Cards.Card title="Open Cap Table Format" href="/protocol/tap-ocf" />
+  <Cards.Card title="Solidity Cap Table" href="/protocol/tap-cap-table" />
+  <Cards.Card title="Structs Library" href="/protocol/structs-lib" />
+  <Cards.Card title="Stock Functions" href="/protocol/stock-lib" />
 </Cards>
+
+## System model
+
+| Layer | Source | Responsibility |
+| --- | --- | --- |
+| OCF records | `ocf/schema` and MongoDB | Offchain issuer, stakeholder, stock class, transaction, and support-record shapes. |
+| API server | `server/routes` | Validates OCF-shaped input, writes MongoDB records, and calls contracts. |
+| Contracts | `chain/src` | Stores issuer, stock class, stakeholder, active position, and transaction state onchain. |
+| Event poller | `server/chain-operations/transactionPoller.ts` | Syncs contract events back into MongoDB history records. |
+
+Contract structs live in [Structs Library](/protocol/structs-lib); stock lifecycle behavior lives in [Stock Functions](/protocol/stock-lib).
