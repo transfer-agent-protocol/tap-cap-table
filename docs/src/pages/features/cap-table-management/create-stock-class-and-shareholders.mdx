@@ -1,16 +1,49 @@
+import { Callout } from 'nextra/components';
+
 # Add Supporting Records
 
-## When to use this page
+For legends, plans, and stakeholder wallets after issuer setup.
 
-Use this page when the stock class and stakeholder already exist and you need the supporting records around them.
+Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholder](/development/create-stakeholder) for first-time setup.
 
-Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholder](/development/create-stakeholder) for the first create flow.
+## Inputs
 
-## Save a stock legend or stock plan
+| ID | Source |
+| --- | --- |
+| `issuerId` | `POST /issuer/create` or `POST /issuer/register` |
+| `stockClassId` | `POST /stock-class/create` |
+| `stakeholderId` | `POST /stakeholder/create` |
 
-Use `POST /stock-legend/create` to save reusable legend text.
+<Callout type="info">
+`/stakeholder`, `/stock-class`, and `/transactions` pass through contract middleware, so every request — even `GET` — must include `issuerId` in the JSON body. The `curl` examples below show the shape.
+</Callout>
 
-Use `POST /stock-plan/create` to save plan details that later equity compensation issuances can reference.
+## Stock legends
+
+`POST /stock-legend/create` saves transfer-restriction text that you can attach to issuances later via `stock_legend_ids`.
+
+```json
+{
+    "issuerId": "<YOUR_ISSUER_ID>",
+    "data": {
+        "name": "Restricted Stock Legend",
+        "text": "THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933\u2026",
+        "comments": []
+    }
+}
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `name` | Yes | Short label shown in UI/responses. |
+| `text` | Yes | Full legend body printed on certificates. |
+| `comments` | No | Free-form notes. |
+
+Returns: `{ "stockLegend": ... }`.
+
+## Stock plans
+
+`POST /stock-plan/create` saves plan terms that future equity-compensation issuances reference via `stock_plan_id`.
 
 ```json
 {
@@ -27,35 +60,40 @@ Use `POST /stock-plan/create` to save plan details that later equity compensatio
 }
 ```
 
-Use [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms) for fuller examples of both create routes.
+Returns: `{ "stockPlan": ... }`.
 
-## Add or remove a stakeholder wallet
+## Wallets
 
-Use `POST /stakeholder/add-wallet` or `POST /stakeholder/remove-wallet` with this body:
+`POST /stakeholder/add-wallet` and `POST /stakeholder/remove-wallet`:
 
 ```json
 {
+    "issuerId": "<YOUR_ISSUER_ID>",
     "id": "<YOUR_STAKEHOLDER_ID>",
     "wallet": "<YOUR_WALLET_ADDRESS>"
 }
 ```
 
-Both routes return `"Success"` when the wallet update is accepted. `POST /stakeholder/add-wallet` can also return `"Wallet already added"`.
+Returns: `"Success"`. Add can also return `"Wallet already added"`.
 
-## Read the records back
+## Read back
 
-- `GET /stock-class/id/:id` returns the stock class summary.
-- `GET /stock-class/total-number` returns the stock class count.
-- `GET /stakeholder/id/:id` returns the stakeholder summary.
-- `GET /stakeholder/issuer_assigned_id/:id`
-- `GET /stakeholder/issuer/:issuerId/issuer_assigned_id/:id`
-- `GET /stakeholder/wallet/:address`
-- `GET /stakeholder/total-number`
-- `GET /stock-legend/id/:id` and `GET /stock-legend/total-number`
-- `GET /stock-plan/id/:id` and `GET /stock-plan/total-number`
+GETs that go through contract middleware still require `issuerId` in the JSON body:
 
-If you created a legend or plan, read it back by ID. If you changed a wallet, read the stakeholder by wallet address.
+```bash
+curl http://localhost:8293/stakeholder/id/<YOUR_STAKEHOLDER_ID> \
+  -H 'Content-Type: application/json' \
+  -d '{"issuerId":"<YOUR_ISSUER_ID>"}'
+```
 
-## What to do next
+| Record | Route | Body |
+| --- | --- | --- |
+| Stock class | `GET /stock-class/id/:id` | `{ issuerId }` |
+| Stock class count | `GET /stock-class/total-number` | `{ issuerId }` |
+| Stakeholder | `GET /stakeholder/id/:id` | `{ issuerId }` |
+| Stakeholder by issuer-assigned ID | `GET /stakeholder/issuer_assigned_id/:id` | `{ issuerId }` |
+| Stakeholder by wallet | `GET /stakeholder/wallet/:address` | `{ issuerId }` |
+| Stock legend | `GET /stock-legend/id/:id` | None |
+| Stock plan | `GET /stock-plan/id/:id` | None |
 
-Use [Issue and Accept Stock](/features/cap-table-management/issue-and-accept-stock).
+Next: [Issue and Accept Stock](/features/cap-table-management/issue-and-accept-stock) or [API Reference](/api-reference).

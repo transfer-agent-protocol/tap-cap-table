@@ -4,21 +4,19 @@ import { Steps, Callout } from 'nextra/components';
 
 Use this page when you want to answer one question: who currently holds stock for this issuer?
 
+<Callout type="info">
+This route returns active stock positions only. Options, warrants, and convertibles never appear here.
+</Callout>
+
 <Steps>
 
 ### Send a GET request
 
-```text
-GET http://localhost:8293/cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>
+```bash
+curl "http://localhost:8293/cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>"
 ```
 
 ### Check the response
-
-The response returns:
-
-- `holdings` - active stock positions only
-- `stockClasses` - stock classes for the issuer
-- `issuer` - the issuer record
 
 ```json
 {
@@ -48,27 +46,23 @@ The response returns:
 
 </Steps>
 
-<Callout type="info">
-This route returns active stock positions only. It does not show option, warrant, or convertible positions.
-</Callout>
+## Response fields
 
-## What this route answers
+| Field | Type | Notes |
+| --- | --- | --- |
+| `holdings[].stockClass._id` | string | Use this to join against the `stockClasses` array. |
+| `holdings[].stakeholder._id` | string | Stakeholder currently holding the position. |
+| `holdings[].quantity` | number | Active share count. |
+| `holdings[].sharePrice` | number | Already de-scaled. The raw onchain value is `sharePrice * 10000`; see the [scaling note](/api-reference#stock-transactions). |
+| `holdings[].timestamp` | number | Unix seconds at the issuing block. |
+| `stockClasses[]` | array | Every stock class on the issuer, even if it has no active holdings. |
+| `issuer._id` | string | Use this to confirm you queried the right cap table. |
 
-- which stock positions are still active
-- which stock classes belong to the issuer
-- which issuer record the holdings belong to
+## Excluded from this route
 
-## What is excluded
-
-- positions with zero remaining quantity
-- non-stock instruments
-
-## How to read the result
-
-- use `holdings` to see the active stock positions
-- use `stockClasses` to map those holdings back to the stock classes
-- use `issuer` to confirm you are looking at the right cap table
+- Positions with zero remaining quantity (cancelled, transferred, repurchased).
+- Equity compensation, convertibles, and any non-stock instruments — those live on their own DB-only routes.
 
 ## What's next?
 
-Use this page for the current state. Use [View History](/features/issuer-management/read-history) when you want to see how the cap table got to that state.
+Use this page for the current state. Use [View History](/features/issuer-management/read-history) when you want to see how the cap table got there.

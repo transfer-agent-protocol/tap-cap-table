@@ -2,24 +2,22 @@ import { Callout } from 'nextra/components';
 
 # Issue and Accept Stock
 
-Use this page when stock has already been issued and you want to add a separate acceptance event.
+Acceptance is an optional, standalone event. Use it when the stakeholder confirms receipt of an existing issuance and you want that confirmation to land as its own history row — typical for regulatory or audit signal. If acceptance is implicit at issuance time, skip this page.
 
-Use [Issue Stock](/development/issue-stock) for the `POST /transactions/issuance/stock` request and response.
+For the issuance itself, use [Issue Stock](/development/issue-stock).
 
-## Before you use this route
+## Inputs
 
-Acceptance is optional. Use it when you want the acceptance recorded as its own event after the original issuance.
-If the original issuance event is enough for your workflow, you do not need a separate acceptance event.
-
-- keep `stakeholderId`
-- keep `stockClassId`
-- keep `security_id`
-
-`security_id` comes from the original issuance response.
+| Field | Source |
+| --- | --- |
+| `issuerId` | `POST /issuer/create` or `POST /issuer/register` |
+| `stakeholderId` | `POST /stakeholder/create` |
+| `stockClassId` | `POST /stock-class/create` |
+| `security_id` | `POST /transactions/issuance/stock` response |
 
 ## Accept stock
 
-Use `POST /transactions/accept/stock` when you want a separate acceptance event for an existing issuance.
+`POST /transactions/accept/stock`
 
 ```json
 {
@@ -33,17 +31,27 @@ Use `POST /transactions/accept/stock` when you want a separate acceptance event 
 }
 ```
 
-The response returns `{ "stockAcceptance": ... }`.
+Response:
+
+```json
+{
+    "stockAcceptance": {
+        "id": "<GENERATED_ACCEPTANCE_ID>",
+        "object_type": "TX_STOCK_ACCEPTANCE",
+        "security_id": "<YOUR_SECURITY_ID>",
+        "date": "2026-01-01",
+        "comments": ["Accepted by stakeholder"]
+    }
+}
+```
 
 <Callout type="info">
-Keep the same `security_id` for later accept, cancel, retract, reissue, and repurchase calls on that issuance.
+Reuse the same `security_id` for accept, cancel, retract, reissue, and repurchase. Acceptance does not change holdings; it only records the event.
 </Callout>
 
-## Verify the result
+## Verify
 
-- `GET /cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>` shows the active position once the contract state is updated.
-- `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` shows issuance and acceptance as separate history rows after processing.
+- Holdings: `GET /cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>`
+- History: `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` — expect a new `TX_STOCK_ACCEPTANCE` row after polling (~20 s on Plume Mainnet).
 
-## What's next?
-
-Use [View Cap Table](/features/cap-table-management/view-cap-table) to read current holdings, or move to [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock).
+Next: [View Cap Table](/features/cap-table-management/view-cap-table) or [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock).
