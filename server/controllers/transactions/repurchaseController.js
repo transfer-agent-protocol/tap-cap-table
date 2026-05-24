@@ -1,6 +1,12 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
+/**
+ * Repurchase controller.
+ * Converts IDs, scales price and quantity. Maps considerationText to reason_text
+ * (per struct limitation comment) before calling contract.repurchaseStock().
+ */
+
 export const convertAndCreateRepurchaseStockOnchain = async (
     contract,
     { stakeholderId, stockClassId, security_id, considerationText = "", quantity, price, comments = [] }

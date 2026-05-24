@@ -1,6 +1,13 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
+/**
+ * Cancellation controller.
+ * Converts IDs to bytes16, scales quantity, and calls contract.cancelStock()
+ * with a params struct + separate quantity argument.
+ * Supports partial cancellation.
+ */
+
 export const convertAndCreateCancellationStockOnchain = async (
     contract,
     { stakeholderId, stockClassId, quantity, security_id, reason_text, comments = [] }

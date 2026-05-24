@@ -1,6 +1,14 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
+/**
+ * Stock issuance controller - the most complex transaction type.
+ * Validates required fields via helper, converts all IDs to bytes16,
+ * scales quantity/price, assembles full StockIssuanceParams struct,
+ * and calls contract.issueStock().
+ * Used by POST /transactions/issuance/stock.
+ */
+
 const checkIssuanceValues = (issuance) => {
     return {
         stakeholder_id: issuance.stakeholder_id, // required

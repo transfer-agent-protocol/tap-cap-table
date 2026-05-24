@@ -1,6 +1,13 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
+/**
+ * Transfer controller.
+ * Converts transferor/transferee/stockClass IDs to bytes16 and scales
+ * quantity + share price before calling contract.transferStock().
+ * Supports buyer verification flag.
+ */
+
 export const convertAndCreateTransferStockOnchain = async (contract, transfer) => {
     const { quantity, transferorId, transfereeId, stockClassId, isBuyerVerified, sharePrice } = transfer;
 

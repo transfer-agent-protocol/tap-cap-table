@@ -1,6 +1,13 @@
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import { ethers } from "ethers";
 
+/**
+ * Stakeholder controller.
+ * All functions convert UUIDs to bytes16 before calling CapTable contract methods.
+ * Creation happens onchain first, then the DB record is saved by the route.
+ * Getters are read-only views.
+ */
+
 /// @dev: controller handles conversion from OCF type to Onchain types and creates the stakeholder.
 export const convertAndReflectStakeholderOnchain = async (contract, stakeholder) => {
     // First: convert OCF Types to Onchain Types

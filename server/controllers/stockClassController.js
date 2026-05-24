@@ -1,6 +1,13 @@
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 
+/**
+ * StockClass controller.
+ * Handles creation, authorized shares adjustments, and read operations.
+ * Converts UUIDs and scales numbers. Mirrors the stakeholder controller pattern.
+ * TODO (in get* functions): Decide whether to also return enriched offchain data.
+ */
+
 /// @dev: controller handles conversion from OCF type to Onchain types and creates the stock class.
 export const convertAndReflectStockClassOnchain = async (contract, stockClass) => {
     // First: convert OCF Types to Onchain Types

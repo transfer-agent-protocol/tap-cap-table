@@ -1,5 +1,11 @@
 import { convertUUIDToBytes16 } from "../../utils/convertUUID.js";
 
+/**
+ * Reissuance controller.
+ * Converts IDs (including array of resulting security IDs) to bytes16
+ * and calls contract.reissueStock() with retraction params + new IDs.
+ */
+
 export const convertAndCreateReissuanceStockOnchain = async (
     contract,
     { stakeholderId, stockClassId, resulting_security_ids, security_id, reason_text, comments = [] }
