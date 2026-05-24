@@ -4,34 +4,39 @@ import { Steps, Callout } from 'nextra/components';
 
 Use this page when you want to check whether a stock action or share adjustment has already been recorded for an issuer.
 
+<Callout type="info">
+The event poller is the source of new history entries. Allow ~20 seconds on Plume Mainnet between an onchain transaction and a successful read.
+</Callout>
+
 <Steps>
 
 ### Send a GET request
 
-```text
-GET http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
+```bash
+curl http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
 ```
 
-<Callout type="info">
 Replace `<YOUR_ISSUER_ID>` with the issuer `_id` from your issuer creation response.
-</Callout>
 
 ### Check the response
 
-The response is an array. Each item includes:
-
-- `transaction` - the populated transaction document
-- `issuer` - the issuer ID
-
-Start with `transaction.date`, `transaction.security_id`, and the transaction body itself.
+The response is an array of `{ issuer, transaction }` items. Each `transaction` is a fully populated OCF document.
 
 ```json
 [
     {
         "issuer": "<YOUR_ISSUER_ID>",
         "transaction": {
+            "object_type": "TX_STOCK_ISSUANCE",
             "date": "2026-01-01",
-            "security_id": "<YOUR_SECURITY_ID>"
+            "security_id": "<YOUR_SECURITY_ID>",
+            "stakeholder_id": "<YOUR_STAKEHOLDER_ID>",
+            "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
+            "quantity": "100000",
+            "share_price": {
+                "amount": "4.20",
+                "currency": "USD"
+            }
         }
     }
 ]
@@ -41,24 +46,13 @@ Start with `transaction.date`, `transaction.security_id`, and the transaction bo
 
 ## Use this route to answer common checks
 
-- did my stock action land yet
-- did an authorized shares adjustment show up
-- am I looking at the right issuer history
-
-## Quick verification recipe
-
-1. Send the stock action or share adjustment route.
-2. Fetch this history endpoint again.
-3. Look for the new `date`, `security_id`, and transaction entry.
+- Did my stock action land yet?
+- Did an authorized-shares adjustment show up?
+- Am I looking at the right issuer history?
 
 ## Why you might not see a record
 
-These routes save data but do not show up here on their own:
-
-- `POST /transactions/issuance/equity-compensation`
-- `POST /transactions/issuance/convertible`
-
-For the full list of routes that do and do not appear here, read [Add New History](/features/issuer-management/append-history).
+Some routes save data but never appear here on their own — typically equity compensation, convertibles, and supporting records like stock plans or vesting terms. For the full list of which routes do and do not appear, see [Add New History](/features/issuer-management/append-history).
 
 ## What's next?
 

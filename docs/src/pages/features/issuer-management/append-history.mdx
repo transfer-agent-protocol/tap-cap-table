@@ -8,9 +8,13 @@ Use this page when you need to know whether a route creates a new history entry 
 You can add new events to the history feed. You cannot rewrite past events through the TAP API.
 </Callout>
 
+## Why two lists?
+
+History entries are produced by the event poller after a contract transaction is mined. Routes that emit a contract event show up in history; routes that only write to MongoDB do not. Use the lists below to predict which side of the line a route falls on.
+
 ## Routes that add new history
 
-These routes add new history entries.
+These routes submit an onchain transaction. After the poller processes the event (~20 s on Plume Mainnet), the entry appears in [View History](/features/issuer-management/read-history).
 
 - Stock actions:
   - `POST /transactions/issuance/stock`
@@ -26,7 +30,7 @@ These routes add new history entries.
 
 ## Routes that only save data
 
-These routes save data for later use but do not add history on their own.
+These routes write a MongoDB record only. They never appear in history on their own.
 
 - Equity compensation and convertibles:
   - `POST /transactions/issuance/equity-compensation`
@@ -37,15 +41,11 @@ These routes save data for later use but do not add history on their own.
   - `POST /valuation/create`
   - `POST /vesting-terms/create`
 
-## How to verify a new history entry
-
-- If the route changes holdings or authorized share counts, it should appear in history.
-- If the route only saves a supporting input, it will not appear there by itself.
+## Verify a new history entry
 
 1. Send the route.
-2. Wait for it to be processed.
-3. Fetch `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` again.
-4. Look for the new `date`, `security_id`, and transaction entry.
+2. Wait for the poller (~20 s on Plume Mainnet).
+3. Fetch [View History](/features/issuer-management/read-history) again and look for the new `date`, `security_id`, and `object_type`.
 
 ## What's next?
 
