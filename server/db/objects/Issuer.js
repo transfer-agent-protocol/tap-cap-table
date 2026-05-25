@@ -19,6 +19,7 @@ const IssuerSchema = new mongoose.Schema(
         comments: [String],
         deployed_to: String, // Address of its CapTable
         tx_hash: String,
+        deployed_by: String, // Admin wallet address (0x) that called factory.createCapTable at mint time
         last_processed_block: { type: Number, default: null },
         is_manifest_created: { type: Boolean, default: false },
     },

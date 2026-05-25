@@ -46,7 +46,6 @@ const FormInput = styled.input`
 
     &:hover {
         outline: 1px solid ${({ theme }) => theme.colors.accent};
-		box-shadow: 0 0 0 1px ${({ theme }) => theme.colors.accent};
     }
 
     @media only screen and (max-width: 768px) {
@@ -157,6 +156,28 @@ const Input = styled.input`
 	}
 `;
 
+const Select = styled.select`
+	width: 100%;
+	padding: 0.75rem;
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-family: inherit;
+	background: ${({ theme }) => theme.colors.background};
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.borderRadius.main};
+	color: ${({ theme }) => theme.colors.text};
+	box-sizing: border-box;
+
+	&:focus {
+		outline: 2px solid ${({ theme }) => theme.colors.main};
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+`;
+
 const Divider = styled.hr`
 	width: 100%;
 	border: none;
@@ -164,4 +185,4 @@ const Divider = styled.hr`
 	margin: 0.5rem 0;
 `;
 
-export { FormWrapper, FormInput, FormTextArea, FormValidation, FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Divider };
+export { FormWrapper, FormInput, FormTextArea, FormValidation, FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Select, Divider }

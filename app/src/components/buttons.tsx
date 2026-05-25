@@ -119,4 +119,34 @@ const MintButton = styled.button`
 	}
 `;
 
-export { LogoRouter, StyledA, PrimaryButton, WalletButtonStyled, MintButton }
+const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "danger" }>`
+	display: inline-flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	min-height: 2rem;
+	padding: 0 ${({ theme }) => theme.spacing.md};
+	border: 1px solid
+		${({ theme, $variant }) => ($variant === "danger" ? theme.colors.error : theme.colors.main)};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	background: ${({ theme, $variant }) => ($variant === "primary" ? theme.colors.main : "transparent")};
+	color: ${({ theme, $variant }) =>
+		$variant === "primary" ? theme.colors.background : $variant === "danger" ? theme.colors.error : theme.colors.text};
+	font-family: inherit;
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-weight: ${({ theme }) => theme.fontWeights.bold};
+	cursor: pointer;
+	transition: opacity 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
+	white-space: nowrap;
+
+	&:hover:not(:disabled) {
+		opacity: 0.85;
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+`;
+
+export { LogoRouter, StyledA, PrimaryButton, WalletButtonStyled, MintButton, InlineButton }

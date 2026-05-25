@@ -57,11 +57,51 @@ stockClass.post("/create", async (req, res) => {
             issuer: issuer._id,
         };
         await validateInputAgainstOCF(incomingStockClassToValidate, stockClassSchema);
+
         await convertAndReflectStockClassOnchain(contract, incomingStockClassForDB);
 
         const stockClass = await createStockClass(incomingStockClassForDB);
 
         console.log("✅ | Stock Class created offchain:", stockClass);
+
+        res.status(200).send({ stockClass });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
+// Register a stock class that the caller already created onchain from their own wallet.
+// The caller MUST supply `id` (the UUID form of the bytes16 used in their onchain tx).
+// We persist it as `_id` so the poller's update-by-_id lookup matches when it processes
+// the StockClassCreated event.
+stockClass.post("/register-onchain", async (req, res) => {
+    const { data, issuerId, id } = req.body;
+
+    if (!id) {
+        return res.status(400).send("id is required (UUID form of the bytes16 used in the onchain createStockClass tx)");
+    }
+
+    try {
+        const issuer = await readIssuerById(issuerId);
+
+        const incomingStockClassToValidate = {
+            id,
+            object_type: "STOCK_CLASS",
+            ...data,
+        };
+
+        const incomingStockClassForDB = {
+            ...incomingStockClassToValidate,
+            _id: id,
+            issuer: issuer._id,
+        };
+
+        await validateInputAgainstOCF(incomingStockClassToValidate, stockClassSchema);
+
+        const stockClass = await createStockClass(incomingStockClassForDB);
+
+        console.log("✅ | Stock Class metadata registered for onchain id:", id);
 
         res.status(200).send({ stockClass });
     } catch (error) {

@@ -83,6 +83,14 @@ A healthy boot logs roughly:
 
 ## Fixes
 
+<Callout type="info">
+If you don't see changes that you pushed in your code on the app or in the server, rebuild docker containers (since they don't have hot reloading).
+
+```bash
+docker compose up -d --build app server
+```
+</Callout>
+
 | Symptom | Check |
 | --- | --- |
 | `EADDRINUSE` | Another process uses `PORT=8293`. |

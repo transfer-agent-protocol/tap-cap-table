@@ -79,6 +79,10 @@ export const stopEventProcessing = async () => {
 
 export const pollingSleepTime = 20_000;
 
+// Max number of issuers processed in parallel per cycle.
+// The poller is slated to be replaced by a proper indexer, so this is the main (and only) tuning knob we keep.
+const POLLER_MAX_CONCURRENCY = Number.parseInt(process.env.POLLER_MAX_CONCURRENCY || "5", 10) || 5;
+
 interface IEventProcessing {
     finalizedOnly: boolean;
     useConn?: Connection;
@@ -91,14 +95,19 @@ export const startEventProcessing = async ({ finalizedOnly, useConn }: IEventPro
     const dbConn = useConn || (await connectDB());
     while (_keepProcessing) {
         const issuers = await readAllIssuers();
+        const activeIssuers: any[] = issuers.filter((issuer: any) => issuer.deployed_to);
 
-        console.log(`Processing synchronously for ${issuers.length} issuers at ${Date()}`);
-        for (const issuer of issuers) {
-            if (issuer.deployed_to) {
+        console.log(`Processing for ${activeIssuers.length} issuers at ${Date()}`);
+
+        await runWithConcurrency(activeIssuers, POLLER_MAX_CONCURRENCY, async (issuer: any) => {
+            try {
                 const { contract, provider, libraries } = await getIssuerContract(issuer);
                 await processEvents(dbConn, contract, provider, issuer, libraries.txHelper, finalizedOnly);
+            } catch (err) {
+                console.error(`Poller error for issuer ${issuer._id}:`, err);
             }
-        }
+        });
+
         await sleep(pollingSleepTime);
     }
     _finishedProcessing = true;
@@ -118,7 +127,11 @@ const getRetryOptions = (action: string, options?: RetryOptions): RetryOptions =
     };
 };
 
-const processEvents = async (dbConn, contract, provider, issuer, txHelper, finalizedOnly, maxBlocks = 500, maxEvents = 250) => {
+// maxBlocks is the per-cycle event-query window. Each cycle is bounded by `maxEvents` regardless,
+// so a large window mostly helps drain a backlog quickly when the issuer is far behind chain head.
+// 5000 is a pragmatic value for fast chains (e.g. Plume); the original 500 was leaving the poller
+// stuck grinding through old blocks on busy networks.
+const processEvents = async (dbConn, contract, provider, issuer, txHelper, finalizedOnly, maxBlocks = 5000, maxEvents = 250) => {
     /*
     We process up to `maxEvents` across `maxBlocks` to ensure our transaction sizes dont get too big and bog down our db
     */
@@ -147,7 +160,6 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
         return;
     }
 
-    // console.log(" processing from", { startBlock, endBlock });
     let events: QueuedEvent[] = [];
 
     const contractEvents: EventLog[] = await pRetry(
@@ -211,11 +223,9 @@ const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
 
 const persistEvents = async (issuerId, events: QueuedEvent[]) => {
     // Persist all the necessary changes for each event gathered in process events
-    // console.log(`${events.length} events to process for issuerId ${issuerId}`);
     for (const event of events) {
         const { type, data, timestamp } = event;
         const txHandleFunc = txFuncs[type];
-        // console.log("persistEvent: ", {type, data, timestamp});
         if (txHandleFunc) {
             await txHandleFunc(data, issuerId, timestamp);
             continue;
@@ -256,3 +266,23 @@ export const trimEvents = (origEvents: QueuedEvent[], maxEvents, endBlock) => {
 const updateLastProcessed = async (issuerId, lastProcessedBlock) => {
     return updateIssuerById(issuerId, { last_processed_block: lastProcessedBlock });
 };
+
+async function runWithConcurrency<T>(items: T[], concurrency: number, worker: (item: T) => Promise<void>): Promise<void> {
+    const queue = [...items];
+    const runNext = async (): Promise<void> => {
+        if (queue.length === 0) return;
+        const item = queue.shift()!;
+        try {
+            await worker(item);
+        } finally {
+            await runNext();
+        }
+    };
+
+    const actualConcurrency = Math.min(concurrency, items.length);
+    const workers: Promise<void>[] = [];
+    for (let i = 0; i < actualConcurrency; i++) {
+        workers.push(runNext());
+    }
+    await Promise.all(workers);
+}

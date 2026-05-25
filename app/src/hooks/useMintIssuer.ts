@@ -51,6 +51,7 @@ export interface UseMintIssuerReturn {
 
 	// Actions
 	handleMint: () => void;
+	reset: () => void;
 
 	// Results / errors
 	txHash: `0x${string}` | undefined;
@@ -135,6 +136,13 @@ export function useMintIssuer(): UseMintIssuerReturn {
 		});
 	}, [canMint, id, fields.legalName, fields.sharesAuthorized, writeContract, reset]);
 
+	const resetMint = useCallback(() => {
+		reset();
+		setDeployedAddress(null);
+		setServerError(null);
+		setResult(null);
+	}, [reset]);
+
 	// --- Step 2: parse event + register with server ---
 	useEffect(() => {
 		if (!receipt || !txHash || result || isRegistering) return;
@@ -176,6 +184,7 @@ export function useMintIssuer(): UseMintIssuerReturn {
 					comments: [],
 					deployed_to: proxyAddress,
 					tx_hash: txHash,
+					...(address && { deployed_by: address }),
 				};
 				const issuer = await registerIssuer(payload);
 				setResult(issuer);
@@ -197,6 +206,7 @@ export function useMintIssuer(): UseMintIssuerReturn {
 		isConfirming,
 		isRegistering,
 		handleMint,
+		reset: resetMint,
 		txHash,
 		isConfirmed,
 		deployedAddress,

@@ -61,12 +61,18 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Processes events through XState state machines (`server/state-machines/`)
     - Synchronizes onchain state to MongoDB
     - Can run in two modes: `--finalized-only` (production) or latest blocks (testing)
+    - **Slated for replacement by a proper indexer.** Kept intentionally simple: round-robin across issuers with `runWithConcurrency` (`POLLER_MAX_CONCURRENCY`, default 5). Per-cycle query window is `maxBlocks=5000` (raised from the historical 500 to drain backlog faster on fast chains like Plume) with a `maxEvents=250` safety cap per DB transaction. Do not re-add prioritization/backoff/dynamic-sleep machinery — the indexer will obviate it.
 
 3. **Express API** (`server/app.js`, `server/routes/`):
     - REST endpoints for issuers, stakeholders, stock classes, transactions, etc.
     - Validates input against OCF schemas (`ocf/schema/`)
     - Submits transactions to smart contracts
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
+    - **Two route conventions** for entity creation:
+      - `POST /<entity>/create` — server-signed (server's OPERATOR key submits onchain, then persists metadata). Legacy default.
+      - `POST /<entity>/register-onchain` — caller's wallet already submitted onchain (direct flow); endpoint only validates + persists metadata. The poller is still authoritative for the resulting record. Currently exposed for `/stakeholder`, `/stock-class`, and `/transactions/issuance/stock`.
+    - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (uses the new `Issuer.deployed_by` field).
+    - `GET /issuer/full/:id` — full Issuer document (read-only) for the management UI.
 
 4. **State Machines** (`server/state-machines/`):
     - XState machines model stock lifecycle: Issued → Transferred/Cancelled/Retracted/Reissued/Repurchased
@@ -81,15 +87,26 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - JSON schemas used for validation
     - Sample OCF files in `ocf/samples/`
 
+7. **Frontend Cap Table Management UI** (`app/src/pages/manage/`, `app/src/components/CapTableDashboard.tsx`):
+    - `/manage` — hub listing all cap tables the connected admin wallet has deployed (queries `/issuer/by-deployer/:address` + a localStorage fallback for legacy mints with no `deployed_by`).
+    - `/manage/cap-table?issuerId=...` — full-screen dashboard for a specific cap table. Forms create stock classes, stakeholders, and stock issuances directly from the connected wallet.
+    - Optimistic state for direct creations carries a 90s TTL — the chain assigns issuance ids internally, so we can't reliably match optimistic items to poller-written records.
+
 ### Data Flow
 
-**Transaction Creation**:
+**Transaction Creation (server-signed, legacy)**:
 
-1. API receives OCF-formatted transaction request
+1. API receives OCF-formatted transaction request at `/<entity>/create`
 2. Validates against OCF schema
-3. Converts to Solidity structs and submits to contract
+3. Converts to Solidity structs and submits to contract via the server's OPERATOR key
 4. Transaction emits events onchain
 5. Event poller picks up events and updates MongoDB
+
+**Transaction Creation (direct wallet, current default for the `/manage` UI)**:
+
+1. Frontend generates a bytes16 id and submits the tx from the connected admin wallet via wagmi (`useDirectCreateStockClass`, `useDirectCreateStakeholder`, `useDirectIssueStock`). The chain assigns issuance + security ids internally for `issueStock`; the frontend supplies its own ids only for `createStakeholder` and `createStockClass`.
+2. Frontend POSTs OCF metadata to `/<entity>/register-onchain`. Server validates and persists offchain metadata; **does not** submit onchain again.
+3. The poller is still authoritative — it picks up the TxCreated/StakeholderCreated/StockClassCreated event and writes the canonical record (joining on the bytes16 id where applicable).
 
 **Minting**:
 When a manifest is created, the system:
@@ -338,6 +355,7 @@ Share quantities and prices use scaled BigNumbers (1e10 precision):
 
 - `toScaledBigNumber(value)` to convert before contract calls
 - Always scale quantities and prices in transaction parameters
+- The poller unscales by 1e10 on read (`toDecimal()` in `transactionHandlers.js`). Any new direct-wallet path must scale on the write side to match — see `app/src/hooks/useDirectIssueStock.ts` where `scaleAmount` (1e10) is applied to both `quantity` and `share_price`.
 
 ### OCF Validation
 
@@ -388,6 +406,7 @@ The system supports multiple environments via `.env` files:
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
 - `NEXT_PUBLIC_OPERATOR_ADDRESS`: Server wallet address to receive OPERATOR_ROLE on new cap tables
+- `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (default 5, raised to 8 in `docker-compose.yml`). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
 
 ## Working with OCF
 
@@ -484,13 +503,15 @@ Libraries:
 
 ## Common Pitfalls
 
-1. **Forgetting to scale numbers**: Always use `toScaledBigNumber()` for quantities and prices
-2. **UUID format mismatch**: Convert UUIDs to bytes16 before contract calls
-3. **Poller not running**: Transactions won't sync to DB without the event poller
-4. **Missing replica set**: Atomic operations fail without `DATABASE_REPLSET=1`
-5. **OCF validation skipped**: Always validate input against schemas
-6. **Contract events not emitted**: Check that contract functions emit expected events
-7. **Preprocessor cache not populated**: Ensure seeding happens after manifest creation
+1. **Forgetting to scale numbers**: Always use `toScaledBigNumber()` for quantities and prices. Direct-wallet hooks must scale on the write side or the poller's 1e10 unscale will produce tiny fractions in Mongo (e.g. `69000` raw → `0.0000069` after unscale).
+2. **UUID format mismatch**: Convert UUIDs to bytes16 before contract calls.
+3. **Poller not running**: Transactions won't sync to DB without the event poller.
+4. **Missing replica set**: Atomic operations fail without `DATABASE_REPLSET=1`.
+5. **OCF validation skipped**: Always validate input against schemas.
+6. **Contract events not emitted**: Check that contract functions emit expected events.
+7. **Preprocessor cache not populated**: Ensure seeding happens after manifest creation.
+8. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
+9. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
 
 ## Debugging
 
