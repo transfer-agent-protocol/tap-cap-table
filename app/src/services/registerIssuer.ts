@@ -18,6 +18,7 @@ export interface RegisterIssuerPayload {
 	comments?: string[];
 	deployed_to: string;
 	tx_hash: string;
+	deployed_by?: string; // 0x admin wallet that initiated the mint tx
 }
 
 export interface IssuerResponse {

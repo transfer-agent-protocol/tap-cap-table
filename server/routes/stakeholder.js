@@ -126,6 +126,45 @@ stakeholder.post("/create", async (req, res) => {
     }
 });
 
+// Register a stakeholder that the caller already created onchain from their own wallet.
+// The caller MUST supply `id` (the UUID form of the bytes16 used in their createStakeholder tx).
+// We persist it as `_id` so the poller's update-by-_id lookup matches when it processes the
+// StakeholderCreated event.
+stakeholder.post("/register-onchain", async (req, res) => {
+    const { data, issuerId, id } = req.body;
+
+    if (!id) {
+        return res.status(400).send("id is required (UUID form of the bytes16 used in the onchain createStakeholder tx)");
+    }
+
+    try {
+        const issuer = await readIssuerById(issuerId);
+
+        const incomingStakeholderToValidate = {
+            id,
+            object_type: "STAKEHOLDER",
+            ...data,
+        };
+
+        const incomingStakeholderForDB = {
+            ...incomingStakeholderToValidate,
+            _id: id,
+            issuer: issuer._id,
+        };
+
+        await validateInputAgainstOCF(incomingStakeholderToValidate, stakeholderSchema);
+
+        const stakeholder = await createStakeholder(incomingStakeholderForDB);
+
+        console.log("✅ | Stakeholder metadata registered for onchain id:", id);
+
+        res.status(200).send({ stakeholder });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(`${error}`);
+    }
+});
+
 stakeholder.post("/add-wallet", async (req, res) => {
     const { contract } = req;
     const { id, wallet } = req.body;
