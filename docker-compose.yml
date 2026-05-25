@@ -31,6 +31,7 @@ services:
             CHAIN_ID: ${CHAIN_ID:-31337}
             PRIVATE_KEY: ${PRIVATE_KEY:-}
             PORT: 8293
+            POLLER_MAX_CONCURRENCY: ${POLLER_MAX_CONCURRENCY:-8}
         depends_on:
             mongodb:
                 condition: service_healthy
