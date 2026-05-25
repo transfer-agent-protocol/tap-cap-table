@@ -6,7 +6,10 @@ export default defineConfig({
 	plugins: [
 		foundry({
 			project: "../chain",
-			include: ["CapTableFactory.sol/CapTableFactory.json"],
+			include: [
+				"CapTableFactory.sol/CapTableFactory.json",
+				"CapTable.sol/CapTable.json",
+			],
 		}),
 		react(),
 	],

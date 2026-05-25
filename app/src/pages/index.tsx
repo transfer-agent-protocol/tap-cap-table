@@ -1,22 +1,19 @@
-import Link from "next/link";
-import { Heading, Content, StyledTable } from "../components/wrappers";
-import { H1, H2, P } from "../components/typography";
+import { Content, Heading, StyledTable } from "../components/wrappers";
+import { H2, P } from "../components/typography";
 
 export default function Home() {
 	return (
 		<Content>
 			<Heading>
-				<H1>Onchain cap tables.</H1>
-				<P>Tokenize RWAs, and handle post-trade settlement.</P>
-				<P>Based on the <a href="https://www.opencaptablecoalition.com/" target="_blank">Open Cap Table</a> data format, transfer agent protocol is being used by SEC-registered entities.</P>
-				<a href="https://paragraph.com/@thatalexpalmer/rwa-tokenization-protocol-stack-1" target="_blank" rel="noopener">Read why this exists</a>
-				
+				<P>Tokenize RWA cap tables and handle post-trade settlment.</P>
+				<P>Fully onchain protocol that's based on <a href="https://www.opencaptablecoalition.com/" target="_blank">Open Cap Table</a> data format. We're being used by SEC-registered transfer agents.</P>
+				<a href="https://paragraph.com/@thatalexpalmer/rwa-tokenization-protocol-stack-1" target="_blank" rel="noopener">Read how this started</a>
 			</Heading>
 			<H2>
-				Demo Deployments:
+				Demo contracts:
 			</H2>
 			<P>
-				Main implementation is being developed on <a href="https://plume.org" target="_blank">Plume</a> by <a href="https://palmer.earth" target="_blank">thatalexpalmer.eth</a> and will power <a href="https://plume.org/blog/plume-earns-sec-approval-as-transfer-agent" target="_blank">Plume's transfer agent.</a> Documentation is being updated.
+				Main implementation is being developed on <a href="https://plume.org" target="_blank">Plume</a> by <a href="https://palmer.earth" target="_blank">thatalexpalmer.eth</a> and will power <a href="https://plume.org/blog/plume-earns-sec-approval-as-transfer-agent" target="_blank">Plume's transfer agent.</a> Read our docs.
 			</P>
 			<StyledTable>
 				<thead>

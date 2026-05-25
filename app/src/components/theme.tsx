@@ -34,6 +34,52 @@ const theme: DefaultTheme = {
 		none: "0",
 		main: "0.131rem",
 	},
+	spacing: {
+		0: "0",
+		xs: "0.25rem",
+		sm: "0.5rem",
+		md: "1rem",
+		lg: "1.5rem",
+		xl: "2rem",
+		"2xl": "3rem",
+		"3xl": "4rem",
+	},
+	fontWeights: {
+		normal: 400,
+		medium: 500,
+		semibold: 600,
+		bold: 700,
+	},
+	breakpoints: {
+		sm: "475px",
+		mobile: "512px",
+		tablet: "768px",
+		mintCollapse: "900px",
+	},
+	radii: {
+		none: "0",
+		main: "0.131rem",
+		sm: "4px",
+		md: "0.5rem",
+	},
+	shadows: {
+		sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+		focus: "0 0 0 2px #0C0B0C",
+	},
+	transitions: {
+		default: "all 0.168s cubic-bezier(0.211, 0.69, 0.313, 1)",
+		spring: "0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)",
+	},
+	maxWidths: {
+		main: "768px",
+		article: "46rem",
+		h1: "52rem",
+	},
+	zIndices: {
+		base: 1,
+		dropdown: 10,
+		modal: 100,
+	},
 };
 
 export default theme;

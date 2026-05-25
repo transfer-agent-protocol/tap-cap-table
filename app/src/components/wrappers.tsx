@@ -9,13 +9,48 @@ const FullWidth = styled.div`
 `;
 
 const Nav = styled.nav`
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: space-between;
+	position: sticky;
+	top: 0;
+	z-index: ${({ theme }) => theme.zIndices.dropdown};
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: space-between;
 	align-items: center;
+	gap: ${({ theme }) => theme.spacing.md};
 	width: 100%;
 	max-width: 100%;
-	padding: 1rem 0;
+	padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+	box-sizing: border-box;
+	background: ${({ theme }) => theme.colors.background};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+
+	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+	}
+`;
+
+const NavBrand = styled.div`
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	gap: ${({ theme }) => theme.spacing.md};
+	min-width: 0;
+`;
+
+const NavTitle = styled.h1`
+	margin: 0;
+	color: ${({ theme }) => theme.colors.text};
+	font-size: ${({ theme }) => theme.fontSizes.medium};
+	font-weight: ${({ theme }) => theme.fontWeights.bold};
+	line-height: ${({ theme }) => theme.lineHeights.H2};
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+		font-size: ${({ theme }) => theme.fontSizes.baseline};
+		white-space: normal;
+	}
 `;
 
 const Logotype = styled.span`
@@ -135,13 +170,13 @@ const Credits = styled.div`
 const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
-  margin: 1rem 0;
+  margin: ${({ theme }) => theme.spacing.md} 0;
   font-size: ${({ theme }) => theme.fontSizes.baseline};
   table-layout: fixed; /* Helps to apply word wrapping */
 
   th, td {
     text-align: left;
-    padding: 0.5rem;
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
     border-bottom: 1px solid ${({ theme }) => theme.colors.main};
     word-break: break-word; /* Ensures text wraps inside the cell */
   }
@@ -283,4 +318,117 @@ const ResponseBlock = styled.pre`
 	margin: 0;
 `;
 
-export { FullWidth, Nav, Logotype, Main, Heading, Content, Article, Credits, StyledTable, FooterWrapper, FooterContent, FooterAside, MintLayout, Panel, StatusBox, ResponseBlock };
+/* Full-screen / dashboard primitives for the updated /mint experience (additive only) */
+const FullScreenMain = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	width: 100%;
+	min-height: 70vh;
+	padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
+	box-sizing: border-box;
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		padding: ${({ theme }) => theme.spacing.md};
+	}
+`;
+
+const FullScreenStack = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.lg};
+	width: 100%;
+`;
+
+const PageIntro = styled.section`
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: flex-start;
+	gap: ${({ theme }) => theme.spacing.sm};
+	max-width: ${({ theme }) => theme.maxWidths.h1};
+
+	p {
+		margin-bottom: 0;
+	}
+`;
+
+const ActionTableLayout = styled.div`
+	display: grid;
+	grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+	gap: ${({ theme }) => theme.spacing.xl};
+	align-items: flex-start;
+	width: 100%;
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.mintCollapse}) {
+		grid-template-columns: 1fr;
+	}
+`;
+const DashboardHeader = styled.header`
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: ${({ theme }) => theme.spacing.md};
+	margin-bottom: ${({ theme }) => theme.spacing.lg};
+	padding-bottom: ${({ theme }) => theme.spacing.md};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+`;
+
+const DashboardGrid = styled.div`
+	display: grid;
+	grid-template-columns: 1fr 2fr;
+	gap: ${({ theme }) => theme.spacing.xl};
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.mintCollapse}) {
+		grid-template-columns: 1fr;
+	}
+`;
+
+const FormPanel = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.md};
+	min-width: 0;
+`;
+
+const TablePanel = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.md};
+	min-width: 0;
+`;
+
+const TableTitle = styled.h3`
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+`;
+const SectionHeader = styled.div`
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: ${({ theme }) => theme.spacing.sm};
+	width: 100%;
+`;
+
+const SectionActions = styled.div`
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const TableScroll = styled.div`
+	width: 100%;
+	overflow-x: auto;
+`;
+
+const MutedText = styled.p`
+	margin: 0;
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	line-height: 1.4;
+	opacity: 0.65;
+`;
+
+export { FullWidth, Nav, NavBrand, NavTitle, Logotype, Main, Heading, Content, Article, Credits, StyledTable, FooterWrapper, FooterContent, FooterAside, MintLayout, Panel, StatusBox, ResponseBlock, FullScreenMain, FullScreenStack, PageIntro, ActionTableLayout, DashboardHeader, DashboardGrid, FormPanel, TablePanel, TableTitle, SectionHeader, SectionActions, TableScroll, MutedText };

@@ -8,6 +8,7 @@ import GlobalStyle from "../components/globalstyle";
 import { IBM_Plex_Mono } from 'next/font/google';
 
 import Layout from "../components/layout";
+import { CapTableMenuProvider } from "../components/CapTableMenuContext";
 import Web3Provider from "../config/Web3Provider";
 
 // Configure our font object
@@ -43,6 +44,7 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 		<Web3Provider>
 			<ThemeProvider theme={theme}>
 				<GlobalStyle />
+				<CapTableMenuProvider>
 				<Layout className={plex.className}>
 					<Head>
 					<meta charSet="utf-8" />
@@ -83,6 +85,7 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 				</Head>
 					<Component {...pageProps} />
 				</Layout>
+				</CapTableMenuProvider>
 			</ThemeProvider>
 		</Web3Provider>
 	);
