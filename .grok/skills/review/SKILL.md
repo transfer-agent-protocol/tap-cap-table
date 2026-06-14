@@ -54,11 +54,11 @@ Everything that follows assumes those docs are the authoritative spec. Do not du
 For each touched domain, apply the matching rule set from the docs:
 
 - `chain/src/**/*.sol` or `chain/test/**/*.sol`: NatSpec, custom errors, events, SPDX 0.8.30, via-ir compatibility, `onlyOperator`/`onlyAdmin` correctness, snake_case struct fields, and that new logic is covered by both unit **and** invariant tests.
-- `server/**`: OCF validation via `validateInputAgainstOCF`, conversion helpers (`convertUUIDToBytes16`, `toScaledBigNumber`), `withGlobalTransaction` for atomic multi-doc writes, poller/state-machine consistency.
-- `app/src/**`: every rule in `app/WARP.md` (file naming, theme tokens only, transient `$` props, allowed cubic-beziers, no new fontWeights).
+- `server/**`: OCF validation via `validateInputAgainstSchema`, conversion helpers (`convertUUIDToBytes16`, `toScaledBigNumber`), `withGlobalTransaction` for atomic multi-doc writes, poller/state-machine consistency.
+- `app/src/**`: every rule in `app/WARP.md` — file naming (lowercase styled vs PascalCase logic), theme tokens only (no hard-coded colors/sizes/breakpoints/transitions), transient `$` props, `theme.transitions.*` / `theme.breakpoints.*` over raw values, and no fontWeights beyond `normal`/`medium`/`semibold`/`bold`. For onchain frontend code: `src/generated.ts` is generated (never hand-edited; regenerate via `pnpm --filter tap-app generate:wagmi` after ABI changes), write-side `1e10` scaling on `quantity`/`share_price`, UUID↔bytes16 conversion via `src/utils/uuid.ts`, and correct use of direct-wallet hooks (`useDirect*` + `registerXxxOnchain`) vs server-signed `create*` services.
 - `docs/src/pages/**/*.mdx`: every bullet in the "Documentation DX conventions" section of root `WARP.md` and the bar in `DOCS_AUDIT.md`.
 
-Run the actual commands appropriate to the scope: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `make test`, `make test-invariant`, `make security`, `pnpm docs:build`. A broken build, lint, or relevant test = automatic FAIL.
+Run the actual commands appropriate to the scope: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `make test`, `make test-invariant`, `make security`, `pnpm docs:build`, `pnpm app:build`. When frontend contract bindings or wallet code changed, also run `pnpm --filter tap-app generate:wagmi` and confirm `src/generated.ts` is in sync. A broken build, lint, or relevant test = automatic FAIL.
 
 ### Phase C — Architecture invariants
 
