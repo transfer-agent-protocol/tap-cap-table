@@ -284,7 +284,7 @@ pnpm app:build
 pnpm app:start
 ```
 
-The frontend is a Next.js app in the `app/` workspace using styled-components v6.
+The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, Reown AppKit, and TanStack Query. It serves both the landing page and the wallet-based cap-table minting/management UI (`/mint`, `/manage`). Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
 
 ### Deployment
 
