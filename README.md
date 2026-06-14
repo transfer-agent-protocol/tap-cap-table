@@ -16,7 +16,7 @@ This is a **pnpm monorepo**:
 
 ```
 tap-cap-table/
-├── app/        # Next.js frontend
+├── app/        # Next.js frontend (landing + cap-table dApp)
 ├── server/     # Express API server
 ├── chain/      # Solidity smart contracts (Foundry)
 ├── docs/       # Nextra documentation site
@@ -34,12 +34,12 @@ pnpm docker:up              # Start MongoDB, server, and app
 
 This spins up three services via Docker:
 **Server** http://localhost:8293
-**App** http://localhost:3000
+**App** http://localhost:3000 — landing page + wallet-based cap-table minting (`/mint`) and management (`/manage`)
 **MongoDB** localhost:27017
 
 Then go read official [docs](https://docs.transferagentprotocol.xyz/)
 
-> **Environment**: Copy `.env.example` to `.env` and fill in `PRIVATE_KEY`, `RPC_URL`, `CHAIN_ID`, and the `NEXT_PUBLIC_*` variables for the frontend. For Plume Mainnet, set `CHAIN_ID=98866` and `RPC_URL=https://rpc.plume.org`.
+> **Environment**: Copy `.env.example` to `.env` and fill in `PRIVATE_KEY`, `RPC_URL`, `CHAIN_ID`, and the `NEXT_PUBLIC_*` variables for the frontend (including `NEXT_PUBLIC_REOWN_PROJECT_ID` from [cloud.reown.com](https://cloud.reown.com) for wallet connection). For Plume Mainnet, set `CHAIN_ID=98866` and `RPC_URL=https://rpc.plume.org`.
 
 ### Scripts
 
