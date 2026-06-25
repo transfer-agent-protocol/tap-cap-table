@@ -28,7 +28,10 @@
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",
         "docker:logs": "docker compose logs -f",
-        "docker:build": "docker compose up -d --build"
+        "docker:build": "docker compose up -d --build",
+        "bootstrap": "./scripts/bootstrap-plume.sh",
+        "poller:fast-forward": "tsx server/scripts/fastForwardPoller.ts",
+        "factory:register": "tsx server/scripts/registerFactory.ts"
     },
     "dependencies": {
         "ajv": "^8.12.0",

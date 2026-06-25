@@ -15,15 +15,19 @@ set -e
 #   4. CapTable implementation contract
 #   5. CapTableFactory (constructor takes CapTable address)
 #
-# After deployment, add the factory to MongoDB to use the API.
+# After a successful deploy, the factory + implementation are auto-registered in MongoDB
+# (addresses written from the deploy output, never hardcoded). Use --no-register to skip.
 
 # Parse arguments
 USE_ENV_FILE=".env"
 VERIFY=false
+NO_REGISTER=false
 
 for arg in "$@"; do
     if [ "$arg" = "--verify" ]; then
         VERIFY=true
+    elif [ "$arg" = "--no-register" ]; then
+        NO_REGISTER=true
     elif [ -f "$arg" ]; then
         USE_ENV_FILE="$arg"
     fi
@@ -62,6 +66,7 @@ fi
 export ETH_RPC_URL="$RPC_URL"
 COMMON_FLAGS="--private-key $PRIVATE_KEY --broadcast --legacy $VERIFY_FLAGS"
 
+ROOT_DIR="$(pwd)"
 cd chain
 
 echo ""
@@ -152,8 +157,21 @@ echo "CapTable (implementation): $CAP_TABLE_ADDR"
 echo "CapTableFactory:           $FACTORY_ADDR"
 echo "========================================"
 echo ""
-echo "Add to MongoDB factories collection:"
-echo "{"
-echo "  \"implementation_address\": \"$CAP_TABLE_ADDR\","
-echo "  \"factory_address\": \"$FACTORY_ADDR\""
-echo "}"
+# Register the deployed addresses in Mongo so the server/API deploys cap tables through
+# THIS factory. These addresses are unique to this deployment — written from the deploy
+# output, never hardcoded. Skip with --no-register and register manually as shown.
+if [ "$NO_REGISTER" = true ]; then
+    echo "Skipping DB registration (--no-register). Register it manually with:"
+    echo "  pnpm factory:register --factory $FACTORY_ADDR --implementation $CAP_TABLE_ADDR"
+else
+    echo "🌱 Registering factory in Mongo (pnpm factory:register)..."
+    cd "$ROOT_DIR"
+    if pnpm factory:register --factory "$FACTORY_ADDR" --implementation "$CAP_TABLE_ADDR"; then
+        echo "✅ Factory registered — the API will deploy cap tables through it."
+    else
+        echo "⚠️  Auto-registration failed (is Mongo up? try 'pnpm docker:up'). Register it with either:"
+        echo "  pnpm factory:register --factory $FACTORY_ADDR --implementation $CAP_TABLE_ADDR"
+        echo "  ...or insert into the Mongo 'factories' collection (e.g. via MongoDB Compass):"
+        echo "  { \"implementation_address\": \"$CAP_TABLE_ADDR\", \"factory_address\": \"$FACTORY_ADDR\" }"
+    fi
+fi
