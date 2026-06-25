@@ -119,6 +119,10 @@ When a manifest is created, the system:
 
 ### Setup
 
+**Fast path (Plume):** `pnpm bootstrap` does the whole setup idempotently — builds contracts if needed, creates the external `offchain-db` volume, `docker compose up -d --build`, and waits for API health. It does **not** hardcode a factory: if none is registered it points you to `pnpm deploy-factory` (which deploys and auto-registers your own). Safe to re-run whenever you come back to the project. For the wallet mint/manage UI, also run `pnpm app:dev` (it reads `app/.env.local`).
+
+Manual steps:
+
 ```bash
 # Install dependencies
 pnpm install
@@ -512,6 +516,9 @@ Libraries:
 7. **Preprocessor cache not populated**: Ensure seeding happens after manifest creation.
 8. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
 9. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
+10. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
+11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The root `.env` `NEXT_PUBLIC_*` only feed `docker-compose` interpolation into the **server**, not the Docker `app`. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables; for `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` that owner is the `.env` server wallet `0x366aA8…` and its current impl is `0xB63C08…` (the docs page's `0xef269…` is the stale pre-upgrade impl). Only reuse a factory whose owner wallet you control.
+12. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
 
 ## Debugging
 
@@ -519,6 +526,8 @@ Libraries:
 - **Database**: Connect to MongoDB on port 27017 (credentials in `.env`)
 - **Blockchain**: Use RPC_URL to query contract state with ethers.js or cast
 - **Event poller**: Runs in-process by default; check console for event processing logs
+- **Poller block number stalled or far behind head**: fast-forward the per-issuer index with `pnpm poller:fast-forward` (`--issuer <id>`, `--block <n>`, `--dry-run`, `--help`). It sets `last_processed_block` to (near) chain head so the poller stops chasing a backlog and just tracks new blocks — handy on fast chains (Plume) or after the server was offline. Skips events between the old pointer and head, which is fine for a cap table with no real positions yet.
+- **"Connection ended" Mongo logs**: benign idle connection-pool churn, not a connectivity problem (see Common Pitfalls).
 
 ## Additional Resources
 
