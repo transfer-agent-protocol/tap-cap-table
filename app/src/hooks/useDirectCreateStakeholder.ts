@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import { useWriteCapTableCreateStakeholder } from "../generated";
 import { generateBytes16Id } from "../utils/uuid";
 
@@ -19,6 +19,11 @@ export function useDirectCreateStakeholder() {
     error: writeError,
     reset,
   } = useWriteCapTableCreateStakeholder();
+
+  // writeContract only *submits*; wait for the receipt to distinguish confirmed vs. reverted.
+  const { data: receipt, isSuccess: receiptFetched } = useWaitForTransactionReceipt({ hash });
+  const isConfirmed = receiptFetched && receipt?.status === "success";
+  const isReverted = receiptFetched && receipt?.status === "reverted";
 
   const createStakeholder = useCallback(
     async (params: DirectCreateStakeholderParams & { id?: `0x${string}` }) => {
@@ -52,8 +57,11 @@ export function useDirectCreateStakeholder() {
 
   return {
     createStakeholder,
-    hash,                    // Current hash from the write (updated after submission)
+    hash,
     isWritePending,
+    isConfirming: !!hash && !receiptFetched,
+    isConfirmed,
+    isReverted,
     writeError,
     reset,
     isConnected: !!connectedAddress,

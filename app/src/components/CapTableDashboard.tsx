@@ -92,28 +92,50 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	// becomes defined a tick after the function call returns, so reading it inside the submit
 	// handler always gets undefined.
 	useEffect(() => {
-		if (directStockClass.hash && pendingStockClass) {
+		if (!pendingStockClass) return;
+		if (directStockClass.isConfirmed) {
 			setSuccessModal({ ...pendingStockClass, txHash: directStockClass.hash });
 			setPendingStockClass(null);
 			directStockClass.reset();
+		} else if (directStockClass.isReverted) {
+			setSuccessModal({ title: "Transaction reverted on-chain", message: "The stock class creation was mined but reverted, so nothing was applied." });
+			setDirectStockClasses((prev) => prev.slice(0, -1));
+			setPendingStockClass(null);
+			directStockClass.reset();
 		}
-	}, [directStockClass.hash, pendingStockClass, directStockClass]);
+	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass]);
 
 	useEffect(() => {
-		if (directStakeholder.hash && pendingStakeholder) {
+		if (!pendingStakeholder) return;
+		if (directStakeholder.isConfirmed) {
 			setSuccessModal({ ...pendingStakeholder, txHash: directStakeholder.hash });
 			setPendingStakeholder(null);
 			directStakeholder.reset();
+		} else if (directStakeholder.isReverted) {
+			setSuccessModal({ title: "Transaction reverted on-chain", message: "The stakeholder creation was mined but reverted, so nothing was applied." });
+			setDirectStakeholders((prev) => prev.slice(0, -1));
+			setPendingStakeholder(null);
+			directStakeholder.reset();
 		}
-	}, [directStakeholder.hash, pendingStakeholder, directStakeholder]);
+	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder]);
 
 	useEffect(() => {
-		if (directIssuance.hash && pendingIssuance) {
+		if (!pendingIssuance) return;
+		if (directIssuance.isConfirmed) {
 			setSuccessModal({ ...pendingIssuance, txHash: directIssuance.hash });
 			setPendingIssuance(null);
 			directIssuance.reset();
+		} else if (directIssuance.isReverted) {
+			setSuccessModal({
+				title: "Issuance reverted on-chain",
+				message:
+					"The transaction was mined but reverted, so no shares were issued. The most common cause is issuing more shares than the issuer's authorized total — lower the quantity or raise the issuer's authorized shares.",
+			});
+			setDirectIssuances((prev) => prev.slice(0, -1));
+			setPendingIssuance(null);
+			directIssuance.reset();
 		}
-	}, [directIssuance.hash, pendingIssuance, directIssuance]);
+	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance]);
 
 	// Lazy-load historical transactions when the Activity view is opened.
 	useEffect(() => {
@@ -257,6 +279,18 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setSuccessModal({
 				title: "Wallet Required",
 				message: "Please connect your wallet (as Admin) to issue stock onchain.",
+			});
+			return;
+		}
+
+		// Pre-flight: issueStock reverts when shares_issued + quantity > issuer.shares_authorized.
+		// Catch the obvious case here so we don't waste a transaction on a guaranteed revert.
+		const issuerAuthorized = Number(manager.holdings?.issuer?.initial_shares_authorized ?? 0);
+		const qty = Number(data.quantity);
+		if (issuerAuthorized > 0 && Number.isFinite(qty) && qty > issuerAuthorized) {
+			setSuccessModal({
+				title: "Not enough authorized shares",
+				message: `This issuer authorized ${issuerAuthorized.toLocaleString()} shares total, but you're trying to issue ${qty.toLocaleString()}. Lower the quantity, or raise the issuer's authorized shares.`,
 			});
 			return;
 		}

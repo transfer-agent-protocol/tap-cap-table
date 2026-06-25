@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import { useWriteCapTableCreateStockClass } from "../generated";
 import { generateBytes16Id } from "../utils/uuid";
 
@@ -20,6 +20,11 @@ export function useDirectCreateStockClass() {
     error: writeError,
     reset,
   } = useWriteCapTableCreateStockClass();
+
+  // writeContract only *submits*; wait for the receipt to distinguish confirmed vs. reverted.
+  const { data: receipt, isSuccess: receiptFetched } = useWaitForTransactionReceipt({ hash });
+  const isConfirmed = receiptFetched && receipt?.status === "success";
+  const isReverted = receiptFetched && receipt?.status === "reverted";
 
   const createStockClass = useCallback(
     async (params: DirectCreateStockClassParams & { id?: `0x${string}` }) => {
@@ -67,6 +72,9 @@ export function useDirectCreateStockClass() {
     createStockClass,
     hash,
     isWritePending,
+    isConfirming: !!hash && !receiptFetched,
+    isConfirmed,
+    isReverted,
     writeError,
     reset,
     isConnected: !!connectedAddress,

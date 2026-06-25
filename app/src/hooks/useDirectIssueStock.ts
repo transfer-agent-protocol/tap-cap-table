@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import { useWriteCapTableIssueStock } from "../generated";
 import { generateBytes16Id, uuidToBytes16 } from "../utils/uuid";
 
@@ -24,6 +24,12 @@ export function useDirectIssueStock() {
     error: writeError,
     reset,
   } = useWriteCapTableIssueStock();
+
+  // writeContract only *submits*; a tx can still revert when mined. Wait for the receipt so
+  // callers can distinguish confirmed success from an on-chain revert.
+  const { data: receipt, isSuccess: receiptFetched } = useWaitForTransactionReceipt({ hash });
+  const isConfirmed = receiptFetched && receipt?.status === "success";
+  const isReverted = receiptFetched && receipt?.status === "reverted";
 
   const issueStock = useCallback(
     async (params: DirectIssueStockParams) => {
@@ -88,6 +94,9 @@ export function useDirectIssueStock() {
     issueStock,
     hash,
     isWritePending,
+    isConfirming: !!hash && !receiptFetched,
+    isConfirmed,
+    isReverted,
     writeError,
     reset,
     isConnected: !!connectedAddress,
