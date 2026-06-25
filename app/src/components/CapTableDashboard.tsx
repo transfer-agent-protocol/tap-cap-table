@@ -126,15 +126,25 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	}, [currentView, issuerResult?._id]);
 
 	// Build options for the Issue form + drawer from holdings + optimistic + direct onchain creates
+	// De-dupe by _id so an entity that is both returned by the server and present in this
+	// session's optimistic list (e.g. after a refresh) doesn't appear twice in the dropdown.
+	const dedupeById = (items: any[]) => {
+		const byId = new Map(items.filter(Boolean).map((x: any) => [x._id, x]));
+		return Array.from(byId.values());
+	};
+
 	const stockClassOptions = useMemo(() => {
 		const fromHoldings = manager.holdings?.stockClasses || [];
-		return [...fromHoldings, ...manager.createdStockClasses, ...directStockClasses].filter(Boolean);
+		return dedupeById([...fromHoldings, ...manager.createdStockClasses, ...directStockClasses]);
 	}, [manager.holdings?.stockClasses, manager.createdStockClasses, directStockClasses]);
 
 	const stakeholderOptions = useMemo(() => {
+		// Full stakeholder list from the server (works even before any stock is issued)...
+		const fromServer = manager.holdings?.stakeholders || [];
+		// ...plus any surfaced via existing holdings, plus this session's optimistic creates.
 		const fromHoldings = (manager.holdings?.holdings || []).map((h: { stakeholder?: any }) => h.stakeholder).filter(Boolean);
-		return [...fromHoldings, ...manager.createdStakeholders, ...directStakeholders].filter(Boolean);
-	}, [manager.holdings?.holdings, manager.createdStakeholders, directStakeholders]);
+		return dedupeById([...fromServer, ...fromHoldings, ...manager.createdStakeholders, ...directStakeholders]);
+	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, manager.createdStakeholders, directStakeholders]);
 
 	const handleStockClass = async (data: StockClassData) => {
 		if (!capTableAddress || !directStockClass.isConnected) {
@@ -392,6 +402,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						stakeholders={stakeholderOptions}
 						onSubmit={handleIssuance}
 						disabled={manager.isLoadingHoldings || stockClassOptions.length === 0 || stakeholderOptions.length === 0}
+						hint={
+							!manager.isLoadingHoldings && (stockClassOptions.length === 0 || stakeholderOptions.length === 0)
+								? "Add a stakeholder and a stock class first, then click Refresh to load them here."
+								: undefined
+						}
 					/>
 				</Panel>
 

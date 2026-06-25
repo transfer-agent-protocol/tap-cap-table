@@ -38,8 +38,13 @@ export function useDirectCreateStockClass() {
       // Scale the price (protocol uses 1e10 fixed point for prices)
       const scaledPrice = scaleAmount(params.pricePerShareAmount);
 
-      // Shares authorized
-      const sharesAuthorized = BigInt(params.initialSharesAuthorized);
+      // Shares authorized must ALSO be scaled by 1e10: the issuer's authorized shares, the
+      // issuance quantity (useDirectIssueStock), and the poller all use 1e10 fixed point. If we
+      // store this unscaled, issueStock compares a scaled quantity against an unscaled authorized
+      // and reverts ("StockClass: Insufficient shares authorized"). Shares are whole numbers, so
+      // use BigInt math to avoid the float precision loss that scaleAmount() would hit at >2^53.
+      const SHARE_SCALE = 10_000_000_000n; // 1e10
+      const sharesAuthorized = BigInt(params.initialSharesAuthorized) * SHARE_SCALE;
 
       writeContract({
         address: params.capTableAddress,

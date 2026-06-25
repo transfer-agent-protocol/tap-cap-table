@@ -14,6 +14,7 @@ interface Props {
 	stakeholders: Option[];
 	onSubmit: (data: StockIssuanceData) => Promise<void>;
 	disabled?: boolean;
+	hint?: string;
 }
 
 const defaultData: Omit<StockIssuanceData, "stakeholder_id" | "stock_class_id"> = {
@@ -25,7 +26,7 @@ const defaultData: Omit<StockIssuanceData, "stakeholder_id" | "stock_class_id"> 
 	comments: ["Founder stock issuance"],
 };
 
-export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled }: Props) {
+export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled, hint }: Props) {
 	const [stakeholderId, setStakeholderId] = useState("");
 	const [stockClassId, setStockClassId] = useState("");
 	const [data, setData] = useState(defaultData);
@@ -56,6 +57,7 @@ export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled 
 	return (
 		<div>
 			<SectionLabel>Issue Stock</SectionLabel>
+			{disabled && hint ? <p style={{ opacity: 0.6, fontSize: "0.85rem", margin: "0 0 0.5rem" }}>{hint}</p> : null}
 
 			<FieldRow>
 				<FieldGroup>
