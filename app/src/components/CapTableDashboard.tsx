@@ -146,6 +146,24 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		return dedupeById([...fromServer, ...fromHoldings, ...manager.createdStakeholders, ...directStakeholders]);
 	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, manager.createdStakeholders, directStakeholders]);
 
+	// Auto-refresh: while an optimistic direct-wallet create/issue hasn't been reconciled by the
+	// poller yet, poll holdings so rows flip Pending → Onchain on their own (no manual Refresh).
+	const syncedStockClassIds = new Set((manager.holdings?.stockClasses || []).map((s: any) => s._id));
+	const syncedStakeholderIds = new Set((manager.holdings?.stakeholders || []).map((s: any) => s._id));
+	const syncedHoldingKeys = new Set(
+		(manager.holdings?.holdings || []).map((h: any) => `${h.stakeholder?._id}|${h.stockClass?._id}`),
+	);
+	const hasPendingSync =
+		directStockClasses.some((sc) => !syncedStockClassIds.has(sc._id)) ||
+		directStakeholders.some((sh) => !syncedStakeholderIds.has(sh._id)) ||
+		directIssuances.some((iss) => !syncedHoldingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`));
+
+	useEffect(() => {
+		if (!hasPendingSync) return;
+		const id = setInterval(() => manager.refreshHoldings(), 5000);
+		return () => clearInterval(id);
+	}, [hasPendingSync, manager.refreshHoldings]);
+
 	const handleStockClass = async (data: StockClassData) => {
 		if (!capTableAddress || !directStockClass.isConnected) {
 			setSuccessModal({
@@ -418,6 +436,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						createdIssuances={[...manager.createdIssuances, ...directIssuances]}
 						onRefresh={manager.refreshHoldings}
 						isLoading={manager.isLoadingHoldings}
+						error={manager.holdingsError}
 					/>
 				</TablePanel>
 			</ActionTableLayout>
