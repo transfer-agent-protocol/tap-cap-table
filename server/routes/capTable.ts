@@ -89,7 +89,10 @@ capTable.get("/holdings/stock", async (req, res) => {
                 timestamp: Number(timestamp),
             });
         }
-        res.send({ holdings, stockClasses, issuer });
+        // Return the full stakeholder list too: the manage UI needs it to populate the
+        // Issue Stock dropdown for a freshly set-up cap table that has no issuances yet
+        // (holdings is empty until stock is issued, so it can't be the only source).
+        res.send({ holdings, stockClasses, stakeholders, issuer });
     } catch (error) {
         console.error(error);
         res.status(500).send(`${error}`);
