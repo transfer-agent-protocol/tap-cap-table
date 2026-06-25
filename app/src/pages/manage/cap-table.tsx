@@ -51,8 +51,8 @@ export default function ManageCapTablePage() {
 							};
 						}
 					}
-				} catch {
-					// fall through to lastMintedIssuer fallback below
+				} catch (err) {
+					console.warn("[manage] /api/issuer/full failed, falling back to localStorage:", err);
 				}
 
 				if (!loadedIssuer) {

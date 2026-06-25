@@ -7,6 +7,7 @@ import { createStockIssuance, type CreateStockIssuancePayload, type StockIssuanc
 export interface HoldingsData {
 	issuer?: any;
 	stockClasses?: any[];
+	stakeholders?: any[];
 	holdings?: Array<{
 		stakeholder: any;
 		stockClass: any;
@@ -60,10 +61,11 @@ export function useCapTableManager(issuerResult: IssuerResponse | null): UseCapT
 
 	const fetchHoldings = useCallback(async () => {
 		if (!issuerId) return;
+		const url = `/api/cap-table/holdings/stock?issuerId=${encodeURIComponent(issuerId)}`;
 		setIsLoadingHoldings(true);
 		setHoldingsError(null);
 		try {
-			const res = await fetch(`/api/cap-table/holdings/stock?issuerId=${encodeURIComponent(issuerId)}`);
+			const res = await fetch(url);
 			if (!res.ok) {
 				const text = await res.text();
 				throw new Error(text || `Failed to load holdings (${res.status})`);
@@ -72,7 +74,8 @@ export function useCapTableManager(issuerResult: IssuerResponse | null): UseCapT
 			setHoldings(data);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
-			setHoldingsError(msg);
+			console.error("[capTableManager] holdings fetch failed for", url, err);
+			setHoldingsError(`Couldn't load cap table data from ${url} — ${msg}`);
 		} finally {
 			setIsLoadingHoldings(false);
 		}
