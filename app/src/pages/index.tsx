@@ -1,14 +1,26 @@
-import { Content, Heading, StyledTable } from "../components/wrappers";
+import Link from "next/link";
+import { Content, Heading, StyledTable, SectionActions } from "../components/wrappers";
 import { H2, P } from "../components/typography";
+import { InlineButton } from "../components/buttons";
 
 export default function Home() {
 	return (
-		<Content>
+		<Content data-testid="home-page">
 			<Heading>
 				<P>Tokenize RWA cap tables and handle post-trade settlment.</P>
 				<P>Fully onchain protocol that's based on <a href="https://www.opencaptablecoalition.com/" target="_blank">Open Cap Table</a> data format. We're being used by SEC-registered transfer agents.</P>
 				<a href="https://paragraph.com/@thatalexpalmer/rwa-tokenization-protocol-stack-1" target="_blank" rel="noopener">Read how this started</a>
 			</Heading>
+			<SectionActions style={{ marginBottom: "2rem" }}>
+				<Link href="/mint" passHref legacyBehavior>
+					<InlineButton as="a" $variant="primary">
+						Mint Cap Table
+					</InlineButton>
+				</Link>
+				<Link href="/manage" passHref legacyBehavior>
+					<InlineButton as="a">Manage Cap Tables</InlineButton>
+				</Link>
+			</SectionActions>
 			<H2>
 				Demo contracts:
 			</H2>

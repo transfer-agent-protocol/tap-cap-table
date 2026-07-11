@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import {
 	ActionTableLayout,
 	FullScreenStack,
@@ -9,15 +10,14 @@ import {
 	TablePanel,
 	TableScroll,
 	TableTitle,
+	MutedText,
 } from "./wrappers";
 import { IssuerHeader } from "./IssuerHeader";
 import { StockClassForm } from "./StockClassForm";
 import { StakeholderForm } from "./StakeholderForm";
 import { IssueStockForm } from "./IssueStockForm";
 import { HoldingsTable } from "./HoldingsTable";
-import { MintNavDrawer, type MintView } from "./MintNavDrawer";
 import { TxSuccessModal } from "./TxSuccessModal";
-import { useCapTableMenu } from "./CapTableMenuContext";
 import { useCapTableManager } from "../hooks/useCapTableManager";
 import { useDirectCreateStockClass } from "../hooks/useDirectCreateStockClass";
 import { useDirectCreateStakeholder } from "../hooks/useDirectCreateStakeholder";
@@ -30,6 +30,7 @@ import { registerStakeholderOnchain, type StakeholderData } from "../services/cr
 import { registerStockIssuanceOnchain, type StockIssuanceData } from "../services/createStockIssuance";
 import type { IssuerResponse } from "../services/registerIssuer";
 import { copy } from "../lib/copy";
+import { parseCapTableView, type CapTableView } from "./navConfig";
 
 interface CapTableDashboardProps {
 	issuerResult: IssuerResponse;
@@ -62,14 +63,14 @@ interface OptimisticIssuance {
 }
 
 export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardProps) {
+	const router = useRouter();
+	const currentView: CapTableView = parseCapTableView(router.query.view as string | undefined);
+
 	const directStockClass = useDirectCreateStockClass();
 	const directStakeholder = useDirectCreateStakeholder();
 	const directIssuance = useDirectIssueStock();
 
 	const capTableAddress = issuerResult.deployed_to as `0x${string}` | undefined;
-
-	const [currentView, setCurrentView] = useState<MintView>("overview");
-	const { isOpen: isDrawerOpen, setOpen: setIsDrawerOpen, setEnabled: setMenuEnabled } = useCapTableMenu();
 
 	const [directStockClasses, setDirectStockClasses] = useState<OptimisticStockClass[]>([]);
 	const [directStakeholders, setDirectStakeholders] = useState<OptimisticStakeholder[]>([]);
@@ -86,18 +87,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
 	// Compute pending sync for holdings polling *before* manager so we can pass shouldPoll.
-	// (We recompute after manager for id matching — first pass uses optimistic lengths.)
 	const [hasPendingSyncFlag, setHasPendingSyncFlag] = useState(false);
 
 	const manager = useCapTableManager(issuerResult, { shouldPoll: hasPendingSyncFlag });
-
-	useEffect(() => {
-		setMenuEnabled(true);
-		return () => {
-			setMenuEnabled(false);
-			setIsDrawerOpen(false);
-		};
-	}, [setMenuEnabled, setIsDrawerOpen]);
 
 	useEffect(() => {
 		if (!pendingStockClass) return;
@@ -163,7 +155,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance]);
 
 	useEffect(() => {
-		if (currentView !== "activity" || !issuerResult?._id) return;
+		if (currentView !== "transactions" || !issuerResult?._id) return;
 		setIsLoadingHistory(true);
 		fetchHistoricalTransactions(issuerResult._id)
 			.then((res: any) => setHistoricalTransactions(Array.isArray(res?.transactions) ? res.transactions : res || []))
@@ -210,7 +202,6 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		const issuerAuthorized = Number(manager.holdings?.issuer?.initial_shares_authorized ?? 0);
 		const classAuth = Number(data.initial_shares_authorized);
 		if (issuerAuthorized > 0 && Number.isFinite(classAuth) && classAuth > issuerAuthorized) {
-			// Creation is allowed onchain, but warn clearly (issuance will still be bounded by issuer).
 			console.warn(
 				`Stock class authorized (${classAuth}) exceeds issuer authorized (${issuerAuthorized}). Issuance remains bounded by the issuer total.`,
 			);
@@ -314,7 +305,6 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		const cap = validateShareCaps({
 			quantity: data.quantity,
 			issuerAuthorized: issuer?.initial_shares_authorized ?? 0,
-			// Mongo issuer may not track shares_issued; sum holdings as a best-effort floor.
 			issuerIssued: (manager.holdings?.holdings || []).reduce(
 				(sum: number, h: any) => sum + (Number(h.quantity) || 0),
 				0,
@@ -375,10 +365,6 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 	};
 
-	const handleNavigate = (view: MintView) => {
-		setCurrentView(view);
-	};
-
 	const holdingsTable = (
 		<HoldingsTable
 			holdingsData={manager.holdings}
@@ -391,132 +377,210 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		/>
 	);
 
+	const stockClassList =
+		stockClassOptions.length > 0 ? (
+			<TableScroll>
+				<StyledTable>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Type</th>
+							<th>Authorized</th>
+							<th>ID</th>
+						</tr>
+					</thead>
+					<tbody>
+						{stockClassOptions.map((sc: any) => (
+							<tr key={sc._id}>
+								<td>{sc.name || "—"}</td>
+								<td>{sc.class_type || "—"}</td>
+								<td>{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}</td>
+								<td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{sc._id?.slice?.(0, 8) || sc._id}</td>
+							</tr>
+						))}
+					</tbody>
+				</StyledTable>
+			</TableScroll>
+		) : (
+			<MutedText>No stock classes yet. Create one with the form.</MutedText>
+		);
+
+	const stakeholderList =
+		stakeholderOptions.length > 0 ? (
+			<TableScroll>
+				<StyledTable>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Type</th>
+							<th>ID</th>
+						</tr>
+					</thead>
+					<tbody>
+						{stakeholderOptions.map((sh: any) => (
+							<tr key={sh._id}>
+								<td>{sh.name?.legal_name || sh.name?.first_name || "—"}</td>
+								<td>{sh.stakeholder_type || "—"}</td>
+								<td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{sh._id?.slice?.(0, 8) || sh._id}</td>
+							</tr>
+						))}
+					</tbody>
+				</StyledTable>
+			</TableScroll>
+		) : (
+			<MutedText>No stakeholders yet. Create one with the form.</MutedText>
+		);
+
 	const renderMainContent = () => {
 		if (currentView === "stock-classes") {
 			return (
-				<ActionTableLayout>
+				<ActionTableLayout data-testid="view-stock-classes">
 					<Panel>
 						<SectionHeader>
 							<TableTitle>Create Stock Class</TableTitle>
 						</SectionHeader>
-						<StockClassForm onSubmit={handleStockClass} />
+						<MutedText>OCF StockClass — class of stock issued by the issuer.</MutedText>
+						<StockClassForm onSubmit={handleStockClass} disabled={manager.isLoadingHoldings} />
 					</Panel>
-					<TablePanel>{holdingsTable}</TablePanel>
+					<TablePanel>
+						<SectionHeader>
+							<TableTitle>Stock Classes</TableTitle>
+						</SectionHeader>
+						{stockClassList}
+						{holdingsTable}
+					</TablePanel>
 				</ActionTableLayout>
 			);
 		}
 
 		if (currentView === "stakeholders") {
 			return (
-				<ActionTableLayout>
+				<ActionTableLayout data-testid="view-stakeholders">
 					<Panel>
 						<SectionHeader>
 							<TableTitle>Create Stakeholder</TableTitle>
 						</SectionHeader>
-						<StakeholderForm onSubmit={handleStakeholder} />
+						<MutedText>OCF Stakeholder — individual or institution on the cap table.</MutedText>
+						<StakeholderForm onSubmit={handleStakeholder} disabled={manager.isLoadingHoldings} />
+					</Panel>
+					<TablePanel>
+						<SectionHeader>
+							<TableTitle>Stakeholders</TableTitle>
+						</SectionHeader>
+						{stakeholderList}
+						{holdingsTable}
+					</TablePanel>
+				</ActionTableLayout>
+			);
+		}
+
+		if (currentView === "issue-stock") {
+			return (
+				<ActionTableLayout data-testid="view-issue-stock">
+					<Panel>
+						<SectionHeader>
+							<TableTitle>Issue Stock</TableTitle>
+						</SectionHeader>
+						<MutedText>OCF TX_STOCK_ISSUANCE — mint shares to a stakeholder.</MutedText>
+						<IssueStockForm
+							stockClasses={stockClassOptions}
+							stakeholders={stakeholderOptions}
+							onSubmit={handleIssuance}
+							disabled={manager.isLoadingHoldings || stockClassOptions.length === 0 || stakeholderOptions.length === 0}
+							hint={
+								!manager.isLoadingHoldings && (stockClassOptions.length === 0 || stakeholderOptions.length === 0)
+									? copy.issueStock.needsSetup
+									: undefined
+							}
+						/>
 					</Panel>
 					<TablePanel>{holdingsTable}</TablePanel>
 				</ActionTableLayout>
 			);
 		}
 
-		if (currentView === "activity") {
+		if (currentView === "transactions") {
 			return (
-				<TablePanel>
-					<SectionHeader>
-						<TableTitle>Recent Activity (Historical Transactions)</TableTitle>
-					</SectionHeader>
-					{historicalTransactions.length > 0 ? (
-						<TableScroll>
-							<StyledTable>
-								<thead>
-									<tr>
-										<th>Type</th>
-										<th>Details</th>
-										<th>Quantity</th>
-										<th>Price</th>
-										<th>Date</th>
-									</tr>
-								</thead>
-								<tbody>
-									{historicalTransactions.map((tx: any, idx: number) => {
-										const t = tx.transaction || {};
-										// Poller already unscales share_price.amount via toDecimal (1e10).
-										const priceAmount = t.share_price?.amount;
-										const priceLabel =
-											priceAmount != null && priceAmount !== ""
-												? `${priceAmount} ${t.share_price?.currency || "USD"}`
-												: "—";
-										return (
-											<tr key={idx}>
-												<td>{tx.transactionType}</td>
-												<td>{t.custom_id || t.security_id?.slice(0, 8) || "—"}</td>
-												<td>{t.quantity}</td>
-												<td>{priceLabel}</td>
-												<td>{t.date || "—"}</td>
-											</tr>
-										);
-									})}
-								</tbody>
-							</StyledTable>
-						</TableScroll>
-					) : (
-						<div style={{ padding: "1rem", opacity: 0.6 }}>
-							No historical transactions yet. Issue stock to see activity here.
-							{isLoadingHistory && " (loading...)"}
-						</div>
-					)}
+				<div data-testid="view-transactions">
+					<TablePanel>
+						<SectionHeader>
+							<TableTitle>Historical Transactions</TableTitle>
+						</SectionHeader>
+						{historicalTransactions.length > 0 ? (
+							<TableScroll>
+								<StyledTable>
+									<thead>
+										<tr>
+											<th>Type</th>
+											<th>Details</th>
+											<th>Quantity</th>
+											<th>Price</th>
+											<th>Date</th>
+										</tr>
+									</thead>
+									<tbody>
+										{historicalTransactions.map((tx: any, idx: number) => {
+											const t = tx.transaction || {};
+											const priceAmount = t.share_price?.amount;
+											const priceLabel =
+												priceAmount != null && priceAmount !== ""
+													? `${priceAmount} ${t.share_price?.currency || "USD"}`
+													: "—";
+											return (
+												<tr key={idx}>
+													<td>{tx.transactionType}</td>
+													<td>{t.custom_id || t.security_id?.slice(0, 8) || "—"}</td>
+													<td>{t.quantity}</td>
+													<td>{priceLabel}</td>
+													<td>{t.date || "—"}</td>
+												</tr>
+											);
+										})}
+									</tbody>
+								</StyledTable>
+							</TableScroll>
+						) : (
+							<div style={{ padding: "1rem", opacity: 0.6 }}>
+								No historical transactions yet. Issue stock to see activity here.
+								{isLoadingHistory && " (loading...)"}
+							</div>
+						)}
 
-					{holdingsTable}
-				</TablePanel>
+						{holdingsTable}
+					</TablePanel>
+				</div>
 			);
 		}
 
+		// overview — holdings summary
 		return (
-			<ActionTableLayout>
-				<Panel>
-					<StockClassForm onSubmit={handleStockClass} disabled={manager.isLoadingHoldings} />
-					<StakeholderForm onSubmit={handleStakeholder} disabled={manager.isLoadingHoldings} />
-					<IssueStockForm
-						stockClasses={stockClassOptions}
-						stakeholders={stakeholderOptions}
-						onSubmit={handleIssuance}
-						disabled={manager.isLoadingHoldings || stockClassOptions.length === 0 || stakeholderOptions.length === 0}
-						hint={
-							!manager.isLoadingHoldings && (stockClassOptions.length === 0 || stakeholderOptions.length === 0)
-								? copy.issueStock.needsSetup
-								: undefined
-						}
-					/>
-				</Panel>
-
-				<TablePanel>{holdingsTable}</TablePanel>
-			</ActionTableLayout>
+			<div data-testid="view-overview">
+				<ActionTableLayout>
+					<Panel>
+						<SectionHeader>
+							<TableTitle>Issuer Overview</TableTitle>
+						</SectionHeader>
+						<MutedText>
+							Active positions and entities on this OCF issuer. Use the left navigation to create
+							stakeholders, stock classes, issue stock, or browse transactions.
+						</MutedText>
+						<MutedText>
+							Stock classes: {stockClassOptions.length} · Stakeholders: {stakeholderOptions.length}
+						</MutedText>
+					</Panel>
+					<TablePanel>{holdingsTable}</TablePanel>
+				</ActionTableLayout>
+			</div>
 		);
 	};
 
 	return (
-		<FullScreenStack>
+		<FullScreenStack data-testid="cap-table-dashboard">
 			<IssuerHeader issuer={issuerResult} contractAddress={manager.contractAddress} onReset={onReset} />
 
 			{manager.holdingsError && <StatusBox $variant="error">{manager.holdingsError}</StatusBox>}
 
 			{renderMainContent()}
-
-			<MintNavDrawer
-				isOpen={isDrawerOpen}
-				onClose={() => setIsDrawerOpen(false)}
-				currentView={currentView}
-				onNavigate={handleNavigate}
-				stockClasses={directStockClasses.map((sc) => ({
-					_id: sc._id,
-					name: sc.name,
-				}))}
-				stakeholders={directStakeholders.map((sh) => ({
-					_id: sh._id,
-					name: sh.name,
-				}))}
-			/>
 
 			<TxSuccessModal
 				isOpen={!!successModal}

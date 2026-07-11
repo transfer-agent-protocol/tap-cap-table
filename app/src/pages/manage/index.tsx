@@ -18,6 +18,7 @@ import {
 import { InlineButton } from "../../components/buttons";
 import { FieldGroup, FieldLabel, Input } from "../../components/forms";
 import { getLastMintedIssuer, type LastMintedIssuer } from "../../utils/lastMintedIssuer";
+import { capTableHref } from "../../components/navConfig";
 
 const MY_ISSUERS_KEY = "tap_my_issuers";
 
@@ -90,11 +91,11 @@ export default function ManageHub() {
 		setMyIssuers((prev) => prev.filter((i) => i._id !== id));
 	};
 
-	// Pull issuers from server that were deployed_by the connected wallet (new capability)
+	// Pull issuers from server that were deployed_by the connected wallet
 	const syncIssuersFromServer = async () => {
 		const addr = wagmiAddress || connectedAddress;
 		if (!addr) {
-			alert("Connect your admin wallet first (via the top Navbar) to query deployed issuers.");
+			alert("Connect your admin wallet first (via the top bar) to query deployed issuers.");
 			return;
 		}
 		setIsSyncingIssuers(true);
@@ -126,11 +127,11 @@ export default function ManageHub() {
 	};
 
 	return (
-		<FullScreenStack>
+		<FullScreenStack data-testid="manage-hub">
 			<PageIntro>
 				<P>
-					This is your central hub for all cap tables you have deployed as Admin.
-					Your connected wallet can manage any of these.
+					This is your central hub for all cap tables you have deployed as Admin. Your connected wallet
+					can manage any of these. Use the left navigation to move between Mint, Manage, and Home.
 				</P>
 			</PageIntro>
 
@@ -156,9 +157,7 @@ export default function ManageHub() {
 							<InlineButton as="a">+ Mint a New Cap Table</InlineButton>
 						</Link>
 					</SectionActions>
-					<MutedText>
-						Paste any issuer ID you have admin rights on.
-					</MutedText>
+					<MutedText>Paste any issuer ID you have admin rights on.</MutedText>
 				</Panel>
 
 				<TablePanel>
@@ -177,7 +176,8 @@ export default function ManageHub() {
 
 					{myIssuers.length === 0 ? (
 						<MutedText>
-							No cap tables yet. Mint one on the <a href="/mint">Mint</a> page, or add an existing issuer ID.
+							No cap tables yet. Mint one on the <a href="/mint">Mint</a> page, or add an existing
+							issuer ID.
 						</MutedText>
 					) : (
 						<TableScroll>
@@ -196,14 +196,12 @@ export default function ManageHub() {
 											<td>{issuer.legal_name || "Unnamed Cap Table"}</td>
 											<td style={{ fontFamily: "monospace" }}>{issuer._id}</td>
 											<td style={{ fontFamily: "monospace" }}>
-												{issuer.deployed_to
-													? `${issuer.deployed_to.slice(0, 10)}…`
-													: "—"}
+												{issuer.deployed_to ? `${issuer.deployed_to.slice(0, 10)}…` : "—"}
 											</td>
 											<td>
 												<SectionActions>
 													<Link
-														href={`/manage/cap-table?issuerId=${issuer._id}`}
+														href={capTableHref(issuer._id, "overview")}
 														passHref
 														legacyBehavior
 													>
@@ -211,10 +209,7 @@ export default function ManageHub() {
 															Manage
 														</InlineButton>
 													</Link>
-													<InlineButton
-														onClick={() => removeIssuer(issuer._id)}
-														$variant="danger"
-													>
+													<InlineButton onClick={() => removeIssuer(issuer._id)} $variant="danger">
 														Remove
 													</InlineButton>
 												</SectionActions>
@@ -227,9 +222,8 @@ export default function ManageHub() {
 					)}
 
 					<MutedText>
-						Tip: every successful mint is automatically added. Use “Sync from Server” to
-						pull in any others deployed by this admin address (requires the deployed_by field
-						on recent mints).
+						Tip: every successful mint is automatically added. Use “Sync from Server” to pull in any
+						others deployed by this admin address (requires the deployed_by field on recent mints).
 					</MutedText>
 				</TablePanel>
 			</ActionTableLayout>

@@ -51,7 +51,8 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 - `styled.d.ts` — styled-components theme type augmentation.
 
 ### Wallet & Web3 Integration
-- Provider nesting in `src/pages/_app.tsx`: `Web3Provider` → `ThemeProvider` (+ `GlobalStyle`) → `CapTableMenuProvider` → `Layout`.
+- Provider nesting in `src/pages/_app.tsx`: `Web3Provider` → `ThemeProvider` (+ `GlobalStyle`) → `AppShellProvider` → `Layout`.
+- **App shell**: left collapsible page nav (`LeftNavDrawer` + `navConfig`) and top bar for brand/context + wallet only (`Navbar`). Cap-table sections (overview, stakeholders, stock classes, issue stock, transactions) are left-nav destinations via `?view=` on `/manage/cap-table`.
 - `src/config/Web3Provider.tsx` wraps `WagmiProvider` (config from `wagmiAdapter.wagmiConfig`) and `QueryClientProvider`.
 - `src/config/wagmi.ts` builds the Reown `WagmiAdapter` and calls `createAppKit` (guarded to the client only). Supported networks: **Plume Mainnet (98866)**, **Plume Testnet (98867)**, **Anvil (31337)**. Requires `NEXT_PUBLIC_REOWN_PROJECT_ID`.
 

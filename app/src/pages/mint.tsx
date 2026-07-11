@@ -66,7 +66,7 @@ export default function MintPage() {
 				</SectionActions>
 
 				<MutedText>
-					Use the top navigation to switch between Mint and Manage.
+					Use the left navigation to switch between Mint and Manage.
 				</MutedText>
 			</FullScreenStack>
 		);
