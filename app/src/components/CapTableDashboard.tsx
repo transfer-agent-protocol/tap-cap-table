@@ -441,9 +441,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<ActionTableLayout data-testid="view-stock-classes">
 					<Panel>
 						<SectionHeader>
-							<TableTitle>Create Stock Class</TableTitle>
+							<TableTitle>Stock class</TableTitle>
 						</SectionHeader>
-						<MutedText>OCF StockClass — class of stock issued by the issuer.</MutedText>
+						<MutedText>
+							OCF STOCK_CLASS. Creates the class onchain; name and terms register as metadata.
+						</MutedText>
 						<StockClassForm onSubmit={handleStockClass} disabled={manager.isLoadingHoldings} />
 					</Panel>
 					<TablePanel>
@@ -462,9 +464,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<ActionTableLayout data-testid="view-stakeholders">
 					<Panel>
 						<SectionHeader>
-							<TableTitle>Create Stakeholder</TableTitle>
+							<TableTitle>Stakeholder</TableTitle>
 						</SectionHeader>
-						<MutedText>OCF Stakeholder — individual or institution on the cap table.</MutedText>
+						<MutedText>
+							OCF STAKEHOLDER. Onchain id + relationship; legal name lives in offchain metadata.
+						</MutedText>
 						<StakeholderForm onSubmit={handleStakeholder} disabled={manager.isLoadingHoldings} />
 					</Panel>
 					<TablePanel>
@@ -483,9 +487,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<ActionTableLayout data-testid="view-issue-stock">
 					<Panel>
 						<SectionHeader>
-							<TableTitle>Issue Stock</TableTitle>
+							<TableTitle>Issue stock</TableTitle>
 						</SectionHeader>
-						<MutedText>OCF TX_STOCK_ISSUANCE — mint shares to a stakeholder.</MutedText>
+						<MutedText>
+							OCF TX_STOCK_ISSUANCE. Share-cap checked client-side; quantity scales 1e10 on write.
+						</MutedText>
 						<IssueStockForm
 							stockClasses={stockClassOptions}
 							stakeholders={stakeholderOptions}
@@ -508,8 +514,12 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<div data-testid="view-transactions">
 					<TablePanel>
 						<SectionHeader>
-							<TableTitle>Historical Transactions</TableTitle>
+							<TableTitle>Transaction history</TableTitle>
 						</SectionHeader>
+						<MutedText>
+							Offchain mirror of onchain events (poller). Empty until issuances (and later actions)
+							are confirmed and synced.
+						</MutedText>
 						{historicalTransactions.length > 0 ? (
 							<TableScroll>
 								<StyledTable>
@@ -581,11 +591,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<ActionTableLayout>
 					<Panel>
 						<SectionHeader>
-							<TableTitle>Issuer Overview</TableTitle>
+							<TableTitle>Overview</TableTitle>
 						</SectionHeader>
 						<MutedText>
-							Active positions on this OCF issuer. Use the left rail to create stakeholders, stock
-							classes, issue stock, or browse the transaction ledger.
+							Core loop: stakeholders → stock classes → issue stock. Positions update onchain;
+							history and labels sync offchain via the poller. Left rail opens each step.
 						</MutedText>
 					</Panel>
 					<TablePanel>{holdingsTable}</TablePanel>

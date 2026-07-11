@@ -37,14 +37,12 @@ export default function MintPage() {
 						Cap table is live
 					</TableTitle>
 					<MutedText>
-						Deployed and registered. Continue to the manager to create stock classes, stakeholders,
-						and issue stock.
+						Factory deployed the CapTable onchain and the API registered OCF issuer metadata. Next:
+						stock classes, stakeholders, then issue stock.
 					</MutedText>
 				</PageIntro>
 
-				<StatusBox $variant="success">
-					Your new cap table has been deployed and registered.
-				</StatusBox>
+				<StatusBox $variant="success">Onchain deploy + offchain registration succeeded.</StatusBox>
 
 				<FormFieldGroup>
 					<FormFieldLabel>Issuer ID</FormFieldLabel>
@@ -62,15 +60,13 @@ export default function MintPage() {
 				<SectionActions>
 					<Link href={manageUrl} passHref legacyBehavior>
 						<InlineButton as="a" $variant="primary">
-							Go to Manage → Create Stock Classes &amp; Issue Stock
+							Open cap table
 						</InlineButton>
 					</Link>
-					<InlineButton onClick={() => mint.reset()}>Mint Another</InlineButton>
+					<InlineButton onClick={() => mint.reset()} $variant="secondary">
+						Mint another
+					</InlineButton>
 				</SectionActions>
-
-				<MutedText>
-					Use the left navigation to switch between Mint and Manage.
-				</MutedText>
 			</FullScreenStack>
 		);
 	}
@@ -83,22 +79,22 @@ export default function MintPage() {
 					Deploy a new issuer
 				</TableTitle>
 				<P>
-					Sign with your admin wallet to mint an OCF issuer onchain. After confirmation, manage stock
-					classes, stakeholders, and issuances from the left rail.
+					Wallet-signs CapTableFactory.createCapTable. Your wallet becomes ADMIN. After the receipt,
+					OCF issuer fields are stored offchain for the manage workspace.
 				</P>
 			</PageIntro>
 
 			<ActionTableLayout>
 				<Panel>
 					<SectionHeader>
-						<TableTitle>Issuer Details</TableTitle>
+						<TableTitle>Issuer (OCF)</TableTitle>
 					</SectionHeader>
 					<IssuerForm fields={mint.fields} setField={mint.setField} disabled={mint.isBusy} />
 				</Panel>
 
 				<Panel>
 					<SectionHeader>
-						<TableTitle>Mint</TableTitle>
+						<TableTitle>Deploy</TableTitle>
 					</SectionHeader>
 					<MintActions
 						isConnected={mint.isConnected}

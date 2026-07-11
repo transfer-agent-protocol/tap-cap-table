@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import styled from "styled-components";
 import { useAccount } from "wagmi";
+import { useAppKitAccount } from "@reown/appkit/react";
 import { Eyebrow, P } from "../../components/typography";
 import {
 	ActionTableLayout,
@@ -10,9 +12,7 @@ import {
 	Panel,
 	SectionActions,
 	SectionHeader,
-	StyledTable,
 	TablePanel,
-	TableScroll,
 	TableTitle,
 } from "../../components/wrappers";
 import { InlineButton } from "../../components/buttons";
@@ -22,33 +22,110 @@ import { capTableHref } from "../../components/navConfig";
 
 const MY_ISSUERS_KEY = "tap_my_issuers";
 
+const IssuerList = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.sm};
+	width: 100%;
+`;
+
+const IssuerCard = styled.div`
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: ${({ theme }) => theme.spacing.md};
+	align-items: center;
+	padding: ${({ theme }) => theme.spacing.md};
+	background: ${({ theme }) => theme.colors.elevated};
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.md};
+	transition: border-color ${({ theme }) => theme.transitions.default};
+
+	&:hover {
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+	}
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		grid-template-columns: 1fr;
+	}
+`;
+
+const IssuerBody = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.xs};
+	min-width: 0;
+`;
+
+const IssuerName = styled.div`
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	letter-spacing: -0.02em;
+	color: ${({ theme }) => theme.colors.text};
+`;
+
+const MetaRow = styled.div`
+	display: flex;
+	flex-flow: row wrap;
+	gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+	align-items: baseline;
+`;
+
+const MetaItem = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 0.15rem;
+	min-width: 0;
+`;
+
+const MetaLabel = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: ${({ theme }) => theme.colors.subtle};
+`;
+
+/** Neutral mono — never signal green (avoids green-on-green next to Manage CTA) */
+const MetaValue = styled.code`
+	font-family: inherit;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.muted};
+	background: ${({ theme }) => theme.colors.surface};
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	padding: 0.2rem 0.45rem;
+	word-break: break-all;
+`;
+
+const CardActions = styled.div`
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: ${({ theme }) => theme.spacing.sm};
+`;
+
 /**
- * /manage - Management Hub
- *
- * Shows all cap tables the admin wallet has interacted with (minted or manually added).
- * This is the central place to pick which issuer to manage.
+ * /manage — pick an issuer to open the cap table workspace.
  */
 export default function ManageHub() {
 	const [myIssuers, setMyIssuers] = useState<LastMintedIssuer[]>([]);
 	const [newIssuerId, setNewIssuerId] = useState("");
-	const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
 	const { address: wagmiAddress } = useAccount();
+	const { address: appKitAddress } = useAppKitAccount();
+	const adminAddress = wagmiAddress || appKitAddress || null;
 	const [isSyncingIssuers, setIsSyncingIssuers] = useState(false);
 
-	// Load persisted list + last minted
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 
-		// Load saved list
 		try {
 			const saved = localStorage.getItem(MY_ISSUERS_KEY);
 			const parsed: LastMintedIssuer[] = saved ? JSON.parse(saved) : [];
 			setMyIssuers(parsed);
 		} catch {
-			// Ignore parse errors; the list will fall back to whatever is available below.
+			// ignore
 		}
 
-		// Always include the most recent mint if it exists
 		const last = getLastMintedIssuer();
 		if (last) {
 			setMyIssuers((prev) => {
@@ -58,16 +135,10 @@ export default function ManageHub() {
 		}
 	}, []);
 
-	// Save list whenever it changes
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 		localStorage.setItem(MY_ISSUERS_KEY, JSON.stringify(myIssuers));
 	}, [myIssuers]);
-
-	// Track connected address for the "by admin" queries (real wagmi state)
-	useEffect(() => {
-		if (wagmiAddress) setConnectedAddress(wagmiAddress);
-	}, [wagmiAddress]);
 
 	const addIssuer = () => {
 		const id = newIssuerId.trim();
@@ -91,16 +162,14 @@ export default function ManageHub() {
 		setMyIssuers((prev) => prev.filter((i) => i._id !== id));
 	};
 
-	// Pull issuers from server that were deployed_by the connected wallet
 	const syncIssuersFromServer = async () => {
-		const addr = wagmiAddress || connectedAddress;
-		if (!addr) {
-			alert("Connect your admin wallet first (via the top bar) to query deployed issuers.");
+		if (!adminAddress) {
+			alert("Connect your admin wallet in the top bar first.");
 			return;
 		}
 		setIsSyncingIssuers(true);
 		try {
-			const res = await fetch(`/api/issuer/by-deployer/${encodeURIComponent(addr)}`);
+			const res = await fetch(`/api/issuer/by-deployer/${encodeURIComponent(adminAddress)}`);
 			if (res.ok) {
 				const json = await res.json();
 				const fromServer: LastMintedIssuer[] = (json.issuers || []).map((iss: any) => ({
@@ -126,31 +195,34 @@ export default function ManageHub() {
 		}
 	};
 
+	const truncate = (addr: string) =>
+		addr.length > 14 ? `${addr.slice(0, 8)}…${addr.slice(-4)}` : addr;
+
 	return (
 		<FullScreenStack data-testid="manage-hub">
 			<PageIntro>
-				<Eyebrow>Admin hub</Eyebrow>
+				<Eyebrow>Workspace</Eyebrow>
 				<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
 					Your cap tables
 				</TableTitle>
 				<P>
-					Issuers you deployed or added. Connect the admin wallet in the top bar, then open a table to
-					manage stakeholders, stock classes, and issuances.
+					Issuers you deployed or added. Open one to manage stakeholders, stock classes, and stock
+					issuances — onchain writes from your wallet, OCF metadata mirrored offchain.
 				</P>
 			</PageIntro>
 
 			<ActionTableLayout>
 				<Panel>
 					<SectionHeader>
-						<TableTitle>Add Existing Cap Table</TableTitle>
+						<TableTitle>Add existing issuer</TableTitle>
 					</SectionHeader>
 					<FieldGroup>
-						<FieldLabel>Issuer ID (UUID)</FieldLabel>
+						<FieldLabel>Issuer ID</FieldLabel>
 						<Input
 							type="text"
 							value={newIssuerId}
 							onChange={(e) => setNewIssuerId(e.target.value)}
-							placeholder="Issuer ID (UUID)"
+							placeholder="UUID"
 						/>
 					</FieldGroup>
 					<SectionActions>
@@ -158,76 +230,71 @@ export default function ManageHub() {
 							Add
 						</InlineButton>
 						<Link href="/mint" passHref legacyBehavior>
-							<InlineButton as="a">+ Mint a New Cap Table</InlineButton>
+							<InlineButton as="a" $variant="secondary">
+								Mint new
+							</InlineButton>
 						</Link>
 					</SectionActions>
-					<MutedText>Paste any issuer ID you have admin rights on.</MutedText>
+					<MutedText>Any issuer where your wallet holds ADMIN can be managed here.</MutedText>
 				</Panel>
 
 				<TablePanel>
 					<SectionHeader>
-						<TableTitle>Your Cap Tables</TableTitle>
+						<TableTitle>Issuers</TableTitle>
 						<SectionActions>
 							<InlineButton
 								onClick={syncIssuersFromServer}
-								disabled={isSyncingIssuers || !wagmiAddress}
-								title="Query Mongo for issuers where deployed_by matches your connected wallet address"
+								disabled={isSyncingIssuers || !adminAddress}
+								$variant="secondary"
+								title="Load issuers where deployed_by matches your connected wallet"
 							>
-								{isSyncingIssuers ? "Syncing..." : "Sync from Server"}
+								{isSyncingIssuers ? "Syncing…" : "Sync from server"}
 							</InlineButton>
 						</SectionActions>
 					</SectionHeader>
 
 					{myIssuers.length === 0 ? (
 						<MutedText>
-							No cap tables yet. Mint one on the <a href="/mint">Mint</a> page, or add an existing
-							issuer ID.
+							No issuers yet.{" "}
+							<a href="/mint">Mint a cap table</a> or paste an issuer ID.
 						</MutedText>
 					) : (
-						<TableScroll>
-							<StyledTable>
-								<thead>
-									<tr>
-										<th>Cap Table</th>
-										<th>Issuer ID</th>
-										<th>Contract</th>
-										<th>Actions</th>
-									</tr>
-								</thead>
-								<tbody>
-									{myIssuers.map((issuer) => (
-										<tr key={issuer._id}>
-											<td>{issuer.legal_name || "Unnamed Cap Table"}</td>
-											<td style={{ fontFamily: "monospace" }}>{issuer._id}</td>
-											<td style={{ fontFamily: "monospace" }}>
-												{issuer.deployed_to ? `${issuer.deployed_to.slice(0, 10)}…` : "—"}
-											</td>
-											<td>
-												<SectionActions>
-													<Link
-														href={capTableHref(issuer._id, "overview")}
-														passHref
-														legacyBehavior
-													>
-														<InlineButton as="a" $variant="primary">
-															Manage
-														</InlineButton>
-													</Link>
-													<InlineButton onClick={() => removeIssuer(issuer._id)} $variant="danger">
-														Remove
-													</InlineButton>
-												</SectionActions>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</StyledTable>
-						</TableScroll>
+						<IssuerList>
+							{myIssuers.map((issuer) => (
+								<IssuerCard key={issuer._id}>
+									<IssuerBody>
+										<IssuerName>{issuer.legal_name || "Unnamed issuer"}</IssuerName>
+										<MetaRow>
+											<MetaItem>
+												<MetaLabel>Issuer ID</MetaLabel>
+												<MetaValue>{issuer._id}</MetaValue>
+											</MetaItem>
+											<MetaItem>
+												<MetaLabel>Contract</MetaLabel>
+												<MetaValue>
+													{issuer.deployed_to ? truncate(issuer.deployed_to) : "—"}
+												</MetaValue>
+											</MetaItem>
+										</MetaRow>
+									</IssuerBody>
+									<CardActions>
+										<Link href={capTableHref(issuer._id, "overview")} passHref legacyBehavior>
+											<InlineButton as="a" $variant="primary">
+												Open
+											</InlineButton>
+										</Link>
+										<InlineButton onClick={() => removeIssuer(issuer._id)} $variant="ghost">
+											Remove
+										</InlineButton>
+									</CardActions>
+								</IssuerCard>
+							))}
+						</IssuerList>
 					)}
 
 					<MutedText>
-						Tip: every successful mint is automatically added. Use “Sync from Server” to pull in any
-						others deployed by this admin address (requires the deployed_by field on recent mints).
+						Successful mints are saved in this browser. Sync from server pulls issuers registered with
+						your wallet as <code>deployed_by</code>.
 					</MutedText>
 				</TablePanel>
 			</ActionTableLayout>

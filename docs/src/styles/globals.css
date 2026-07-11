@@ -1,0 +1,93 @@
+/**
+ * Docs skin — aligned with app "Ledger Signal" without merging the apps.
+ * Nextra still owns layout; we only override canvas + type + accents.
+ */
+
+:root {
+	--tap-bg: #09090b;
+	--tap-surface: #111113;
+	--tap-elevated: #18181b;
+	--tap-text: #f4f4f5;
+	--tap-muted: #a1a1aa;
+	--tap-subtle: #71717a;
+	--tap-border: rgba(255, 255, 255, 0.08);
+	--tap-signal: #c8f542;
+	--tap-inverse: #09090b;
+}
+
+html,
+body {
+	background: var(--tap-bg) !important;
+	color: var(--tap-text);
+	font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Nextra shell surfaces */
+.nextra-nav-container,
+.nextra-nav-container-blur,
+.nextra-sidebar-container,
+aside.nextra-sidebar,
+nav.nextra-toc {
+	background-color: var(--tap-surface) !important;
+	border-color: var(--tap-border) !important;
+}
+
+.nextra-nav-container {
+	border-bottom: 1px solid var(--tap-border) !important;
+}
+
+/* Content */
+article,
+main {
+	color: var(--tap-text);
+}
+
+article a,
+main a,
+.nextra-content a {
+	color: var(--tap-signal) !important;
+	text-decoration: none;
+}
+
+article a:hover,
+main a:hover,
+.nextra-content a:hover {
+	color: var(--tap-signal) !important;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+	opacity: 0.92;
+}
+
+/* Code blocks */
+pre,
+code {
+	font-family: "IBM Plex Mono", ui-monospace, monospace !important;
+}
+
+pre {
+	background: var(--tap-elevated) !important;
+	border: 1px solid var(--tap-border);
+	border-radius: 0.5rem;
+}
+
+/* Sidebar active */
+.nextra-sidebar a[aria-current="page"],
+.nextra-menu-desktop a.active,
+.nextra-menu-mobile a.active {
+	background: rgba(200, 245, 66, 0.12) !important;
+	color: var(--tap-signal) !important;
+}
+
+/* Footer */
+footer,
+.nextra-footer {
+	background: var(--tap-bg) !important;
+	border-top: 1px solid var(--tap-border) !important;
+	color: var(--tap-subtle) !important;
+}
+
+::selection {
+	background: var(--tap-signal);
+	color: var(--tap-inverse);
+}

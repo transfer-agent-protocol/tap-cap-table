@@ -78,7 +78,7 @@ const PrimaryButton = styled.button`
 	margin: ${({ theme }) => theme.spacing.lg} 0 ${({ theme }) => theme.spacing.md} 0;
 	padding: 0 ${({ theme }) => theme.spacing.lg};
 	background: ${({ theme }) => theme.colors.main};
-	color: ${({ theme }) => theme.colors.inverse};
+	color: ${({ theme }) => theme.colors.inverse} !important;
 	border-radius: ${({ theme }) => theme.radii.sm};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	box-shadow: ${({ theme }) => theme.shadows.glow};
@@ -87,10 +87,11 @@ const PrimaryButton = styled.button`
 	&:focus:not(:disabled) {
 		transform: translateY(-1px);
 		box-shadow: 0 0 32px rgba(200, 245, 66, 0.28);
-		/* Keep dark ink on signal green — never white */
-		color: ${({ theme }) => theme.colors.inverse};
+		/* Keep dark ink on signal green — never white/green-on-green */
+		color: ${({ theme }) => theme.colors.inverse} !important;
 		background: ${({ theme }) => theme.colors.main};
 		opacity: 1;
+		text-decoration: none !important;
 	}
 
 	&:active:not(:disabled) {
@@ -109,7 +110,7 @@ const WalletButtonStyled = styled.button`
 	height: 2.375rem;
 	padding: 0 ${({ theme }) => theme.spacing.md};
 	background: ${({ theme }) => theme.colors.main};
-	color: ${({ theme }) => theme.colors.inverse};
+	color: ${({ theme }) => theme.colors.inverse} !important;
 	border-radius: ${({ theme }) => theme.radii.pill};
 	font-size: ${({ theme }) => theme.fontSizes.small};
 	font-weight: ${({ theme }) => theme.fontWeights.bold};
@@ -121,9 +122,10 @@ const WalletButtonStyled = styled.button`
 	&:focus:not(:disabled) {
 		box-shadow: 0 0 28px rgba(200, 245, 66, 0.32);
 		transform: translateY(-1px);
-		color: ${({ theme }) => theme.colors.inverse};
+		color: ${({ theme }) => theme.colors.inverse} !important;
 		background: ${({ theme }) => theme.colors.main};
 		opacity: 1;
+		text-decoration: none !important;
 	}
 `;
 
@@ -133,7 +135,7 @@ const MintButton = styled.button`
 	height: 3rem;
 	margin-top: ${({ theme }) => theme.spacing.md};
 	background: ${({ theme }) => theme.colors.main};
-	color: ${({ theme }) => theme.colors.inverse};
+	color: ${({ theme }) => theme.colors.inverse} !important;
 	border-radius: ${({ theme }) => theme.radii.sm};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	box-shadow: ${({ theme }) => theme.shadows.glow};
@@ -142,9 +144,10 @@ const MintButton = styled.button`
 	&:focus:not(:disabled) {
 		transform: translateY(-1px);
 		box-shadow: 0 0 32px rgba(200, 245, 66, 0.28);
-		color: ${({ theme }) => theme.colors.inverse};
+		color: ${({ theme }) => theme.colors.inverse} !important;
 		background: ${({ theme }) => theme.colors.main};
 		opacity: 1;
+		text-decoration: none !important;
 	}
 
 	&:disabled {
@@ -164,24 +167,25 @@ const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "dange
 
 	${({ theme, $variant = "secondary" }) => {
 		if ($variant === "primary") {
+			// !important on color: global `a {}` styles must not paint green text on green buttons
 			return css`
 				background: ${theme.colors.main};
-				color: ${theme.colors.inverse};
+				color: ${theme.colors.inverse} !important;
 				border-color: ${theme.colors.main};
 				box-shadow: ${theme.shadows.glow};
 
 				&:hover:not(:disabled),
 				&:focus:not(:disabled) {
 					transform: translateY(-1px);
-					color: ${theme.colors.inverse};
+					color: ${theme.colors.inverse} !important;
 					background: ${theme.colors.main};
 					opacity: 1;
-					text-decoration: none;
+					text-decoration: none !important;
 				}
 
 				&:disabled {
 					background: ${theme.colors.elevated};
-					color: ${theme.colors.subtle};
+					color: ${theme.colors.subtle} !important;
 					border-color: ${theme.colors.outline};
 					box-shadow: none;
 				}

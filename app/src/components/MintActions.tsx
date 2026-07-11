@@ -1,7 +1,13 @@
-import { MintButton } from "./buttons";
-import { StatusBox, ResponseBlock } from "./wrappers";
+import dynamic from "next/dynamic";
+import { MintButton, WalletButtonStyled } from "./buttons";
+import { StatusBox, ResponseBlock, MutedText } from "./wrappers";
 import { FieldGroup, FieldLabel } from "./forms";
 import type { IssuerResponse } from "../services/registerIssuer";
+
+const WalletButton = dynamic(() => import("./WalletButtonClient"), {
+	ssr: false,
+	loading: () => <WalletButtonStyled>Connect Wallet</WalletButtonStyled>,
+});
 
 export interface MintActionsProps {
 	isConnected: boolean;
@@ -34,23 +40,36 @@ export function MintActions({
 }: MintActionsProps) {
 	if (!isConnected) {
 		return (
-			<StatusBox $variant="pending">
-				Connect your wallet to mint a cap table.
-			</StatusBox>
+			<>
+				<StatusBox $variant="pending">
+					Connect the admin wallet to deploy a new issuer onchain. The same wallet will own ADMIN on the
+					cap table.
+				</StatusBox>
+				<div style={{ marginTop: "0.75rem" }}>
+					<WalletButton />
+				</div>
+				<MutedText style={{ marginTop: "0.75rem" }}>
+					Use the top-right Connect Wallet control anytime — it stays in sync with this flow.
+				</MutedText>
+			</>
 		);
 	}
 
 	return (
 		<>
-			<MintButton onClick={onMint} disabled={!canMint}>
+			<MintButton onClick={onMint} disabled={!canMint} type="button">
 				{isWritePending
 					? "Confirm in wallet..."
 					: isConfirming
 						? "Confirming onchain..."
 						: isRegistering
-							? "Registering with server..."
+							? "Saving metadata..."
 							: "Mint Cap Table"}
 			</MintButton>
+
+			<MutedText>
+				Onchain: factory deploys CapTable. Offchain: API stores OCF issuer metadata after the receipt.
+			</MutedText>
 
 			{writeError && (
 				<StatusBox $variant="error">
@@ -62,37 +81,33 @@ export function MintActions({
 
 			{serverError && (
 				<StatusBox $variant="error">
-					Server registration failed: {serverError.slice(0, 300)}
+					Onchain deploy may have succeeded, but metadata registration failed: {serverError.slice(0, 300)}
 				</StatusBox>
 			)}
 
 			{txHash && !isConfirmed && (
-				<StatusBox $variant="pending">
-					Transaction submitted: {txHash}
-				</StatusBox>
+				<StatusBox $variant="pending">Transaction submitted: {txHash}</StatusBox>
 			)}
 
 			{isConfirmed && deployedAddress && !result && !serverError && (
 				<StatusBox $variant="pending">
-					Cap table deployed at {deployedAddress}. Registering with server...
+					Cap table at {deployedAddress}. Registering issuer metadata...
 				</StatusBox>
 			)}
 
 			{result && (
 				<>
-					<StatusBox $variant="success">
-						Cap table deployed and registered successfully.
-					</StatusBox>
+					<StatusBox $variant="success">Cap table deployed and registered.</StatusBox>
 					<FieldGroup>
 						<FieldLabel>Issuer ID</FieldLabel>
 						<ResponseBlock>{result._id}</ResponseBlock>
 					</FieldGroup>
 					<FieldGroup>
-						<FieldLabel>Contract Address</FieldLabel>
+						<FieldLabel>Contract</FieldLabel>
 						<ResponseBlock>{result.deployed_to}</ResponseBlock>
 					</FieldGroup>
 					<FieldGroup>
-						<FieldLabel>Transaction Hash</FieldLabel>
+						<FieldLabel>Transaction</FieldLabel>
 						<ResponseBlock>{result.tx_hash}</ResponseBlock>
 					</FieldGroup>
 				</>
