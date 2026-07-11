@@ -70,17 +70,22 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Submits transactions to smart contracts
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
     - **Route conventions** for entity creation:
-      - `POST /<entity>/register-onchain` — **manage UI path**: caller's wallet already submitted onchain; endpoint validates (+ share-cap checks for issuance) and persists metadata. Poller remains authoritative.
-      - `POST /<entity>/create` — server-signed legacy/API path (server OPERATOR key submits onchain). Still used by manifest seed tooling; **not** used by the `/manage` UI.
-    - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (uses the new `Issuer.deployed_by` field).
-    - `GET /issuer/full/:id` — full Issuer document (read-only) for the management UI.
+      - `POST /<entity>/register-onchain` — **manage UI path**: caller's wallet already submitted onchain; endpoint validates (+ share-cap checks for issuance), sets `is_onchain_synced` / `tx_hash`, and persists metadata. Poller remains authoritative.
+      - `POST /<entity>/create` — server-signed legacy/API path (server OPERATOR key submits onchain). Still used by manifest seed tooling; **not** used by the `/app` manage UI.
+    - Issuer helpers for the product UI:
+      - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (`Issuer.deployed_by`).
+      - `GET /issuer/full/:id` — full Issuer document (read-only).
+      - `POST /issuer/summaries` — readiness stats for company cards (people/classes/issuances/ghost flags).
+      - `POST /issuer/reconcile` — flip sync flags against chain + backfill missing `tx_hash` values from logs.
+      - `POST /issuer/poller-catchup` — reindex (rebuild cursor from deploy) vs head (fast-forward). Prefer reconcile for UI “Refresh”; reindex only when the mirror is empty/corrupt.
+    - Stock transfer: `POST /transactions/transfer/stock` is the **server-signed** API/docs path (`transferController` → `contract.transferStock`). The manage UI does **not** call this; it uses direct-wallet `useDirectTransferStock` (same `StockTransferParams` / scaling). Poller `handleStockTransfer` mirrors either path into Mongo `StockTransfer` + historical rows.
 
 4. **State Machines** (`server/state-machines/`):
     - XState machines used by **OCF manifest preprocess/seed** (not the live poller path) to compute active positions before minting
     - Live day-to-day manage UI does not depend on these machines
 
 5. **Database Layer** (`server/db/`):
-    - Mongoose models for OCF objects (Issuer, Stakeholder, StockClass, VestingTerms, etc.)
+    - Mongoose models for OCF objects (Issuer, Stakeholder, StockClass, VestingTerms, StockTransfer, etc.)
     - Atomic operations with MongoDB transactions when `DATABASE_REPLSET=1`
 
 6. **OCF Submodule** (`ocf/`):
@@ -88,22 +93,29 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - JSON schemas used for validation
     - Sample OCF files in `ocf/samples/`
 
-7. **Frontend Cap Table Management UI** (`app/src/pages/manage/`, `app/src/components/CapTableDashboard.tsx`):
-    - `/manage` — hub listing all cap tables the connected admin wallet has deployed (queries `/issuer/by-deployer/:address` + a localStorage fallback for legacy mints with no `deployed_by`).
-    - `/manage/cap-table?issuerId=...` — full-screen dashboard for a specific cap table. Forms create stock classes, stakeholders, and stock issuances directly from the connected wallet.
-    - Optimistic state for direct creations carries a 90s TTL — the chain assigns issuance ids internally, so we can't reliably match optimistic items to poller-written records.
+7. **Frontend Cap Table Management UI** (`app/src/pages/app/`, `app/src/components/cap-table/`):
+    - **Marketing** `/` — landing only (docs, GitHub, demo contracts). No wallet chrome, no product CTAs.
+    - **Product** under `/app/*` (wallet + left nav shell):
+      - `/app` / `/app/companies` — company list (localStorage + `/issuer/by-deployer` + Load from wallet; summaries for readiness chips).
+      - `/app/mint` — deploy a new cap table from the connected admin wallet.
+      - `/app/companies/[issuerId]?view=…` — full company workspace. Sections (left nav, setup order): **Holdings** → **Stock classes** → **Shareholders** → **Issue stock** → **Transfer** → **Transactions**.
+    - Legacy `/mint` and `/manage*` redirect into `/app/*`.
+    - Direct-wallet writes: stock class, shareholder, issuance, **stock transfer** (`useDirect*` + `useOnchainAction`). Class/person/issuance metadata via `/register-onchain` after receipt; transfers rely on the poller (`StockTransfer` / historical TX) — no separate transfer register endpoint.
+    - UI lives in `components/cap-table/*` (dashboard orchestrator, views, ownership bar, `DataTable` lists). Product copy in `lib/copy.ts`. Nav config in `navConfig.ts` — always use `query.issuerId` / `asPath` for links, never `router.pathname` with a `[issuerId]` pattern (that produced `%5BissuerId%5D` URLs).
+    - Optimistic session rows for in-flight creates; holdings/API lists must work when `deployed_to` is missing (Mongo people/classes) and 404 only when the issuer id is unknown.
 
 ### Data Flow
 
-**Transaction Creation (direct wallet — `/manage` UI)**:
+**Transaction Creation (direct wallet — `/app` manage UI)**:
 
-1. Frontend generates a bytes16 id and submits the tx from the connected admin wallet via wagmi (`useDirect*` + `useOnchainAction`: submit → wait receipt → success/reverted). Scaling/IDs/share-caps use `@tap/units`. The chain assigns issuance + security ids internally for `issueStock`; the frontend supplies its own ids for `createStakeholder` and `createStockClass`.
-2. Frontend POSTs OCF metadata to `/<entity>/register-onchain`. Server validates (and asserts share caps on issuance) and persists offchain metadata; **does not** submit onchain again.
-3. The poller is still authoritative — it picks up the event and writes the canonical record (joining on the bytes16 id where applicable).
+1. Frontend generates a bytes16 id (where required) and submits the tx from the connected admin wallet via wagmi (`useDirect*` + `useOnchainAction`: submit → wait receipt → success/reverted). Scaling/IDs/share-caps use `@tap/units`. The chain assigns issuance + security ids internally for `issueStock` and transfer balance securities; the frontend supplies its own ids for `createStakeholder` and `createStockClass`.
+2. For class / stakeholder / issuance: frontend POSTs OCF metadata to `/<entity>/register-onchain` after confirmation. Server validates (and asserts share caps on issuance) and persists offchain metadata; **does not** submit onchain again.
+3. For **transfer**: wallet calls `CapTable.transferStock` only; poller `handleStockTransfer` writes Mongo + historical TX (same as API-path transfers).
+4. The poller is still authoritative — it picks up events and writes canonical records (joining on bytes16 id where applicable). UI “Refresh” runs reconcile + reloads holdings/history; do not jump the poller to head on every refresh (that skipped events and created ghost classes).
 
 **Transaction Creation (server-signed, legacy / API / manifest seed)**:
 
-1. API receives OCF-formatted request at `/<entity>/create`
+1. API receives OCF-formatted request at `/<entity>/create` (or `/transactions/transfer/stock`, etc.)
 2. Validates against OCF schema, converts, submits via the server's OPERATOR key
 3. Poller mirrors events to MongoDB
 
@@ -118,7 +130,7 @@ When a manifest is created, the system:
 
 ### Setup
 
-**Fast path (Plume):** `pnpm bootstrap` does the whole setup idempotently — builds contracts if needed, creates the external `offchain-db` volume, `docker compose up -d --build`, and waits for API health. It does **not** hardcode a factory: if none is registered it points you to `pnpm deploy-factory` (which deploys and auto-registers your own). Safe to re-run whenever you come back to the project. For the wallet mint/manage UI, also run `pnpm app:dev` (it reads `app/.env.local`).
+**Fast path (Plume):** `pnpm bootstrap` does the whole setup idempotently — builds contracts if needed, creates the external `offchain-db` volume, `docker compose up -d --build`, and waits for API health. It does **not** hardcode a factory: if none is registered it points you to `pnpm deploy-factory` (which deploys and auto-registers your own). Safe to re-run whenever you come back to the project. For the wallet product UI (`/app/*`), also run `pnpm app:dev` (it reads `app/.env.local`).
 
 Manual steps:
 
@@ -290,7 +302,7 @@ pnpm app:build
 pnpm app:start
 ```
 
-The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, Reown AppKit, and TanStack Query. It serves both the landing page and the wallet-based cap-table minting/management UI (`/mint`, `/manage`). Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
+The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, Reown AppKit, and TanStack Query. It serves the marketing landing page (`/`) and the product workspace under `/app/*` (companies, mint, company cap table). Legacy `/mint` and `/manage*` redirect to `/app`. Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
 
 ### Deployment
 
@@ -311,8 +323,10 @@ pnpm deploy-factory
 tap-cap-table/
 ├── app/                # Frontend (Next.js, workspace: tap-app)
 │   ├── src/
-│   │   ├── pages/      # Next.js pages
-│   │   └── components/ # React components
+│   │   ├── pages/      # `/` landing; `/app/*` product; legacy redirects
+│   │   ├── components/ # shell + forms; cap-table/* for company workspace
+│   │   ├── hooks/      # useDirect*, useMintIssuer, useCapTableManager
+│   │   └── lib/copy.ts # product copy (human labels)
 │   └── package.json
 ├── chain/              # Foundry project (Solidity contracts)
 │   ├── src/            # Smart contracts
@@ -522,6 +536,9 @@ Libraries:
 10. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
 11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The root `.env` `NEXT_PUBLIC_*` only feed `docker-compose` interpolation into the **server**, not the Docker `app`. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it — often the operator's **user** wallet, not the server key) controls beacon upgrades for all its cap tables. Implementation is the upgradeable beacon target (read live; docs may show stale impl addresses). Only reuse a factory whose owner wallet you control. Keep Mongo `factories` and `app/.env.local` on the same factory address.
 12. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
+13. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
+14. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
+15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
 
 ## Debugging
 
