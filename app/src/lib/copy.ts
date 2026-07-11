@@ -1,7 +1,6 @@
 /**
  * Centralized UI copy for the cap-table manager — table headers, labels, and the
- * loading/error/empty strings. Mirrors `visualize-laws-app/lib/copy.ts`: keeping copy in
- * one place keeps the components declarative and makes wording changes a one-line edit.
+ * loading/error/empty strings. Keeping copy in one place keeps components declarative.
  */
 export const copy = {
 	holdings: {
@@ -24,5 +23,24 @@ export const copy = {
 	status: {
 		onchain: "Onchain",
 		pending: "Pending sync",
+		reverted: "Reverted",
+	},
+	tx: {
+		walletRequired: "Please connect your wallet (as Admin) to submit this onchain action.",
+		revertedTitle: "Transaction reverted on-chain",
+		revertedGeneric: "The transaction was mined but reverted, so nothing was applied.",
+		issuanceReverted:
+			"The transaction was mined but reverted, so no shares were issued. Common causes: quantity exceeds issuer or stock-class authorized remaining shares.",
+		submittedTitle: {
+			stockClass: "Stock class submitted",
+			stakeholder: "Stakeholder submitted",
+			issuance: "Issuance submitted",
+		},
+		submittedBody: "Waiting for the transaction receipt. Success is only shown after on-chain confirmation.",
+		confirmedTitle: {
+			stockClass: "Stock class confirmed on-chain",
+			stakeholder: "Stakeholder confirmed on-chain",
+			issuance: "Issuance confirmed on-chain",
+		},
 	},
 } as const;
