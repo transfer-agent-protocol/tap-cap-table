@@ -219,23 +219,35 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		setIsSyncingPoller(true);
 		setSyncNote(null);
 		try {
-			const res = await fetch(`/api/issuer/${encodeURIComponent(issuerResult._id)}/poller-catchup`, {
+			// Explicit path (not /:id/...) so older servers never 404 on route order
+			const res = await fetch(`/api/issuer/poller-catchup`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ buffer: 3000 }),
+				body: JSON.stringify({ issuerId: issuerResult._id, buffer: 5000 }),
 			});
-			if (!res.ok) {
-				const text = await res.text();
-				setSyncNote(text || `Sync failed (${res.status})`);
+			const text = await res.text();
+			let json: any = null;
+			try {
+				json = JSON.parse(text);
+			} catch {
+				// strip HTML error pages
+				const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+				setSyncNote(plain.slice(0, 200) || `Sync failed (${res.status})`);
 				return;
 			}
-			const json = await res.json();
-			setSyncNote(json.message || "Ledger catch-up queued. Refreshing…");
-			// Give the poller a moment then refresh
+			if (!res.ok) {
+				setSyncNote(json?.error || json?.message || `Sync failed (${res.status})`);
+				return;
+			}
+			setSyncNote(json.message || "Catch-up queued. Refreshing in a few seconds…");
 			setTimeout(() => {
 				manager.refreshHoldings();
 				loadHistory();
-			}, 2500);
+			}, 3000);
+			setTimeout(() => {
+				manager.refreshHoldings();
+				loadHistory();
+			}, 8000);
 		} catch (e) {
 			setSyncNote(e instanceof Error ? e.message : "Sync failed");
 		} finally {
@@ -387,18 +399,16 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 	};
 
+	// Parent toolbar owns Refresh — don't pass onRefresh (avoids double buttons)
 	const holdingsTable = (
 		<HoldingsTable
 			holdingsData={manager.holdings}
 			createdStockClasses={directStockClasses}
 			createdStakeholders={directStakeholders}
 			createdIssuances={directIssuances}
-			onRefresh={() => {
-				manager.refreshHoldings();
-				loadHistory();
-			}}
 			isLoading={manager.isLoadingHoldings}
 			error={manager.holdingsError}
+			compact
 		/>
 	);
 
@@ -412,10 +422,10 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					manager.refreshHoldings();
 					loadHistory();
 				}}
-				disabled={manager.isLoadingHoldings}
+				disabled={manager.isLoadingHoldings || isLoadingHistory}
 				$variant="ghost"
 			>
-				Refresh
+				{manager.isLoadingHoldings ? "Refreshing…" : "Refresh"}
 			</InlineButton>
 		</SectionActions>
 	);

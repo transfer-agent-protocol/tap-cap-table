@@ -152,37 +152,40 @@ issuer.get("/by-deployer/:address", async (req, res) => {
 
 /**
  * Catch the event poller up on recent blocks for one issuer.
+ * POST body: { issuerId, buffer? }
  * Sets last_processed_block = chainHead - buffer so the next poller cycle
  * re-scans the recent window (including just-mined issuances). Same idea as
  * `pnpm poller:fast-forward --issuer <id> --buffer <n>` (WARP.md).
  */
-issuer.post("/:id/poller-catchup", async (req, res) => {
+issuer.post("/poller-catchup", async (req, res) => {
     try {
-        const { id } = req.params;
-        const buffer = Math.max(0, Number(req.body?.buffer) || 3000);
+        const id = req.body?.issuerId || req.body?.id;
+        if (!id) return res.status(400).json({ error: "issuerId required" });
+
+        const buffer = Math.max(0, Number(req.body?.buffer) || 5000);
         const issuerDoc = await Issuer.findById(id);
-        if (!issuerDoc) return res.status(404).send("Issuer not found");
-        if (!issuerDoc.deployed_to) return res.status(400).send("Issuer has no deployed_to");
+        if (!issuerDoc) return res.status(404).json({ error: "Issuer not found" });
+        if (!issuerDoc.deployed_to) return res.status(400).json({ error: "Issuer has no deployed_to" });
 
         const { default: getProvider } = await import("../chain-operations/getProvider.js");
         const { updateIssuerById } = await import("../db/operations/update.js");
 
         const head = await getProvider().getBlockNumber();
         const target = Math.max(head - buffer, 0);
-        const before = issuerDoc.last_processed_block;
+        const before = issuerDoc.last_processed_block ?? null;
         await updateIssuerById(id, { last_processed_block: target });
 
-        res.status(200).send({
+        res.status(200).json({
             issuerId: id,
             head,
             buffer,
             last_processed_block_before: before,
             last_processed_block: target,
-            message: `Poller will re-scan from block ${target} toward head ${head}. Refresh holdings in a few seconds.`,
+            message: `Poller will re-scan from block ${target} toward head ${head}. Hit Refresh in a few seconds.`,
         });
     } catch (error) {
         console.error(error);
-        res.status(500).send(`${error}`);
+        res.status(500).json({ error: String(error?.message || error) });
     }
 });
 
