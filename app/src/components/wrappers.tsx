@@ -323,7 +323,7 @@ const FullScreenMain = styled.div`
 	flex-flow: column nowrap;
 	width: 100%;
 	min-height: calc(100vh - ${({ theme }) => theme.layout.topBar} - 4rem);
-	padding: ${({ theme }) => theme.spacing.xl};
+	padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
 	box-sizing: border-box;
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
@@ -361,6 +361,32 @@ const ActionTableLayout = styled.div`
 	@media (max-width: ${({ theme }) => theme.breakpoints.mintCollapse}) {
 		grid-template-columns: 1fr;
 	}
+`;
+
+/** Full-width manage page: form band then table band */
+const PageLayout = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.xl};
+	width: 100%;
+	max-width: ${({ theme }) => theme.maxWidths.wide};
+`;
+
+const FormBand = styled.section`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.md};
+	width: 100%;
+	max-width: 36rem;
+	padding-bottom: ${({ theme }) => theme.spacing.lg};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+`;
+
+const DataBand = styled.section`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.md};
+	width: 100%;
 `;
 
 const DashboardHeader = styled.header`
@@ -495,6 +521,9 @@ export {
 	FullScreenStack,
 	PageIntro,
 	ActionTableLayout,
+	PageLayout,
+	FormBand,
+	DataBand,
 	DashboardHeader,
 	DashboardGrid,
 	FormPanel,

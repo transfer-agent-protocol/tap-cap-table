@@ -1,23 +1,22 @@
 /**
- * Centralized UI copy — plain language for operators, not protocol engineers.
+ * Plain-language UI copy for the manage workspace.
  */
 export const copy = {
 	holdings: {
 		title: "Holdings",
 		columns: {
-			stakeholder: "Person / entity",
-			stockClass: "Share class",
+			stakeholder: "Holder",
+			stockClass: "Class",
 			quantity: "Shares",
 			sharePrice: "Price",
 			status: "Status",
 		},
-		empty: "No shares issued yet. Add a person, a share class, then issue stock.",
-		loadError: "Couldn't load holdings. Is the API running?",
-		caption:
-			"Live balances from the chain. New activity may show as Pending for a moment while we sync.",
+		empty: "No shares issued yet.",
+		loadError: "Couldn't load holdings.",
+		caption: "",
 	},
 	issueStock: {
-		needsSetup: "Add at least one person and one share class first.",
+		needsSetup: "Add a person and a share class first.",
 	},
 	status: {
 		onchain: "Confirmed",
@@ -25,17 +24,16 @@ export const copy = {
 		reverted: "Failed",
 	},
 	tx: {
-		walletRequired: "Connect your admin wallet to do this.",
+		walletRequired: "Connect your wallet first.",
 		revertedTitle: "Transaction failed",
-		revertedGeneric: "The transaction failed onchain — nothing changed.",
-		issuanceReverted:
-			"Issuance failed. Usually that means there aren't enough authorized shares left.",
+		revertedGeneric: "Nothing changed onchain.",
+		issuanceReverted: "Issuance failed — usually not enough authorized shares left.",
 		submittedTitle: {
 			stockClass: "Share class submitted",
 			stakeholder: "Person submitted",
 			issuance: "Issuance submitted",
 		},
-		submittedBody: "Waiting for confirmation...",
+		submittedBody: "Waiting for confirmation…",
 		confirmedTitle: {
 			stockClass: "Share class created",
 			stakeholder: "Person added",

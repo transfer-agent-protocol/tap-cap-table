@@ -44,31 +44,11 @@ export const CAP_TABLE_SECTIONS: Array<{
 	label: string;
 	description: string;
 }> = [
-	{
-		id: "overview",
-		label: "Overview",
-		description: "Summary and holdings",
-	},
-	{
-		id: "stakeholders",
-		label: "People",
-		description: "Founders, employees, investors",
-	},
-	{
-		id: "stock-classes",
-		label: "Share classes",
-		description: "Common, preferred, etc.",
-	},
-	{
-		id: "issue-stock",
-		label: "Issue stock",
-		description: "Grant shares",
-	},
-	{
-		id: "transactions",
-		label: "Activity",
-		description: "Recent events",
-	},
+	{ id: "overview", label: "Holdings", description: "Who owns what" },
+	{ id: "stakeholders", label: "People", description: "Who can hold shares" },
+	{ id: "stock-classes", label: "Classes", description: "Share classes" },
+	{ id: "issue-stock", label: "Issue", description: "Grant shares" },
+	{ id: "transactions", label: "Activity", description: "History" },
 ];
 
 export const VALID_CAP_TABLE_VIEWS = new Set<string>(

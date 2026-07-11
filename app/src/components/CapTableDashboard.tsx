@@ -1,21 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
-	ActionTableLayout,
 	FullScreenStack,
-	Panel,
 	SectionHeader,
 	StatusBox,
 	StyledTable,
-	TablePanel,
 	TableScroll,
 	TableTitle,
 	MutedText,
-	StatGrid,
-	StatCard,
-	StatLabel,
-	StatValue,
+	PageLayout,
+	FormBand,
+	DataBand,
+	SectionActions,
 } from "./wrappers";
+import { InlineButton } from "./buttons";
 import { IssuerHeader } from "./IssuerHeader";
 import { StockClassForm } from "./StockClassForm";
 import { StakeholderForm } from "./StakeholderForm";
@@ -41,12 +39,6 @@ interface CapTableDashboardProps {
 	onReset: () => void;
 }
 
-interface PendingModal {
-	title: string;
-	message?: string;
-	kind: "stockClass" | "stakeholder" | "issuance";
-}
-
 interface OptimisticStockClass {
 	_id: string;
 	name: string;
@@ -64,6 +56,12 @@ interface OptimisticIssuance {
 	quantity: string;
 	stakeholder_id: string;
 	stock_class_id: string;
+	share_price?: { amount: string; currency: string };
+	stakeholder_name?: string;
+	stock_class_name?: string;
+	custom_id?: string;
+	txHash?: string;
+	date?: string;
 }
 
 export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardProps) {
@@ -80,30 +78,31 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const [directStakeholders, setDirectStakeholders] = useState<OptimisticStakeholder[]>([]);
 	const [directIssuances, setDirectIssuances] = useState<OptimisticIssuance[]>([]);
 
-	// Pending until receipt is confirmed or reverted — never "success on submit".
-	const [pendingStockClass, setPendingStockClass] = useState<PendingModal | null>(null);
-	const [pendingStakeholder, setPendingStakeholder] = useState<PendingModal | null>(null);
-	const [pendingIssuance, setPendingIssuance] = useState<PendingModal | null>(null);
+	const [pendingStockClass, setPendingStockClass] = useState(false);
+	const [pendingStakeholder, setPendingStakeholder] = useState(false);
+	const [pendingIssuance, setPendingIssuance] = useState(false);
 
-	const [successModal, setSuccessModal] = useState<{ title: string; txHash?: string; message?: string } | null>(null);
+	const [successModal, setSuccessModal] = useState<{ title: string; txHash?: string; message?: string } | null>(
+		null,
+	);
 
 	const [historicalTransactions, setHistoricalTransactions] = useState<any[]>([]);
 	const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+	const [isSyncingPoller, setIsSyncingPoller] = useState(false);
+	const [syncNote, setSyncNote] = useState<string | null>(null);
 
-	// Compute pending sync for holdings polling *before* manager so we can pass shouldPoll.
 	const [hasPendingSyncFlag, setHasPendingSyncFlag] = useState(false);
-
 	const manager = useCapTableManager(issuerResult, { shouldPoll: hasPendingSyncFlag });
 
+	// Confirm / revert handlers
 	useEffect(() => {
 		if (!pendingStockClass) return;
 		if (directStockClass.isConfirmed) {
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.stockClass,
 				txHash: directStockClass.hash,
-				message: pendingStockClass.message,
 			});
-			setPendingStockClass(null);
+			setPendingStockClass(false);
 			directStockClass.reset();
 		} else if (directStockClass.isReverted) {
 			setSuccessModal({
@@ -111,7 +110,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				message: directStockClass.errorMessage || copy.tx.revertedGeneric,
 			});
 			setDirectStockClasses((prev) => prev.slice(0, -1));
-			setPendingStockClass(null);
+			setPendingStockClass(false);
 			directStockClass.reset();
 		}
 	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass]);
@@ -122,9 +121,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.stakeholder,
 				txHash: directStakeholder.hash,
-				message: pendingStakeholder.message,
 			});
-			setPendingStakeholder(null);
+			setPendingStakeholder(false);
 			directStakeholder.reset();
 		} else if (directStakeholder.isReverted) {
 			setSuccessModal({
@@ -132,7 +130,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				message: directStakeholder.errorMessage || copy.tx.revertedGeneric,
 			});
 			setDirectStakeholders((prev) => prev.slice(0, -1));
-			setPendingStakeholder(null);
+			setPendingStakeholder(false);
 			directStakeholder.reset();
 		}
 	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder]);
@@ -143,29 +141,47 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.issuance,
 				txHash: directIssuance.hash,
-				message: pendingIssuance.message,
 			});
-			setPendingIssuance(null);
+			// Attach hash onto last optimistic row
+			if (directIssuance.hash) {
+				setDirectIssuances((prev) => {
+					if (!prev.length) return prev;
+					const next = [...prev];
+					next[next.length - 1] = { ...next[next.length - 1], txHash: directIssuance.hash };
+					return next;
+				});
+			}
+			setPendingIssuance(false);
 			directIssuance.reset();
+			manager.refreshHoldings();
 		} else if (directIssuance.isReverted) {
 			setSuccessModal({
 				title: copy.tx.revertedTitle,
 				message: directIssuance.errorMessage || copy.tx.issuanceReverted,
 			});
 			setDirectIssuances((prev) => prev.slice(0, -1));
-			setPendingIssuance(null);
+			setPendingIssuance(false);
 			directIssuance.reset();
 		}
-	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance]);
+	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance, manager]);
 
-	useEffect(() => {
-		if (currentView !== "transactions" || !issuerResult?._id) return;
+	const loadHistory = useCallback(() => {
+		if (!issuerResult?._id) return;
 		setIsLoadingHistory(true);
 		fetchHistoricalTransactions(issuerResult._id)
-			.then((res: any) => setHistoricalTransactions(Array.isArray(res?.transactions) ? res.transactions : res || []))
+			.then((res: any) => {
+				const list = Array.isArray(res) ? res : Array.isArray(res?.transactions) ? res.transactions : [];
+				setHistoricalTransactions(list);
+			})
 			.catch((err) => console.warn("Failed to load historical transactions", err))
 			.finally(() => setIsLoadingHistory(false));
-	}, [currentView, issuerResult?._id]);
+	}, [issuerResult?._id]);
+
+	useEffect(() => {
+		if (currentView === "transactions" || currentView === "overview") {
+			loadHistory();
+		}
+	}, [currentView, loadHistory, directIssuances.length]);
 
 	const dedupeById = (items: any[]) => {
 		const byId = new Map(items.filter(Boolean).map((x: any) => [x._id, x]));
@@ -179,7 +195,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 
 	const stakeholderOptions = useMemo(() => {
 		const fromServer = manager.holdings?.stakeholders || [];
-		const fromHoldings = (manager.holdings?.holdings || []).map((h: { stakeholder?: any }) => h.stakeholder).filter(Boolean);
+		const fromHoldings = (manager.holdings?.holdings || [])
+			.map((h: { stakeholder?: any }) => h.stakeholder)
+			.filter(Boolean);
 		return dedupeById([...fromServer, ...fromHoldings, ...directStakeholders]);
 	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, directStakeholders]);
 
@@ -197,20 +215,39 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		setHasPendingSyncFlag(hasPendingSync);
 	}, [hasPendingSync]);
 
+	const syncLedger = async () => {
+		setIsSyncingPoller(true);
+		setSyncNote(null);
+		try {
+			const res = await fetch(`/api/issuer/${encodeURIComponent(issuerResult._id)}/poller-catchup`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ buffer: 3000 }),
+			});
+			if (!res.ok) {
+				const text = await res.text();
+				setSyncNote(text || `Sync failed (${res.status})`);
+				return;
+			}
+			const json = await res.json();
+			setSyncNote(json.message || "Ledger catch-up queued. Refreshing…");
+			// Give the poller a moment then refresh
+			setTimeout(() => {
+				manager.refreshHoldings();
+				loadHistory();
+			}, 2500);
+		} catch (e) {
+			setSyncNote(e instanceof Error ? e.message : "Sync failed");
+		} finally {
+			setIsSyncingPoller(false);
+		}
+	};
+
 	const handleStockClass = async (data: StockClassData) => {
 		if (!capTableAddress || !directStockClass.isConnected) {
-			setSuccessModal({ title: "Wallet Required", message: copy.tx.walletRequired });
+			setSuccessModal({ title: "Wallet required", message: copy.tx.walletRequired });
 			return;
 		}
-
-		const issuerAuthorized = Number(manager.holdings?.issuer?.initial_shares_authorized ?? 0);
-		const classAuth = Number(data.initial_shares_authorized);
-		if (issuerAuthorized > 0 && Number.isFinite(classAuth) && classAuth > issuerAuthorized) {
-			console.warn(
-				`Stock class authorized (${classAuth}) exceeds issuer authorized (${issuerAuthorized}). Issuance remains bounded by the issuer total.`,
-			);
-		}
-
 		try {
 			const stockClassBytes16 = generateBytes16Id() as `0x${string}`;
 			const stockClassUuid = bytes16ToUuid(stockClassBytes16);
@@ -223,12 +260,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				id: stockClassBytes16,
 			});
 
-			setPendingStockClass({
-				kind: "stockClass",
-				title: copy.tx.submittedTitle.stockClass,
-				message: copy.tx.submittedBody,
-			});
-
+			setPendingStockClass(true);
 			setDirectStockClasses((prev) => [
 				...prev,
 				{
@@ -242,23 +274,20 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			registerStockClassOnchain({ issuerId: issuerResult._id, data, id: stockClassUuid }).catch((err) =>
 				console.warn("Failed to register stock class metadata:", err),
 			);
-
 			manager.refreshHoldings();
 		} catch (err) {
-			console.error("Direct stock class creation failed", err);
 			setSuccessModal({
-				title: "Transaction Failed",
-				message: err instanceof Error ? err.message : "Failed to create stock class onchain.",
+				title: "Transaction failed",
+				message: err instanceof Error ? err.message : "Failed to create share class.",
 			});
 		}
 	};
 
 	const handleStakeholder = async (data: StakeholderData) => {
 		if (!capTableAddress || !directStakeholder.isConnected) {
-			setSuccessModal({ title: "Wallet Required", message: copy.tx.walletRequired });
+			setSuccessModal({ title: "Wallet required", message: copy.tx.walletRequired });
 			return;
 		}
-
 		try {
 			const stakeholderBytes16 = generateBytes16Id() as `0x${string}`;
 			const stakeholderUuid = bytes16ToUuid(stakeholderBytes16);
@@ -270,12 +299,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				id: stakeholderBytes16,
 			});
 
-			setPendingStakeholder({
-				kind: "stakeholder",
-				title: copy.tx.submittedTitle.stakeholder,
-				message: copy.tx.submittedBody,
-			});
-
+			setPendingStakeholder(true);
 			setDirectStakeholders((prev) => [
 				...prev,
 				{ _id: stakeholderUuid, name: data.name, stakeholder_type: data.stakeholder_type },
@@ -284,20 +308,18 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			registerStakeholderOnchain({ issuerId: issuerResult._id, data, id: stakeholderUuid }).catch((err) =>
 				console.warn("Failed to register stakeholder metadata:", err),
 			);
-
 			manager.refreshHoldings();
 		} catch (err) {
-			console.error("Direct stakeholder creation failed", err);
 			setSuccessModal({
-				title: "Transaction Failed",
-				message: err instanceof Error ? err.message : "Failed to create stakeholder onchain.",
+				title: "Transaction failed",
+				message: err instanceof Error ? err.message : "Failed to add person.",
 			});
 		}
 	};
 
 	const handleIssuance = async (data: StockIssuanceData) => {
 		if (!capTableAddress || !directIssuance.isConnected) {
-			setSuccessModal({ title: "Wallet Required", message: copy.tx.walletRequired });
+			setSuccessModal({ title: "Wallet required", message: copy.tx.walletRequired });
 			return;
 		}
 
@@ -305,6 +327,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		const stockClass =
 			stockClassOptions.find((sc: any) => sc._id === data.stock_class_id) ||
 			(manager.holdings?.stockClasses || []).find((sc: any) => sc._id === data.stock_class_id);
+		const stakeholder = stakeholderOptions.find((sh: any) => sh._id === data.stakeholder_id);
 
 		const cap = validateShareCaps({
 			quantity: data.quantity,
@@ -320,10 +343,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		});
 
 		if (!cap.ok) {
-			setSuccessModal({
-				title: "Not enough authorized shares",
-				message: cap.errors.join(" "),
-			});
+			setSuccessModal({ title: "Not enough shares", message: cap.errors.join(" ") });
 			return;
 		}
 
@@ -338,12 +358,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				comments: data.comments,
 			});
 
-			setPendingIssuance({
-				kind: "issuance",
-				title: copy.tx.submittedTitle.issuance,
-				message: copy.tx.submittedBody,
-			});
-
+			setPendingIssuance(true);
 			setDirectIssuances((prev) => [
 				...prev,
 				{
@@ -352,19 +367,22 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					quantity: data.quantity,
 					stakeholder_id: data.stakeholder_id,
 					stock_class_id: data.stock_class_id,
+					share_price: data.share_price,
+					stakeholder_name: stakeholder?.name?.legal_name || stakeholder?.name?.first_name,
+					stock_class_name: stockClass?.name,
+					custom_id: data.custom_id,
+					date: new Date().toISOString().slice(0, 10),
 				},
 			]);
 
 			registerStockIssuanceOnchain({ issuerId: issuerResult._id, data }).catch((err) =>
 				console.warn("Failed to register stock issuance metadata:", err),
 			);
-
 			manager.refreshHoldings();
 		} catch (err) {
-			console.error("Direct stock issuance failed", err);
 			setSuccessModal({
-				title: "Transaction Failed",
-				message: err instanceof Error ? err.message : "Failed to issue stock onchain.",
+				title: "Transaction failed",
+				message: err instanceof Error ? err.message : "Failed to issue stock.",
 			});
 		}
 	};
@@ -375,214 +393,265 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			createdStockClasses={directStockClasses}
 			createdStakeholders={directStakeholders}
 			createdIssuances={directIssuances}
-			onRefresh={manager.refreshHoldings}
+			onRefresh={() => {
+				manager.refreshHoldings();
+				loadHistory();
+			}}
 			isLoading={manager.isLoadingHoldings}
 			error={manager.holdingsError}
 		/>
 	);
 
-	const stockClassList =
-		stockClassOptions.length > 0 ? (
-			<TableScroll>
-				<StyledTable>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Type</th>
-							<th>Authorized</th>
-							<th>ID</th>
-						</tr>
-					</thead>
-					<tbody>
-						{stockClassOptions.map((sc: any) => (
-							<tr key={sc._id}>
-								<td>{sc.name || "—"}</td>
-								<td>{sc.class_type || "—"}</td>
-								<td>{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}</td>
-								<td style={{ fontFamily: "monospace", fontSize: "0.85em", wordBreak: "break-all" }}>{sc._id}</td>
-							</tr>
-						))}
-					</tbody>
-				</StyledTable>
-			</TableScroll>
-		) : (
-			<MutedText>No stock classes yet. Create one with the form.</MutedText>
-		);
-
-	const stakeholderList =
-		stakeholderOptions.length > 0 ? (
-			<TableScroll>
-				<StyledTable>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Type</th>
-							<th>ID</th>
-						</tr>
-					</thead>
-					<tbody>
-						{stakeholderOptions.map((sh: any) => (
-							<tr key={sh._id}>
-								<td>{sh.name?.legal_name || sh.name?.first_name || "—"}</td>
-								<td>{sh.stakeholder_type || "—"}</td>
-								<td style={{ fontFamily: "monospace", fontSize: "0.85em", wordBreak: "break-all" }}>{sh._id}</td>
-							</tr>
-						))}
-					</tbody>
-				</StyledTable>
-			</TableScroll>
-		) : (
-			<MutedText>No stakeholders yet. Create one with the form.</MutedText>
-		);
+	const toolBar = (
+		<SectionActions>
+			<InlineButton onClick={syncLedger} disabled={isSyncingPoller} $variant="secondary">
+				{isSyncingPoller ? "Syncing…" : "Sync ledger"}
+			</InlineButton>
+			<InlineButton
+				onClick={() => {
+					manager.refreshHoldings();
+					loadHistory();
+				}}
+				disabled={manager.isLoadingHoldings}
+				$variant="ghost"
+			>
+				Refresh
+			</InlineButton>
+		</SectionActions>
+	);
 
 	const renderMainContent = () => {
 		if (currentView === "stock-classes") {
 			return (
-				<ActionTableLayout data-testid="view-stock-classes">
-					<Panel>
-						<SectionHeader>
-							<TableTitle>Share class</TableTitle>
-						</SectionHeader>
-						<MutedText>Common, preferred, or any other class of stock this company can issue.</MutedText>
+				<PageLayout data-testid="view-stock-classes">
+					<FormBand>
+						<TableTitle>New share class</TableTitle>
 						<StockClassForm onSubmit={handleStockClass} disabled={manager.isLoadingHoldings} />
-					</Panel>
-					<TablePanel>
+					</FormBand>
+					<DataBand>
 						<SectionHeader>
-							<TableTitle>Stock Classes</TableTitle>
+							<TableTitle>Share classes</TableTitle>
+							{toolBar}
 						</SectionHeader>
-						{stockClassList}
-						{holdingsTable}
-					</TablePanel>
-				</ActionTableLayout>
+						<TableScroll>
+							<StyledTable>
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Type</th>
+										<th>Authorized</th>
+										<th>ID</th>
+									</tr>
+								</thead>
+								<tbody>
+									{stockClassOptions.length === 0 ? (
+										<tr>
+											<td colSpan={4}>
+												<MutedText>None yet — use the form above.</MutedText>
+											</td>
+										</tr>
+									) : (
+										stockClassOptions.map((sc: any) => (
+											<tr key={sc._id}>
+												<td>{sc.name || "—"}</td>
+												<td>{sc.class_type || "—"}</td>
+												<td>{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}</td>
+												<td style={{ wordBreak: "break-all", fontSize: "0.85em" }}>{sc._id}</td>
+											</tr>
+										))
+									)}
+								</tbody>
+							</StyledTable>
+						</TableScroll>
+					</DataBand>
+				</PageLayout>
 			);
 		}
 
 		if (currentView === "stakeholders") {
 			return (
-				<ActionTableLayout data-testid="view-stakeholders">
-					<Panel>
-						<SectionHeader>
-							<TableTitle>Person or entity</TableTitle>
-						</SectionHeader>
-						<MutedText>Founders, employees, investors — anyone who will hold shares.</MutedText>
+				<PageLayout data-testid="view-stakeholders">
+					<FormBand>
+						<TableTitle>Add person</TableTitle>
 						<StakeholderForm onSubmit={handleStakeholder} disabled={manager.isLoadingHoldings} />
-					</Panel>
-					<TablePanel>
+					</FormBand>
+					<DataBand>
 						<SectionHeader>
-							<TableTitle>Stakeholders</TableTitle>
+							<TableTitle>People</TableTitle>
+							{toolBar}
 						</SectionHeader>
-						{stakeholderList}
-						{holdingsTable}
-					</TablePanel>
-				</ActionTableLayout>
+						<TableScroll>
+							<StyledTable>
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Type</th>
+										<th>ID</th>
+									</tr>
+								</thead>
+								<tbody>
+									{stakeholderOptions.length === 0 ? (
+										<tr>
+											<td colSpan={3}>
+												<MutedText>None yet — use the form above.</MutedText>
+											</td>
+										</tr>
+									) : (
+										stakeholderOptions.map((sh: any) => (
+											<tr key={sh._id}>
+												<td>{sh.name?.legal_name || sh.name?.first_name || "—"}</td>
+												<td>{sh.stakeholder_type || "—"}</td>
+												<td style={{ wordBreak: "break-all", fontSize: "0.85em" }}>{sh._id}</td>
+											</tr>
+										))
+									)}
+								</tbody>
+							</StyledTable>
+						</TableScroll>
+					</DataBand>
+				</PageLayout>
 			);
 		}
 
 		if (currentView === "issue-stock") {
 			return (
-				<ActionTableLayout data-testid="view-issue-stock">
-					<Panel>
-						<SectionHeader>
-							<TableTitle>Issue stock</TableTitle>
-						</SectionHeader>
-						<MutedText>Grant shares to someone. We check authorized share limits before you sign.</MutedText>
+				<PageLayout data-testid="view-issue-stock">
+					<FormBand>
+						<TableTitle>Issue stock</TableTitle>
 						<IssueStockForm
 							stockClasses={stockClassOptions}
 							stakeholders={stakeholderOptions}
 							onSubmit={handleIssuance}
-							disabled={manager.isLoadingHoldings || stockClassOptions.length === 0 || stakeholderOptions.length === 0}
+							disabled={
+								manager.isLoadingHoldings ||
+								stockClassOptions.length === 0 ||
+								stakeholderOptions.length === 0
+							}
 							hint={
-								!manager.isLoadingHoldings && (stockClassOptions.length === 0 || stakeholderOptions.length === 0)
+								!manager.isLoadingHoldings &&
+								(stockClassOptions.length === 0 || stakeholderOptions.length === 0)
 									? copy.issueStock.needsSetup
 									: undefined
 							}
 						/>
-					</Panel>
-					<TablePanel>{holdingsTable}</TablePanel>
-				</ActionTableLayout>
+					</FormBand>
+					<DataBand>
+						<SectionHeader>
+							<TableTitle>Holdings</TableTitle>
+							{toolBar}
+						</SectionHeader>
+						{holdingsTable}
+					</DataBand>
+				</PageLayout>
 			);
 		}
 
 		if (currentView === "transactions") {
+			const pendingRows = directIssuances.map((iss) => ({
+				type: "Stock issuance",
+				details: iss.custom_id || iss.security_id || "—",
+				quantity: iss.quantity,
+				price: iss.share_price?.amount
+					? `${iss.share_price.amount} ${iss.share_price.currency || "USD"}`
+					: "—",
+				date: iss.date || "—",
+				status: "Pending",
+				key: `local-${iss._id}`,
+			}));
+
+			const historyRows = historicalTransactions.map((tx: any, idx: number) => {
+				const t = tx.transaction || tx || {};
+				const priceAmount = t.share_price?.amount;
+				return {
+					type: tx.transactionType || t.object_type || "Transaction",
+					details: t.custom_id || t.security_id || "—",
+					quantity: t.quantity ?? "—",
+					price:
+						priceAmount != null && priceAmount !== ""
+							? `${priceAmount} ${t.share_price?.currency || "USD"}`
+							: "—",
+					date: t.date || "—",
+					status: "Confirmed",
+					key: `hist-${idx}`,
+				};
+			});
+
+			const rows = [...pendingRows, ...historyRows];
+
 			return (
-				<div data-testid="view-transactions">
-					<TablePanel>
+				<PageLayout data-testid="view-transactions">
+					<DataBand>
 						<SectionHeader>
 							<TableTitle>Activity</TableTitle>
+							{toolBar}
 						</SectionHeader>
-						<MutedText>Issuances and other events once they&apos;ve confirmed onchain.</MutedText>
-						{historicalTransactions.length > 0 ? (
-							<TableScroll>
-								<StyledTable>
-									<thead>
+						{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+						<TableScroll>
+							<StyledTable>
+								<thead>
+									<tr>
+										<th>Type</th>
+										<th>Details</th>
+										<th>Shares</th>
+										<th>Price</th>
+										<th>Date</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									{rows.length === 0 ? (
 										<tr>
-											<th>Type</th>
-											<th>Details</th>
-											<th>Quantity</th>
-											<th>Price</th>
-											<th>Date</th>
+											<td colSpan={6}>
+												<MutedText>
+													{isLoadingHistory
+														? "Loading…"
+														: "No activity yet. Issue stock, then Sync ledger if nothing shows."}
+												</MutedText>
+											</td>
 										</tr>
-									</thead>
-									<tbody>
-										{historicalTransactions.map((tx: any, idx: number) => {
-											const t = tx.transaction || {};
-											const priceAmount = t.share_price?.amount;
-											const priceLabel =
-												priceAmount != null && priceAmount !== ""
-													? `${priceAmount} ${t.share_price?.currency || "USD"}`
-													: "—";
-											return (
-												<tr key={idx}>
-													<td>{tx.transactionType}</td>
-													<td>{t.custom_id || t.security_id?.slice(0, 8) || "—"}</td>
-													<td>{t.quantity}</td>
-													<td>{priceLabel}</td>
-													<td>{t.date || "—"}</td>
-												</tr>
-											);
-										})}
-									</tbody>
-								</StyledTable>
-							</TableScroll>
-						) : (
-							<div style={{ padding: "1rem", opacity: 0.6 }}>
-								No historical transactions yet. Issue stock to see activity here.
-								{isLoadingHistory && " (loading...)"}
-							</div>
-						)}
-
-						{holdingsTable}
-					</TablePanel>
-				</div>
+									) : (
+										rows.map((r) => (
+											<tr key={r.key}>
+												<td>{r.type}</td>
+												<td style={{ wordBreak: "break-all" }}>{r.details}</td>
+												<td>{r.quantity}</td>
+												<td>{r.price}</td>
+												<td>{r.date}</td>
+												<td>{r.status}</td>
+											</tr>
+										))
+									)}
+								</tbody>
+							</StyledTable>
+						</TableScroll>
+					</DataBand>
+				</PageLayout>
 			);
 		}
 
-		// overview — holdings summary
-		const holdingsCount = (manager.holdings?.holdings || []).length + directIssuances.length;
+		// overview — holdings first, compact counts
+		const classN = stockClassOptions.length;
+		const peopleN = stakeholderOptions.length;
+		const posN = (manager.holdings?.holdings || []).length + directIssuances.length;
+
 		return (
-			<div data-testid="view-overview">
-				<StatGrid>
-					<StatCard>
-						<StatLabel>Stock Classes</StatLabel>
-						<StatValue>{stockClassOptions.length}</StatValue>
-					</StatCard>
-					<StatCard>
-						<StatLabel>Stakeholders</StatLabel>
-						<StatValue>{stakeholderOptions.length}</StatValue>
-					</StatCard>
-					<StatCard>
-						<StatLabel>Positions</StatLabel>
-						<StatValue>{holdingsCount}</StatValue>
-					</StatCard>
-					<StatCard>
-						<StatLabel>Pending Sync</StatLabel>
-						<StatValue>{hasPendingSync ? "Yes" : "—"}</StatValue>
-					</StatCard>
-				</StatGrid>
-				<ActionTableLayout>
-					<TablePanel>{holdingsTable}</TablePanel>
-				</ActionTableLayout>
-			</div>
+			<PageLayout data-testid="view-overview">
+				<DataBand>
+					<SectionHeader>
+						<div>
+							<TableTitle>Holdings</TableTitle>
+							<MutedText style={{ marginTop: "0.35rem" }}>
+								{classN} class{classN === 1 ? "" : "es"} · {peopleN} people · {posN} position
+								{posN === 1 ? "" : "s"}
+								{hasPendingSync ? " · syncing…" : ""}
+							</MutedText>
+						</div>
+						{toolBar}
+					</SectionHeader>
+					{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+					{holdingsTable}
+				</DataBand>
+			</PageLayout>
 		);
 	};
 

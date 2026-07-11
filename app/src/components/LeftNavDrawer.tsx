@@ -125,19 +125,9 @@ const NavLink = styled.a<{ $active?: boolean }>`
 	}
 `;
 
-const IssuerId = styled.div`
-	margin: 0 ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.sm};
-	padding: 0;
-	font-size: ${({ theme }) => theme.fontSizes.xs};
-	line-height: 1.4;
-	color: ${({ theme }) => theme.colors.subtle};
-	word-break: break-all;
-	user-select: all;
-`;
-
 const BackLink = styled(NavLink)`
 	color: ${({ theme }) => theme.colors.subtle} !important;
-	margin-bottom: ${({ theme }) => theme.spacing.xs};
+	margin-bottom: ${({ theme }) => theme.spacing.sm};
 
 	&:hover {
 		color: ${({ theme }) => theme.colors.main} !important;
@@ -198,7 +188,6 @@ export function LeftNavDrawer() {
 					</BrandRow>
 
 					<NavSection>
-						<NavLabel>App</NavLabel>
 						{APP_NAV_ITEMS.map((item) => {
 							const active = item.match(pathname);
 							return (
@@ -217,11 +206,10 @@ export function LeftNavDrawer() {
 
 					{isCapTableRoute && issuerId && (
 						<NavSection data-testid="cap-table-sections">
-							<NavLabel>This company</NavLabel>
 							<Link href="/manage" passHref legacyBehavior>
-								<BackLink onClick={closeMobile}>All companies</BackLink>
+								<BackLink onClick={closeMobile}>← Companies</BackLink>
 							</Link>
-							<IssuerId title={issuerId}>{issuerId}</IssuerId>
+							<NavLabel>Company</NavLabel>
 							{CAP_TABLE_SECTIONS.map((section) => {
 								const active = currentView === section.id;
 								return (

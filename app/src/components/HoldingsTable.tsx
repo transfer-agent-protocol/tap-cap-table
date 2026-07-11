@@ -5,17 +5,28 @@ import { SectionActions, SectionHeader, TableTitle } from "./wrappers";
 import { copy } from "../lib/copy";
 
 interface HoldingsTableProps {
-	holdingsData: any; // response from /cap-table/holdings/stock
+	holdingsData: any;
 	createdStockClasses?: any[];
 	createdStakeholders?: any[];
-	createdIssuances?: any[];
+	createdIssuances?: Array<{
+		_id: string;
+		security_id?: string;
+		quantity: string;
+		stakeholder_id: string;
+		stock_class_id: string;
+		share_price?: { amount?: string; currency?: string };
+		stakeholder_name?: string;
+		stock_class_name?: string;
+		custom_id?: string;
+		txHash?: string;
+	}>;
 	onRefresh?: () => void;
 	isLoading?: boolean;
 	error?: string | null;
+	/** Hide the title band when the parent page already labels the section */
+	compact?: boolean;
 }
 
-// One flat row shape for every kind of entry (server holding, pending issuance, optimistic
-// class/stakeholder) so the generic DataTable can render them uniformly.
 interface HoldingRow {
 	key: string;
 	stakeholder: ReactNode;
@@ -27,7 +38,6 @@ interface HoldingRow {
 
 function formatSharePrice(sharePrice: unknown, currency = "USD"): string {
 	if (sharePrice == null) return "—";
-	// Server returns a plain number; optimistic rows use the OCF `{ amount, currency }` shape.
 	if (typeof sharePrice === "number") {
 		if (!Number.isFinite(sharePrice) || sharePrice === 0) return "—";
 		return `${sharePrice.toFixed(2)} ${currency}`;
@@ -40,12 +50,17 @@ function formatSharePrice(sharePrice: unknown, currency = "USD"): string {
 	return "—";
 }
 
-function ExplorerLink({ txHash, label }: { txHash: string; label: string }) {
-	return (
-		<a href={`https://explorer.plume.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
-			{label}
-		</a>
-	);
+function resolveName(
+	id: string,
+	nameHint: string | undefined,
+	list: any[] | undefined,
+	kind: "stakeholder" | "stockClass",
+): string {
+	if (nameHint) return nameHint;
+	const hit = (list || []).find((x: any) => x._id === id);
+	if (!hit) return id;
+	if (kind === "stakeholder") return hit.name?.legal_name || hit.name?.first_name || id;
+	return hit.name || id;
 }
 
 const columns: Column<HoldingRow>[] = [
@@ -64,10 +79,12 @@ export function HoldingsTable({
 	onRefresh,
 	isLoading,
 	error = null,
+	compact = false,
 }: HoldingsTableProps) {
 	const holdings: any[] = holdingsData?.holdings || [];
+	const allStakeholders = [...(holdingsData?.stakeholders || []), ...createdStakeholders];
+	const allClasses = [...(holdingsData?.stockClasses || []), ...createdStockClasses];
 
-	// Drop optimistic issuances once a matching server row exists (join key: stakeholder + class).
 	const holdingKeys = new Set<string>(holdings.map((h) => `${h.stakeholder?._id}|${h.stockClass?._id}`));
 	const pendingIssuances = createdIssuances.filter(
 		(iss) => !holdingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`),
@@ -84,47 +101,30 @@ export function HoldingsTable({
 		})),
 		...pendingIssuances.map((iss, i) => ({
 			key: `iss-${i}`,
-			stakeholder: iss.stakeholder_id,
-			stockClass: iss.stock_class_id,
-			quantity: `${iss.quantity} (pending)`,
+			stakeholder: resolveName(iss.stakeholder_id, iss.stakeholder_name, allStakeholders, "stakeholder"),
+			stockClass: resolveName(iss.stock_class_id, iss.stock_class_name, allClasses, "stockClass"),
+			quantity: iss.quantity,
 			sharePrice: formatSharePrice(iss.share_price),
-			status: iss.txHash ? <ExplorerLink txHash={iss.txHash} label="Onchain ✓" /> : copy.status.pending,
+			status: copy.status.pending,
 		})),
-		...createdStockClasses
-			.filter((sc) => sc.txHash)
-			.map((sc, i) => ({
-				key: `sc-${i}`,
-				stakeholder: "—",
-				stockClass: `Stock Class: ${sc.name}`,
-				quantity: "—",
-				sharePrice: "—",
-				status: <ExplorerLink txHash={sc.txHash} label="Onchain ✓" />,
-			})),
-		...createdStakeholders
-			.filter((sh) => sh.txHash)
-			.map((sh, i) => ({
-				key: `sh-${i}`,
-				stakeholder: `Stakeholder: ${sh.name?.legal_name || sh.name || sh._id}`,
-				stockClass: "—",
-				quantity: "—",
-				sharePrice: "—",
-				status: <ExplorerLink txHash={sh.txHash} label="Onchain ✓" />,
-			})),
 	];
 
 	return (
 		<div>
-			<SectionHeader>
-				<TableTitle>{copy.holdings.title}</TableTitle>
-				{onRefresh && (
-					<SectionActions>
-						<InlineButton onClick={onRefresh} disabled={isLoading}>
-							{isLoading ? "Refreshing…" : "Refresh"}
-						</InlineButton>
-					</SectionActions>
-				)}
-			</SectionHeader>
+			{!compact && (
+				<SectionHeader>
+					<TableTitle>{copy.holdings.title}</TableTitle>
+					{onRefresh && (
+						<SectionActions>
+							<InlineButton onClick={onRefresh} disabled={isLoading}>
+								{isLoading ? "Refreshing…" : "Refresh"}
+							</InlineButton>
+						</SectionActions>
+					)}
+				</SectionHeader>
+			)}
 
+			{/* Always a real table (headers + body) — empty state is a table row */}
 			<DataTable<HoldingRow>
 				columns={columns}
 				rows={rows}
@@ -132,7 +132,11 @@ export function HoldingsTable({
 				isLoading={isLoading}
 				error={error}
 				emptyMessage={copy.holdings.empty}
-				caption={copy.holdings.caption}
+				caption={
+					pendingIssuances.length > 0
+						? "Pending rows are from this session. Use Sync ledger if they stay pending."
+						: undefined
+				}
 			/>
 		</div>
 	);
