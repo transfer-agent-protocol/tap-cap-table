@@ -102,17 +102,6 @@ const MetaLabel = styled.span`
 	color: ${({ theme }) => theme.colors.subtle};
 `;
 
-const MetaValue = styled.span`
-	display: block;
-	font-size: ${({ theme }) => theme.fontSizes.xs};
-	line-height: 1.5;
-	color: ${({ theme }) => theme.colors.muted};
-	word-break: break-all;
-	overflow-wrap: anywhere;
-	user-select: all;
-	font-variant-numeric: tabular-nums;
-`;
-
 const ContractLink = styled.a`
 	display: block;
 	font-size: ${({ theme }) => theme.fontSizes.xs} !important;
