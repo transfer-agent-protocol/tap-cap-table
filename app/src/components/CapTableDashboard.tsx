@@ -602,6 +602,24 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 	};
 
+	const onchainClassCount = issuableStockClasses.length;
+	const peopleCount = stakeholderOptions.length;
+	const positionCount =
+		(manager.holdings?.holdings || []).length +
+		directIssuances.filter((i) => i.confirmed || i.txHash).length;
+	const ghostClassCount = stockClassOptions.length - onchainClassCount;
+
+	const holdingsEmptyHint =
+		positionCount === 0 && directIssuances.length === 0
+			? onchainClassCount === 0
+				? peopleCount === 0
+					? "Nothing issued yet. Add a person, create a share class onchain (Classes), then Issue stock."
+					: "No share positions on the blockchain. Your share class is not onchain yet — open Classes, create it, confirm in your wallet, then Issue."
+				: peopleCount === 0
+					? "No share positions yet. Add a person under People, then Issue stock."
+					: "No share positions on the blockchain yet. Open Issue and grant shares (confirm in your wallet)."
+			: undefined;
+
 	// Parent toolbar owns Refresh — don't pass onRefresh (avoids double buttons)
 	const holdingsTable = (
 		<HoldingsTable
@@ -612,6 +630,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			isLoading={manager.isLoadingHoldings}
 			error={manager.holdingsError}
 			compact
+			emptyHint={holdingsEmptyHint}
 		/>
 	);
 
@@ -881,11 +900,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			);
 		}
 
-		// overview — holdings first, compact counts
-		const classN = stockClassOptions.length;
-		const peopleN = stakeholderOptions.length;
-		const posN = (manager.holdings?.holdings || []).length + directIssuances.length;
-
+		// overview — holdings first; counts distinguish onchain vs metadata-only
 		return (
 			<PageLayout data-testid="view-overview">
 				<DataBand>
@@ -893,13 +908,26 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						<div>
 							<TableTitle>Holdings</TableTitle>
 							<MutedText style={{ marginTop: "0.35rem" }}>
-								{classN} class{classN === 1 ? "" : "es"} · {peopleN} people · {posN} position
-								{posN === 1 ? "" : "s"}
-								{hasPendingSync ? " · syncing…" : ""}
+								{positionCount} position{positionCount === 1 ? "" : "s"} onchain
+								{" · "}
+								{peopleCount} people
+								{" · "}
+								{onchainClassCount} class{onchainClassCount === 1 ? "" : "es"} onchain
+								{ghostClassCount > 0
+									? ` · ${ghostClassCount} class name${ghostClassCount === 1 ? "" : "s"} not onchain`
+									: ""}
+								{hasPendingSync ? " · waiting on wallet…" : ""}
 							</MutedText>
 						</div>
 						{toolBar}
 					</SectionHeader>
+					{ghostClassCount > 0 && positionCount === 0 && (
+						<StatusBox $variant="pending">
+							A share class exists in the database but not on the blockchain yet. Create it under{" "}
+							<strong>Classes</strong> and confirm the wallet transaction before issuing stock. Sync
+							blockchain does not create classes or issuances.
+						</StatusBox>
+					)}
 					{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
 					{holdingsTable}
 				</DataBand>

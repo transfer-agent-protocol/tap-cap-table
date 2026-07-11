@@ -26,6 +26,8 @@ interface HoldingsTableProps {
 	isLoading?: boolean;
 	error?: string | null;
 	compact?: boolean;
+	/** Extra empty-state guidance (e.g. class not onchain yet) */
+	emptyHint?: string;
 }
 
 interface HoldingRow {
@@ -81,6 +83,7 @@ export function HoldingsTable({
 	isLoading,
 	error = null,
 	compact = false,
+	emptyHint,
 }: HoldingsTableProps) {
 	const holdings: any[] = holdingsData?.holdings || [];
 	const allStakeholders = [...(holdingsData?.stakeholders || []), ...createdStakeholders];
@@ -142,7 +145,7 @@ export function HoldingsTable({
 				rowKey={(r) => r.key}
 				isLoading={isLoading}
 				error={error}
-				emptyMessage={copy.holdings.empty}
+				emptyMessage={emptyHint || copy.holdings.empty}
 				caption={
 					waitingOnReceipt
 						? "Pending = waiting for the wallet transaction to confirm."

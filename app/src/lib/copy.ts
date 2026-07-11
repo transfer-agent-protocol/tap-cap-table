@@ -11,12 +11,12 @@ export const copy = {
 			sharePrice: "Price",
 			status: "Status",
 		},
-		empty: "No shares issued yet.",
+		empty: "No share positions on the blockchain yet.",
 		loadError: "Couldn't load holdings.",
 		caption: "",
 	},
 	issueStock: {
-		needsSetup: "Add a person and a share class first.",
+		needsSetup: "Add a person and an onchain share class first.",
 	},
 	status: {
 		onchain: "Confirmed",
