@@ -53,6 +53,8 @@ interface OptimisticStockClass {
 	name: string;
 	class_type: string;
 	initial_shares_authorized?: string;
+	/** True after wallet receipt — safe to issue against */
+	onchain?: boolean;
 }
 interface OptimisticStakeholder {
 	_id: string;
@@ -93,9 +95,22 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const [pendingStakeholder, setPendingStakeholder] = useState(false);
 	const [pendingIssuance, setPendingIssuance] = useState(false);
 
-	const [successModal, setSuccessModal] = useState<{ title: string; txHash?: string; message?: string } | null>(
-		null,
-	);
+	const [successModal, setSuccessModal] = useState<{
+		title: string;
+		txHash?: string;
+		message?: string;
+		variant?: "success" | "error" | "info";
+	} | null>(null);
+
+	// Pending metadata to register only AFTER wallet receipt (avoids Mongo-only ghosts)
+	const [pendingStockClassMeta, setPendingStockClassMeta] = useState<{
+		id: string;
+		data: StockClassData;
+	} | null>(null);
+	const [pendingStakeholderMeta, setPendingStakeholderMeta] = useState<{
+		id: string;
+		data: StakeholderData;
+	} | null>(null);
 
 	const [historicalTransactions, setHistoricalTransactions] = useState<any[]>([]);
 	const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
@@ -123,7 +138,20 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.stockClass,
 				txHash: hash,
+				variant: "success",
 			});
+			// Mark local class as live onchain + register metadata only now
+			setDirectStockClasses((prev) =>
+				prev.map((sc, i) => (i === prev.length - 1 ? { ...sc, onchain: true } : sc)),
+			);
+			if (pendingStockClassMeta) {
+				registerStockClassOnchain({
+					issuerId: issuerResult._id,
+					data: pendingStockClassMeta.data,
+					id: pendingStockClassMeta.id,
+				}).catch((err) => console.warn("Failed to register stock class metadata:", err));
+				setPendingStockClassMeta(null);
+			}
 			if (pendingActivityId && issuerResult._id) {
 				setActivityLog(
 					updateActivity(issuerResult._id, pendingActivityId, {
@@ -137,10 +165,12 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setPendingActivityId(null);
 			setPendingStockClass(false);
 			directStockClass.reset();
+			manager.refreshHoldings();
 		} else if (directStockClass.isReverted) {
 			setSuccessModal({
 				title: copy.tx.revertedTitle,
 				message: directStockClass.errorMessage || copy.tx.revertedGeneric,
+				variant: "error",
 			});
 			if (pendingActivityId && issuerResult._id) {
 				setActivityLog(
@@ -148,11 +178,12 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				);
 			}
 			setDirectStockClasses((prev) => prev.slice(0, -1));
+			setPendingStockClassMeta(null);
 			setPendingActivityId(null);
 			setPendingStockClass(false);
 			directStockClass.reset();
 		}
-	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass, pendingActivityId, issuerResult._id]);
+	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass, pendingActivityId, issuerResult._id, pendingStockClassMeta, manager]);
 
 	useEffect(() => {
 		if (!pendingStakeholder) return;
@@ -161,7 +192,16 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.stakeholder,
 				txHash: hash,
+				variant: "success",
 			});
+			if (pendingStakeholderMeta) {
+				registerStakeholderOnchain({
+					issuerId: issuerResult._id,
+					data: pendingStakeholderMeta.data,
+					id: pendingStakeholderMeta.id,
+				}).catch((err) => console.warn("Failed to register stakeholder metadata:", err));
+				setPendingStakeholderMeta(null);
+			}
 			if (pendingActivityId && issuerResult._id) {
 				setActivityLog(
 					updateActivity(issuerResult._id, pendingActivityId, {
@@ -175,10 +215,12 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setPendingActivityId(null);
 			setPendingStakeholder(false);
 			directStakeholder.reset();
+			manager.refreshHoldings();
 		} else if (directStakeholder.isReverted) {
 			setSuccessModal({
 				title: copy.tx.revertedTitle,
 				message: directStakeholder.errorMessage || copy.tx.revertedGeneric,
+				variant: "error",
 			});
 			if (pendingActivityId && issuerResult._id) {
 				setActivityLog(
@@ -186,11 +228,12 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				);
 			}
 			setDirectStakeholders((prev) => prev.slice(0, -1));
+			setPendingStakeholderMeta(null);
 			setPendingActivityId(null);
 			setPendingStakeholder(false);
 			directStakeholder.reset();
 		}
-	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder, pendingActivityId, issuerResult._id]);
+	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder, pendingActivityId, issuerResult._id, pendingStakeholderMeta, manager]);
 
 	useEffect(() => {
 		if (!pendingIssuance) return;
@@ -275,6 +318,21 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		return dedupeById([...fromHoldings, ...directStockClasses]);
 	}, [manager.holdings?.stockClasses, directStockClasses]);
 
+	/** Only classes that are live onchain (or confirmed in this session) — safe to issue */
+	const issuableStockClasses = useMemo(() => {
+		return stockClassOptions.filter((sc: any) => {
+			if (sc.onchain) return true;
+			if (sc.is_onchain_synced === true) return true;
+			// Session class waiting for receipt is not yet issuable
+			const session = directStockClasses.find((d) => d._id === sc._id);
+			if (session) return !!session.onchain;
+			// Mongo row with is_onchain_synced false = metadata ghost
+			if (sc.is_onchain_synced === false) return false;
+			// Unknown — allow (older data without the flag)
+			return true;
+		});
+	}, [stockClassOptions, directStockClasses]);
+
 	const stakeholderOptions = useMemo(() => {
 		const fromServer = manager.holdings?.stakeholders || [];
 		const fromHoldings = (manager.holdings?.holdings || [])
@@ -352,6 +410,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			const activityId = `sc-${stockClassUuid}-${Date.now()}`;
 			setPendingActivityId(activityId);
 			setPendingStockClass(true);
+			setPendingStockClassMeta({ id: stockClassUuid, data });
 			setDirectStockClasses((prev) => [
 				...prev,
 				{
@@ -359,6 +418,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					name: data.name,
 					class_type: data.class_type,
 					initial_shares_authorized: data.initial_shares_authorized,
+					onchain: false,
 				},
 			]);
 			setActivityLog(
@@ -370,19 +430,16 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					details: data.name,
 					date: new Date().toISOString().slice(0, 10),
 					txHash: result.hash,
-					status: result.hash ? "pending" : "pending",
+					status: "pending",
 					createdAt: Date.now(),
 				}),
 			);
-
-			registerStockClassOnchain({ issuerId: issuerResult._id, data, id: stockClassUuid }).catch((err) =>
-				console.warn("Failed to register stock class metadata:", err),
-			);
-			manager.refreshHoldings();
+			// Metadata is registered only after wallet confirmation (see effect above)
 		} catch (err) {
 			setSuccessModal({
 				title: "Transaction failed",
 				message: err instanceof Error ? err.message : "Failed to create share class.",
+				variant: "error",
 			});
 		}
 	};
@@ -407,6 +464,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			const legalName = data.name?.legal_name || "Person";
 			setPendingActivityId(activityId);
 			setPendingStakeholder(true);
+			setPendingStakeholderMeta({ id: stakeholderUuid, data });
 			setDirectStakeholders((prev) => [
 				...prev,
 				{ _id: stakeholderUuid, name: data.name, stakeholder_type: data.stakeholder_type },
@@ -424,15 +482,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					createdAt: Date.now(),
 				}),
 			);
-
-			registerStakeholderOnchain({ issuerId: issuerResult._id, data, id: stakeholderUuid }).catch((err) =>
-				console.warn("Failed to register stakeholder metadata:", err),
-			);
-			manager.refreshHoldings();
 		} catch (err) {
 			setSuccessModal({
 				title: "Transaction failed",
 				message: err instanceof Error ? err.message : "Failed to add person.",
+				variant: "error",
 			});
 		}
 	};
@@ -469,13 +523,21 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 
 		try {
 			// Guard: class must exist onchain (Mongo can have metadata-only rows)
-			if (stockClass && stockClass.is_onchain_synced === false) {
-				setSuccessModal({
-					title: "Share class not onchain",
-					message:
-						"This share class is only saved as metadata. Create it again under Classes and wait for the wallet confirmation before issuing.",
-				});
-				return;
+			const sessionClass = directStockClasses.find((d) => d._id === data.stock_class_id);
+			const onchainOk =
+				sessionClass?.onchain === true ||
+				stockClass?.is_onchain_synced === true ||
+				(stockClass?.is_onchain_synced !== false && !sessionClass && !!stockClass);
+			if (!onchainOk || stockClass?.is_onchain_synced === false) {
+				if (!(sessionClass?.onchain)) {
+					setSuccessModal({
+						title: "Share class isn’t on the blockchain yet",
+						message:
+							"Go to Classes, create the share class, and wait until the wallet confirms the transaction (you’ll see it under Activity with a TX link). Then come back to Issue.",
+						variant: "info",
+					});
+					return;
+				}
 			}
 
 			const result = await directIssuance.issueStock({
@@ -535,6 +597,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			setSuccessModal({
 				title: "Transaction failed",
 				message: err instanceof Error ? err.message : "Failed to issue stock.",
+				variant: "error",
 			});
 		}
 	};
@@ -590,25 +653,34 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 										<th>Name</th>
 										<th>Type</th>
 										<th>Authorized</th>
+										<th>Status</th>
 										<th>ID</th>
 									</tr>
 								</thead>
 								<tbody>
 									{stockClassOptions.length === 0 ? (
 										<tr>
-											<td colSpan={4}>
+											<td colSpan={5}>
 												<MutedText>None yet — use the form above.</MutedText>
 											</td>
 										</tr>
 									) : (
-										stockClassOptions.map((sc: any) => (
-											<tr key={sc._id}>
-												<td>{sc.name || "—"}</td>
-												<td>{sc.class_type || "—"}</td>
-												<td>{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}</td>
-												<td style={{ wordBreak: "break-all", fontSize: "0.85em" }}>{sc._id}</td>
-											</tr>
-										))
+										stockClassOptions.map((sc: any) => {
+											const session = directStockClasses.find((d) => d._id === sc._id);
+											const live =
+												session?.onchain ||
+												sc.is_onchain_synced === true ||
+												(sc.is_onchain_synced !== false && !session);
+											return (
+												<tr key={sc._id}>
+													<td>{sc.name || "—"}</td>
+													<td>{sc.class_type || "—"}</td>
+													<td>{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}</td>
+													<td>{live ? "Onchain" : "Not onchain"}</td>
+													<td style={{ wordBreak: "break-all", fontSize: "0.85em" }}>{sc._id}</td>
+												</tr>
+											);
+										})
 									)}
 								</tbody>
 							</StyledTable>
@@ -669,19 +741,20 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					<FormBand>
 						<TableTitle>Issue stock</TableTitle>
 						<IssueStockForm
-							stockClasses={stockClassOptions}
+							stockClasses={issuableStockClasses}
 							stakeholders={stakeholderOptions}
 							onSubmit={handleIssuance}
 							disabled={
 								manager.isLoadingHoldings ||
-								stockClassOptions.length === 0 ||
+								issuableStockClasses.length === 0 ||
 								stakeholderOptions.length === 0
 							}
 							hint={
-								!manager.isLoadingHoldings &&
-								(stockClassOptions.length === 0 || stakeholderOptions.length === 0)
+								!manager.isLoadingHoldings && stakeholderOptions.length === 0
 									? copy.issueStock.needsSetup
-									: undefined
+									: !manager.isLoadingHoldings && issuableStockClasses.length === 0
+										? "No onchain share classes yet. Create one under Classes and wait for wallet confirmation."
+										: undefined
 							}
 						/>
 					</FormBand>
@@ -848,6 +921,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				title={successModal?.title || ""}
 				txHash={successModal?.txHash}
 				message={successModal?.message}
+				variant={successModal?.variant || "success"}
 			/>
 		</FullScreenStack>
 	);

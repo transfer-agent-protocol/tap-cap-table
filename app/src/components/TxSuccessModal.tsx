@@ -9,6 +9,8 @@ interface TxSuccessModalProps {
 	title: string;
 	txHash?: string;
 	message?: string;
+	/** error | info | success — controls default body when no message/hash */
+	variant?: "success" | "error" | "info";
 }
 
 const Stack = styled.div`
@@ -41,7 +43,14 @@ const Actions = styled.div`
 	margin-top: ${({ theme }) => theme.spacing.xs};
 `;
 
-export function TxSuccessModal({ isOpen, onClose, title, txHash, message }: TxSuccessModalProps) {
+export function TxSuccessModal({
+	isOpen,
+	onClose,
+	title,
+	txHash,
+	message,
+	variant = "success",
+}: TxSuccessModalProps) {
 	const explorerUrl = txHash ? `https://explorer.plume.org/tx/${txHash}` : undefined;
 
 	return (
@@ -51,18 +60,28 @@ export function TxSuccessModal({ isOpen, onClose, title, txHash, message }: TxSu
 
 				{txHash ? (
 					<div>
-						<Label>Transaction Hash</Label>
+						<Label>Transaction</Label>
 						<ResponseBlock>{txHash}</ResponseBlock>
 						{explorerUrl && (
 							<Actions style={{ justifyContent: "flex-start", marginTop: "0.75rem" }}>
-								<InlineButton as="a" href={explorerUrl} target="_blank" rel="noopener noreferrer" $variant="primary">
-									View on Plume Explorer →
+								<InlineButton
+									as="a"
+									href={explorerUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									$variant="primary"
+								>
+									View on explorer
 								</InlineButton>
 							</Actions>
 						)}
 					</div>
 				) : (
-					<Message>Transaction submitted. Check your wallet for confirmation.</Message>
+					// Never imply a tx was submitted for pure validation / error modals
+					!message &&
+					variant === "success" && (
+						<Message>Waiting for wallet confirmation…</Message>
+					)
 				)}
 
 				<Actions>
