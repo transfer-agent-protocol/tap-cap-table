@@ -55,16 +55,16 @@ export function MintActions({
 		<>
 			<MintButton onClick={onMint} disabled={!canMint} type="button">
 				{isWritePending
-					? "Confirm in wallet..."
+					? "Confirm in wallet…"
 					: isConfirming
-						? "Confirming..."
+						? "Confirming…"
 						: isRegistering
-							? "Finishing up..."
-							: "Mint Cap Table"}
+							? "Finishing up…"
+							: "Create company"}
 			</MintButton>
 
 			<MutedText>
-				You&apos;ll sign one transaction. When it confirms, the company is ready to manage.
+				You&apos;ll sign one transaction. When it confirms, the company is ready.
 			</MutedText>
 
 			{writeError && (

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styled from "styled-components";
 import { DashboardHeader, SectionActions } from "./wrappers";
 import { InlineButton } from "./buttons";
@@ -27,21 +28,6 @@ const MetaLine = styled.div`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
 	line-height: 1.5;
 	min-width: 0;
-`;
-
-const MetaLabel = styled.span`
-	flex-shrink: 0;
-	color: ${({ theme }) => theme.colors.subtle};
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-`;
-
-const MetaValue = styled.span`
-	color: ${({ theme }) => theme.colors.muted};
-	word-break: break-all;
-	overflow-wrap: anywhere;
-	user-select: all;
-	font-variant-numeric: tabular-nums;
 `;
 
 const MetaLink = styled.a`
@@ -75,6 +61,32 @@ const LiveTag = styled.span`
 	}
 `;
 
+const DetailsToggle = styled.button`
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.subtle};
+	cursor: pointer;
+	text-align: left;
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.main};
+	}
+`;
+
+const DetailsBlock = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 0.35rem;
+	margin-top: 0.25rem;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.muted};
+	font-variant-numeric: tabular-nums;
+	word-break: break-all;
+`;
+
 interface IssuerHeaderProps {
 	issuer: IssuerResponse | null;
 	contractAddress: string | null;
@@ -82,36 +94,56 @@ interface IssuerHeaderProps {
 }
 
 export function IssuerHeader({ issuer, contractAddress, onReset }: IssuerHeaderProps) {
+	const [showDetails, setShowDetails] = useState(false);
+
 	if (!issuer) return null;
 
 	const contract = contractAddress || issuer.deployed_to || null;
+	const hasContract = !!contract && String(contract).startsWith("0x");
 
 	return (
 		<DashboardHeader>
 			<IssuerSummary>
 				<IssuerName>{issuer.legal_name}</IssuerName>
 				<MetaLine>
-					<MetaLabel>ID</MetaLabel>
-					<MetaValue>{issuer._id}</MetaValue>
-				</MetaLine>
-				{contract && (
-					<MetaLine>
-						<MetaLabel>Contract</MetaLabel>
+					{hasContract ? <LiveTag>Onchain</LiveTag> : <LiveTag style={{ color: "inherit", opacity: 0.6 }}>No contract</LiveTag>}
+					{hasContract && (
 						<MetaLink
 							href={`https://explorer.plume.org/address/${contract}`}
 							target="_blank"
 							rel="noopener noreferrer"
+							title={contract}
 						>
-							{contract}
+							View contract
 						</MetaLink>
-					</MetaLine>
+					)}
+					<DetailsToggle
+						type="button"
+						onClick={() => setShowDetails((v) => !v)}
+						aria-expanded={showDetails}
+					>
+						{showDetails ? "Hide details" : "Details"}
+					</DetailsToggle>
+				</MetaLine>
+				{showDetails && (
+					<DetailsBlock>
+						<div>
+							<span style={{ opacity: 0.7 }}>Company ID · </span>
+							{issuer._id}
+						</div>
+						{contract && (
+							<div>
+								<span style={{ opacity: 0.7 }}>Contract · </span>
+								{contract}
+							</div>
+						)}
+					</DetailsBlock>
 				)}
 			</IssuerSummary>
 
 			<SectionActions>
-				<LiveTag>Live</LiveTag>
-				<InlineButton onClick={onReset} $variant="ghost">
-					Mint another
+				<InlineButton onClick={onReset} $variant="ghost" title="Deploy a different company">
+					New company
 				</InlineButton>
 			</SectionActions>
 		</DashboardHeader>
