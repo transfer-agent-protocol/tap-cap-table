@@ -1,31 +1,33 @@
 import styled from "styled-components";
 
 const FullWidth = styled.div`
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: flex-start;
-	align-items: center;
+	display: flex;
+	flex-flow: column nowrap;
+	justify-content: flex-start;
+	align-items: stretch;
 	width: 100%;
 `;
 
 const Nav = styled.nav`
 	position: sticky;
 	top: 0;
-	z-index: ${({ theme }) => theme.zIndices.dropdown};
+	z-index: ${({ theme }) => theme.zIndices.sticky};
 	display: flex;
 	flex-flow: row nowrap;
 	justify-content: space-between;
 	align-items: center;
 	gap: ${({ theme }) => theme.spacing.md};
 	width: 100%;
-	max-width: 100%;
-	padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+	min-height: ${({ theme }) => theme.layout.topBar};
+	padding: 0 ${({ theme }) => theme.spacing.xl};
 	box-sizing: border-box;
-	background: ${({ theme }) => theme.colors.background};
+	background: rgba(9, 9, 11, 0.78);
+	backdrop-filter: blur(16px) saturate(1.2);
+	-webkit-backdrop-filter: blur(16px) saturate(1.2);
 	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
 
 	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-		padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+		padding: 0 ${({ theme }) => theme.spacing.md};
 	}
 `;
 
@@ -40,225 +42,245 @@ const NavBrand = styled.div`
 const NavTitle = styled.h1`
 	margin: 0;
 	color: ${({ theme }) => theme.colors.text};
-	font-size: ${({ theme }) => theme.fontSizes.medium};
-	font-weight: ${({ theme }) => theme.fontWeights.bold};
-	line-height: ${({ theme }) => theme.lineHeights.H2};
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	line-height: 1.2;
+	letter-spacing: -0.02em;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 
 	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-		font-size: ${({ theme }) => theme.fontSizes.baseline};
-		white-space: normal;
+		font-size: ${({ theme }) => theme.fontSizes.small};
 	}
 `;
 
 const Logotype = styled.span`
 	display: flex;
 	flex-flow: row wrap;
-	justify-content: flex-start;
-	align-items: flex-start;
-	text-align: left;
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-weight: 600;
-	width: 8rem;
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	color: ${({ theme }) => theme.colors.text};
 `;
 
 const Main = styled.main`
-    display: flex;
-    flex-flow: column nowrap;
-	align-items: flex-start;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
 	justify-content: flex-start;
 	width: 100%;
-	max-width: 768px;
-	padding: 0 0 0 3rem;
+	max-width: ${({ theme }) => theme.maxWidths.content};
+	padding: ${({ theme }) => theme.spacing["2xl"]} ${({ theme }) => theme.spacing.xl};
+	box-sizing: border-box;
 
-    /** Generic tablet and equivalent devices */
-    @media only screen and (max-width: 768px) {
-    }
-    /** iPhone portrait mode and equivalent devices */
-    @media only screen and (max-width: 512px) {
-		width: 80%;
-		padding: 0 0 0 0.618rem;
-    }
+	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
+	}
 
-    mark {
-        color: ${({ theme }) => theme.colors.background};
-        background-color: ${({ theme }) => theme.colors.main};;
-		font-weight: 500;
-    }
+	mark {
+		color: ${({ theme }) => theme.colors.inverse};
+		background-color: ${({ theme }) => theme.colors.main};
+		font-weight: ${({ theme }) => theme.fontWeights.medium};
+		padding: 0 0.2em;
+		border-radius: 2px;
+	}
 `;
 
 const Heading = styled.div`
-    display: flex;
-    flex-flow: column nowrap;
+	display: flex;
+	flex-flow: column nowrap;
 	align-items: flex-start;
 	justify-content: flex-start;
-	margin: 8rem 0 2rem 0;
-  
-
-    /** iPhone portrait mode and equivalent devices */
-    @media only screen and (max-width: 768px) {
-        margin: 4rem 0;
-    }
-
-    /** iPhone portrait mode and equivalent devices */
-    @media only screen and (max-width: 512px) {
-        margin: 2rem 0;
-    }
+	gap: ${({ theme }) => theme.spacing.md};
+	margin: 0 0 ${({ theme }) => theme.spacing["2xl"]} 0;
+	max-width: 44rem;
 
 	a {
-		font-size: ${({ theme }) => theme.fontSizes.medium};
-        padding: 0 1rem 0 0;
-        /** iPhone portrait mode and equivalent devices */
-		@media only screen and (max-width: 512px) {
-			font-size: ${({ theme }) => theme.fontSizes.medium};
-			padding: 0 0.3rem 0 0;
-		}
-    }
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: ${({ theme }) => theme.fontSizes.baseline};
+		font-weight: ${({ theme }) => theme.fontWeights.semibold};
+		color: ${({ theme }) => theme.colors.main};
+		border-bottom: 1px solid transparent;
+		transition: border-color ${({ theme }) => theme.transitions.default};
 
-	a:hover {
-		color: ${({ theme }) => theme.colors.background};
-		background: ${({ theme }) => theme.colors.main};
+		&:hover {
+			border-bottom-color: ${({ theme }) => theme.colors.main};
+			color: ${({ theme }) => theme.colors.main};
+			background: transparent;
+		}
 	}
 `;
 
 const Content = styled.div`
-    display: flex;
-    flex-flow: column nowrap;
-    align-items: flex-start;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
 	justify-content: flex-start;
+	width: 100%;
 `;
 
 const Article = styled.article`
-    display: flex;
-    flex-flow: column nowrap;
-    align-items: center;
-    align-self: flex-start;
-    justify-content: flex-start;
-    flex: 1;
-    width: auto;
-    max-width: 46rem;
-    height: auto;
-    margin: 0 auto;
-    text-align: left;
-
-    /** iPad Air and equivalent devices */
-    @media (max-width: 820px) {
-        width: 100%;
-    }
-    /** Generic tablet and equivalent devices */
-    @media (max-width: 768px) {
-        width: 98%;
-        align-items: center;
-    }
-    /** iPhone portrait mode and equivalent devices */
-    @media screen and (max-width: 512px) {
-        width: 96%;
-    }
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: flex-start;
+	width: 100%;
+	max-width: ${({ theme }) => theme.maxWidths.article};
+	text-align: left;
 `;
 
 const Credits = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
-	justify-content: flex-start;
-	align-items: flex-start;
 	font-size: ${({ theme }) => theme.fontSizes.large};
-	margin-bottom: 4rem;
+	margin-bottom: ${({ theme }) => theme.spacing["2xl"]};
+	color: ${({ theme }) => theme.colors.muted};
 `;
 
 const StyledTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin: ${({ theme }) => theme.spacing.md} 0;
-  font-size: ${({ theme }) => theme.fontSizes.baseline};
-  table-layout: fixed; /* Helps to apply word wrapping */
+	width: 100%;
+	min-width: 36rem;
+	border-collapse: separate;
+	border-spacing: 0;
+	margin: 0;
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	table-layout: auto;
+	background: ${({ theme }) => theme.colors.surface};
 
-  th, td {
-    text-align: left;
-    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.main};
-    word-break: break-word; /* Ensures text wraps inside the cell */
-  }
+	th,
+	td {
+		text-align: left;
+		padding: 0.7rem 1rem;
+		border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+		vertical-align: middle;
+		word-break: break-word;
+	}
 
-  th {
-    background-color: ${({ theme }) => theme.colors.main};
-    color: ${({ theme }) => theme.colors.background};
-  }
+	th {
+		background: ${({ theme }) => theme.colors.elevated};
+		color: ${({ theme }) => theme.colors.subtle};
+		font-size: ${({ theme }) => theme.fontSizes.xs};
+		font-weight: ${({ theme }) => theme.fontWeights.semibold};
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		border-bottom: 1px solid ${({ theme }) => theme.colors.borderStrong};
+	}
 
-  td a {
-    color: ${({ theme }) => theme.colors.main};
-    text-decoration: none;
-    display: inline-block; /* Can help with better handling of wrapping for links */
-    max-width: 100%; /* Prevents the link from overflowing its container */
-  }
+	/* Sticky header when the frame scrolls */
+	thead th {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+	}
 
-  td a:hover {
-    color: ${({ theme }) => theme.colors.background};
-    background: ${({ theme }) => theme.colors.main};
-  }
+	td {
+		color: ${({ theme }) => theme.colors.text};
+		font-variant-numeric: tabular-nums;
+	}
 
-  @media (max-width: 768px) {
-    font-size: ${({ theme }) => theme.fontSizes.small};
-    th, td {
-      padding: 0.3rem; /* Smaller padding for smaller screens */
-    }
-  }
+	tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	tbody tr:hover td {
+		background: ${({ theme }) => theme.colors.elevated};
+	}
+
+	/* Right-aligned numeric columns via inline style keep working */
+	th[style*="right"],
+	td[style*="right"] {
+		font-variant-numeric: tabular-nums;
+	}
+
+	td a {
+		color: ${({ theme }) => theme.colors.main};
+		text-decoration: none;
+		font-weight: ${({ theme }) => theme.fontWeights.medium};
+		font-family: inherit;
+
+		&:hover {
+			text-decoration: underline;
+			background: transparent;
+		}
+	}
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		font-size: ${({ theme }) => theme.fontSizes.xs};
+		min-width: 28rem;
+
+		th,
+		td {
+			padding: 0.6rem 0.75rem;
+		}
+	}
 `;
 
-
-
 const FooterWrapper = styled.footer`
-    display: flex;
-    flex-flow: column nowrap;
-    flex-shrink: 0;
-   	align-items: flext-start;
-    align-self: center;
-    justify-content: flex-start;
-    margin: 4rem auto;
+	display: flex;
+	flex-flow: column nowrap;
+	flex-shrink: 0;
+	align-items: stretch;
+	justify-content: flex-start;
+	width: 100%;
+	margin-top: auto;
+	padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
+	border-top: 1px solid ${({ theme }) => theme.colors.outline};
+	box-sizing: border-box;
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		padding: ${({ theme }) => theme.spacing.md};
+	}
 `;
 
 const FooterContent = styled.div`
-    display: flex;
-	flex-flow: row nowrap;
-	justify-content: flex-start;
-	align-items: flex-start;
+	display: flex;
+	flex-flow: row wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: ${({ theme }) => theme.spacing.md};
 	width: 100%;
-	margin: 0 auto;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: ${({ theme }) => theme.colors.subtle};
+
+	a {
+		color: ${({ theme }) => theme.colors.subtle} !important;
+		text-decoration: none !important;
+		opacity: 1 !important;
+		letter-spacing: 0.06em;
+
+		&:hover {
+			color: ${({ theme }) => theme.colors.main} !important;
+			text-decoration: none !important;
+		}
+	}
 `;
 
 const FooterAside = styled.aside`
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: flex-end;
-    width: 100%;
-    margin: 0;
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: flex-end;
+	width: 100%;
+	margin: 0;
 
-    /** iPhone portrait mode and equivalent devices */
-    @media only screen and (max-width: 475px) {
-        font-size: ${({ theme }) => theme.fontSizes.small};
-    }
-
-    p {
-        font-size: ${({ theme }) => theme.fontSizes.baseline};
-        margin: 0;
-
-        /** iPhone portrait mode and equivalent devices */
-        @media only screen and (max-width: 475px) {
-            font-size: ${({ theme }) => theme.fontSizes.small};
-        }
-    }
+	p {
+		font-size: ${({ theme }) => theme.fontSizes.small};
+		margin: 0;
+		color: ${({ theme }) => theme.colors.muted};
+	}
 `;
 
 const MintLayout = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
-	gap: 2rem;
+	gap: ${({ theme }) => theme.spacing.xl};
 	width: 100%;
-	margin-top: 2rem;
+	margin-top: ${({ theme }) => theme.spacing.lg};
 	align-items: flex-start;
 
-	/* Form panel (first child) gets 2x width, actions panel gets 1x */
 	& > *:first-child {
 		flex: 2;
 	}
@@ -266,9 +288,8 @@ const MintLayout = styled.div`
 		flex: 1;
 	}
 
-	@media only screen and (max-width: 900px) {
+	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.mintCollapse}) {
 		flex-flow: column nowrap;
-		gap: 2rem;
 
 		& > *:first-child,
 		& > *:last-child {
@@ -280,50 +301,55 @@ const MintLayout = styled.div`
 const Panel = styled.section`
 	display: flex;
 	flex-flow: column nowrap;
-	gap: 1rem;
+	gap: ${({ theme }) => theme.spacing.md};
 	min-width: 0;
+	padding: ${({ theme }) => theme.spacing.lg};
+	background: transparent;
+	border: 1px solid ${({ theme }) => theme.colors.outline};
 `;
 
 const StatusBox = styled.div<{ $variant?: "success" | "error" | "pending" }>`
-	padding: 0.75rem;
-	border-radius: ${({ theme }) => theme.borderRadius.main};
+	padding: ${({ theme }) => theme.spacing.sm} 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	word-break: break-all;
-	border: 1px solid
+	word-break: break-word;
+	line-height: 1.5;
+	border: none;
+	border-left: 2px solid
 		${({ theme, $variant }) =>
 			$variant === "success"
 				? theme.colors.success
 				: $variant === "error"
 					? theme.colors.error
 					: theme.colors.pending};
-	background: ${({ theme, $variant }) =>
+	padding-left: ${({ theme }) => theme.spacing.md};
+	background: transparent;
+	color: ${({ theme, $variant }) =>
 		$variant === "success"
-			? theme.colors.successBg
+			? theme.colors.success
 			: $variant === "error"
-				? theme.colors.errorBg
-				: theme.colors.pendingBg};
+				? theme.colors.error
+				: theme.colors.pending};
 `;
 
 const ResponseBlock = styled.pre`
-	padding: 0.75rem;
+	padding: 0;
+	margin: 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
 	font-family: inherit;
-	background: ${({ theme }) => theme.colors.input};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.borderRadius.main};
-	color: ${({ theme }) => theme.colors.text};
+	background: transparent;
+	border: none;
+	color: ${({ theme }) => theme.colors.muted};
 	word-break: break-all;
 	white-space: pre-wrap;
 	overflow-x: auto;
-	margin: 0;
+	user-select: all;
 `;
 
-/* Full-screen / dashboard primitives for the updated /mint experience (additive only) */
 const FullScreenMain = styled.div`
 	display: flex;
 	flex-flow: column nowrap;
 	width: 100%;
-	min-height: 70vh;
+	min-height: calc(100vh - ${({ theme }) => theme.layout.topBar} - 4rem);
 	padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
 	box-sizing: border-box;
 
@@ -337,6 +363,7 @@ const FullScreenStack = styled.div`
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.lg};
 	width: 100%;
+	max-width: none;
 `;
 
 const PageIntro = styled.section`
@@ -344,7 +371,7 @@ const PageIntro = styled.section`
 	flex-flow: column nowrap;
 	align-items: flex-start;
 	gap: ${({ theme }) => theme.spacing.sm};
-	max-width: ${({ theme }) => theme.maxWidths.h1};
+	max-width: 40rem;
 
 	p {
 		margin-bottom: 0;
@@ -353,24 +380,51 @@ const PageIntro = styled.section`
 
 const ActionTableLayout = styled.div`
 	display: grid;
-	grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
-	gap: ${({ theme }) => theme.spacing.xl};
-	align-items: flex-start;
+	grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr);
+	gap: ${({ theme }) => theme.spacing.lg};
+	align-items: start;
 	width: 100%;
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.mintCollapse}) {
 		grid-template-columns: 1fr;
 	}
 `;
+
+/** Full-width manage page: form band then table band */
+const PageLayout = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.xl};
+	width: 100%;
+	max-width: none;
+`;
+
+const FormBand = styled.section`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.md};
+	width: 100%;
+	max-width: 36rem;
+	padding-bottom: ${({ theme }) => theme.spacing.lg};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+`;
+
+const DataBand = styled.section`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.md};
+	width: 100%;
+`;
+
 const DashboardHeader = styled.header`
 	display: flex;
 	flex-flow: row wrap;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
 	gap: ${({ theme }) => theme.spacing.md};
-	margin-bottom: ${({ theme }) => theme.spacing.lg};
-	padding-bottom: ${({ theme }) => theme.spacing.md};
+	padding: 0 0 ${({ theme }) => theme.spacing.lg} 0;
 	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+	background: transparent;
 `;
 
 const DashboardGrid = styled.div`
@@ -395,13 +449,19 @@ const TablePanel = styled.div`
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.md};
 	min-width: 0;
+	padding: 0;
+	background: transparent;
+	border: none;
 `;
 
 const TableTitle = styled.h3`
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+	letter-spacing: -0.02em;
+	margin: 0;
+	color: ${({ theme }) => theme.colors.text};
 `;
+
 const SectionHeader = styled.div`
 	display: flex;
 	flex-flow: row wrap;
@@ -422,13 +482,91 @@ const SectionActions = styled.div`
 const TableScroll = styled.div`
 	width: 100%;
 	overflow-x: auto;
+	overflow-y: auto;
+	max-height: min(70vh, 40rem);
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.none};
+	background: ${({ theme }) => theme.colors.surface};
+	box-sizing: border-box;
 `;
 
 const MutedText = styled.p`
 	margin: 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	line-height: 1.4;
-	opacity: 0.65;
+	line-height: 1.5;
+	color: ${({ theme }) => theme.colors.muted};
 `;
 
-export { FullWidth, Nav, NavBrand, NavTitle, Logotype, Main, Heading, Content, Article, Credits, StyledTable, FooterWrapper, FooterContent, FooterAside, MintLayout, Panel, StatusBox, ResponseBlock, FullScreenMain, FullScreenStack, PageIntro, ActionTableLayout, DashboardHeader, DashboardGrid, FormPanel, TablePanel, TableTitle, SectionHeader, SectionActions, TableScroll, MutedText };
+const StatGrid = styled.div`
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: ${({ theme }) => theme.spacing.sm};
+	width: 100%;
+`;
+
+const StatCard = styled.div`
+	display: flex;
+	flex-flow: column nowrap;
+	gap: ${({ theme }) => theme.spacing.xs};
+	padding: ${({ theme }) => theme.spacing.md} 0;
+	background: transparent;
+	border: none;
+	border-top: 1px solid ${({ theme }) => theme.colors.outline};
+`;
+
+const StatLabel = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: ${({ theme }) => theme.colors.subtle};
+`;
+
+const StatValue = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.H3};
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	letter-spacing: -0.03em;
+	color: ${({ theme }) => theme.colors.text};
+	font-variant-numeric: tabular-nums;
+`;
+
+export {
+	FullWidth,
+	Nav,
+	NavBrand,
+	NavTitle,
+	Logotype,
+	Main,
+	Heading,
+	Content,
+	Article,
+	Credits,
+	StyledTable,
+	FooterWrapper,
+	FooterContent,
+	FooterAside,
+	MintLayout,
+	Panel,
+	StatusBox,
+	ResponseBlock,
+	FullScreenMain,
+	FullScreenStack,
+	PageIntro,
+	ActionTableLayout,
+	PageLayout,
+	FormBand,
+	DataBand,
+	DashboardHeader,
+	DashboardGrid,
+	FormPanel,
+	TablePanel,
+	TableTitle,
+	SectionHeader,
+	SectionActions,
+	TableScroll,
+	MutedText,
+	StatGrid,
+	StatCard,
+	StatLabel,
+	StatValue,
+};

@@ -25,6 +25,8 @@ const HistoricalTransactionSchema = new mongoose.Schema(
             type: String,
             ref: "Issuer",
         },
+        // Ethereum tx hash of the TxCreated (or related) log — for Activity / explorer links
+        tx_hash: { type: String, default: null },
     },
     { timestamps: true }
 );

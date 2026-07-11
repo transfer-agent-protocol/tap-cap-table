@@ -1,106 +1,151 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+import styled from "styled-components";
+import { InlineButton } from "./buttons";
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  children: React.ReactNode;
-  maxWidth?: string;
+	isOpen: boolean;
+	onClose: () => void;
+	title?: string;
+	children: React.ReactNode;
+	maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, maxWidth = "420px" }: ModalProps) {
-  // Close on Escape
-  useEffect(() => {
-    if (!isOpen) return;
+const Backdrop = styled.div`
+	position: fixed;
+	inset: 0;
+	background: ${({ theme }) => theme.colors.overlay};
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: ${({ theme }) => theme.zIndices.modal};
+	padding: ${({ theme }) => theme.spacing.md};
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	animation: fadeIn 160ms ease;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+`;
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+const Dialog = styled.div<{ $maxWidth: string }>`
+	background: ${({ theme }) => theme.colors.elevated};
+	border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+	border-radius: ${({ theme }) => theme.radii.md};
+	width: 100%;
+	max-width: ${({ $maxWidth }) => $maxWidth};
+	box-shadow: ${({ theme }) => theme.shadows.lg}, ${({ theme }) => theme.shadows.glow};
+	overflow: hidden;
+	animation: rise 200ms cubic-bezier(0.22, 1, 0.36, 1);
 
-  if (!isOpen) return null;
+	@keyframes rise {
+		from {
+			opacity: 0;
+			transform: translateY(8px) scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+`;
 
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.55)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: "1rem",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#fff",
-          borderRadius: "8px",
-          width: "100%",
-          maxWidth,
-          boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-          overflow: "hidden",
-        }}
-      >
-        {title && (
-          <div
-            style={{
-              padding: "14px 18px",
-              borderBottom: "1px solid #e5e7eb",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontWeight: 600,
-              fontSize: "1rem",
-            }}
-          >
-            <span>{title}</span>
-            <button
-              onClick={onClose}
-              aria-label="Close modal"
-              style={{
-                background: "none",
-                border: "none",
-                fontSize: "22px",
-                lineHeight: 1,
-                cursor: "pointer",
-                color: "#6b7280",
-              }}
-            >
-              ×
-            </button>
-          </div>
-        )}
+const Header = styled.div`
+	padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: ${({ theme }) => theme.spacing.md};
+`;
 
-        <div style={{ padding: "18px" }}>{children}</div>
+const Title = styled.span`
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	letter-spacing: -0.02em;
+	color: ${({ theme }) => theme.colors.text};
+`;
 
-        {!title && (
-          <div style={{ padding: "0 18px 18px", textAlign: "right" }}>
-            <button
-              onClick={onClose}
-              style={{
-                background: "#0C0B0C",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-              }}
-            >
-              Close
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+const CloseBtn = styled.button`
+	background: transparent;
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	width: 2rem;
+	height: 2rem;
+	font-size: 1.1rem;
+	line-height: 1;
+	cursor: pointer;
+	color: ${({ theme }) => theme.colors.muted};
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: color ${({ theme }) => theme.transitions.default},
+		border-color ${({ theme }) => theme.transitions.default},
+		background ${({ theme }) => theme.transitions.default};
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.text};
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+		background: ${({ theme }) => theme.colors.input};
+	}
+`;
+
+const Body = styled.div`
+	padding: ${({ theme }) => theme.spacing.lg};
+	color: ${({ theme }) => theme.colors.muted};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	line-height: 1.55;
+`;
+
+const Footer = styled.div`
+	padding: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg};
+	display: flex;
+	justify-content: flex-end;
+`;
+
+export function Modal({ isOpen, onClose, title, children, maxWidth = "440px" }: ModalProps) {
+	useEffect(() => {
+		if (!isOpen) return;
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose();
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [isOpen, onClose]);
+
+	if (!isOpen) return null;
+
+	return (
+		<Backdrop onClick={onClose} role="presentation">
+			<Dialog
+				$maxWidth={maxWidth}
+				onClick={(e) => e.stopPropagation()}
+				role="dialog"
+				aria-modal="true"
+				aria-label={title || "Dialog"}
+			>
+				{title && (
+					<Header>
+						<Title>{title}</Title>
+						<CloseBtn onClick={onClose} aria-label="Close modal" type="button">
+							×
+						</CloseBtn>
+					</Header>
+				)}
+				<Body>{children}</Body>
+				{!title && (
+					<Footer>
+						<InlineButton onClick={onClose} $variant="primary" type="button">
+							Close
+						</InlineButton>
+					</Footer>
+				)}
+			</Dialog>
+		</Backdrop>
+	);
 }

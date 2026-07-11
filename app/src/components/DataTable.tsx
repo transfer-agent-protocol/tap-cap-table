@@ -5,6 +5,8 @@ export interface Column<T> {
 	key: string;
 	header: ReactNode;
 	align?: "left" | "right" | "center";
+	/** Optional fixed/min width e.g. "8rem" or "12%" */
+	width?: string;
 	render: (row: T) => ReactNode;
 }
 
@@ -18,13 +20,14 @@ export interface DataTableProps<T> {
 	emptyMessage?: ReactNode;
 	/** Optional muted footnote under the table. */
 	caption?: ReactNode;
+	/** Accessible label for the table */
+	"aria-label"?: string;
 }
 
 /**
- * Generic table that always renders one explicit state: error, first-load, empty, or rows.
- * This is the key fix for the old hand-rolled tables, where a failed or pending fetch looked
- * identical to "no data". Columns declare how each cell renders; styling reuses the shared
- * `StyledTable` primitives so every table in the app looks and behaves the same.
+ * Shared data table for the manage workspace.
+ * Always renders one explicit state: error, first-load, empty, or rows.
+ * Styling comes from `StyledTable` / `TableScroll` so every list looks the same.
  */
 export function DataTable<T>({
 	columns,
@@ -34,54 +37,68 @@ export function DataTable<T>({
 	error = null,
 	emptyMessage = "Nothing here yet.",
 	caption,
+	"aria-label": ariaLabel,
 }: DataTableProps<T>) {
 	const span = columns.length;
 
 	return (
-		<TableScroll>
-			<StyledTable>
-				<thead>
-					<tr>
-						{columns.map((c) => (
-							<th key={c.key} style={{ textAlign: c.align ?? "left" }}>
-								{c.header}
-							</th>
-						))}
-					</tr>
-				</thead>
-				<tbody>
-					{error ? (
+		<div style={{ width: "100%" }}>
+			<TableScroll>
+				<StyledTable aria-label={ariaLabel}>
+					<thead>
 						<tr>
-							<td colSpan={span} style={{ padding: 0, borderBottom: "none" }}>
-								<StatusBox $variant="error">{error}</StatusBox>
-							</td>
+							{columns.map((c) => (
+								<th
+									key={c.key}
+									style={{
+										textAlign: c.align ?? "left",
+										width: c.width,
+									}}
+								>
+									{c.header}
+								</th>
+							))}
 						</tr>
-					) : isLoading && rows.length === 0 ? (
-						<tr>
-							<td colSpan={span} style={{ textAlign: "center", opacity: 0.7 }}>
-								Loading…
-							</td>
-						</tr>
-					) : rows.length === 0 ? (
-						<tr>
-							<td colSpan={span} style={{ borderBottom: "none" }}>
-								<MutedText>{emptyMessage}</MutedText>
-							</td>
-						</tr>
-					) : (
-						rows.map((row, i) => (
-							<tr key={rowKey(row, i)}>
-								{columns.map((c) => (
-									<td key={c.key} style={{ textAlign: c.align ?? "left" }}>
-										{c.render(row)}
-									</td>
-								))}
+					</thead>
+					<tbody>
+						{error ? (
+							<tr>
+								<td colSpan={span} style={{ padding: "1rem" }}>
+									<StatusBox $variant="error">{error}</StatusBox>
+								</td>
 							</tr>
-						))
-					)}
-				</tbody>
-			</StyledTable>
-			{caption ? <MutedText>{caption}</MutedText> : null}
-		</TableScroll>
+						) : isLoading && rows.length === 0 ? (
+							<tr>
+								<td
+									colSpan={span}
+									style={{ textAlign: "center", padding: "1.5rem", opacity: 0.7 }}
+								>
+									Loading…
+								</td>
+							</tr>
+						) : rows.length === 0 ? (
+							<tr>
+								<td colSpan={span} style={{ padding: "1.5rem" }}>
+									<MutedText>{emptyMessage}</MutedText>
+								</td>
+							</tr>
+						) : (
+							rows.map((row, i) => (
+								<tr key={rowKey(row, i)}>
+									{columns.map((c) => (
+										<td key={c.key} style={{ textAlign: c.align ?? "left" }}>
+											{c.render(row)}
+										</td>
+									))}
+								</tr>
+							))
+						)}
+					</tbody>
+				</StyledTable>
+			</TableScroll>
+			{caption ? (
+				<MutedText style={{ marginTop: "0.5rem" }}>{caption}</MutedText>
+			) : null}
+		</div>
 	);
 }

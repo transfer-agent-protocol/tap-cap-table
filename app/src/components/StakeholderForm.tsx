@@ -1,21 +1,26 @@
 import { useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Select, Divider } from "./forms";
-import { MintButton } from "./buttons";
+import { FieldGroup, FieldRow, FieldLabel, Input, Select, Divider } from "./forms";
+import { InlineButton, MintButton } from "./buttons";
+import { SectionActions } from "./wrappers";
 import type { StakeholderData } from "../services/createStakeholder";
+import { copy } from "../lib/copy";
 
 interface Props {
 	onSubmit: (data: StakeholderData) => Promise<void>;
+	onCancel?: () => void;
 	disabled?: boolean;
+	/** Hide the big section label when embedded under a table header */
+	compact?: boolean;
 }
 
 const defaultData: StakeholderData = {
-	name: { legal_name: "Alex Palmer" },
+	name: { legal_name: "" },
 	stakeholder_type: "INDIVIDUAL",
 	current_relationship: "FOUNDER",
 	issuer_assigned_id: "",
 };
 
-export function StakeholderForm({ onSubmit, disabled }: Props) {
+export function StakeholderForm({ onSubmit, onCancel, disabled, compact }: Props) {
 	const [data, setData] = useState<StakeholderData>(defaultData);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -31,6 +36,7 @@ export function StakeholderForm({ onSubmit, disabled }: Props) {
 		setSubmitting(true);
 		try {
 			await onSubmit(data);
+			setData(defaultData);
 		} finally {
 			setSubmitting(false);
 		}
@@ -40,10 +46,15 @@ export function StakeholderForm({ onSubmit, disabled }: Props) {
 
 	return (
 		<div>
-			<SectionLabel>Create Stakeholder</SectionLabel>
 			<FieldGroup>
-				<FieldLabel>Legal Name</FieldLabel>
-				<Input value={data.name.legal_name} onChange={(e) => updateName(e.target.value)} disabled={isBusy} />
+				<FieldLabel>Legal name</FieldLabel>
+				<Input
+					value={data.name.legal_name}
+					onChange={(e) => updateName(e.target.value)}
+					disabled={isBusy}
+					placeholder="e.g. Alex Palmer"
+					autoFocus={compact}
+				/>
 			</FieldGroup>
 
 			<FieldRow>
@@ -54,20 +65,38 @@ export function StakeholderForm({ onSubmit, disabled }: Props) {
 						onChange={(e) => update("stakeholder_type", e.target.value as "INDIVIDUAL" | "INSTITUTION")}
 						disabled={isBusy}
 					>
-						<option value="INDIVIDUAL">INDIVIDUAL</option>
-						<option value="INSTITUTION">INSTITUTION</option>
+						<option value="INDIVIDUAL">Individual</option>
+						<option value="INSTITUTION">Institution</option>
 					</Select>
 				</FieldGroup>
 				<FieldGroup>
 					<FieldLabel>Relationship</FieldLabel>
-					<Input value={data.current_relationship} onChange={(e) => update("current_relationship", e.target.value)} disabled={isBusy} />
+					<Select
+						value={data.current_relationship}
+						onChange={(e) => update("current_relationship", e.target.value)}
+						disabled={isBusy}
+					>
+						<option value="FOUNDER">Founder</option>
+						<option value="EMPLOYEE">Employee</option>
+						<option value="INVESTOR">Investor</option>
+						<option value="ADVISOR">Advisor</option>
+						<option value="BOARD_MEMBER">Board member</option>
+						<option value="OTHER">Other</option>
+					</Select>
 				</FieldGroup>
 			</FieldRow>
 
 			<Divider />
-			<MintButton onClick={handleSubmit} disabled={isBusy || !data.name.legal_name}>
-				{submitting ? "Creating..." : "Create Stakeholder"}
-			</MintButton>
+			<SectionActions>
+				<MintButton onClick={handleSubmit} disabled={isBusy || !data.name.legal_name.trim()}>
+					{submitting ? copy.shareholders.creating : copy.shareholders.create}
+				</MintButton>
+				{onCancel && (
+					<InlineButton type="button" onClick={onCancel} disabled={isBusy} $variant="ghost">
+						{copy.shareholders.cancel}
+					</InlineButton>
+				)}
+			</SectionActions>
 		</div>
 	);
 }

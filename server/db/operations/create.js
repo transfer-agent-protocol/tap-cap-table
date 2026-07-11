@@ -11,7 +11,7 @@ import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIss
 import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
 import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import { save } from "./atomic.ts";
+import { findOne, save } from "./atomic.ts";
 
 export const createIssuer = (issuerData) => {
     return save(new Issuer(issuerData));
@@ -41,7 +41,22 @@ export const createVestingTerms = (vestingTermsData) => {
     return save(new VestingTerms(vestingTermsData));
 };
 
-export const createHistoricalTransaction = (transactionHistoryData) => {
+/**
+ * Idempotent: replaying poller events (reindex) must not duplicate history rows.
+ * If we re-see the same event with a tx_hash, fill it in on the existing row.
+ */
+export const createHistoricalTransaction = async (transactionHistoryData) => {
+    const existing = await findOne(HistoricalTransaction, {
+        transaction: transactionHistoryData.transaction,
+        issuer: transactionHistoryData.issuer,
+    });
+    if (existing) {
+        if (transactionHistoryData.tx_hash && !existing.tx_hash) {
+            existing.tx_hash = transactionHistoryData.tx_hash;
+            return existing.save();
+        }
+        return existing;
+    }
     return save(new HistoricalTransaction(transactionHistoryData));
 };
 

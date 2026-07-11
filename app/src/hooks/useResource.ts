@@ -49,8 +49,12 @@ export function useResource<T>(url: string | null, opts: UseResourceOptions = {}
 		setIsFetching(true);
 		setError(null);
 		fetch(url, { signal: ctrl.signal, cache: "no-store" })
-			.then((r) => {
-				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+			.then(async (r) => {
+				if (!r.ok) {
+					const body = (await r.text().catch(() => "")).replace(/<[^>]+>/g, " ").trim();
+					const detail = body.slice(0, 160);
+					throw new Error(detail ? `HTTP ${r.status}: ${detail}` : `HTTP ${r.status}`);
+				}
 				return r.json() as Promise<T>;
 			})
 			.then((json) => {

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Divider } from "./forms";
+import { FieldGroup, FieldRow, FieldLabel, Input, Divider, Select } from "./forms";
 import { MintButton } from "./buttons";
 import type { StockIssuanceData } from "../services/createStockIssuance";
+import { copy } from "../lib/copy";
 
 interface Option {
 	_id: string;
@@ -56,38 +57,38 @@ export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled,
 
 	return (
 		<div>
-			<SectionLabel>Issue Stock</SectionLabel>
-			{disabled && hint ? <p style={{ opacity: 0.6, fontSize: "0.85rem", margin: "0 0 0.5rem" }}>{hint}</p> : null}
+			{disabled && hint ? (
+				<p style={{ opacity: 0.75, fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{hint}</p>
+			) : null}
 
 			<FieldRow>
 				<FieldGroup>
-					<FieldLabel>Stakeholder</FieldLabel>
-					<select
+					<FieldLabel>Shareholder</FieldLabel>
+					<Select
 						value={stakeholderId}
 						onChange={(e) => setStakeholderId(e.target.value)}
 						disabled={isBusy}
-						style={{ padding: "0.5rem", fontFamily: "inherit", width: "100%" }}
 					>
-						<option value="">Select stakeholder...</option>
+						<option value="">Select shareholder…</option>
 						{stakeholders.map((s) => {
-							const name = typeof s.name === "object" && s.name ? (s.name as any).legal_name : s.name;
+							const name =
+								typeof s.name === "object" && s.name ? (s.name as any).legal_name : s.name;
 							return (
 								<option key={s._id} value={s._id}>
 									{name || s.label || s._id}
 								</option>
 							);
 						})}
-					</select>
+					</Select>
 				</FieldGroup>
 				<FieldGroup>
-					<FieldLabel>Stock Class</FieldLabel>
-					<select
+					<FieldLabel>Stock class</FieldLabel>
+					<Select
 						value={stockClassId}
 						onChange={(e) => setStockClassId(e.target.value)}
 						disabled={isBusy}
-						style={{ padding: "0.5rem", fontFamily: "inherit", width: "100%" }}
 					>
-						<option value="">Select class...</option>
+						<option value="">Select stock class…</option>
 						{stockClasses.map((c) => {
 							const name = typeof c.name === "object" && c.name ? (c.name as any) : c.name;
 							return (
@@ -96,28 +97,41 @@ export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled,
 								</option>
 							);
 						})}
-					</select>
+					</Select>
 				</FieldGroup>
 			</FieldRow>
 
 			<FieldRow>
 				<FieldGroup>
-					<FieldLabel>Quantity</FieldLabel>
-					<Input value={data.quantity} onChange={(e) => setData((d) => ({ ...d, quantity: e.target.value }))} disabled={isBusy} />
+					<FieldLabel>Shares</FieldLabel>
+					<Input
+						value={data.quantity}
+						onChange={(e) => setData((d) => ({ ...d, quantity: e.target.value }))}
+						disabled={isBusy}
+					/>
 				</FieldGroup>
 				<FieldGroup>
-					<FieldLabel>Price / Share (USD)</FieldLabel>
-					<Input value={data.share_price.amount} onChange={(e) => updatePrice(e.target.value)} disabled={isBusy} />
+					<FieldLabel>Price per share (USD)</FieldLabel>
+					<Input
+						value={data.share_price.amount}
+						onChange={(e) => updatePrice(e.target.value)}
+						disabled={isBusy}
+					/>
 				</FieldGroup>
 				<FieldGroup>
-					<FieldLabel>Custom ID</FieldLabel>
-					<Input value={data.custom_id || ""} onChange={(e) => setData((d) => ({ ...d, custom_id: e.target.value }))} disabled={isBusy} />
+					<FieldLabel>Certificate ID</FieldLabel>
+					<Input
+						value={data.custom_id || ""}
+						onChange={(e) => setData((d) => ({ ...d, custom_id: e.target.value }))}
+						disabled={isBusy}
+						placeholder="CS-001"
+					/>
 				</FieldGroup>
 			</FieldRow>
 
 			<Divider />
 			<MintButton onClick={handleSubmit} disabled={isBusy || !canSubmit}>
-				{submitting ? "Issuing..." : "Issue Stock"}
+				{submitting ? "Confirm in wallet…" : copy.issueStock.title}
 			</MintButton>
 		</div>
 	);

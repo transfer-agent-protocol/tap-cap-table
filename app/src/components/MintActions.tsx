@@ -1,7 +1,13 @@
-import { MintButton } from "./buttons";
-import { StatusBox, ResponseBlock } from "./wrappers";
+import dynamic from "next/dynamic";
+import { MintButton, WalletButtonStyled } from "./buttons";
+import { StatusBox, ResponseBlock, MutedText } from "./wrappers";
 import { FieldGroup, FieldLabel } from "./forms";
 import type { IssuerResponse } from "../services/registerIssuer";
+
+const WalletButton = dynamic(() => import("./WalletButtonClient"), {
+	ssr: false,
+	loading: () => <WalletButtonStyled>Connect Wallet</WalletButtonStyled>,
+});
 
 export interface MintActionsProps {
 	isConnected: boolean;
@@ -34,65 +40,70 @@ export function MintActions({
 }: MintActionsProps) {
 	if (!isConnected) {
 		return (
-			<StatusBox $variant="pending">
-				Connect your wallet to mint a cap table.
-			</StatusBox>
+			<>
+				<StatusBox $variant="pending">
+					Connect your wallet to create a cap table. That wallet becomes the admin.
+				</StatusBox>
+				<div style={{ marginTop: "0.75rem" }}>
+					<WalletButton />
+				</div>
+			</>
 		);
 	}
 
 	return (
 		<>
-			<MintButton onClick={onMint} disabled={!canMint}>
+			<MintButton onClick={onMint} disabled={!canMint} type="button">
 				{isWritePending
-					? "Confirm in wallet..."
+					? "Confirm in wallet…"
 					: isConfirming
-						? "Confirming onchain..."
+						? "Confirming…"
 						: isRegistering
-							? "Registering with server..."
-							: "Mint Cap Table"}
+							? "Finishing up…"
+							: "Create company"}
 			</MintButton>
+
+			<MutedText>
+				You&apos;ll sign one transaction. When it confirms, the company is ready.
+			</MutedText>
 
 			{writeError && (
 				<StatusBox $variant="error">
 					{writeError.includes("User rejected") || writeError.includes("denied")
-						? "Transaction rejected."
+						? "You rejected the transaction."
 						: writeError.slice(0, 300)}
 				</StatusBox>
 			)}
 
 			{serverError && (
 				<StatusBox $variant="error">
-					Server registration failed: {serverError.slice(0, 300)}
+					The chain deploy may have worked, but saving company details failed: {serverError.slice(0, 300)}
 				</StatusBox>
 			)}
 
 			{txHash && !isConfirmed && (
-				<StatusBox $variant="pending">
-					Transaction submitted: {txHash}
-				</StatusBox>
+				<StatusBox $variant="pending">Transaction submitted: {txHash}</StatusBox>
 			)}
 
 			{isConfirmed && deployedAddress && !result && !serverError && (
 				<StatusBox $variant="pending">
-					Cap table deployed at {deployedAddress}. Registering with server...
+					Deployed at {deployedAddress}. Saving company details...
 				</StatusBox>
 			)}
 
 			{result && (
 				<>
-					<StatusBox $variant="success">
-						Cap table deployed and registered successfully.
-					</StatusBox>
+					<StatusBox $variant="success">Cap table created.</StatusBox>
 					<FieldGroup>
 						<FieldLabel>Issuer ID</FieldLabel>
 						<ResponseBlock>{result._id}</ResponseBlock>
 					</FieldGroup>
 					<FieldGroup>
-						<FieldLabel>Contract Address</FieldLabel>
+						<FieldLabel>Contract</FieldLabel>
 						<ResponseBlock>{result.deployed_to}</ResponseBlock>
 					</FieldGroup>
 					<FieldGroup>
-						<FieldLabel>Transaction Hash</FieldLabel>
+						<FieldLabel>Transaction</FieldLabel>
 						<ResponseBlock>{result.tx_hash}</ResponseBlock>
 					</FieldGroup>
 				</>

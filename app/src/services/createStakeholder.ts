@@ -33,7 +33,7 @@ export interface StakeholderResponse {
  * `id` is the UUID form of the bytes16 used in the onchain createStakeholder tx.
  */
 export async function registerStakeholderOnchain(
-	payload: CreateStakeholderPayload & { id: string },
+	payload: CreateStakeholderPayload & { id: string; tx_hash?: string },
 ): Promise<StakeholderResponse> {
 	const res = await fetch("/api/stakeholder/register-onchain", {
 		method: "POST",

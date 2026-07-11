@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
+import { useAppKitAccount } from "@reown/appkit/react";
 
 /**
  * Shared lifecycle for direct-wallet writes:
@@ -25,6 +26,7 @@ export interface OnchainActionState {
 
 type WriteContractLike = {
 	writeContract: (...args: any[]) => void;
+	writeContractAsync?: (...args: any[]) => Promise<`0x${string}`>;
 	data: `0x${string}` | undefined;
 	isPending: boolean;
 	error: Error | null;
@@ -36,7 +38,12 @@ type WriteContractLike = {
  * Pass the object returned by generated `useWriteCapTable*` hooks.
  */
 export function useOnchainAction(write: WriteContractLike): OnchainActionState {
-	const { address: connectedAddress } = useAccount();
+	// Align with AppKit connect state so manage actions aren't blocked when the
+	// top-bar wallet shows connected but wagmi briefly lags.
+	const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
+	const { address: appKitAddress, isConnected: appKitConnected } = useAppKitAccount();
+	const connectedAddress = (wagmiAddress || appKitAddress) as `0x${string}` | undefined;
+	const isConnected = Boolean((wagmiConnected || appKitConnected) && connectedAddress);
 	const hash = write.data;
 	const { data: receipt, isSuccess: receiptFetched } = useWaitForTransactionReceipt({ hash });
 	const isConfirmed = receiptFetched && receipt?.status === "success";
@@ -72,7 +79,7 @@ export function useOnchainAction(write: WriteContractLike): OnchainActionState {
 		writeError: write.error,
 		errorMessage,
 		reset,
-		isConnected: !!connectedAddress,
+		isConnected,
 		address: connectedAddress,
 	};
 }

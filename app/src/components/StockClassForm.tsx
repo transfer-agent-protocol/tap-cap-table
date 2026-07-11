@@ -1,24 +1,28 @@
 import { useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Select, Divider } from "./forms";
-import { MintButton } from "./buttons";
+import { FieldGroup, FieldRow, FieldLabel, Input, Select, Divider } from "./forms";
+import { InlineButton, MintButton } from "./buttons";
+import { SectionActions } from "./wrappers";
 import type { StockClassData } from "../services/createStockClass";
+import { copy } from "../lib/copy";
 
 interface Props {
 	onSubmit: (data: StockClassData) => Promise<void>;
+	onCancel?: () => void;
 	disabled?: boolean;
+	compact?: boolean;
 }
 
 const defaultData: StockClassData = {
-	name: "Series A Common",
+	name: "Common",
 	class_type: "COMMON",
-	default_id_prefix: "CS-A",
-	initial_shares_authorized: "1000000",
+	default_id_prefix: "CS",
+	initial_shares_authorized: "10000000",
 	votes_per_share: "1",
-	price_per_share: { currency: "USD", amount: "4.20" },
+	price_per_share: { currency: "USD", amount: "0.00001" },
 	seniority: "1",
 };
 
-export function StockClassForm({ onSubmit, disabled }: Props) {
+export function StockClassForm({ onSubmit, onCancel, disabled, compact }: Props) {
 	const [data, setData] = useState<StockClassData>(defaultData);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -36,7 +40,6 @@ export function StockClassForm({ onSubmit, disabled }: Props) {
 		setSubmitting(true);
 		try {
 			await onSubmit(data);
-			// keep values for quick successive creates (or reset if preferred)
 		} finally {
 			setSubmitting(false);
 		}
@@ -44,10 +47,15 @@ export function StockClassForm({ onSubmit, disabled }: Props) {
 
 	return (
 		<div>
-			<SectionLabel>Create Stock Class</SectionLabel>
 			<FieldGroup>
 				<FieldLabel>Name</FieldLabel>
-				<Input value={data.name} onChange={(e) => update("name", e.target.value)} disabled={isBusy} />
+				<Input
+					value={data.name}
+					onChange={(e) => update("name", e.target.value)}
+					disabled={isBusy}
+					placeholder="e.g. Common"
+					autoFocus={compact}
+				/>
 			</FieldGroup>
 
 			<FieldRow>
@@ -58,42 +66,62 @@ export function StockClassForm({ onSubmit, disabled }: Props) {
 						onChange={(e) => update("class_type", e.target.value as "COMMON" | "PREFERRED")}
 						disabled={isBusy}
 					>
-						<option value="COMMON">COMMON</option>
-						<option value="PREFERRED">PREFERRED</option>
+						<option value="COMMON">Common</option>
+						<option value="PREFERRED">Preferred</option>
 					</Select>
 				</FieldGroup>
 				<FieldGroup>
-					<FieldLabel>ID Prefix</FieldLabel>
-					<Input value={data.default_id_prefix} onChange={(e) => update("default_id_prefix", e.target.value)} disabled={isBusy} />
+					<FieldLabel>Certificate prefix</FieldLabel>
+					<Input
+						value={data.default_id_prefix}
+						onChange={(e) => update("default_id_prefix", e.target.value)}
+						disabled={isBusy}
+						placeholder="CS"
+					/>
 				</FieldGroup>
 			</FieldRow>
 
 			<FieldRow>
 				<FieldGroup>
-					<FieldLabel>Shares Authorized</FieldLabel>
-					<Input value={data.initial_shares_authorized} onChange={(e) => update("initial_shares_authorized", e.target.value)} disabled={isBusy} />
+					<FieldLabel>Shares authorized</FieldLabel>
+					<Input
+						value={data.initial_shares_authorized}
+						onChange={(e) => update("initial_shares_authorized", e.target.value)}
+						disabled={isBusy}
+					/>
 				</FieldGroup>
 				<FieldGroup>
-					<FieldLabel>Votes / Share</FieldLabel>
-					<Input value={data.votes_per_share} onChange={(e) => update("votes_per_share", e.target.value)} disabled={isBusy} />
+					<FieldLabel>Votes per share</FieldLabel>
+					<Input
+						value={data.votes_per_share}
+						onChange={(e) => update("votes_per_share", e.target.value)}
+						disabled={isBusy}
+					/>
 				</FieldGroup>
 				<FieldGroup>
-					<FieldLabel>Seniority</FieldLabel>
-					<Input value={data.seniority} onChange={(e) => update("seniority", e.target.value)} disabled={isBusy} />
-				</FieldGroup>
-			</FieldRow>
-
-			<FieldRow>
-				<FieldGroup>
-					<FieldLabel>Price per Share (USD)</FieldLabel>
-					<Input value={data.price_per_share.amount} onChange={(e) => updatePrice(e.target.value)} disabled={isBusy} />
+					<FieldLabel>Price per share (USD)</FieldLabel>
+					<Input
+						value={data.price_per_share.amount}
+						onChange={(e) => updatePrice(e.target.value)}
+						disabled={isBusy}
+					/>
 				</FieldGroup>
 			</FieldRow>
 
 			<Divider />
-			<MintButton onClick={handleSubmit} disabled={isBusy || !data.name || !data.initial_shares_authorized}>
-				{submitting ? "Creating..." : "Create Stock Class"}
-			</MintButton>
+			<SectionActions>
+				<MintButton
+					onClick={handleSubmit}
+					disabled={isBusy || !data.name.trim() || !data.initial_shares_authorized}
+				>
+					{submitting ? copy.stockClasses.creating : copy.stockClasses.create}
+				</MintButton>
+				{onCancel && (
+					<InlineButton type="button" onClick={onCancel} disabled={isBusy} $variant="ghost">
+						{copy.stockClasses.cancel}
+					</InlineButton>
+				)}
+			</SectionActions>
 		</div>
 	);
 }

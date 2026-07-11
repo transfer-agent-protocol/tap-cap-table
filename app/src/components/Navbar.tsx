@@ -1,77 +1,185 @@
 import styled from "styled-components";
 import dynamic from "next/dynamic";
 import { Nav, NavBrand, NavTitle } from "./wrappers";
-import { InlineButton, LogoRouter, StyledA, WalletButtonStyled } from "./buttons";
-import { useCapTableMenu } from "./CapTableMenuContext";
+import { WalletButtonStyled } from "./buttons";
+import { useAppShell } from "./AppShellContext";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import {
+	CAP_TABLE_SECTIONS,
+	isCompanyWorkspacePath,
+	isWorkspaceRoute,
+	parseCapTableView,
+} from "./navConfig";
 
 const NavActions = styled.span`
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
 	gap: ${({ theme }) => theme.spacing.sm};
+	margin-left: auto;
 `;
 
-// Route-derived titles are rendered in the navbar so individual pages
-// don't need to repeat the page heading in their body.
-const ROUTE_TITLES: Record<string, string> = {
-	"/": "Onchain cap tables.",
-	"/mint": "Mint Cap Table",
-	"/manage": "Manage Cap Tables",
-	"/manage/cap-table": "Cap Table Manager",
-};
+const MenuToggle = styled.button`
+	display: inline-flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	width: 2.25rem;
+	height: 2.25rem;
+	padding: 0;
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	background: transparent;
+	cursor: pointer;
+	transition: border-color ${({ theme }) => theme.transitions.default},
+		background ${({ theme }) => theme.transitions.default};
 
-// Client-only: useAppKit requires createAppKit to have been called (client-side only)
+	span {
+		display: block;
+		width: 12px;
+		height: 1px;
+		background: ${({ theme }) => theme.colors.muted};
+		transition: background ${({ theme }) => theme.transitions.default};
+	}
+
+	&:hover {
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+		background: ${({ theme }) => theme.colors.elevated};
+
+		span {
+			background: ${({ theme }) => theme.colors.main};
+		}
+	}
+`;
+
+const BrandLink = styled.div`
+	display: inline-flex;
+	align-items: center;
+	line-height: 0;
+
+	a {
+		display: inline-flex;
+		line-height: 0;
+	}
+`;
+
+const TopLink = styled.a`
+	display: inline-flex;
+	align-items: center;
+	height: 2.125rem;
+	padding: 0 ${({ theme }) => theme.spacing.sm};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-weight: ${({ theme }) => theme.fontWeights.medium};
+	color: ${({ theme }) => theme.colors.muted} !important;
+	text-decoration: none !important;
+	opacity: 1 !important;
+	transition: color ${({ theme }) => theme.transitions.default};
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.main} !important;
+		text-decoration: none !important;
+		opacity: 1 !important;
+	}
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+		display: none;
+	}
+`;
+
 const WalletButton = dynamic(() => import("./WalletButtonClient"), {
 	ssr: false,
-	loading: () => <WalletButtonStyled>Connect Wallet</WalletButtonStyled>,
+	loading: () => <WalletButtonStyled>Connect</WalletButtonStyled>,
 });
 
+/**
+ * Top bar.
+ * Marketing (`/`): logo + Docs (+ optional GitHub) — no wallet.
+ * Product (`/app/*`): menu + title + wallet.
+ */
 export default function Navbar() {
-	const { pathname } = useRouter();
-	const { isEnabled: isMenuEnabled, setOpen: setMenuOpen } = useCapTableMenu();
+	const { pathname, query, asPath } = useRouter();
+	const { collapsed, toggleCollapsed, mobileOpen, toggleMobileOpen, setMobileOpen } =
+		useAppShell();
+	const workspace = isWorkspaceRoute(pathname);
+	// asPath is the real URL; pathname is the route pattern (…/[issuerId])
+	const pathOnly = (asPath || "").split("?")[0];
 
-	// Mint/Manage links and the wallet button live in the navbar only while the
-	// user is actively on an app route. Docs and Github stay visible on every
-	// page so the landing page keeps the original outbound links.
-	const isAppRoute = pathname === "/mint" || pathname.startsWith("/manage");
-	const title = ROUTE_TITLES[pathname];
+	let title = "";
+	if (pathname === "/app/mint" || pathOnly === "/app/mint") title = "New company";
+	else if (pathOnly === "/app" || pathOnly === "/app/companies") title = "Companies";
+	else if (isCompanyWorkspacePath(pathOnly) || typeof query.issuerId === "string") {
+		const view = parseCapTableView(query.view as string | undefined);
+		const section = CAP_TABLE_SECTIONS.find((s) => s.id === view);
+		title = section?.label || "Company";
+	}
+
+	const handleMenu = () => {
+		if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) {
+			toggleMobileOpen();
+		} else {
+			toggleCollapsed();
+		}
+	};
+
+	const menuLabel =
+		typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+			? mobileOpen
+				? "Close menu"
+				: "Open menu"
+			: collapsed
+				? "Show sidebar"
+				: "Hide sidebar";
 
 	return (
-		<Nav>
+		<Nav data-testid="top-nav" role="banner">
 			<NavBrand>
-				<LogoRouter>
-					<Link href="/">
-						<Image src="/tap-logo.svg" alt="Transfer Agent Protocol" width={48} height={48} />
+				{workspace && (
+					<MenuToggle
+						type="button"
+						onClick={handleMenu}
+						aria-label={menuLabel}
+						title={menuLabel}
+						data-testid="nav-collapse-toggle"
+					>
+						<span />
+						<span />
+						<span />
+					</MenuToggle>
+				)}
+				<BrandLink>
+					<Link href="/" aria-label="Home" onClick={() => setMobileOpen(false)}>
+						<Image
+							src="/tap-logo.svg"
+							alt="Transfer Agent Protocol"
+							width={32}
+							height={32}
+						/>
 					</Link>
-				</LogoRouter>
-				{title && <NavTitle>{title}</NavTitle>}
+				</BrandLink>
+				{workspace && title && <NavTitle data-testid="top-nav-title">{title}</NavTitle>}
 			</NavBrand>
-			<NavActions>
-				{isAppRoute && (
+			<NavActions data-testid="top-nav-account">
+				{!workspace && (
 					<>
-						<StyledA>
-							<Link href="/mint">Mint</Link>
-						</StyledA>
-						<StyledA>
-							<Link href="/manage">Manage</Link>
-						</StyledA>
+						<TopLink
+							href="https://docs.transferagentprotocol.xyz"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Docs
+						</TopLink>
+						<TopLink
+							href="https://github.com/transfer-agent-protocol/tap-cap-table"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							GitHub
+						</TopLink>
 					</>
 				)}
-				<StyledA>
-					<Link href="https://docs.transferagentprotocol.xyz" target="_blank">Docs</Link>
-				</StyledA>
-				<StyledA>
-					<Link href="https://github.com/transfer-agent-protocol/tap-cap-table" target="_blank">Github</Link>
-				</StyledA>
-				{isMenuEnabled && (
-					<InlineButton onClick={() => setMenuOpen(true)} $variant="primary" title="Open cap table navigation">
-						☰ Menu
-					</InlineButton>
-				)}
-				{isAppRoute && <WalletButton />}
+				{workspace && <WalletButton />}
 			</NavActions>
 		</Nav>
 	);

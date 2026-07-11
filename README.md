@@ -16,8 +16,8 @@ This is a **pnpm monorepo**:
 
 ```
 tap-cap-table/
-├── app/             # Next.js frontend (landing + cap-table dApp)
-├── server/          # Express API server
+├── app/             # Next.js frontend (landing + /app product workspace)
+├── server/          # Express API server + event poller
 ├── chain/           # Solidity smart contracts (Foundry)
 ├── docs/            # Nextra documentation site
 ├── packages/units/  # @tap/units — shared 1e10 scale / UUID / share-caps
@@ -34,13 +34,24 @@ pnpm docker:up              # Start MongoDB, server, and app
 ```
 
 This spins up three services via Docker:
-**Server** http://localhost:8293
-**App** http://localhost:3000 — landing page + wallet-based cap-table minting (`/mint`) and management (`/manage`)
-**MongoDB** localhost:27017
+
+| Service | URL |
+|---------|-----|
+| **Server** | http://localhost:8293 |
+| **App** | http://localhost:3000 — marketing `/` + product `/app/*` |
+| **MongoDB** | localhost:27017 |
+
+**Product UI** (`pnpm app:dev` for hot reload):
+
+- `/app/companies` — companies you’ve minted / loaded from wallet
+- `/app/mint` — create a company (cap table) from the connected admin wallet
+- `/app/companies/[issuerId]` — holdings, stock classes, shareholders, issue stock, **transfer**, transactions
+
+Legacy `/mint` and `/manage*` redirect into `/app`.
 
 Then go read official [docs](https://docs.transferagentprotocol.xyz/)
 
-> **Environment**: Copy `.env.example` to `.env` and fill in `PRIVATE_KEY`, `RPC_URL`, `CHAIN_ID`, and the `NEXT_PUBLIC_*` variables for the frontend (including `NEXT_PUBLIC_REOWN_PROJECT_ID` from [cloud.reown.com](https://cloud.reown.com) for wallet connection). For Plume Mainnet, set `CHAIN_ID=98866` and `RPC_URL=https://rpc.plume.org`.
+> **Environment**: Copy `.env.example` to `.env` and fill in `PRIVATE_KEY`, `RPC_URL`, `CHAIN_ID`, and the `NEXT_PUBLIC_*` variables for the frontend (including `NEXT_PUBLIC_REOWN_PROJECT_ID` from [cloud.reown.com](https://cloud.reown.com) for wallet connection). Align `NEXT_PUBLIC_FACTORY_ADDRESS` in `app/.env.local` with the Mongo `factories` collection. For Plume Mainnet, set `CHAIN_ID=98866` and `RPC_URL=https://rpc.plume.org`.
 
 ### Scripts
 
@@ -60,7 +71,12 @@ pnpm test:units             # Shared @tap/units tests
 
 ## Development
 
-For developers using [Warp](https://warp.dev), see [`WARP.md`](./WARP.md) for AI-assisted development guidance.
+For AI-assisted / agent development, see:
+
+- [`WARP.md`](./WARP.md) — monorepo architecture, commands, patterns, pitfalls
+- [`app/WARP.md`](./app/WARP.md) — frontend conventions (routes, write path, styled-components)
+- [`AGENTS.md`](./AGENTS.md) / [`CLAUDE.md`](./CLAUDE.md) — short pointers to those files
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch and PR conventions
 
 ## Contributing
 

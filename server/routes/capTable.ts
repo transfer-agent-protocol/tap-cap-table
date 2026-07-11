@@ -10,91 +10,92 @@ import { convertUUIDToBytes16 } from "../utils/convertUUID";
 export const capTable = Router();
 
 capTable.get("/", async (req, res) => {
-    res.send("Hello Cap Table!");
+	res.send("Hello Cap Table!");
 });
 
+/**
+ * Holdings from the chain (getAveragePosition), joined with Mongo metadata.
+ *
+ * Mongo stakeholder/class lists are ALWAYS returned when the issuer exists —
+ * even if deployed_to is missing. Only onchain position reads require a contract.
+ * (Previously a missing contract returned 400 and wiped the entire manage UI.)
+ */
 capTable.get("/holdings/stock", async (req, res) => {
-    /* 
-    TODO: handle this in the polling process? or maybe just cache it once in a while?
-     It will get slow once we have 50+ stakeholders
-    */
-    const issuerId = req.query.issuerId;
-    try {
-        const stakeholders = await Stakeholder.find({ issuer: issuerId });
-        const stockClasses = await StockClass.find({ issuer: issuerId });
-        const issuer = await Issuer.findById(issuerId);
-        // Grouping by stakeholder_id and stock_class_id, grab the records with the largest createdAt time
-        const issuances = await StockIssuance.aggregate([
-            {
-                $group: {
-                    _id: {
-                        stakeholder_id: "$stakeholder_id",
-                        stock_class_id: "$stock_class_id",
-                    },
-                    maxDate: { $max: "$createdAt" },
-                },
-            },
-            {
-                $lookup: {
-                    from: "stockissuances",
-                    let: { stakeholder_id: "$_id.stakeholder_id", stock_class_id: "$_id.stock_class_id", maxDate: "$maxDate" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$stakeholder_id", "$$stakeholder_id"] },
-                                        { $eq: ["$stock_class_id", "$$stock_class_id"] },
-                                        { $eq: ["$createdAt", "$$maxDate"] },
-                                    ],
-                                },
-                            },
-                        },
-                    ],
-                    as: "issuanceData",
-                },
-            },
-            { $unwind: "$issuanceData" },
-            { $replaceRoot: { newRoot: "$issuanceData" } },
-        ]);
+	const issuerId = req.query.issuerId;
+	if (!issuerId || typeof issuerId !== "string") {
+		return res.status(400).send("issuerId query param required");
+	}
 
-        // We need to hit web3 to see which are actually valid
-        const { contract } = await getIssuerContract(issuer);
-        const holdings = [];
-        const stakeholderMap = Object.fromEntries(
-            stakeholders.map((x) => {
-                return [x._id, x];
-            })
-        );
-        const stockClassMap = Object.fromEntries(
-            stockClasses.map((x) => {
-                return [x._id, x];
-            })
-        );
-        for (const issuance of issuances) {
-            const { stakeholder_id, stock_class_id } = issuance;
-            const [quantityPrice, quantity, timestamp] = await contract.getAveragePosition(
-                convertUUIDToBytes16(stakeholder_id),
-                convertUUIDToBytes16(stock_class_id)
-            );
-            if (quantity == 0) {
-                continue;
-            }
-            const sharePrice = quantityPrice / quantity;
-            holdings.push({
-                stockClass: stockClassMap[stock_class_id],
-                stakeholder: stakeholderMap[stakeholder_id],
-                quantity: Number(quantity) / decimalScaleValue,
-                sharePrice: Number(sharePrice) / decimalScaleValue,
-                timestamp: Number(timestamp),
-            });
-        }
-        // Return the full stakeholder list too: the manage UI needs it to populate the
-        // Issue Stock dropdown for a freshly set-up cap table that has no issuances yet
-        // (holdings is empty until stock is issued, so it can't be the only source).
-        res.send({ holdings, stockClasses, stakeholders, issuer });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send(`${error}`);
-    }
+	try {
+		const issuer = await Issuer.findById(issuerId);
+		if (!issuer) {
+			return res.status(404).send("Issuer not found");
+		}
+
+		const [stakeholders, stockClasses, issuanceCount] = await Promise.all([
+			Stakeholder.find({ issuer: issuerId }),
+			StockClass.find({ issuer: issuerId }),
+			StockIssuance.countDocuments({ issuer: issuerId }),
+		]);
+
+		// No contract yet — still return mirror so the UI can show people/classes
+		if (!issuer.deployed_to) {
+			return res.send({
+				holdings: [],
+				stockClasses,
+				stakeholders,
+				issuer,
+				meta: {
+					issuanceCount,
+					positions: 0,
+					chainSkipped: true,
+					reason: "Issuer has no deployed_to",
+				},
+			});
+		}
+
+		const { contract } = await getIssuerContract(issuer);
+		const holdings = [];
+
+		for (const stakeholder of stakeholders) {
+			for (const stockClass of stockClasses) {
+				try {
+					const [quantityPrice, quantity, timestamp] = await contract.getAveragePosition(
+						convertUUIDToBytes16(stakeholder._id),
+						convertUUIDToBytes16(stockClass._id),
+					);
+					if (quantity == 0n || quantity === 0 || quantity === "0") {
+						continue;
+					}
+					const q = Number(quantity);
+					const qp = Number(quantityPrice);
+					if (!Number.isFinite(q) || q === 0) continue;
+					const sharePrice = q !== 0 ? qp / q : 0;
+					holdings.push({
+						stockClass,
+						stakeholder,
+						quantity: q / decimalScaleValue,
+						sharePrice: sharePrice / decimalScaleValue,
+						timestamp: Number(timestamp),
+					});
+				} catch (pairErr) {
+					console.warn(
+						`getAveragePosition failed for ${stakeholder._id}/${stockClass._id}:`,
+						pairErr?.message || pairErr,
+					);
+				}
+			}
+		}
+
+		res.send({
+			holdings,
+			stockClasses,
+			stakeholders,
+			issuer,
+			meta: { issuanceCount, positions: holdings.length, chainSkipped: false },
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).send(`${error}`);
+	}
 });

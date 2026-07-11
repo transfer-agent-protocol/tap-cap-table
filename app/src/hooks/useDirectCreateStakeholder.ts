@@ -24,12 +24,13 @@ export function useDirectCreateStakeholder() {
 
 			const stakeholderId = params.id || generateBytes16Id();
 
-			write.writeContract({
+			const writeAsync = write.writeContractAsync ?? write.writeContract;
+			const hash = await writeAsync({
 				address: params.capTableAddress,
 				args: [stakeholderId, params.stakeholderType, params.currentRelationship],
 			});
 
-			return { stakeholderId };
+			return { stakeholderId, hash: typeof hash === "string" ? hash : undefined };
 		},
 		[write, action.isConnected],
 	);

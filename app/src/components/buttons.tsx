@@ -1,152 +1,226 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 const LogoRouter = styled.button`
-    position: relative;
-    display: inline-flex;
-    flex-direction: row nowrap;
-    justify-content: center;
-    align-items: center;
-    min-width: 48px;
-    min-height: 48px;
-    background-color: inherit;
-    border: none;
-    cursor: pointer;
-    opacity: 1;
-    transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+	position: relative;
+	display: inline-flex;
+	flex-flow: row nowrap;
+	justify-content: center;
+	align-items: center;
+	min-width: 40px;
+	min-height: 40px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	border-radius: ${({ theme }) => theme.radii.sm};
+	transition: opacity ${({ theme }) => theme.transitions.default},
+		transform ${({ theme }) => theme.transitions.spring};
 
-    &:hover {
-        opacity: 0.8;
-    }
+	&:hover {
+		opacity: 0.9;
+		transform: scale(1.03);
+	}
 `;
 
 const StyledA = styled.button`
-    position: relative;
-    display: inline-flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    align-items: center;
-	width: auto;
-	height: 32px;
-    font-size: ${({ theme }) => theme.fontSizes.baseline};
-	padding: 0 0 0 1rem;
-    background-color: inherit;
-    border: none;
-    color: ${({ theme }) => theme.colors.text};
-
-    &:hover {
-		opacity: 0.8;
-        transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    }
-
-	&:nth-last-child(1){
-		padding-right: 1rem;
-	}
-`;
-
-const PrimaryButton = styled.button`
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    align-items: center;
-    background: ${({ theme }) => theme.colors.main};
-    width: 9.875rem;
-    height: 3rem;
-	margin: 2rem 0 1rem 0;
-    border: none;
-    box-sizing: border-box;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: bold;
-    font-family: "IBM Plex Mono", sans-serif;
-    color: #FFFFFF;
-    cursor: pointer;
-    transition: all 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
-
-    &:hover {
-        opacity: 0.9;
-    }
-`;
-
-const WalletButtonStyled = styled.button`
-	display: flex;
-	flex-flow: row nowrap;
-	justify-content: center;
-	align-items: center;
-	background: ${({ theme }) => theme.colors.main};
-	height: 2.25rem;
-	padding: 0 1rem;
-	margin-left: 1rem;
-	border: none;
-	border-radius: 0;
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	font-weight: bold;
-	font-family: inherit;
-	color: ${({ theme }) => theme.colors.background};
-	cursor: pointer;
-	transition: opacity 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
-	white-space: nowrap;
-
-	&:hover {
-		opacity: 0.85;
-	}
-`;
-
-const MintButton = styled.button`
-	display: flex;
-	flex-flow: row nowrap;
-	justify-content: center;
-	align-items: center;
-	background: ${({ theme }) => theme.colors.main};
-	width: 100%;
-	height: 3rem;
-	margin-top: 1rem;
-	border: none;
-	border-radius: 4px;
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-weight: bold;
-	font-family: inherit;
-	color: ${({ theme }) => theme.colors.background};
-	cursor: pointer;
-	transition: all 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
-
-	&:hover:not(:disabled) {
-		opacity: 0.9;
-	}
-
-	&:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-`;
-
-const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "danger" }>`
+	position: relative;
 	display: inline-flex;
 	flex-flow: row nowrap;
 	align-items: center;
 	justify-content: center;
-	min-height: 2rem;
-	padding: 0 ${({ theme }) => theme.spacing.md};
-	border: 1px solid
-		${({ theme, $variant }) => ($variant === "danger" ? theme.colors.error : theme.colors.main)};
-	border-radius: ${({ theme }) => theme.radii.sm};
-	background: ${({ theme, $variant }) => ($variant === "primary" ? theme.colors.main : "transparent")};
-	color: ${({ theme, $variant }) =>
-		$variant === "primary" ? theme.colors.background : $variant === "danger" ? theme.colors.error : theme.colors.text};
-	font-family: inherit;
+	height: 2rem;
+	padding: 0 ${({ theme }) => theme.spacing.sm};
+	background: transparent;
+	border: none;
+	color: ${({ theme }) => theme.colors.muted};
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	font-weight: ${({ theme }) => theme.fontWeights.bold};
+	font-family: inherit;
 	cursor: pointer;
-	transition: opacity 0.168s cubic-bezier(0.211, 0.69, 0.313, 1);
-	white-space: nowrap;
+	transition: color ${({ theme }) => theme.transitions.default};
 
-	&:hover:not(:disabled) {
-		opacity: 0.85;
-	}
-
-	&:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
+	&:hover {
+		color: ${({ theme }) => theme.colors.main};
 	}
 `;
 
-export { LogoRouter, StyledA, PrimaryButton, WalletButtonStyled, MintButton, InlineButton }
+const buttonBase = css`
+	display: inline-flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	gap: ${({ theme }) => theme.spacing.sm};
+	font-family: inherit;
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	letter-spacing: -0.01em;
+	border: 1px solid transparent;
+	cursor: pointer;
+	text-decoration: none !important;
+	transition: background ${({ theme }) => theme.transitions.default},
+		border-color ${({ theme }) => theme.transitions.default},
+		color ${({ theme }) => theme.transitions.default},
+		box-shadow ${({ theme }) => theme.transitions.default},
+		transform ${({ theme }) => theme.transitions.default},
+		opacity ${({ theme }) => theme.transitions.default};
+
+	&:disabled {
+		cursor: not-allowed;
+		box-shadow: none !important;
+		transform: none !important;
+		filter: none;
+	}
+`;
+
+const PrimaryButton = styled.button`
+	${buttonBase}
+	width: auto;
+	min-width: 9rem;
+	height: 2.75rem;
+	margin: ${({ theme }) => theme.spacing.lg} 0 ${({ theme }) => theme.spacing.md} 0;
+	padding: 0 ${({ theme }) => theme.spacing.lg};
+	background: ${({ theme }) => theme.colors.main};
+	color: ${({ theme }) => theme.colors.inverse} !important;
+	border-radius: ${({ theme }) => theme.radii.sm};
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	&:hover:not(:disabled),
+	&:focus:not(:disabled) {
+		color: ${({ theme }) => theme.colors.inverse} !important;
+		background: ${({ theme }) => theme.colors.main};
+		opacity: 0.92;
+		text-decoration: none !important;
+	}
+
+	&:disabled {
+		background: ${({ theme }) => theme.colors.elevated};
+		color: ${({ theme }) => theme.colors.subtle};
+		border: 1px solid ${({ theme }) => theme.colors.outline};
+	}
+`;
+
+const WalletButtonStyled = styled.button`
+	${buttonBase}
+	height: 2.375rem;
+	padding: 0 ${({ theme }) => theme.spacing.md};
+	background: ${({ theme }) => theme.colors.main};
+	color: ${({ theme }) => theme.colors.inverse} !important;
+	border-radius: ${({ theme }) => theme.radii.pill};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-weight: ${({ theme }) => theme.fontWeights.bold};
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+
+	&:hover:not(:disabled),
+	&:focus:not(:disabled) {
+		color: ${({ theme }) => theme.colors.inverse} !important;
+		background: ${({ theme }) => theme.colors.main};
+		opacity: 0.92;
+		text-decoration: none !important;
+	}
+`;
+
+const MintButton = styled.button`
+	${buttonBase}
+	width: 100%;
+	height: 2.75rem;
+	margin-top: ${({ theme }) => theme.spacing.md};
+	background: ${({ theme }) => theme.colors.main};
+	color: ${({ theme }) => theme.colors.inverse} !important;
+	border-radius: 0;
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+
+	&:hover:not(:disabled),
+	&:focus:not(:disabled) {
+		color: ${({ theme }) => theme.colors.inverse} !important;
+		background: ${({ theme }) => theme.colors.main};
+		opacity: 0.92;
+		text-decoration: none !important;
+	}
+
+	&:disabled {
+		background: ${({ theme }) => theme.colors.elevated};
+		color: ${({ theme }) => theme.colors.subtle};
+		border: 1px solid ${({ theme }) => theme.colors.outline};
+	}
+`;
+
+const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "danger" | "ghost" }>`
+	${buttonBase}
+	min-height: 2.125rem;
+	padding: 0 ${({ theme }) => theme.spacing.md};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	white-space: nowrap;
+
+	${({ theme, $variant = "secondary" }) => {
+		if ($variant === "primary") {
+			// !important on color: global `a {}` styles must not paint green text on green buttons
+			return css`
+				background: ${theme.colors.main};
+				color: ${theme.colors.inverse} !important;
+				border-color: ${theme.colors.main};
+
+				&:hover:not(:disabled),
+				&:focus:not(:disabled) {
+					color: ${theme.colors.inverse} !important;
+					background: ${theme.colors.main};
+					opacity: 0.92;
+					text-decoration: none !important;
+				}
+
+				&:disabled {
+					background: ${theme.colors.elevated};
+					color: ${theme.colors.subtle} !important;
+					border-color: ${theme.colors.outline};
+					box-shadow: none;
+				}
+			`;
+		}
+		if ($variant === "danger") {
+			return css`
+				background: transparent;
+				color: ${theme.colors.error};
+				border-color: rgba(251, 113, 133, 0.35);
+
+				&:hover:not(:disabled),
+				&:focus:not(:disabled) {
+					background: ${theme.colors.errorBg};
+					border-color: ${theme.colors.error};
+					color: ${theme.colors.error};
+					opacity: 1;
+					text-decoration: none;
+				}
+			`;
+		}
+		if ($variant === "ghost") {
+			return css`
+				background: transparent;
+				color: ${theme.colors.muted};
+				border-color: transparent;
+
+				&:hover:not(:disabled),
+				&:focus:not(:disabled) {
+					color: ${theme.colors.main};
+					background: ${theme.colors.input};
+					opacity: 1;
+					text-decoration: none;
+				}
+			`;
+		}
+		// secondary — green accent on hover, never white
+		return css`
+			background: transparent;
+			color: ${theme.colors.text};
+			border-color: ${theme.colors.borderStrong};
+
+			&:hover:not(:disabled),
+			&:focus:not(:disabled) {
+				border-color: ${theme.colors.main};
+				color: ${theme.colors.main};
+				background: ${theme.colors.accentMuted};
+				opacity: 1;
+				text-decoration: none;
+			}
+		`;
+	}}
+`;
+
+export { LogoRouter, StyledA, PrimaryButton, WalletButtonStyled, MintButton, InlineButton };

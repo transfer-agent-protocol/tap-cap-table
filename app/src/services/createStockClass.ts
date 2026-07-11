@@ -31,7 +31,7 @@ export interface StockClassResponse {
  * `id` is the UUID form of the bytes16 used in the onchain createStockClass tx.
  */
 export async function registerStockClassOnchain(
-	payload: CreateStockClassPayload & { id: string },
+	payload: CreateStockClassPayload & { id: string; tx_hash?: string },
 ): Promise<StockClassResponse> {
 	const res = await fetch("/api/stock-class/register-onchain", {
 		method: "POST",
