@@ -42,15 +42,11 @@ export function MintActions({
 		return (
 			<>
 				<StatusBox $variant="pending">
-					Connect the admin wallet to deploy a new issuer onchain. The same wallet will own ADMIN on the
-					cap table.
+					Connect your wallet to create a cap table. That wallet becomes the admin.
 				</StatusBox>
 				<div style={{ marginTop: "0.75rem" }}>
 					<WalletButton />
 				</div>
-				<MutedText style={{ marginTop: "0.75rem" }}>
-					Use the top-right Connect Wallet control anytime — it stays in sync with this flow.
-				</MutedText>
 			</>
 		);
 	}
@@ -61,27 +57,27 @@ export function MintActions({
 				{isWritePending
 					? "Confirm in wallet..."
 					: isConfirming
-						? "Confirming onchain..."
+						? "Confirming..."
 						: isRegistering
-							? "Saving metadata..."
+							? "Finishing up..."
 							: "Mint Cap Table"}
 			</MintButton>
 
 			<MutedText>
-				Onchain: factory deploys CapTable. Offchain: API stores OCF issuer metadata after the receipt.
+				You&apos;ll sign one transaction. When it confirms, the company is ready to manage.
 			</MutedText>
 
 			{writeError && (
 				<StatusBox $variant="error">
 					{writeError.includes("User rejected") || writeError.includes("denied")
-						? "Transaction rejected."
+						? "You rejected the transaction."
 						: writeError.slice(0, 300)}
 				</StatusBox>
 			)}
 
 			{serverError && (
 				<StatusBox $variant="error">
-					Onchain deploy may have succeeded, but metadata registration failed: {serverError.slice(0, 300)}
+					The chain deploy may have worked, but saving company details failed: {serverError.slice(0, 300)}
 				</StatusBox>
 			)}
 
@@ -91,13 +87,13 @@ export function MintActions({
 
 			{isConfirmed && deployedAddress && !result && !serverError && (
 				<StatusBox $variant="pending">
-					Cap table at {deployedAddress}. Registering issuer metadata...
+					Deployed at {deployedAddress}. Saving company details...
 				</StatusBox>
 			)}
 
 			{result && (
 				<>
-					<StatusBox $variant="success">Cap table deployed and registered.</StatusBox>
+					<StatusBox $variant="success">Cap table created.</StatusBox>
 					<FieldGroup>
 						<FieldLabel>Issuer ID</FieldLabel>
 						<ResponseBlock>{result._id}</ResponseBlock>

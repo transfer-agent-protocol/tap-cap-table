@@ -419,20 +419,12 @@ export function LeftNavDrawer() {
 							{showCollapsed ? "Docs" : "Docs →"}
 						</ExternalLink>
 						<ExternalLink
-							href="https://x.com/thatalexpalmer"
-							target="_blank"
-							rel="noopener noreferrer"
-							$collapsed={showCollapsed}
-						>
-							{showCollapsed ? "X" : "@thatalexpalmer"}
-						</ExternalLink>
-						<ExternalLink
 							href="https://github.com/transfer-agent-protocol/tap-cap-table"
 							target="_blank"
 							rel="noopener noreferrer"
 							$collapsed={showCollapsed}
 						>
-							{showCollapsed ? "GH" : "Source →"}
+							{showCollapsed ? "GH" : "GitHub →"}
 						</ExternalLink>
 					</DrawerFooter>
 				</DrawerInner>

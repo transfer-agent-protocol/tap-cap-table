@@ -69,15 +69,9 @@ export default function Layout({ children, className }: Props) {
 				<FooterWrapper>
 					<FooterContent>
 						<span>© {new Date().getFullYear()} PALMER.EARTH CORP</span>
-						<span>
-							<a href="https://x.com/thatalexpalmer" target="_blank" rel="noopener noreferrer">
-								@thatalexpalmer
-							</a>
-							{" · "}
-							<a href="https://docs.transferagentprotocol.xyz" target="_blank" rel="noopener noreferrer">
-								Docs
-							</a>
-						</span>
+						<a href="https://docs.transferagentprotocol.xyz" target="_blank" rel="noopener noreferrer">
+							Docs
+						</a>
 					</FooterContent>
 				</FooterWrapper>
 			</ShellMainColumn>

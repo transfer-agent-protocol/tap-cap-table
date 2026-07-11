@@ -18,49 +18,61 @@ import { IssuerForm } from "../components/IssuerForm";
 import { MintActions } from "../components/MintActions";
 import { useMintIssuer } from "../hooks/useMintIssuer";
 import { saveLastMintedIssuer } from "../utils/lastMintedIssuer";
+import { loadMyIssuers, mergeIssuers, saveMyIssuers } from "../utils/myIssuers";
 
 export default function MintPage() {
 	const mint = useMintIssuer();
 
-	// Clean post-mint success state — heavy management now lives at /manage/cap-table
 	if (mint.result) {
-		// Persist for /manage to auto-load
 		saveLastMintedIssuer(mint.result);
+		// Keep Manage list in sync with successful mints
+		try {
+			const merged = mergeIssuers(loadMyIssuers(), [
+				{
+					_id: mint.result._id,
+					legal_name: mint.result.legal_name,
+					deployed_to: mint.result.deployed_to,
+					tx_hash: mint.result.tx_hash,
+				},
+			]);
+			saveMyIssuers(merged);
+		} catch {
+			// ignore storage errors
+		}
 
 		const manageUrl = `/manage/cap-table?issuerId=${encodeURIComponent(mint.result._id)}`;
 
 		return (
 			<FullScreenStack>
 				<PageIntro>
-					<Eyebrow>Deploy complete</Eyebrow>
+					<Eyebrow>Done</Eyebrow>
 					<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
-						Cap table is live
+						Your cap table is live
 					</TableTitle>
 					<MutedText>
-						Factory deployed the CapTable onchain and the API registered OCF issuer metadata. Next:
-						stock classes, stakeholders, then issue stock.
+						The company is deployed onchain. Next: add people, set up share classes, and issue stock.
 					</MutedText>
 				</PageIntro>
 
-				<StatusBox $variant="success">Onchain deploy + offchain registration succeeded.</StatusBox>
+				<StatusBox $variant="success">Deployed successfully.</StatusBox>
 
 				<FormFieldGroup>
 					<FormFieldLabel>Issuer ID</FormFieldLabel>
 					<ResponseBlock>{mint.result._id}</ResponseBlock>
 				</FormFieldGroup>
 				<FormFieldGroup>
-					<FormFieldLabel>Contract Address</FormFieldLabel>
+					<FormFieldLabel>Contract</FormFieldLabel>
 					<ResponseBlock>{mint.result.deployed_to}</ResponseBlock>
 				</FormFieldGroup>
 				<FormFieldGroup>
-					<FormFieldLabel>Transaction Hash</FormFieldLabel>
+					<FormFieldLabel>Transaction</FormFieldLabel>
 					<ResponseBlock>{mint.result.tx_hash}</ResponseBlock>
 				</FormFieldGroup>
 
 				<SectionActions>
 					<Link href={manageUrl} passHref legacyBehavior>
 						<InlineButton as="a" $variant="primary">
-							Open cap table
+							Manage this cap table
 						</InlineButton>
 					</Link>
 					<InlineButton onClick={() => mint.reset()} $variant="secondary">
@@ -74,20 +86,20 @@ export default function MintPage() {
 	return (
 		<FullScreenStack>
 			<PageIntro>
-				<Eyebrow>Factory mint</Eyebrow>
+				<Eyebrow>Mint</Eyebrow>
 				<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
-					Deploy a new issuer
+					Create a new cap table
 				</TableTitle>
 				<P>
-					Wallet-signs CapTableFactory.createCapTable. Your wallet becomes ADMIN. After the receipt,
-					OCF issuer fields are stored offchain for the manage workspace.
+					Fill in the company details and confirm with your wallet. You&apos;ll be the admin of this
+					cap table.
 				</P>
 			</PageIntro>
 
 			<ActionTableLayout>
 				<Panel>
 					<SectionHeader>
-						<TableTitle>Issuer (OCF)</TableTitle>
+						<TableTitle>Company details</TableTitle>
 					</SectionHeader>
 					<IssuerForm fields={mint.fields} setField={mint.setField} disabled={mint.isBusy} />
 				</Panel>

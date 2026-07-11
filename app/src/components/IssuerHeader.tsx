@@ -9,6 +9,7 @@ const IssuerSummary = styled.div`
 	gap: ${({ theme }) => theme.spacing.sm};
 	min-width: 0;
 	padding-left: ${({ theme }) => theme.spacing.sm};
+	flex: 1;
 `;
 
 const IssuerName = styled.div`
@@ -18,21 +19,11 @@ const IssuerName = styled.div`
 	color: ${({ theme }) => theme.colors.text};
 `;
 
-const IssuerMeta = styled.div`
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	color: ${({ theme }) => theme.colors.muted};
+const MetaBlock = styled.div`
 	display: flex;
-	flex-flow: row wrap;
-	align-items: center;
-	gap: ${({ theme }) => theme.spacing.sm};
-
-	code {
-		font-size: 0.85em;
-	}
-
-	a {
-		color: ${({ theme }) => theme.colors.main};
-	}
+	flex-flow: column nowrap;
+	gap: 0.2rem;
+	min-width: 0;
 `;
 
 const MetaLabel = styled.span`
@@ -40,10 +31,37 @@ const MetaLabel = styled.span`
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: ${({ theme }) => theme.colors.subtle};
-	margin-right: 0.35rem;
 `;
 
-const MintedTag = styled.span`
+const MetaCode = styled.code`
+	display: block;
+	font-family: inherit;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	line-height: 1.45;
+	color: ${({ theme }) => theme.colors.muted};
+	word-break: break-all;
+	overflow-wrap: anywhere;
+	user-select: all;
+`;
+
+const MetaLink = styled.a`
+	display: block;
+	font-family: inherit;
+	font-size: ${({ theme }) => theme.fontSizes.xs} !important;
+	line-height: 1.45;
+	color: ${({ theme }) => theme.colors.muted} !important;
+	word-break: break-all;
+	overflow-wrap: anywhere;
+	text-decoration: none !important;
+	opacity: 1 !important;
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.main} !important;
+		text-decoration: underline !important;
+	}
+`;
+
+const LiveTag = styled.span`
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35rem;
@@ -77,37 +95,34 @@ export function IssuerHeader({ issuer, contractAddress, onReset }: IssuerHeaderP
 	if (!issuer) return null;
 
 	const explorerBase = "https://explorer.plume.org";
+	const contract = contractAddress || issuer.deployed_to || null;
 
 	return (
 		<DashboardHeader>
 			<IssuerSummary>
 				<IssuerName>{issuer.legal_name}</IssuerName>
-				<IssuerMeta>
-					<span>
-						<MetaLabel>Issuer</MetaLabel>
-						<code>{issuer._id}</code>
-					</span>
-				</IssuerMeta>
-				{contractAddress && (
-					<IssuerMeta>
-						<span>
-							<MetaLabel>Contract</MetaLabel>
-							<a
-								href={`${explorerBase}/address/${contractAddress}`}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{contractAddress.slice(0, 10)}…{contractAddress.slice(-6)}
-							</a>
-						</span>
-					</IssuerMeta>
+				<MetaBlock>
+					<MetaLabel>Issuer ID</MetaLabel>
+					<MetaCode>{issuer._id}</MetaCode>
+				</MetaBlock>
+				{contract && (
+					<MetaBlock>
+						<MetaLabel>Contract</MetaLabel>
+						<MetaLink
+							href={`${explorerBase}/address/${contract}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{contract}
+						</MetaLink>
+					</MetaBlock>
 				)}
 			</IssuerSummary>
 
 			<SectionActions>
-				<MintedTag>Live</MintedTag>
+				<LiveTag>Live</LiveTag>
 				<InlineButton onClick={onReset} $variant="secondary">
-					Mint Another
+					Mint another
 				</InlineButton>
 			</SectionActions>
 		</DashboardHeader>

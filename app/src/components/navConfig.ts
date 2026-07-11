@@ -31,7 +31,7 @@ export const APP_NAV_ITEMS: NavItem[] = [
 	},
 	{
 		id: "manage",
-		label: "Cap Tables",
+		label: "Manage",
 		href: "/manage",
 		// Parent stays active while working inside a single issuer
 		match: (pathname) => pathname === "/manage" || pathname.startsWith("/manage/"),
@@ -47,27 +47,27 @@ export const CAP_TABLE_SECTIONS: Array<{
 	{
 		id: "overview",
 		label: "Overview",
-		description: "Issuer summary and active positions",
+		description: "Summary and holdings",
 	},
 	{
 		id: "stakeholders",
-		label: "Stakeholders",
-		description: "OCF Stakeholder objects",
+		label: "People",
+		description: "Founders, employees, investors",
 	},
 	{
 		id: "stock-classes",
-		label: "Stock Classes",
-		description: "OCF StockClass objects",
+		label: "Share classes",
+		description: "Common, preferred, etc.",
 	},
 	{
 		id: "issue-stock",
-		label: "Issue Stock",
-		description: "TX_STOCK_ISSUANCE",
+		label: "Issue stock",
+		description: "Grant shares",
 	},
 	{
 		id: "transactions",
-		label: "Transactions",
-		description: "Historical transactions",
+		label: "Activity",
+		description: "Recent events",
 	},
 ];
 

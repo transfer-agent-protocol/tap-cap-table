@@ -1,63 +1,45 @@
 /**
- * Centralized UI copy for the cap-table manager.
- * Voice: direct, OCF-aware, honest about onchain vs offchain.
+ * Centralized UI copy — plain language for operators, not protocol engineers.
  */
 export const copy = {
 	holdings: {
-		title: "Positions",
+		title: "Holdings",
 		columns: {
-			stakeholder: "Stakeholder",
-			stockClass: "Stock class",
-			quantity: "Quantity",
-			sharePrice: "Share price",
+			stakeholder: "Person / entity",
+			stockClass: "Share class",
+			quantity: "Shares",
+			sharePrice: "Price",
 			status: "Status",
 		},
-		empty: "No positions yet. Create a stock class and a stakeholder, then issue stock.",
-		loadError: "Couldn't load positions. Is the API and poller running?",
+		empty: "No shares issued yet. Add a person, a share class, then issue stock.",
+		loadError: "Couldn't load holdings. Is the API running?",
 		caption:
-			"Onchain balances (getAveragePosition) joined with latest issuance metadata. New wallet writes show Pending until the event poller mirrors them offchain.",
+			"Live balances from the chain. New activity may show as Pending for a moment while we sync.",
 	},
 	issueStock: {
-		needsSetup: "Create at least one stakeholder and one stock class first.",
+		needsSetup: "Add at least one person and one share class first.",
 	},
 	status: {
-		onchain: "Onchain",
-		pending: "Pending sync",
-		reverted: "Reverted",
+		onchain: "Confirmed",
+		pending: "Pending",
+		reverted: "Failed",
 	},
 	tx: {
-		walletRequired: "Connect the admin wallet to submit this onchain action.",
-		revertedTitle: "Transaction reverted",
-		revertedGeneric: "Mined but reverted — nothing was applied onchain.",
+		walletRequired: "Connect your admin wallet to do this.",
+		revertedTitle: "Transaction failed",
+		revertedGeneric: "The transaction failed onchain — nothing changed.",
 		issuanceReverted:
-			"Issuance reverted. Common cause: quantity exceeds issuer or stock-class authorized shares remaining.",
+			"Issuance failed. Usually that means there aren't enough authorized shares left.",
 		submittedTitle: {
-			stockClass: "Stock class submitted",
-			stakeholder: "Stakeholder submitted",
+			stockClass: "Share class submitted",
+			stakeholder: "Person submitted",
 			issuance: "Issuance submitted",
 		},
-		submittedBody: "Waiting for the receipt. Success only after onchain confirmation.",
+		submittedBody: "Waiting for confirmation...",
 		confirmedTitle: {
-			stockClass: "Stock class confirmed onchain",
-			stakeholder: "Stakeholder confirmed onchain",
-			issuance: "Issuance confirmed onchain",
+			stockClass: "Share class created",
+			stakeholder: "Person added",
+			issuance: "Stock issued",
 		},
-	},
-	scope: {
-		/** What we ship in v1 UI — OCF core only, not full Carta surface */
-		core: [
-			"ISSUER",
-			"STAKEHOLDER",
-			"STOCK_CLASS",
-			"TX_STOCK_ISSUANCE",
-			"Holdings + historical transactions",
-		] as const,
-		later: [
-			"Transfers / cancellations / reissuances",
-			"Stock plans & equity compensation",
-			"Convertibles & warrants",
-			"Vesting engines",
-			"Valuations & financings",
-		] as const,
 	},
 } as const;

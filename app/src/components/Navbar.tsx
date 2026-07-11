@@ -227,16 +227,9 @@ export default function Navbar() {
 						>
 							Docs
 						</TopLink>
-						<TopLink
-							href="https://x.com/thatalexpalmer"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							@thatalexpalmer
-						</TopLink>
 					</>
 				)}
-				{workspace && <LiveDot>Onchain</LiveDot>}
+				{workspace && <LiveDot>Live</LiveDot>}
 				<WalletButton />
 			</NavActions>
 		</Nav>

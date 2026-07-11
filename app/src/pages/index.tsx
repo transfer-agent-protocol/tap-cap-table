@@ -58,11 +58,7 @@ export default function Home() {
 				<a href="https://x.com/thatalexpalmer" target="_blank" rel="noopener noreferrer">
 					@thatalexpalmer
 				</a>{" "}
-				(
-				<a href="https://palmer.earth" target="_blank" rel="noopener noreferrer">
-					thatalexpalmer.eth
-				</a>
-				) and will power{" "}
+				and will power{" "}
 				<a
 					href="https://plume.org/blog/plume-earns-sec-approval-as-transfer-agent"
 					target="_blank"
@@ -158,15 +154,6 @@ export default function Home() {
 				</TableScroll>
 			</Panel>
 
-			<MutedText style={{ marginTop: "1.25rem" }}>
-				<a href="https://x.com/thatalexpalmer" target="_blank" rel="noopener noreferrer">
-					x.com/thatalexpalmer
-				</a>
-				{" · "}
-				<a href="https://palmer.earth" target="_blank" rel="noopener noreferrer">
-					palmer.earth
-				</a>
-			</MutedText>
 		</Content>
 	);
 }

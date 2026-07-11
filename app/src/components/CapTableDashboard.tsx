@@ -399,7 +399,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 								<td>{sc.name || "—"}</td>
 								<td>{sc.class_type || "—"}</td>
 								<td>{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}</td>
-								<td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{sc._id?.slice?.(0, 8) || sc._id}</td>
+								<td style={{ fontFamily: "monospace", fontSize: "0.85em", wordBreak: "break-all" }}>{sc._id}</td>
 							</tr>
 						))}
 					</tbody>
@@ -425,7 +425,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 							<tr key={sh._id}>
 								<td>{sh.name?.legal_name || sh.name?.first_name || "—"}</td>
 								<td>{sh.stakeholder_type || "—"}</td>
-								<td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{sh._id?.slice?.(0, 8) || sh._id}</td>
+								<td style={{ fontFamily: "monospace", fontSize: "0.85em", wordBreak: "break-all" }}>{sh._id}</td>
 							</tr>
 						))}
 					</tbody>
@@ -441,11 +441,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<ActionTableLayout data-testid="view-stock-classes">
 					<Panel>
 						<SectionHeader>
-							<TableTitle>Stock class</TableTitle>
+							<TableTitle>Share class</TableTitle>
 						</SectionHeader>
-						<MutedText>
-							OCF STOCK_CLASS. Creates the class onchain; name and terms register as metadata.
-						</MutedText>
+						<MutedText>Common, preferred, or any other class of stock this company can issue.</MutedText>
 						<StockClassForm onSubmit={handleStockClass} disabled={manager.isLoadingHoldings} />
 					</Panel>
 					<TablePanel>
@@ -464,11 +462,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<ActionTableLayout data-testid="view-stakeholders">
 					<Panel>
 						<SectionHeader>
-							<TableTitle>Stakeholder</TableTitle>
+							<TableTitle>Person or entity</TableTitle>
 						</SectionHeader>
-						<MutedText>
-							OCF STAKEHOLDER. Onchain id + relationship; legal name lives in offchain metadata.
-						</MutedText>
+						<MutedText>Founders, employees, investors — anyone who will hold shares.</MutedText>
 						<StakeholderForm onSubmit={handleStakeholder} disabled={manager.isLoadingHoldings} />
 					</Panel>
 					<TablePanel>
@@ -489,9 +485,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						<SectionHeader>
 							<TableTitle>Issue stock</TableTitle>
 						</SectionHeader>
-						<MutedText>
-							OCF TX_STOCK_ISSUANCE. Share-cap checked client-side; quantity scales 1e10 on write.
-						</MutedText>
+						<MutedText>Grant shares to someone. We check authorized share limits before you sign.</MutedText>
 						<IssueStockForm
 							stockClasses={stockClassOptions}
 							stakeholders={stakeholderOptions}
@@ -514,12 +508,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				<div data-testid="view-transactions">
 					<TablePanel>
 						<SectionHeader>
-							<TableTitle>Transaction history</TableTitle>
+							<TableTitle>Activity</TableTitle>
 						</SectionHeader>
-						<MutedText>
-							Offchain mirror of onchain events (poller). Empty until issuances (and later actions)
-							are confirmed and synced.
-						</MutedText>
+						<MutedText>Issuances and other events once they&apos;ve confirmed onchain.</MutedText>
 						{historicalTransactions.length > 0 ? (
 							<TableScroll>
 								<StyledTable>
@@ -594,8 +585,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 							<TableTitle>Overview</TableTitle>
 						</SectionHeader>
 						<MutedText>
-							Core loop: stakeholders → stock classes → issue stock. Positions update onchain;
-							history and labels sync offchain via the poller. Left rail opens each step.
+							Start with people and share classes, then issue stock. Use the left menu to move
+							between steps.
 						</MutedText>
 					</Panel>
 					<TablePanel>{holdingsTable}</TablePanel>
