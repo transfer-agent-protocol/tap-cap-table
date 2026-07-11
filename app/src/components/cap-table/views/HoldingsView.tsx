@@ -9,6 +9,7 @@ import {
 } from "../../wrappers";
 import { copy } from "../../../lib/copy";
 import { SetupChecklist } from "../SetupChecklist";
+import { OwnershipBar } from "../OwnershipBar";
 import type { CapTableView } from "../../navConfig";
 
 interface HoldingsViewProps {
@@ -21,6 +22,16 @@ interface HoldingsViewProps {
 	syncNote: string | null;
 	toolbar: ReactNode;
 	holdingsTable: ReactNode;
+	holdingsData: any;
+	createdIssuances?: Array<{
+		stakeholder_id: string;
+		stock_class_id: string;
+		quantity: string;
+		stakeholder_name?: string;
+		stock_class_name?: string;
+		confirmed?: boolean;
+		txHash?: string;
+	}>;
 	onNavigate: (view: CapTableView) => void;
 }
 
@@ -34,9 +45,12 @@ export function HoldingsView({
 	syncNote,
 	toolbar,
 	holdingsTable,
+	holdingsData,
+	createdIssuances = [],
 	onNavigate,
 }: HoldingsViewProps) {
 	const showSetup = !isLoading && positionCount === 0;
+	const showBar = !isLoading && positionCount > 0;
 
 	return (
 		<PageLayout data-testid="view-overview">
@@ -66,6 +80,12 @@ export function HoldingsView({
 					<StatusBox $variant="pending">{copy.sync.ghostClasses}</StatusBox>
 				)}
 				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{showBar && (
+					<OwnershipBar
+						holdingsData={holdingsData}
+						createdIssuances={createdIssuances}
+					/>
+				)}
 				{holdingsTable}
 			</DataBand>
 		</PageLayout>

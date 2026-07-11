@@ -786,6 +786,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				syncNote={syncNote}
 				toolbar={toolbar}
 				holdingsTable={holdingsTable}
+				holdingsData={manager.holdings}
+				createdIssuances={directIssuances}
 				onNavigate={goTo}
 			/>
 		);
