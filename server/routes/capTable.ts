@@ -16,20 +16,42 @@ capTable.get("/", async (req, res) => {
 /**
  * Holdings from the chain (getAveragePosition), joined with Mongo metadata.
  *
- * Previously we only queried positions for stakeholder/class pairs that already
- * had a StockIssuance doc written by the poller — so a lagging poller made the
- * UI look empty even when shares existed onchain. We now iterate every known
- * stakeholder × stock class from Mongo (including register-onchain metadata).
+ * Mongo stakeholder/class lists are ALWAYS returned when the issuer exists —
+ * even if deployed_to is missing. Only onchain position reads require a contract.
+ * (Previously a missing contract returned 400 and wiped the entire manage UI.)
  */
 capTable.get("/holdings/stock", async (req, res) => {
 	const issuerId = req.query.issuerId;
-	try {
-		const stakeholders = await Stakeholder.find({ issuer: issuerId });
-		const stockClasses = await StockClass.find({ issuer: issuerId });
-		const issuer = await Issuer.findById(issuerId);
+	if (!issuerId || typeof issuerId !== "string") {
+		return res.status(400).send("issuerId query param required");
+	}
 
-		if (!issuer?.deployed_to) {
-			return res.status(400).send("Issuer has no deployed cap table address");
+	try {
+		const issuer = await Issuer.findById(issuerId);
+		if (!issuer) {
+			return res.status(404).send("Issuer not found");
+		}
+
+		const [stakeholders, stockClasses, issuanceCount] = await Promise.all([
+			Stakeholder.find({ issuer: issuerId }),
+			StockClass.find({ issuer: issuerId }),
+			StockIssuance.countDocuments({ issuer: issuerId }),
+		]);
+
+		// No contract yet — still return mirror so the UI can show people/classes
+		if (!issuer.deployed_to) {
+			return res.send({
+				holdings: [],
+				stockClasses,
+				stakeholders,
+				issuer,
+				meta: {
+					issuanceCount,
+					positions: 0,
+					chainSkipped: true,
+					reason: "Issuer has no deployed_to",
+				},
+			});
 		}
 
 		const { contract } = await getIssuerContract(issuer);
@@ -57,7 +79,6 @@ capTable.get("/holdings/stock", async (req, res) => {
 						timestamp: Number(timestamp),
 					});
 				} catch (pairErr) {
-					// Skip pairs the contract rejects (e.g. unknown ids) without failing the whole request
 					console.warn(
 						`getAveragePosition failed for ${stakeholder._id}/${stockClass._id}:`,
 						pairErr?.message || pairErr,
@@ -66,15 +87,12 @@ capTable.get("/holdings/stock", async (req, res) => {
 			}
 		}
 
-		// Also surface issuance count from Mongo (poller mirror) for debugging
-		const issuanceCount = await StockIssuance.countDocuments({ issuer: issuerId });
-
 		res.send({
 			holdings,
 			stockClasses,
 			stakeholders,
 			issuer,
-			meta: { issuanceCount, positions: holdings.length },
+			meta: { issuanceCount, positions: holdings.length, chainSkipped: false },
 		});
 	} catch (error) {
 		console.error(error);
