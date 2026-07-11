@@ -34,6 +34,14 @@ import type { IssuerResponse } from "../services/registerIssuer";
 import { copy } from "../lib/copy";
 import { parseCapTableView, type CapTableView } from "./navConfig";
 import { issuanceStillSyncing } from "../utils/holdingStatus";
+import {
+	appendActivity,
+	EXPLORER_TX,
+	loadActivity,
+	markActivityByTx,
+	updateActivity,
+	type ActivityEntry,
+} from "../utils/activityLog";
 
 interface CapTableDashboardProps {
 	issuerResult: IssuerResponse;
@@ -90,21 +98,43 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	);
 
 	const [historicalTransactions, setHistoricalTransactions] = useState<any[]>([]);
+	const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
 	const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 	const [isSyncingPoller, setIsSyncingPoller] = useState(false);
 	const [syncNote, setSyncNote] = useState<string | null>(null);
 
+	// Last local activity id waiting on a receipt (so we can update TX status)
+	const [pendingActivityId, setPendingActivityId] = useState<string | null>(null);
+
 	const [hasPendingSyncFlag, setHasPendingSyncFlag] = useState(false);
 	const manager = useCapTableManager(issuerResult, { shouldPoll: hasPendingSyncFlag });
+
+	// Load persisted activity for this issuer
+	useEffect(() => {
+		if (!issuerResult?._id) return;
+		setActivityLog(loadActivity(issuerResult._id));
+	}, [issuerResult?._id]);
 
 	// Confirm / revert handlers
 	useEffect(() => {
 		if (!pendingStockClass) return;
 		if (directStockClass.isConfirmed) {
+			const hash = directStockClass.hash;
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.stockClass,
-				txHash: directStockClass.hash,
+				txHash: hash,
 			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, {
+						status: "confirmed",
+						txHash: hash || undefined,
+					}),
+				);
+			} else if (hash && issuerResult._id) {
+				setActivityLog(markActivityByTx(issuerResult._id, hash, "confirmed"));
+			}
+			setPendingActivityId(null);
 			setPendingStockClass(false);
 			directStockClass.reset();
 		} else if (directStockClass.isReverted) {
@@ -112,19 +142,37 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				title: copy.tx.revertedTitle,
 				message: directStockClass.errorMessage || copy.tx.revertedGeneric,
 			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, { status: "reverted" }),
+				);
+			}
 			setDirectStockClasses((prev) => prev.slice(0, -1));
+			setPendingActivityId(null);
 			setPendingStockClass(false);
 			directStockClass.reset();
 		}
-	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass]);
+	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass, pendingActivityId, issuerResult._id]);
 
 	useEffect(() => {
 		if (!pendingStakeholder) return;
 		if (directStakeholder.isConfirmed) {
+			const hash = directStakeholder.hash;
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.stakeholder,
-				txHash: directStakeholder.hash,
+				txHash: hash,
 			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, {
+						status: "confirmed",
+						txHash: hash || undefined,
+					}),
+				);
+			} else if (hash && issuerResult._id) {
+				setActivityLog(markActivityByTx(issuerResult._id, hash, "confirmed"));
+			}
+			setPendingActivityId(null);
 			setPendingStakeholder(false);
 			directStakeholder.reset();
 		} else if (directStakeholder.isReverted) {
@@ -132,34 +180,50 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				title: copy.tx.revertedTitle,
 				message: directStakeholder.errorMessage || copy.tx.revertedGeneric,
 			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, { status: "reverted" }),
+				);
+			}
 			setDirectStakeholders((prev) => prev.slice(0, -1));
+			setPendingActivityId(null);
 			setPendingStakeholder(false);
 			directStakeholder.reset();
 		}
-	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder]);
+	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder, pendingActivityId, issuerResult._id]);
 
 	useEffect(() => {
 		if (!pendingIssuance) return;
 		if (directIssuance.isConfirmed) {
+			const hash = directIssuance.hash;
 			setSuccessModal({
 				title: copy.tx.confirmedTitle.issuance,
-				txHash: directIssuance.hash,
+				txHash: hash,
 			});
-			// Mark session row Confirmed as soon as the receipt succeeds
 			setDirectIssuances((prev) => {
 				if (!prev.length) return prev;
 				const next = [...prev];
 				next[next.length - 1] = {
 					...next[next.length - 1],
-					txHash: directIssuance.hash || next[next.length - 1].txHash,
+					txHash: hash || next[next.length - 1].txHash,
 					confirmed: true,
 				};
 				return next;
 			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, {
+						status: "confirmed",
+						txHash: hash || undefined,
+					}),
+				);
+			} else if (hash && issuerResult._id) {
+				setActivityLog(markActivityByTx(issuerResult._id, hash, "confirmed"));
+			}
+			setPendingActivityId(null);
 			setPendingIssuance(false);
 			directIssuance.reset();
 			manager.refreshHoldings();
-			// Poll chain holdings briefly so the Confirmed row can flip to the API row
 			const t1 = setTimeout(() => manager.refreshHoldings(), 1500);
 			const t2 = setTimeout(() => manager.refreshHoldings(), 4000);
 			return () => {
@@ -171,11 +235,17 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				title: copy.tx.revertedTitle,
 				message: directIssuance.errorMessage || copy.tx.issuanceReverted,
 			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, { status: "reverted" }),
+				);
+			}
 			setDirectIssuances((prev) => prev.slice(0, -1));
+			setPendingActivityId(null);
 			setPendingIssuance(false);
 			directIssuance.reset();
 		}
-	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance, manager]);
+	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance, manager, pendingActivityId, issuerResult._id]);
 
 	const loadHistory = useCallback(() => {
 		if (!issuerResult?._id) return;
@@ -271,7 +341,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			const stockClassBytes16 = generateBytes16Id() as `0x${string}`;
 			const stockClassUuid = bytes16ToUuid(stockClassBytes16);
 
-			await directStockClass.createStockClass({
+			const result = await directStockClass.createStockClass({
 				capTableAddress,
 				classType: data.class_type,
 				pricePerShareAmount: data.price_per_share?.amount || "0",
@@ -279,6 +349,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				id: stockClassBytes16,
 			});
 
+			const activityId = `sc-${stockClassUuid}-${Date.now()}`;
+			setPendingActivityId(activityId);
 			setPendingStockClass(true);
 			setDirectStockClasses((prev) => [
 				...prev,
@@ -289,6 +361,19 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					initial_shares_authorized: data.initial_shares_authorized,
 				},
 			]);
+			setActivityLog(
+				appendActivity(issuerResult._id, {
+					id: activityId,
+					issuerId: issuerResult._id,
+					kind: "stock_class",
+					type: "Share class",
+					details: data.name,
+					date: new Date().toISOString().slice(0, 10),
+					txHash: result.hash,
+					status: result.hash ? "pending" : "pending",
+					createdAt: Date.now(),
+				}),
+			);
 
 			registerStockClassOnchain({ issuerId: issuerResult._id, data, id: stockClassUuid }).catch((err) =>
 				console.warn("Failed to register stock class metadata:", err),
@@ -311,18 +396,34 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			const stakeholderBytes16 = generateBytes16Id() as `0x${string}`;
 			const stakeholderUuid = bytes16ToUuid(stakeholderBytes16);
 
-			await directStakeholder.createStakeholder({
+			const result = await directStakeholder.createStakeholder({
 				capTableAddress,
 				stakeholderType: data.stakeholder_type,
 				currentRelationship: data.current_relationship,
 				id: stakeholderBytes16,
 			});
 
+			const activityId = `sh-${stakeholderUuid}-${Date.now()}`;
+			const legalName = data.name?.legal_name || "Person";
+			setPendingActivityId(activityId);
 			setPendingStakeholder(true);
 			setDirectStakeholders((prev) => [
 				...prev,
 				{ _id: stakeholderUuid, name: data.name, stakeholder_type: data.stakeholder_type },
 			]);
+			setActivityLog(
+				appendActivity(issuerResult._id, {
+					id: activityId,
+					issuerId: issuerResult._id,
+					kind: "stakeholder",
+					type: "Person",
+					details: legalName,
+					date: new Date().toISOString().slice(0, 10),
+					txHash: result.hash,
+					status: "pending",
+					createdAt: Date.now(),
+				}),
+			);
 
 			registerStakeholderOnchain({ issuerId: issuerResult._id, data, id: stakeholderUuid }).catch((err) =>
 				console.warn("Failed to register stakeholder metadata:", err),
@@ -387,6 +488,10 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				comments: data.comments,
 			});
 
+			const activityId = `iss-${result.issuanceId}-${Date.now()}`;
+			const holderName = stakeholder?.name?.legal_name || stakeholder?.name?.first_name || "Holder";
+			const className = stockClass?.name || "Class";
+			setPendingActivityId(activityId);
 			setPendingIssuance(true);
 			setDirectIssuances((prev) => [
 				...prev,
@@ -397,13 +502,30 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					stakeholder_id: data.stakeholder_id,
 					stock_class_id: data.stock_class_id,
 					share_price: data.share_price,
-					stakeholder_name: stakeholder?.name?.legal_name || stakeholder?.name?.first_name,
-					stock_class_name: stockClass?.name,
+					stakeholder_name: holderName,
+					stock_class_name: className,
 					custom_id: data.custom_id,
 					txHash: result.hash,
 					date: new Date().toISOString().slice(0, 10),
 				},
 			]);
+			setActivityLog(
+				appendActivity(issuerResult._id, {
+					id: activityId,
+					issuerId: issuerResult._id,
+					kind: "stock_issuance",
+					type: "Stock issuance",
+					details: data.custom_id || `${holderName} · ${className}`,
+					quantity: data.quantity,
+					price: data.share_price?.amount
+						? `${data.share_price.amount} ${data.share_price.currency || "USD"}`
+						: undefined,
+					date: new Date().toISOString().slice(0, 10),
+					txHash: result.hash,
+					status: "pending",
+					createdAt: Date.now(),
+				}),
+			);
 
 			registerStockIssuanceOnchain({ issuerId: issuerResult._id, data }).catch((err) =>
 				console.warn("Failed to register stock issuance metadata:", err),
@@ -575,36 +697,51 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 
 		if (currentView === "transactions") {
-			const pendingRows = directIssuances.map((iss) => ({
-				type: "Stock issuance",
-				details: iss.custom_id || iss.security_id || "—",
-				quantity: iss.quantity,
-				price: iss.share_price?.amount
-					? `${iss.share_price.amount} ${iss.share_price.currency || "USD"}`
-					: "—",
-				date: iss.date || "—",
-				status: "Pending",
-				key: `local-${iss._id}`,
+			// Prefer persisted local log (has real TX hashes from wallet). Merge server history after.
+			const localRows = activityLog.map((e) => ({
+				key: e.id,
+				type: e.type,
+				details: e.details,
+				quantity: e.quantity ?? "—",
+				price: e.price ?? "—",
+				date: e.date,
+				status:
+					e.status === "confirmed"
+						? "Confirmed"
+						: e.status === "reverted"
+							? "Failed"
+							: e.txHash
+								? "Submitted"
+								: "Pending",
+				txHash: e.txHash,
 			}));
 
-			const historyRows = historicalTransactions.map((tx: any, idx: number) => {
-				const t = tx.transaction || tx || {};
-				const priceAmount = t.share_price?.amount;
-				return {
-					type: tx.transactionType || t.object_type || "Transaction",
-					details: t.custom_id || t.security_id || "—",
-					quantity: t.quantity ?? "—",
-					price:
-						priceAmount != null && priceAmount !== ""
-							? `${priceAmount} ${t.share_price?.currency || "USD"}`
-							: "—",
-					date: t.date || "—",
-					status: "Confirmed",
-					key: `hist-${idx}`,
-				};
-			});
+			const seenTx = new Set(
+				localRows.map((r) => r.txHash?.toLowerCase()).filter(Boolean) as string[],
+			);
 
-			const rows = [...pendingRows, ...historyRows];
+			const historyRows = historicalTransactions
+				.map((tx: any, idx: number) => {
+					const t = tx.transaction || tx || {};
+					const priceAmount = t.share_price?.amount;
+					const txHash = tx.tx_hash || t.tx_hash || tx.transactionHash || t.transaction_hash;
+					return {
+						key: `hist-${idx}`,
+						type: tx.transactionType || t.object_type || "Transaction",
+						details: t.custom_id || t.security_id || "—",
+						quantity: t.quantity ?? "—",
+						price:
+							priceAmount != null && priceAmount !== ""
+								? `${priceAmount} ${t.share_price?.currency || "USD"}`
+								: "—",
+						date: t.date || "—",
+						status: "Confirmed",
+						txHash: typeof txHash === "string" ? txHash : undefined,
+					};
+				})
+				.filter((r) => !r.txHash || !seenTx.has(r.txHash.toLowerCase()));
+
+			const rows = [...localRows, ...historyRows];
 
 			return (
 				<PageLayout data-testid="view-transactions">
@@ -624,16 +761,17 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 										<th>Price</th>
 										<th>Date</th>
 										<th>Status</th>
+										<th>Transaction</th>
 									</tr>
 								</thead>
 								<tbody>
 									{rows.length === 0 ? (
 										<tr>
-											<td colSpan={6}>
+											<td colSpan={7}>
 												<MutedText>
 													{isLoadingHistory
 														? "Loading…"
-														: "No activity yet. Issue stock, then Sync blockchain if history is empty."}
+														: "No activity yet. Actions you take here show up with their TX hash."}
 												</MutedText>
 											</td>
 										</tr>
@@ -646,6 +784,19 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 												<td>{r.price}</td>
 												<td>{r.date}</td>
 												<td>{r.status}</td>
+												<td style={{ wordBreak: "break-all", fontSize: "0.85em" }}>
+													{r.txHash ? (
+														<a
+															href={EXPLORER_TX(r.txHash)}
+															target="_blank"
+															rel="noopener noreferrer"
+														>
+															{r.txHash}
+														</a>
+													) : (
+														"—"
+													)}
+												</td>
 											</tr>
 										))
 									)}
