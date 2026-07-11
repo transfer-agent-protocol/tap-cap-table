@@ -11,16 +11,13 @@ interface Props {
 	className?: string;
 }
 
-const ShellRoot = styled.div<{ $workspace: boolean }>`
+const ShellRoot = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: stretch;
 	width: 100%;
 	min-height: 100vh;
-	background:
-		radial-gradient(1200px 600px at 10% -10%, rgba(200, 245, 66, 0.07), transparent 55%),
-		radial-gradient(900px 500px at 100% 0%, rgba(125, 211, 252, 0.05), transparent 50%),
-		${({ theme }) => theme.colors.background};
+	background: ${({ theme }) => theme.colors.background};
 `;
 
 const ShellMainColumn = styled.div`
@@ -39,10 +36,6 @@ const ContentArea = styled.div`
 	min-width: 0;
 `;
 
-/**
- * Marketing (`/`) uses top chrome only.
- * Workspace (`/mint`, `/manage/*`) adds the left collapsible product nav.
- */
 export default function Layout({ children, className }: Props) {
 	const { pathname } = useRouter();
 	const { collapsed } = useAppShell();
@@ -51,7 +44,6 @@ export default function Layout({ children, className }: Props) {
 	return (
 		<ShellRoot
 			className={className}
-			$workspace={workspace}
 			data-testid="app-shell"
 			data-nav-collapsed={collapsed ? "1" : "0"}
 			data-workspace={workspace ? "1" : "0"}
@@ -69,9 +61,6 @@ export default function Layout({ children, className }: Props) {
 				<FooterWrapper>
 					<FooterContent>
 						<span>© {new Date().getFullYear()} PALMER.EARTH CORP</span>
-						<a href="https://docs.transferagentprotocol.xyz" target="_blank" rel="noopener noreferrer">
-							Docs
-						</a>
 					</FooterContent>
 				</FooterWrapper>
 			</ShellMainColumn>

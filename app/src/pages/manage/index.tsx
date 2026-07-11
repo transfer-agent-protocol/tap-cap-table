@@ -38,15 +38,10 @@ const IssuerCard = styled.div`
 	grid-template-columns: minmax(0, 1fr) auto;
 	gap: ${({ theme }) => theme.spacing.md};
 	align-items: start;
-	padding: ${({ theme }) => theme.spacing.md};
-	background: ${({ theme }) => theme.colors.elevated};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.md};
-	transition: border-color ${({ theme }) => theme.transitions.default};
-
-	&:hover {
-		border-color: ${({ theme }) => theme.colors.borderStrong};
-	}
+	padding: ${({ theme }) => theme.spacing.md} 0;
+	background: transparent;
+	border: none;
+	border-top: 1px solid ${({ theme }) => theme.colors.outline};
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
 		grid-template-columns: 1fr;
@@ -81,41 +76,31 @@ const MetaLabel = styled.span`
 	color: ${({ theme }) => theme.colors.subtle};
 `;
 
-/** Full-width mono values — never truncate addresses */
-const MetaValue = styled.code`
+/** Plain read-only mono — not an input */
+const MetaValue = styled.span`
 	display: block;
-	font-family: inherit;
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	line-height: 1.45;
+	line-height: 1.5;
 	color: ${({ theme }) => theme.colors.muted};
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
-	padding: 0.35rem 0.5rem;
 	word-break: break-all;
 	overflow-wrap: anywhere;
 	user-select: all;
+	font-variant-numeric: tabular-nums;
 `;
 
 const ContractLink = styled.a`
 	display: block;
-	font-family: inherit;
 	font-size: ${({ theme }) => theme.fontSizes.xs} !important;
-	line-height: 1.45;
-	color: ${({ theme }) => theme.colors.muted} !important;
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
-	padding: 0.35rem 0.5rem;
+	line-height: 1.5;
+	color: ${({ theme }) => theme.colors.main} !important;
 	word-break: break-all;
 	overflow-wrap: anywhere;
 	text-decoration: none !important;
 	opacity: 1 !important;
+	font-variant-numeric: tabular-nums;
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main} !important;
-		border-color: ${({ theme }) => theme.colors.borderStrong};
-		text-decoration: none !important;
+		text-decoration: underline !important;
 	}
 `;
 
@@ -322,11 +307,6 @@ export default function ManageHub() {
 							))}
 						</IssuerList>
 					)}
-
-					<MutedText>
-						This list is saved in your browser. Syncing pulls companies your connected wallet has
-						deployed and keeps them here for next time.
-					</MutedText>
 				</TablePanel>
 			</ActionTableLayout>
 		</FullScreenStack>

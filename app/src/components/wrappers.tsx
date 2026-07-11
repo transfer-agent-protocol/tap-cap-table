@@ -140,49 +140,38 @@ const Credits = styled.div`
 
 const StyledTable = styled.table`
 	width: 100%;
-	border-collapse: separate;
-	border-spacing: 0;
+	border-collapse: collapse;
 	margin: 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
 	table-layout: fixed;
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.md};
-	overflow: hidden;
+	background: transparent;
+	border-top: 1px solid ${({ theme }) => theme.colors.outline};
 
 	th,
 	td {
 		text-align: left;
-		padding: 0.85rem 1rem;
+		padding: 0.75rem 0;
 		border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
 		word-break: break-word;
-		vertical-align: middle;
+		vertical-align: top;
 	}
 
 	th {
-		background: ${({ theme }) => theme.colors.elevated};
+		background: transparent;
 		color: ${({ theme }) => theme.colors.subtle};
 		font-size: ${({ theme }) => theme.fontSizes.xs};
-		font-weight: ${({ theme }) => theme.fontWeights.semibold};
-		letter-spacing: 0.08em;
+		font-weight: ${({ theme }) => theme.fontWeights.medium};
+		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		border-bottom: 1px solid ${({ theme }) => theme.colors.borderStrong};
-	}
-
-	tbody tr {
-		transition: background ${({ theme }) => theme.transitions.default};
+		padding-bottom: 0.5rem;
 	}
 
 	tbody tr:hover td {
-		background: ${({ theme }) => theme.colors.accentMuted};
-	}
-
-	tbody tr:last-child td {
-		border-bottom: none;
+		color: ${({ theme }) => theme.colors.text};
 	}
 
 	td {
-		color: ${({ theme }) => theme.colors.text};
+		color: ${({ theme }) => theme.colors.muted};
 	}
 
 	td a {
@@ -191,8 +180,6 @@ const StyledTable = styled.table`
 		font-weight: ${({ theme }) => theme.fontWeights.medium};
 
 		&:hover {
-			color: ${({ theme }) => theme.colors.main};
-			opacity: 0.9;
 			text-decoration: underline;
 			background: transparent;
 		}
@@ -200,10 +187,6 @@ const StyledTable = styled.table`
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
 		font-size: ${({ theme }) => theme.fontSizes.xs};
-		th,
-		td {
-			padding: 0.65rem 0.75rem;
-		}
 	}
 `;
 
@@ -294,31 +277,25 @@ const Panel = styled.section`
 	gap: ${({ theme }) => theme.spacing.md};
 	min-width: 0;
 	padding: ${({ theme }) => theme.spacing.lg};
-	background: ${({ theme }) => theme.colors.surface};
+	background: transparent;
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.md};
-	box-shadow: ${({ theme }) => theme.shadows.sm};
 `;
 
 const StatusBox = styled.div<{ $variant?: "success" | "error" | "pending" }>`
-	padding: ${({ theme }) => theme.spacing.md};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	padding: ${({ theme }) => theme.spacing.sm} 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	word-break: break-all;
+	word-break: break-word;
 	line-height: 1.5;
-	border: 1px solid
+	border: none;
+	border-left: 2px solid
 		${({ theme, $variant }) =>
 			$variant === "success"
-				? "rgba(52, 211, 153, 0.35)"
+				? theme.colors.success
 				: $variant === "error"
-					? "rgba(251, 113, 133, 0.35)"
-					: "rgba(251, 191, 36, 0.35)"};
-	background: ${({ theme, $variant }) =>
-		$variant === "success"
-			? theme.colors.successBg
-			: $variant === "error"
-				? theme.colors.errorBg
-				: theme.colors.pendingBg};
+					? theme.colors.error
+					: theme.colors.pending};
+	padding-left: ${({ theme }) => theme.spacing.md};
+	background: transparent;
 	color: ${({ theme, $variant }) =>
 		$variant === "success"
 			? theme.colors.success
@@ -328,17 +305,17 @@ const StatusBox = styled.div<{ $variant?: "success" | "error" | "pending" }>`
 `;
 
 const ResponseBlock = styled.pre`
-	padding: ${({ theme }) => theme.spacing.md};
+	padding: 0;
+	margin: 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
 	font-family: inherit;
-	background: ${({ theme }) => theme.colors.elevated};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
-	color: ${({ theme }) => theme.colors.main};
+	background: transparent;
+	border: none;
+	color: ${({ theme }) => theme.colors.muted};
 	word-break: break-all;
 	white-space: pre-wrap;
 	overflow-x: auto;
-	margin: 0;
+	user-select: all;
 `;
 
 const FullScreenMain = styled.div`
@@ -392,26 +369,9 @@ const DashboardHeader = styled.header`
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: ${({ theme }) => theme.spacing.md};
-	padding: ${({ theme }) => theme.spacing.lg};
-	background: linear-gradient(
-		135deg,
-		${({ theme }) => theme.colors.elevated} 0%,
-		${({ theme }) => theme.colors.surface} 55%,
-		rgba(200, 245, 66, 0.06) 100%
-	);
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.md};
-	position: relative;
-	overflow: hidden;
-
-	&::after {
-		content: "";
-		position: absolute;
-		inset: 0 auto 0 0;
-		width: 3px;
-		background: ${({ theme }) => theme.colors.main};
-		box-shadow: ${({ theme }) => theme.shadows.glow};
-	}
+	padding: 0 0 ${({ theme }) => theme.spacing.lg} 0;
+	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+	background: transparent;
 `;
 
 const DashboardGrid = styled.div`
@@ -436,10 +396,9 @@ const TablePanel = styled.div`
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.md};
 	min-width: 0;
-	padding: ${({ theme }) => theme.spacing.lg};
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.md};
+	padding: 0;
+	background: transparent;
+	border: none;
 `;
 
 const TableTitle = styled.h3`
@@ -491,10 +450,10 @@ const StatCard = styled.div`
 	display: flex;
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.xs};
-	padding: ${({ theme }) => theme.spacing.md};
-	background: ${({ theme }) => theme.colors.elevated};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	padding: ${({ theme }) => theme.spacing.md} 0;
+	background: transparent;
+	border: none;
+	border-top: 1px solid ${({ theme }) => theme.colors.outline};
 `;
 
 const StatLabel = styled.span`

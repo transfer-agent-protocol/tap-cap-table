@@ -31,12 +31,11 @@ const FormInput = styled.input`
 	padding: 0 ${({ theme }) => theme.spacing.md};
 	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	border-radius: 0;
 	color: ${({ theme }) => theme.colors.text};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	font-family: inherit;
-	transition: border-color ${({ theme }) => theme.transitions.default},
-		box-shadow ${({ theme }) => theme.transitions.default};
+	transition: border-color ${({ theme }) => theme.transitions.default};
 
 	&::placeholder {
 		color: ${({ theme }) => theme.colors.subtle};
@@ -49,7 +48,6 @@ const FormInput = styled.input`
 	&:focus {
 		outline: none;
 		border-color: ${({ theme }) => theme.colors.main};
-		box-shadow: ${({ theme }) => theme.shadows.focus};
 	}
 
 	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
@@ -64,7 +62,7 @@ const FormTextArea = styled.textarea`
 	padding: ${({ theme }) => theme.spacing.md};
 	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	border-radius: 0;
 	color: ${({ theme }) => theme.colors.text};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	font-family: inherit;
@@ -137,12 +135,10 @@ const Input = styled.input`
 	font-family: inherit;
 	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	border-radius: 0;
 	color: ${({ theme }) => theme.colors.text};
 	box-sizing: border-box;
-	transition: border-color ${({ theme }) => theme.transitions.default},
-		box-shadow ${({ theme }) => theme.transitions.default},
-		background ${({ theme }) => theme.transitions.default};
+	transition: border-color ${({ theme }) => theme.transitions.default};
 
 	&::placeholder {
 		color: ${({ theme }) => theme.colors.subtle};
@@ -155,7 +151,6 @@ const Input = styled.input`
 	&:focus {
 		outline: none;
 		border-color: ${({ theme }) => theme.colors.main};
-		box-shadow: ${({ theme }) => theme.shadows.focus};
 		background: ${({ theme }) => theme.colors.elevated};
 	}
 
@@ -173,12 +168,11 @@ const Select = styled.select`
 	font-family: inherit;
 	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	border-radius: 0;
 	color: ${({ theme }) => theme.colors.text};
 	box-sizing: border-box;
 	cursor: pointer;
-	transition: border-color ${({ theme }) => theme.transitions.default},
-		box-shadow ${({ theme }) => theme.transitions.default};
+	transition: border-color ${({ theme }) => theme.transitions.default};
 
 	&:hover:not(:disabled) {
 		border-color: ${({ theme }) => theme.colors.borderStrong};
@@ -187,7 +181,6 @@ const Select = styled.select`
 	&:focus {
 		outline: none;
 		border-color: ${({ theme }) => theme.colors.main};
-		box-shadow: ${({ theme }) => theme.shadows.focus};
 	}
 
 	&:disabled {

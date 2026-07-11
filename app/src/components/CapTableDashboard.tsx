@@ -580,15 +580,6 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					</StatCard>
 				</StatGrid>
 				<ActionTableLayout>
-					<Panel>
-						<SectionHeader>
-							<TableTitle>Overview</TableTitle>
-						</SectionHeader>
-						<MutedText>
-							Start with people and share classes, then issue stock. Use the left menu to move
-							between steps.
-						</MutedText>
-					</Panel>
 					<TablePanel>{holdingsTable}</TablePanel>
 				</ActionTableLayout>
 			</div>

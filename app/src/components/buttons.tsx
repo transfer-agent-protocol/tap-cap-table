@@ -81,21 +81,12 @@ const PrimaryButton = styled.button`
 	color: ${({ theme }) => theme.colors.inverse} !important;
 	border-radius: ${({ theme }) => theme.radii.sm};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	box-shadow: ${({ theme }) => theme.shadows.glow};
-
 	&:hover:not(:disabled),
 	&:focus:not(:disabled) {
-		transform: translateY(-1px);
-		box-shadow: 0 0 32px rgba(200, 245, 66, 0.28);
-		/* Keep dark ink on signal green — never white/green-on-green */
 		color: ${({ theme }) => theme.colors.inverse} !important;
 		background: ${({ theme }) => theme.colors.main};
-		opacity: 1;
+		opacity: 0.92;
 		text-decoration: none !important;
-	}
-
-	&:active:not(:disabled) {
-		transform: translateY(0);
 	}
 
 	&:disabled {
@@ -116,15 +107,12 @@ const WalletButtonStyled = styled.button`
 	font-weight: ${({ theme }) => theme.fontWeights.bold};
 	letter-spacing: 0.02em;
 	white-space: nowrap;
-	box-shadow: ${({ theme }) => theme.shadows.glow};
 
 	&:hover:not(:disabled),
 	&:focus:not(:disabled) {
-		box-shadow: 0 0 28px rgba(200, 245, 66, 0.32);
-		transform: translateY(-1px);
 		color: ${({ theme }) => theme.colors.inverse} !important;
 		background: ${({ theme }) => theme.colors.main};
-		opacity: 1;
+		opacity: 0.92;
 		text-decoration: none !important;
 	}
 `;
@@ -132,21 +120,18 @@ const WalletButtonStyled = styled.button`
 const MintButton = styled.button`
 	${buttonBase}
 	width: 100%;
-	height: 3rem;
+	height: 2.75rem;
 	margin-top: ${({ theme }) => theme.spacing.md};
 	background: ${({ theme }) => theme.colors.main};
 	color: ${({ theme }) => theme.colors.inverse} !important;
-	border-radius: ${({ theme }) => theme.radii.sm};
+	border-radius: 0;
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	box-shadow: ${({ theme }) => theme.shadows.glow};
 
 	&:hover:not(:disabled),
 	&:focus:not(:disabled) {
-		transform: translateY(-1px);
-		box-shadow: 0 0 32px rgba(200, 245, 66, 0.28);
 		color: ${({ theme }) => theme.colors.inverse} !important;
 		background: ${({ theme }) => theme.colors.main};
-		opacity: 1;
+		opacity: 0.92;
 		text-decoration: none !important;
 	}
 
@@ -172,14 +157,12 @@ const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "dange
 				background: ${theme.colors.main};
 				color: ${theme.colors.inverse} !important;
 				border-color: ${theme.colors.main};
-				box-shadow: ${theme.shadows.glow};
 
 				&:hover:not(:disabled),
 				&:focus:not(:disabled) {
-					transform: translateY(-1px);
 					color: ${theme.colors.inverse} !important;
 					background: ${theme.colors.main};
-					opacity: 1;
+					opacity: 0.92;
 					text-decoration: none !important;
 				}
 

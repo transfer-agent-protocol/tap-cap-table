@@ -8,55 +8,50 @@ const IssuerSummary = styled.div`
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.sm};
 	min-width: 0;
-	padding-left: ${({ theme }) => theme.spacing.sm};
 	flex: 1;
 `;
 
-const IssuerName = styled.div`
+const IssuerName = styled.h2`
+	margin: 0;
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
 	font-size: ${({ theme }) => theme.fontSizes.H3};
 	letter-spacing: -0.03em;
 	color: ${({ theme }) => theme.colors.text};
 `;
 
-const MetaBlock = styled.div`
+const MetaLine = styled.div`
 	display: flex;
-	flex-flow: column nowrap;
-	gap: 0.2rem;
+	flex-flow: row wrap;
+	align-items: baseline;
+	gap: ${({ theme }) => theme.spacing.sm};
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	line-height: 1.5;
 	min-width: 0;
 `;
 
 const MetaLabel = styled.span`
-	font-size: ${({ theme }) => theme.fontSizes.xs};
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
+	flex-shrink: 0;
 	color: ${({ theme }) => theme.colors.subtle};
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
 `;
 
-const MetaCode = styled.code`
-	display: block;
-	font-family: inherit;
-	font-size: ${({ theme }) => theme.fontSizes.xs};
-	line-height: 1.45;
+const MetaValue = styled.span`
 	color: ${({ theme }) => theme.colors.muted};
 	word-break: break-all;
 	overflow-wrap: anywhere;
 	user-select: all;
+	font-variant-numeric: tabular-nums;
 `;
 
 const MetaLink = styled.a`
-	display: block;
-	font-family: inherit;
-	font-size: ${({ theme }) => theme.fontSizes.xs} !important;
-	line-height: 1.45;
-	color: ${({ theme }) => theme.colors.muted} !important;
+	color: ${({ theme }) => theme.colors.main} !important;
 	word-break: break-all;
 	overflow-wrap: anywhere;
 	text-decoration: none !important;
 	opacity: 1 !important;
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main} !important;
 		text-decoration: underline !important;
 	}
 `;
@@ -65,23 +60,18 @@ const LiveTag = styled.span`
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35rem;
-	padding: 0.35rem 0.7rem;
-	background: ${({ theme }) => theme.colors.successBg};
-	color: ${({ theme }) => theme.colors.success};
-	border: 1px solid rgba(52, 211, 153, 0.3);
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	letter-spacing: 0.08em;
+	font-weight: ${({ theme }) => theme.fontWeights.medium};
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	border-radius: ${({ theme }) => theme.radii.pill};
+	color: ${({ theme }) => theme.colors.success};
 
 	&::before {
 		content: "";
-		width: 0.4rem;
-		height: 0.4rem;
+		width: 0.35rem;
+		height: 0.35rem;
 		border-radius: 50%;
 		background: currentColor;
-		box-shadow: 0 0 8px currentColor;
 	}
 `;
 
@@ -94,34 +84,33 @@ interface IssuerHeaderProps {
 export function IssuerHeader({ issuer, contractAddress, onReset }: IssuerHeaderProps) {
 	if (!issuer) return null;
 
-	const explorerBase = "https://explorer.plume.org";
 	const contract = contractAddress || issuer.deployed_to || null;
 
 	return (
 		<DashboardHeader>
 			<IssuerSummary>
 				<IssuerName>{issuer.legal_name}</IssuerName>
-				<MetaBlock>
-					<MetaLabel>Issuer ID</MetaLabel>
-					<MetaCode>{issuer._id}</MetaCode>
-				</MetaBlock>
+				<MetaLine>
+					<MetaLabel>ID</MetaLabel>
+					<MetaValue>{issuer._id}</MetaValue>
+				</MetaLine>
 				{contract && (
-					<MetaBlock>
+					<MetaLine>
 						<MetaLabel>Contract</MetaLabel>
 						<MetaLink
-							href={`${explorerBase}/address/${contract}`}
+							href={`https://explorer.plume.org/address/${contract}`}
 							target="_blank"
 							rel="noopener noreferrer"
 						>
 							{contract}
 						</MetaLink>
-					</MetaBlock>
+					</MetaLine>
 				)}
 			</IssuerSummary>
 
 			<SectionActions>
 				<LiveTag>Live</LiveTag>
-				<InlineButton onClick={onReset} $variant="secondary">
+				<InlineButton onClick={onReset} $variant="ghost">
 					Mint another
 				</InlineButton>
 			</SectionActions>
