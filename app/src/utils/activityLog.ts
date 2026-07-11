@@ -29,10 +29,21 @@ export interface ActivityEntry {
 
 const keyFor = (issuerId: string) => `tap_activity_${issuerId}`;
 
-export function loadActivity(issuerId: string): ActivityEntry[] {
-	if (typeof window === "undefined" || !issuerId) return [];
+function storage(): Storage | null {
 	try {
-		const raw = localStorage.getItem(keyFor(issuerId));
+		if (typeof globalThis === "undefined") return null;
+		const w = globalThis as typeof globalThis & { window?: Window; localStorage?: Storage };
+		return w.localStorage ?? w.window?.localStorage ?? null;
+	} catch {
+		return null;
+	}
+}
+
+export function loadActivity(issuerId: string): ActivityEntry[] {
+	const store = storage();
+	if (!store || !issuerId) return [];
+	try {
+		const raw = store.getItem(keyFor(issuerId));
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
 		return Array.isArray(parsed) ? parsed : [];
@@ -42,9 +53,10 @@ export function loadActivity(issuerId: string): ActivityEntry[] {
 }
 
 export function saveActivity(issuerId: string, entries: ActivityEntry[]): void {
-	if (typeof window === "undefined" || !issuerId) return;
+	const store = storage();
+	if (!store || !issuerId) return;
 	try {
-		localStorage.setItem(keyFor(issuerId), JSON.stringify(entries.slice(0, 200)));
+		store.setItem(keyFor(issuerId), JSON.stringify(entries.slice(0, 200)));
 	} catch (e) {
 		console.warn("Failed to save activity log", e);
 	}
