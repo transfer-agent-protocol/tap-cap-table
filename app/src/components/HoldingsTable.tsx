@@ -67,11 +67,11 @@ function resolveName(
 }
 
 const columns: Column<HoldingRow>[] = [
-	{ key: "stakeholder", header: copy.holdings.columns.stakeholder, render: (r) => r.stakeholder },
-	{ key: "stockClass", header: copy.holdings.columns.stockClass, render: (r) => r.stockClass },
-	{ key: "quantity", header: copy.holdings.columns.quantity, align: "right", render: (r) => r.quantity },
-	{ key: "sharePrice", header: copy.holdings.columns.sharePrice, align: "right", render: (r) => r.sharePrice },
-	{ key: "status", header: copy.holdings.columns.status, render: (r) => r.status },
+	{ key: "stakeholder", header: copy.holdings.columns.stakeholder, width: "26%", render: (r) => r.stakeholder },
+	{ key: "stockClass", header: copy.holdings.columns.stockClass, width: "22%", render: (r) => r.stockClass },
+	{ key: "quantity", header: copy.holdings.columns.quantity, align: "right", width: "16%", render: (r) => r.quantity },
+	{ key: "sharePrice", header: copy.holdings.columns.sharePrice, align: "right", width: "16%", render: (r) => r.sharePrice },
+	{ key: "status", header: copy.holdings.columns.status, width: "14%", render: (r) => r.status },
 ];
 
 export function HoldingsTable({
@@ -102,12 +102,17 @@ export function HoldingsTable({
 		(iss) => holdingStatusForIssuance(iss) === "Pending",
 	);
 
+	const fmtQty = (q: unknown) => {
+		const n = Number(q);
+		return Number.isFinite(n) ? n.toLocaleString() : String(q ?? "—");
+	};
+
 	const rows: HoldingRow[] = [
 		...holdings.map((h, i) => ({
 			key: `h-${i}`,
 			stakeholder: h.stakeholder?.name?.legal_name || h.stakeholder?._id || "—",
 			stockClass: h.stockClass?.name || h.stockClass?._id || "—",
-			quantity: h.quantity,
+			quantity: fmtQty(h.quantity),
 			sharePrice: formatSharePrice(h.sharePrice),
 			status: copy.status.onchain,
 		})),
@@ -117,7 +122,7 @@ export function HoldingsTable({
 				key: `iss-${i}`,
 				stakeholder: resolveName(iss.stakeholder_id, iss.stakeholder_name, allStakeholders, "stakeholder"),
 				stockClass: resolveName(iss.stock_class_id, iss.stock_class_name, allClasses, "stockClass"),
-				quantity: iss.quantity,
+				quantity: fmtQty(iss.quantity),
 				sharePrice: formatSharePrice(iss.share_price),
 				status: status === "Confirmed" ? copy.status.onchain : copy.status.pending,
 			};

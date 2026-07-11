@@ -5,10 +5,9 @@ import {
 	PageLayout,
 	SectionHeader,
 	StatusBox,
-	StyledTable,
-	TableScroll,
 	TableTitle,
 } from "../../wrappers";
+import { DataTable, type Column } from "../../DataTable";
 import { copy, shortTx } from "../../../lib/copy";
 import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
 
@@ -20,6 +19,53 @@ interface TransactionsViewProps {
 	toolbar: ReactNode;
 }
 
+interface TxRow {
+	key: string;
+	type: string;
+	details: string;
+	quantity: string;
+	price: string;
+	date: string;
+	status: string;
+	tx: ReactNode;
+}
+
+function renderTx(txHash: string | undefined): ReactNode {
+	if (!txHash) return "—";
+	return (
+		<a
+			href={EXPLORER_TX(txHash)}
+			target="_blank"
+			rel="noopener noreferrer"
+			title={txHash}
+		>
+			{shortTx(txHash)}
+		</a>
+	);
+}
+
+const columns: Column<TxRow>[] = [
+	{ key: "type", header: copy.transactions.columns.type, width: "16%", render: (r) => r.type },
+	{ key: "details", header: copy.transactions.columns.details, width: "22%", render: (r) => r.details },
+	{
+		key: "quantity",
+		header: copy.transactions.columns.shares,
+		align: "right",
+		width: "12%",
+		render: (r) => r.quantity,
+	},
+	{
+		key: "price",
+		header: copy.transactions.columns.price,
+		align: "right",
+		width: "12%",
+		render: (r) => r.price,
+	},
+	{ key: "date", header: copy.transactions.columns.date, width: "12%", render: (r) => r.date },
+	{ key: "status", header: copy.transactions.columns.status, width: "10%", render: (r) => r.status },
+	{ key: "tx", header: copy.transactions.columns.tx, width: "14%", render: (r) => r.tx },
+];
+
 export function TransactionsView({
 	activityLog,
 	historicalTransactions,
@@ -27,9 +73,8 @@ export function TransactionsView({
 	syncNote,
 	toolbar,
 }: TransactionsViewProps) {
-	const localRows = activityLog.map((e) => ({
+	const localRows: TxRow[] = activityLog.map((e) => ({
 		key: e.id,
-		// Prefer kind map; also normalize legacy labels already stored in localStorage
 		type: copy.txTypeLabel(e.kind) || copy.txTypeLabel(e.type) || e.type,
 		details: e.details,
 		quantity: e.quantity ?? "—",
@@ -43,37 +88,43 @@ export function TransactionsView({
 					: e.txHash
 						? "Submitted"
 						: "Pending",
-		txHash: e.txHash,
+		tx: renderTx(e.txHash),
 	}));
 
 	const seenTx = new Set(
-		localRows.map((r) => r.txHash?.toLowerCase()).filter(Boolean) as string[],
+		activityLog
+			.map((e) => e.txHash?.toLowerCase())
+			.filter(Boolean) as string[],
 	);
 
-	const historyRows = historicalTransactions
-		.map((tx: any, idx: number) => {
-			const t = tx.transaction || tx || {};
-			const priceAmount = t.share_price?.amount;
-			const rawHash =
-				tx.tx_hash || t.tx_hash || tx.transactionHash || t.transaction_hash || t.txHash;
-			const txHash =
-				typeof rawHash === "string" && rawHash.startsWith("0x") ? rawHash : undefined;
-			const ocfId = t._id || tx.transaction || `hist-${idx}`;
-			return {
-				key: `hist-${ocfId}`,
-				type: copy.txTypeLabel(tx.transactionType || t.object_type),
-				details: t.custom_id || t.security_id || "—",
-				quantity: t.quantity ?? "—",
-				price:
-					priceAmount != null && priceAmount !== ""
-						? `${priceAmount} ${t.share_price?.currency || "USD"}`
-						: "—",
-				date: t.date || "—",
-				status: "Confirmed",
-				txHash,
-			};
-		})
-		.filter((r) => !r.txHash || !seenTx.has(r.txHash.toLowerCase()));
+	const historyRows: TxRow[] = [];
+	for (let idx = 0; idx < historicalTransactions.length; idx++) {
+		const tx: any = historicalTransactions[idx];
+		const t = tx.transaction || tx || {};
+		const priceAmount = t.share_price?.amount;
+		const rawHash =
+			tx.tx_hash || t.tx_hash || tx.transactionHash || t.transaction_hash || t.txHash;
+		const txHash =
+			typeof rawHash === "string" && rawHash.startsWith("0x") ? rawHash : undefined;
+		if (txHash && seenTx.has(txHash.toLowerCase())) continue;
+		const ocfId = t._id || tx.transaction || `hist-${idx}`;
+		historyRows.push({
+			key: `hist-${ocfId}`,
+			type: copy.txTypeLabel(tx.transactionType || t.object_type),
+			details: t.custom_id || t.security_id || "—",
+			quantity:
+				t.quantity != null && t.quantity !== ""
+					? Number(t.quantity).toLocaleString()
+					: "—",
+			price:
+				priceAmount != null && priceAmount !== ""
+					? `${priceAmount} ${t.share_price?.currency || "USD"}`
+					: "—",
+			date: t.date || "—",
+			status: "Confirmed",
+			tx: renderTx(txHash),
+		});
+	}
 
 	const rows = [...localRows, ...historyRows];
 
@@ -90,57 +141,14 @@ export function TransactionsView({
 					{toolbar}
 				</SectionHeader>
 				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
-				<TableScroll>
-					<StyledTable>
-						<thead>
-							<tr>
-								<th>{copy.transactions.columns.type}</th>
-								<th>{copy.transactions.columns.details}</th>
-								<th>{copy.transactions.columns.shares}</th>
-								<th>{copy.transactions.columns.price}</th>
-								<th>{copy.transactions.columns.date}</th>
-								<th>{copy.transactions.columns.status}</th>
-								<th>{copy.transactions.columns.tx}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{rows.length === 0 ? (
-								<tr>
-									<td colSpan={7}>
-										<MutedText>
-											{isLoadingHistory ? "Loading…" : copy.transactions.empty}
-										</MutedText>
-									</td>
-								</tr>
-							) : (
-								rows.map((r) => (
-									<tr key={r.key}>
-										<td>{r.type}</td>
-										<td>{r.details}</td>
-										<td>{r.quantity}</td>
-										<td>{r.price}</td>
-										<td>{r.date}</td>
-										<td>{r.status}</td>
-										<td>
-											{r.txHash ? (
-												<a
-													href={EXPLORER_TX(r.txHash)}
-													target="_blank"
-													rel="noopener noreferrer"
-													title={r.txHash}
-												>
-													{shortTx(r.txHash)}
-												</a>
-											) : (
-												"—"
-											)}
-										</td>
-									</tr>
-								))
-							)}
-						</tbody>
-					</StyledTable>
-				</TableScroll>
+				<DataTable<TxRow>
+					aria-label={copy.transactions.title}
+					columns={columns}
+					rows={rows}
+					rowKey={(r) => r.key}
+					isLoading={isLoadingHistory}
+					emptyMessage={copy.transactions.empty}
+				/>
 			</DataBand>
 		</PageLayout>
 	);

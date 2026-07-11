@@ -140,44 +140,65 @@ const Credits = styled.div`
 
 const StyledTable = styled.table`
 	width: 100%;
-	border-collapse: collapse;
+	min-width: 36rem;
+	border-collapse: separate;
+	border-spacing: 0;
 	margin: 0;
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	table-layout: fixed;
-	background: transparent;
-	border-top: 1px solid ${({ theme }) => theme.colors.outline};
+	table-layout: auto;
+	background: ${({ theme }) => theme.colors.surface};
 
 	th,
 	td {
 		text-align: left;
-		padding: 0.75rem 0;
+		padding: 0.7rem 1rem;
 		border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+		vertical-align: middle;
 		word-break: break-word;
-		vertical-align: top;
 	}
 
 	th {
-		background: transparent;
+		background: ${({ theme }) => theme.colors.elevated};
 		color: ${({ theme }) => theme.colors.subtle};
 		font-size: ${({ theme }) => theme.fontSizes.xs};
-		font-weight: ${({ theme }) => theme.fontWeights.medium};
+		font-weight: ${({ theme }) => theme.fontWeights.semibold};
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		padding-bottom: 0.5rem;
+		white-space: nowrap;
+		border-bottom: 1px solid ${({ theme }) => theme.colors.borderStrong};
 	}
 
-	tbody tr:hover td {
-		color: ${({ theme }) => theme.colors.text};
+	/* Sticky header when the frame scrolls */
+	thead th {
+		position: sticky;
+		top: 0;
+		z-index: 1;
 	}
 
 	td {
-		color: ${({ theme }) => theme.colors.muted};
+		color: ${({ theme }) => theme.colors.text};
+		font-variant-numeric: tabular-nums;
+	}
+
+	tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	tbody tr:hover td {
+		background: ${({ theme }) => theme.colors.elevated};
+	}
+
+	/* Right-aligned numeric columns via inline style keep working */
+	th[style*="right"],
+	td[style*="right"] {
+		font-variant-numeric: tabular-nums;
 	}
 
 	td a {
 		color: ${({ theme }) => theme.colors.main};
 		text-decoration: none;
 		font-weight: ${({ theme }) => theme.fontWeights.medium};
+		font-family: inherit;
 
 		&:hover {
 			text-decoration: underline;
@@ -187,6 +208,12 @@ const StyledTable = styled.table`
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
 		font-size: ${({ theme }) => theme.fontSizes.xs};
+		min-width: 28rem;
+
+		th,
+		td {
+			padding: 0.6rem 0.75rem;
+		}
 	}
 `;
 
@@ -336,7 +363,7 @@ const FullScreenStack = styled.div`
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.lg};
 	width: 100%;
-	max-width: ${({ theme }) => theme.maxWidths.wide};
+	max-width: none;
 `;
 
 const PageIntro = styled.section`
@@ -369,7 +396,7 @@ const PageLayout = styled.div`
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.xl};
 	width: 100%;
-	max-width: ${({ theme }) => theme.maxWidths.wide};
+	max-width: none;
 `;
 
 const FormBand = styled.section`
@@ -455,7 +482,12 @@ const SectionActions = styled.div`
 const TableScroll = styled.div`
 	width: 100%;
 	overflow-x: auto;
-	border-radius: ${({ theme }) => theme.radii.md};
+	overflow-y: auto;
+	max-height: min(70vh, 40rem);
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.none};
+	background: ${({ theme }) => theme.colors.surface};
+	box-sizing: border-box;
 `;
 
 const MutedText = styled.p`

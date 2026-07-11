@@ -7,11 +7,10 @@ import {
 	SectionActions,
 	SectionHeader,
 	StatusBox,
-	StyledTable,
-	TableScroll,
 	TableTitle,
 } from "../../wrappers";
 import { InlineButton } from "../../buttons";
+import { DataTable, type Column } from "../../DataTable";
 import { StakeholderForm } from "../../StakeholderForm";
 import { copy, shortTx } from "../../../lib/copy";
 import type { StakeholderData } from "../../../services/createStakeholder";
@@ -29,6 +28,14 @@ interface ShareholdersViewProps {
 	toolbar: ReactNode;
 }
 
+interface ShareholderRow {
+	key: string;
+	name: string;
+	type: string;
+	relationship: string;
+	tx: ReactNode;
+}
+
 /** Resolve explorer TX for a shareholder: Mongo tx_hash, else activity log by entity id. */
 function txForStakeholder(sh: any, activityLog: ActivityEntry[]): string | undefined {
 	if (typeof sh.tx_hash === "string" && sh.tx_hash.startsWith("0x")) return sh.tx_hash;
@@ -43,6 +50,22 @@ function txForStakeholder(sh: any, activityLog: ActivityEntry[]): string | undef
 	return hit?.txHash;
 }
 
+function renderTx(tx: string | undefined): ReactNode {
+	if (!tx) return "—";
+	return (
+		<a href={EXPLORER_TX(tx)} target="_blank" rel="noopener noreferrer" title={tx}>
+			{shortTx(tx)}
+		</a>
+	);
+}
+
+const columns: Column<ShareholderRow>[] = [
+	{ key: "name", header: "Name", width: "28%", render: (r) => r.name },
+	{ key: "type", header: "Type", width: "16%", render: (r) => r.type },
+	{ key: "relationship", header: "Relationship", width: "18%", render: (r) => r.relationship },
+	{ key: "tx", header: "Transaction", width: "20%", render: (r) => r.tx },
+];
+
 export function ShareholdersView({
 	stakeholders,
 	activityLog,
@@ -53,6 +76,14 @@ export function ShareholdersView({
 	onSubmit,
 	toolbar,
 }: ShareholdersViewProps) {
+	const rows: ShareholderRow[] = stakeholders.map((sh: any) => ({
+		key: sh._id,
+		name: sh.name?.legal_name || sh.name?.first_name || "—",
+		type: formatStakeholderType(sh.stakeholder_type),
+		relationship: formatRelationship(sh.current_relationship),
+		tx: renderTx(txForStakeholder(sh, activityLog)),
+	}));
+
 	return (
 		<PageLayout data-testid="view-stakeholders">
 			<DataBand>
@@ -90,52 +121,14 @@ export function ShareholdersView({
 						/>
 					</FormBand>
 				)}
-				<TableScroll>
-					<StyledTable>
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Type</th>
-								<th>Relationship</th>
-								<th>Transaction</th>
-							</tr>
-						</thead>
-						<tbody>
-							{stakeholders.length === 0 ? (
-								<tr>
-									<td colSpan={4}>
-										<MutedText>{copy.shareholders.empty}</MutedText>
-									</td>
-								</tr>
-							) : (
-								stakeholders.map((sh: any) => {
-									const tx = txForStakeholder(sh, activityLog);
-									return (
-										<tr key={sh._id}>
-											<td>{sh.name?.legal_name || sh.name?.first_name || "—"}</td>
-											<td>{formatStakeholderType(sh.stakeholder_type)}</td>
-											<td>{formatRelationship(sh.current_relationship)}</td>
-											<td>
-												{tx ? (
-													<a
-														href={EXPLORER_TX(tx)}
-														target="_blank"
-														rel="noopener noreferrer"
-														title={tx}
-													>
-														{shortTx(tx)}
-													</a>
-												) : (
-													"—"
-												)}
-											</td>
-										</tr>
-									);
-								})
-							)}
-						</tbody>
-					</StyledTable>
-				</TableScroll>
+				<DataTable<ShareholderRow>
+					aria-label={copy.shareholders.title}
+					columns={columns}
+					rows={rows}
+					rowKey={(r) => r.key}
+					isLoading={isLoading}
+					emptyMessage={copy.shareholders.empty}
+				/>
 			</DataBand>
 		</PageLayout>
 	);

@@ -7,11 +7,10 @@ import {
 	SectionActions,
 	SectionHeader,
 	StatusBox,
-	StyledTable,
-	TableScroll,
 	TableTitle,
 } from "../../wrappers";
 import { InlineButton } from "../../buttons";
+import { DataTable, type Column } from "../../DataTable";
 import { StockClassForm } from "../../StockClassForm";
 import { copy, shortTx } from "../../../lib/copy";
 import type { StockClassData } from "../../../services/createStockClass";
@@ -31,6 +30,15 @@ interface StockClassesViewProps {
 	toolbar: ReactNode;
 }
 
+interface ClassRow {
+	key: string;
+	name: string;
+	type: string;
+	authorized: string;
+	status: string;
+	tx: ReactNode;
+}
+
 function txForClass(sc: any, activityLog: ActivityEntry[]): string | undefined {
 	if (typeof sc.tx_hash === "string" && sc.tx_hash.startsWith("0x")) return sc.tx_hash;
 	const id = sc._id as string | undefined;
@@ -44,6 +52,29 @@ function txForClass(sc: any, activityLog: ActivityEntry[]): string | undefined {
 	return hit?.txHash;
 }
 
+function renderTx(tx: string | undefined): ReactNode {
+	if (!tx) return "—";
+	return (
+		<a href={EXPLORER_TX(tx)} target="_blank" rel="noopener noreferrer" title={tx}>
+			{shortTx(tx)}
+		</a>
+	);
+}
+
+const columns: Column<ClassRow>[] = [
+	{ key: "name", header: "Name", width: "24%", render: (r) => r.name },
+	{ key: "type", header: "Type", width: "14%", render: (r) => r.type },
+	{
+		key: "authorized",
+		header: "Authorized",
+		align: "right",
+		width: "16%",
+		render: (r) => r.authorized,
+	},
+	{ key: "status", header: "Status", width: "14%", render: (r) => r.status },
+	{ key: "tx", header: "Transaction", width: "18%", render: (r) => r.tx },
+];
+
 export function StockClassesView({
 	stockClasses,
 	sessionClasses,
@@ -56,6 +87,26 @@ export function StockClassesView({
 	onSubmit,
 	toolbar,
 }: StockClassesViewProps) {
+	const rows: ClassRow[] = stockClasses.map((sc: any) => {
+		const session = sessionClasses.find((d) => d._id === sc._id);
+		const live =
+			session?.onchain ||
+			sc.is_onchain_synced === true ||
+			(sc.is_onchain_synced !== false && !session);
+		const authorized = sc.initial_shares_authorized ?? sc.shares_authorized;
+		return {
+			key: sc._id,
+			name: sc.name || "—",
+			type: formatClassType(sc.class_type),
+			authorized:
+				authorized != null && authorized !== ""
+					? Number(authorized).toLocaleString()
+					: "—",
+			status: live ? copy.stockClasses.live : copy.stockClasses.notLive,
+			tx: renderTx(txForClass(sc, activityLog)),
+		};
+	});
+
 	return (
 		<PageLayout data-testid="view-stock-classes">
 			<DataBand>
@@ -94,63 +145,14 @@ export function StockClassesView({
 						/>
 					</FormBand>
 				)}
-				<TableScroll>
-					<StyledTable>
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Type</th>
-								<th>Authorized</th>
-								<th>Status</th>
-								<th>Transaction</th>
-							</tr>
-						</thead>
-						<tbody>
-							{stockClasses.length === 0 ? (
-								<tr>
-									<td colSpan={5}>
-										<MutedText>{copy.stockClasses.empty}</MutedText>
-									</td>
-								</tr>
-							) : (
-								stockClasses.map((sc: any) => {
-									const session = sessionClasses.find((d) => d._id === sc._id);
-									const live =
-										session?.onchain ||
-										sc.is_onchain_synced === true ||
-										(sc.is_onchain_synced !== false && !session);
-									const tx = txForClass(sc, activityLog);
-									return (
-										<tr key={sc._id}>
-											<td>{sc.name || "—"}</td>
-											<td>{formatClassType(sc.class_type)}</td>
-											<td>
-												{sc.initial_shares_authorized ?? sc.shares_authorized ?? "—"}
-											</td>
-											<td>
-												{live ? copy.stockClasses.live : copy.stockClasses.notLive}
-											</td>
-											<td>
-												{tx ? (
-													<a
-														href={EXPLORER_TX(tx)}
-														target="_blank"
-														rel="noopener noreferrer"
-														title={tx}
-													>
-														{shortTx(tx)}
-													</a>
-												) : (
-													"—"
-												)}
-											</td>
-										</tr>
-									);
-								})
-							)}
-						</tbody>
-					</StyledTable>
-				</TableScroll>
+				<DataTable<ClassRow>
+					aria-label={copy.stockClasses.title}
+					columns={columns}
+					rows={rows}
+					rowKey={(r) => r.key}
+					isLoading={isLoading}
+					emptyMessage={copy.stockClasses.empty}
+				/>
 			</DataBand>
 		</PageLayout>
 	);
