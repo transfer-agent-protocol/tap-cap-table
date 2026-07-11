@@ -20,6 +20,7 @@
         "@reown/appkit": "^1.8.17",
         "@reown/appkit-adapter-wagmi": "^1.8.17",
         "@tanstack/react-query": "^5.90.20",
+        "@tap/units": "workspace:*",
         "@wagmi/core": "^3.3.2",
         "next": "^16.1.6",
         "next-sitemap": "^4.2.3",

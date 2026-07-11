@@ -8,6 +8,7 @@ RUN npm install -g pnpm
 
 # Copy package files first for better caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/ ./packages/
 COPY server/ ./server/
 COPY ocf/ ./ocf/
 COPY chain/out/ ./chain/out/
