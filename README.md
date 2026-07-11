@@ -16,11 +16,12 @@ This is a **pnpm monorepo**:
 
 ```
 tap-cap-table/
-├── app/        # Next.js frontend (landing + cap-table dApp)
-├── server/     # Express API server
-├── chain/      # Solidity smart contracts (Foundry)
-├── docs/       # Nextra documentation site
-└── ocf/        # OCF standard (git submodule)
+├── app/             # Next.js frontend (landing + cap-table dApp)
+├── server/          # Express API server
+├── chain/           # Solidity smart contracts (Foundry)
+├── docs/            # Nextra documentation site
+├── packages/units/  # @tap/units — shared 1e10 scale / UUID / share-caps
+└── ocf/             # OCF standard (git submodule)
 ```
 
 ## Quick Start
@@ -50,10 +51,11 @@ pnpm docker:down            # Stop all services
 pnpm docker:logs            # Stream logs
 pnpm docker:build           # Rebuild and start
 
-# Local development (hot-reload, run instead of Docker server/app)
-pnpm dev                    # API server
-pnpm app:dev                # Frontend
+# Local development (hot-reload; prefer this over Docker for app/server code changes)
+pnpm dev                    # API server (+ poller)
+pnpm app:dev                # Frontend (reads app/.env.local)
 pnpm docs:dev               # Docs site
+pnpm test:units             # Shared @tap/units tests
 ```
 
 ## Development

@@ -7,14 +7,14 @@ Controllers bridge the Express routes and `CapTable.sol`. They convert OCF data 
 ```mermaid
 flowchart TD
     A["API route<br/><small>OCF JSON + issuerId</small>"] --> B["Schema validation"]
-    B --> C["Controller<br/><small>UUID → bytes16, scale ×10000, build struct</small>"]
+    B --> C["Controller<br/><small>UUID → bytes16, scale ×1e10, build struct</small>"]
     C --> D["Contract call<br/><small>issueStock / transferStock / …</small>"]
     D --> E["tx.wait() + events"]
     E --> F[("Event poller → MongoDB")]
 ```
 
 <Callout type="warning">
-Quantities and prices are scaled by 10000 via `toScaledBigNumber()`. Divide raw onchain values by 10000 to match the numbers in API examples.
+Quantities and prices are scaled by 1e10 (10_000_000_000) via `toScaledBigNumber()`. Divide raw onchain values by 1e10 to match the numbers in API examples.
 </Callout>
 
 ## Conversion
@@ -25,7 +25,7 @@ flowchart LR
         A["stakeholder_id: UUID string<br/>share_price.amount: 4.20"]
     end
     subgraph SOL["Solidity call"]
-        B["stakeholder_id: bytes16<br/>share_price: uint256 42000"]
+        B["stakeholder_id: bytes16<br/>share_price: uint256 42000000000"]
     end
     OCF -- "convertUUIDToBytes16<br/>toScaledBigNumber" --> SOL
 ```

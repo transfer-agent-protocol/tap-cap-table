@@ -43,9 +43,9 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 - `src/pages/` — Next.js pages. `_app.tsx` wires up providers; `_document.tsx`; `index.tsx` (landing); `mint.tsx`; `manage/index.tsx` and `manage/cap-table.tsx`.
 - `src/components/` — styled components (lowercase files) and React components (PascalCase), e.g. `CapTableDashboard.tsx`, `IssueStockForm.tsx`, `Navbar.tsx`.
 - `src/config/` — runtime + web3 config: `wagmi.ts` (AppKit + `WagmiAdapter`, networks), `Web3Provider.tsx`, `contracts.ts` (addresses, `DECIMAL_SCALE`, re-exported generated hooks).
-- `src/hooks/` — wagmi hooks for onchain writes: `useMintIssuer`, `useDirectCreateStockClass`, `useDirectCreateStakeholder`, `useDirectIssueStock`, plus `useCapTableManager` (server flow + holdings).
-- `src/services/` — typed `fetch` wrappers around the API server (`registerIssuer`, `createStockClass`, `createStakeholder`, `createStockIssuance`, `fetchHistoricalTransactions`).
-- `src/utils/` — `uuid.ts` (UUID↔bytes16 helpers), `lastMintedIssuer.ts` (localStorage).
+- `src/hooks/` — onchain writes: `useMintIssuer`, `useDirect*`, `useOnchainAction`; data: `useResource`, `useCapTableManager` (read-only holdings).
+- `src/services/` — typed `fetch` wrappers: `registerIssuer`, `register*Onchain` metadata helpers, `fetchHistoricalTransactions`.
+- `src/utils/` — `uuid.ts` re-exports UUID↔bytes16 from `@tap/units`; `lastMintedIssuer.ts` (localStorage).
 - `src/samples/` — sample/seed payloads for the mint flow.
 - `src/generated.ts` — **generated** wagmi contract hooks (do not edit; see Contract bindings).
 - `styled.d.ts` — styled-components theme type augmentation.
@@ -62,11 +62,10 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 
 ### Onchain Data Conventions
 These mirror the rules in the root `WARP.md` — keep them in sync.
-- **Fixed-point scaling**: scale `quantity` and `share_price` by `1e10` on the **write** side (`DECIMAL_SCALE` in `contracts.ts`, `scaleAmount` in `useDirectIssueStock.ts`). The poller unscales by `1e10`, so skipping this produces tiny fractions in Mongo.
-- **UUID ↔ bytes16**: use `uuidToBytes16`, `bytes16ToUuid`, and `generateBytes16Id` from `src/utils/uuid.ts` for any id sent to / read from a contract.
-- **Two write paths**:
-  - *Direct wallet* (current default for `/manage`): `useDirect*` hooks submit the tx from the connected wallet, then the matching `registerXxxOnchain` service POSTs metadata to `/<entity>/register-onchain`. The poller stays authoritative.
-  - *Server-signed* (legacy): `create*` services POST to `/<entity>/create` and the server's OPERATOR key submits onchain.
+- **Fixed-point scaling**: scale `quantity` and `share_price` by `1e10` on the **write** side via `@tap/units` (`scaleShares` / `scaleAmount`). The poller unscales by `1e10`, so skipping this produces tiny fractions in Mongo.
+- **UUID ↔ bytes16**: use `uuidToBytes16`, `bytes16ToUuid`, and `generateBytes16Id` (from `@tap/units` via `src/utils/uuid.ts`) for any id sent to / read from a contract.
+- **Share caps**: pre-sign with `validateShareCaps` from `@tap/units` (issuer remaining **and** class remaining).
+- **One write path (manage UI)**: `useDirect*` + `useOnchainAction` (submit → wait receipt → success/reverted) then `registerXxxOnchain` for metadata. The poller stays authoritative. Shared units live in `@tap/units` (1e10 scale, UUID↔bytes16, share-cap checks). Legacy server-signed `/create` may still exist for API/manifest tooling but is not used by the app.
 - **API access**: the frontend calls `/api/*`; `next.config.js` rewrites that to `NEXT_PUBLIC_API_URL` (default `http://localhost:8293`).
 
 ### Theming
@@ -149,3 +148,7 @@ See the root `.env.example` for the canonical list.
 ## Git Workflow
 
 PR titles should follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) (e.g. `feat(ui): add new component`). Branch from `main`; see the root [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+
+## Dev noise (not app bugs)
+
+Next.js dev overlay may show `Runtime TypeError: Failed to fetch` whose stack is `chrome-extension://…` (wallet / Reown analytics blocked by an ad-blocker). That is **not** the TAP API. AppKit analytics is already disabled in `src/config/wagmi.ts`; `_app.tsx` filters extension fetch noise. If holdings fail, check the Network tab for `/api/*` — real API errors show HTTP status there.

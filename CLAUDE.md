@@ -14,3 +14,6 @@ Quick reminders:
 - Never commit directly to `main`; branch from it and open a PR. PR titles follow Conventional Commits.
 - The blockchain is the source of truth; the off-chain DB mirrors it via the event poller.
 - Don't hand-edit `app/src/generated.ts` — regenerate it with `pnpm --filter tap-app generate:wagmi`.
+- Shared write-path units live in **`@tap/units`** (`packages/units`): 1e10 scaling, UUID↔bytes16, share-cap checks. Import from there in app and server; don't reintroduce local `scaleAmount` copies or ×10000 docs.
+- Manage UI write path is **direct-wallet only** (`useDirect*` + `useOnchainAction` + `/register-onchain`). Legacy `/create` is for API/manifest seed, not the UI.
+- Factory addresses are deployment-specific (owner = deployer wallet you control). Never hardcode; keep Mongo `factories` and `app/.env.local` aligned. Frontend dev = `pnpm app:dev`.
