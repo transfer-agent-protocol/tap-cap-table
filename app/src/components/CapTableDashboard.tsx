@@ -215,22 +215,21 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		setHasPendingSyncFlag(hasPendingSync);
 	}, [hasPendingSync]);
 
-	const syncLedger = async () => {
+	const syncBlockchain = async () => {
 		setIsSyncingPoller(true);
 		setSyncNote(null);
 		try {
-			// Explicit path (not /:id/...) so older servers never 404 on route order
+			// buffer: 0 → jump poller index to chain head now (no sequential re-scan)
 			const res = await fetch(`/api/issuer/poller-catchup`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ issuerId: issuerResult._id, buffer: 5000 }),
+				body: JSON.stringify({ issuerId: issuerResult._id, buffer: 0 }),
 			});
 			const text = await res.text();
 			let json: any = null;
 			try {
 				json = JSON.parse(text);
 			} catch {
-				// strip HTML error pages
 				const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 				setSyncNote(plain.slice(0, 200) || `Sync failed (${res.status})`);
 				return;
@@ -239,15 +238,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				setSyncNote(json?.error || json?.message || `Sync failed (${res.status})`);
 				return;
 			}
-			setSyncNote(json.message || "Catch-up queued. Refreshing in a few seconds…");
-			setTimeout(() => {
-				manager.refreshHoldings();
-				loadHistory();
-			}, 3000);
-			setTimeout(() => {
-				manager.refreshHoldings();
-				loadHistory();
-			}, 8000);
+			// Holdings read the chain directly — refresh immediately, don't wait on poller
+			await Promise.all([manager.refreshHoldings(), Promise.resolve(loadHistory())]);
+			setSyncNote(json.message || `Synced to block ${json.head ?? "head"}.`);
 		} catch (e) {
 			setSyncNote(e instanceof Error ? e.message : "Sync failed");
 		} finally {
@@ -414,8 +407,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 
 	const toolBar = (
 		<SectionActions>
-			<InlineButton onClick={syncLedger} disabled={isSyncingPoller} $variant="secondary">
-				{isSyncingPoller ? "Syncing…" : "Sync ledger"}
+			<InlineButton onClick={syncBlockchain} disabled={isSyncingPoller} $variant="secondary">
+				{isSyncingPoller ? "Syncing…" : "Sync blockchain"}
 			</InlineButton>
 			<InlineButton
 				onClick={() => {
@@ -615,7 +608,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 												<MutedText>
 													{isLoadingHistory
 														? "Loading…"
-														: "No activity yet. Issue stock, then Sync ledger if nothing shows."}
+														: "No activity yet. Issue stock, then Sync blockchain if history is empty."}
 												</MutedText>
 											</td>
 										</tr>

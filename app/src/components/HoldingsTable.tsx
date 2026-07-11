@@ -134,7 +134,7 @@ export function HoldingsTable({
 				emptyMessage={copy.holdings.empty}
 				caption={
 					pendingIssuances.length > 0
-						? "Pending rows are from this session. Use Sync ledger if they stay pending."
+						? "Pending = this session, waiting for confirmation / chain index."
 						: undefined
 				}
 			/>

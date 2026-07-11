@@ -151,18 +151,22 @@ issuer.get("/by-deployer/:address", async (req, res) => {
 });
 
 /**
- * Catch the event poller up on recent blocks for one issuer.
+ * Jump the event poller index to (near) chain head for one issuer.
  * POST body: { issuerId, buffer? }
- * Sets last_processed_block = chainHead - buffer so the next poller cycle
- * re-scans the recent window (including just-mined issuances). Same idea as
- * `pnpm poller:fast-forward --issuer <id> --buffer <n>` (WARP.md).
+ *
+ * Default buffer = 0 → last_processed_block = head (instant; no multi-block re-scan).
+ * Optional buffer N → head - N only if you intentionally want a short re-window.
+ * Same semantics as `pnpm poller:fast-forward --issuer <id>` (WARP.md).
+ *
+ * Holdings in the UI read getAveragePosition onchain and do not wait on this catch-up.
  */
 issuer.post("/poller-catchup", async (req, res) => {
     try {
         const id = req.body?.issuerId || req.body?.id;
         if (!id) return res.status(400).json({ error: "issuerId required" });
 
-        const buffer = Math.max(0, Number(req.body?.buffer) || 5000);
+        // Instant jump to head unless caller asks for a re-scan window
+        const buffer = Math.max(0, Number(req.body?.buffer ?? 0));
         const issuerDoc = await Issuer.findById(id);
         if (!issuerDoc) return res.status(404).json({ error: "Issuer not found" });
         if (!issuerDoc.deployed_to) return res.status(400).json({ error: "Issuer has no deployed_to" });
@@ -181,7 +185,10 @@ issuer.post("/poller-catchup", async (req, res) => {
             buffer,
             last_processed_block_before: before,
             last_processed_block: target,
-            message: `Poller will re-scan from block ${target} toward head ${head}. Hit Refresh in a few seconds.`,
+            message:
+                buffer === 0
+                    ? `Blockchain index jumped to head (${head}). New events only from here.`
+                    : `Blockchain index set to ${target} (head ${head} − ${buffer}).`,
         });
     } catch (error) {
         console.error(error);
