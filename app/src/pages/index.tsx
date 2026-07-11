@@ -1,16 +1,15 @@
-import Link from "next/link";
-import { Content, Heading, StyledTable, SectionActions, TableScroll } from "../components/wrappers";
+import { Content, Heading, StyledTable, TableScroll } from "../components/wrappers";
 import { H2, P } from "../components/typography";
-import { InlineButton } from "../components/buttons";
 
 /**
- * Landing — Alex's voice. Single entry into the product.
+ * Landing — marketing only (no product entry until API is public).
+ * Demo contract addresses stay for transparency.
  */
 export default function Home() {
 	return (
 		<Content data-testid="home-page">
 			<Heading>
-				<P>Tokenize RWA cap tables and handle post-trade settlment.</P>
+				<P>Tokenize RWA cap tables and handle post-trade settlement.</P>
 				<P>
 					Fully onchain protocol that&apos;s based on{" "}
 					<a href="https://www.opencaptablecoalition.com/" target="_blank" rel="noopener noreferrer">
@@ -26,14 +25,6 @@ export default function Home() {
 					Read how this started
 				</a>
 			</Heading>
-
-			<SectionActions style={{ marginBottom: "2rem", justifyContent: "flex-start" }}>
-				<Link href="/manage" passHref legacyBehavior>
-					<InlineButton as="a" $variant="primary">
-						Launch app
-					</InlineButton>
-				</Link>
-			</SectionActions>
 
 			<H2>Demo contracts:</H2>
 			<P>

@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 
-/** Legacy /manage → /app/companies */
-export default function ManageRedirect() {
+/** /app → companies hub */
+export default function AppIndex() {
 	const router = useRouter();
 	useEffect(() => {
 		void router.replace("/app/companies");

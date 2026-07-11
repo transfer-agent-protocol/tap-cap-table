@@ -6,6 +6,8 @@ import {
 	APP_NAV_ITEMS,
 	CAP_TABLE_SECTIONS,
 	capTableHref,
+	isCompanyWorkspacePath,
+	issuerIdFromPath,
 	parseCapTableView,
 	type CapTableView,
 } from "./navConfig";
@@ -159,16 +161,30 @@ const ExternalLink = styled.a`
 export function LeftNavDrawer() {
 	const router = useRouter();
 	const { collapsed, mobileOpen, setMobileOpen } = useAppShell();
-	const { pathname, query } = router;
+	const { pathname, query, asPath } = router;
 
-	const isCapTableRoute = pathname === "/manage/cap-table";
-	const issuerId = typeof query.issuerId === "string" ? query.issuerId : null;
+	// router.pathname is the *pattern* (e.g. /app/companies/[issuerId]) — never use it
+	// for the real UUID. Prefer query.issuerId, then asPath.
+	const issuerId =
+		typeof query.issuerId === "string" &&
+		query.issuerId.length > 0 &&
+		query.issuerId !== "[issuerId]"
+			? query.issuerId
+			: issuerIdFromPath(asPath.split("?")[0] || "");
+
+	const isCapTableRoute =
+		Boolean(issuerId) &&
+		(isCompanyWorkspacePath(asPath.split("?")[0] || "") ||
+			pathname.startsWith("/app/companies/"));
 	const currentView = parseCapTableView(query.view as string | undefined);
 
 	const closeMobile = () => setMobileOpen(false);
 
 	const handleSectionNav = (view: CapTableView) => {
-		if (!issuerId) return;
+		if (!issuerId || issuerId === "[issuerId]") {
+			console.error("[nav] refusing section nav without real issuer id", { issuerId, asPath });
+			return;
+		}
 		router.push(capTableHref(issuerId, view));
 		closeMobile();
 	};
@@ -184,7 +200,7 @@ export function LeftNavDrawer() {
 			>
 				<DrawerInner>
 					<BrandRow href="/" onClick={closeMobile}>
-						TAP
+						Home
 					</BrandRow>
 
 					<NavSection>
@@ -206,7 +222,7 @@ export function LeftNavDrawer() {
 
 					{isCapTableRoute && issuerId && (
 						<NavSection data-testid="cap-table-sections">
-							<Link href="/manage" passHref legacyBehavior>
+							<Link href="/app/companies" passHref legacyBehavior>
 								<BackLink onClick={closeMobile}>← Companies</BackLink>
 							</Link>
 							<NavLabel>Company</NavLabel>

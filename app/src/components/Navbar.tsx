@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import {
 	CAP_TABLE_SECTIONS,
+	isCompanyWorkspacePath,
 	isWorkspaceRoute,
 	parseCapTableView,
 } from "./navConfig";
@@ -20,7 +21,6 @@ const NavActions = styled.span`
 	margin-left: auto;
 `;
 
-/** Sidebar toggle — not a back arrow */
 const MenuToggle = styled.button`
 	display: inline-flex;
 	flex-flow: column nowrap;
@@ -94,35 +94,32 @@ const WalletButton = dynamic(() => import("./WalletButtonClient"), {
 });
 
 /**
- * Top bar: brand + current page context + wallet.
- * Landing: logo + docs + wallet (no Mint/Manage — those live on the page).
- * Workspace: menu toggle + page title + wallet.
+ * Top bar.
+ * Marketing (`/`): logo + Docs (+ optional GitHub) — no wallet.
+ * Product (`/app/*`): menu + title + wallet.
  */
 export default function Navbar() {
-	const { pathname, query } = useRouter();
-	const { collapsed, toggleCollapsed, mobileOpen, toggleMobileOpen, setMobileOpen } = useAppShell();
+	const { pathname, query, asPath } = useRouter();
+	const { collapsed, toggleCollapsed, mobileOpen, toggleMobileOpen, setMobileOpen } =
+		useAppShell();
 	const workspace = isWorkspaceRoute(pathname);
+	// asPath is the real URL; pathname is the route pattern (…/[issuerId])
+	const pathOnly = (asPath || "").split("?")[0];
 
 	let title = "";
-	if (pathname === "/mint") title = "Mint";
-	else if (pathname === "/manage") title = "Manage";
-	else if (pathname === "/manage/cap-table") {
+	if (pathname === "/app/mint" || pathOnly === "/app/mint") title = "New company";
+	else if (pathOnly === "/app" || pathOnly === "/app/companies") title = "Companies";
+	else if (isCompanyWorkspacePath(pathOnly) || typeof query.issuerId === "string") {
 		const view = parseCapTableView(query.view as string | undefined);
 		const section = CAP_TABLE_SECTIONS.find((s) => s.id === view);
-		title = section?.label || "Cap table";
+		title = section?.label || "Company";
 	}
 
 	const handleMenu = () => {
 		if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) {
 			toggleMobileOpen();
 		} else {
-			// Desktop: open drawer if collapsed, otherwise close it
-			if (collapsed) {
-				// AppShell uses collapsed=true for narrow rail; we switched to hide fully
-				toggleCollapsed();
-			} else {
-				toggleCollapsed();
-			}
+			toggleCollapsed();
 		}
 	};
 
@@ -153,22 +150,36 @@ export default function Navbar() {
 				)}
 				<BrandLink>
 					<Link href="/" aria-label="Home" onClick={() => setMobileOpen(false)}>
-						<Image src="/tap-logo.svg" alt="Transfer Agent Protocol" width={32} height={32} />
+						<Image
+							src="/tap-logo.svg"
+							alt="Transfer Agent Protocol"
+							width={32}
+							height={32}
+						/>
 					</Link>
 				</BrandLink>
 				{workspace && title && <NavTitle data-testid="top-nav-title">{title}</NavTitle>}
 			</NavBrand>
 			<NavActions data-testid="top-nav-account">
 				{!workspace && (
-					<TopLink
-						href="https://docs.transferagentprotocol.xyz"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Docs
-					</TopLink>
+					<>
+						<TopLink
+							href="https://docs.transferagentprotocol.xyz"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Docs
+						</TopLink>
+						<TopLink
+							href="https://github.com/transfer-agent-protocol/tap-cap-table"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							GitHub
+						</TopLink>
+					</>
 				)}
-				<WalletButton />
+				{workspace && <WalletButton />}
 			</NavActions>
 		</Nav>
 	);
