@@ -14,7 +14,7 @@
         "start:ci": "INSECURE_AUTH=true pnpm run start",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "eslint src/",
-        "test:nav": "node --import tsx --test src/components/navConfig.test.ts src/utils/myIssuers.test.ts src/utils/holdingStatus.test.ts src/utils/activityLog.test.ts",
+        "test:nav": "node --import tsx --test src/components/navConfig.test.ts src/components/cap-table/ownershipModel.test.ts src/utils/myIssuers.test.ts src/utils/holdingStatus.test.ts src/utils/activityLog.test.ts",
         "generate:wagmi": "wagmi generate"
     },
     "dependencies": {
