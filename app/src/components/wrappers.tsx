@@ -191,7 +191,9 @@ const StyledTable = styled.table`
 		font-weight: ${({ theme }) => theme.fontWeights.medium};
 
 		&:hover {
-			color: ${({ theme }) => theme.colors.white};
+			color: ${({ theme }) => theme.colors.main};
+			opacity: 0.9;
+			text-decoration: underline;
 			background: transparent;
 		}
 	}
@@ -233,6 +235,18 @@ const FooterContent = styled.div`
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: ${({ theme }) => theme.colors.subtle};
+
+	a {
+		color: ${({ theme }) => theme.colors.subtle} !important;
+		text-decoration: none !important;
+		opacity: 1 !important;
+		letter-spacing: 0.06em;
+
+		&:hover {
+			color: ${({ theme }) => theme.colors.main} !important;
+			text-decoration: none !important;
+		}
+	}
 `;
 
 const FooterAside = styled.aside`

@@ -4,13 +4,14 @@ import Navbar from "./Navbar";
 import { LeftNavDrawer } from "./LeftNavDrawer";
 import { useAppShell } from "./AppShellContext";
 import { FooterContent, FooterWrapper, Main, FullScreenMain } from "./wrappers";
+import { isWorkspaceRoute } from "./navConfig";
 
 interface Props {
 	children: React.ReactNode;
 	className?: string;
 }
 
-const ShellRoot = styled.div`
+const ShellRoot = styled.div<{ $workspace: boolean }>`
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: stretch;
@@ -39,21 +40,27 @@ const ContentArea = styled.div`
 `;
 
 /**
- * App shell: left collapsible page nav + top account/wallet bar + main content.
+ * Marketing (`/`) uses top chrome only.
+ * Workspace (`/mint`, `/manage/*`) adds the left collapsible product nav.
  */
 export default function Layout({ children, className }: Props) {
 	const { pathname } = useRouter();
 	const { collapsed } = useAppShell();
-	const isAppFullScreen =
-		pathname === "/mint" || pathname === "/manage" || pathname.startsWith("/manage/");
+	const workspace = isWorkspaceRoute(pathname);
 
 	return (
-		<ShellRoot className={className} data-testid="app-shell" data-nav-collapsed={collapsed ? "1" : "0"}>
-			<LeftNavDrawer />
+		<ShellRoot
+			className={className}
+			$workspace={workspace}
+			data-testid="app-shell"
+			data-nav-collapsed={collapsed ? "1" : "0"}
+			data-workspace={workspace ? "1" : "0"}
+		>
+			{workspace && <LeftNavDrawer />}
 			<ShellMainColumn>
 				<Navbar />
 				<ContentArea>
-					{isAppFullScreen ? (
+					{workspace ? (
 						<FullScreenMain data-testid="main-content">{children}</FullScreenMain>
 					) : (
 						<Main data-testid="main-content">{children}</Main>
@@ -61,8 +68,16 @@ export default function Layout({ children, className }: Props) {
 				</ContentArea>
 				<FooterWrapper>
 					<FooterContent>
-						<span>© {new Date().getFullYear()} Transfer Agent Protocol</span>
-						<span>Open Cap Table · Onchain</span>
+						<span>© {new Date().getFullYear()} PALMER.EARTH CORP</span>
+						<span>
+							<a href="https://x.com/thatalexpalmer" target="_blank" rel="noopener noreferrer">
+								@thatalexpalmer
+							</a>
+							{" · "}
+							<a href="https://docs.transferagentprotocol.xyz" target="_blank" rel="noopener noreferrer">
+								Docs
+							</a>
+						</span>
 					</FooterContent>
 				</FooterWrapper>
 			</ShellMainColumn>

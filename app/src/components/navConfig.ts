@@ -1,9 +1,9 @@
 /**
  * Application navigation configuration.
  *
- * Primary page nav lives in the left drawer. Cap-table section names align
- * with OCF object types the protocol supports onchain (Issuer, Stakeholder,
- * StockClass, StockIssuance / TX_STOCK_ISSUANCE, historical transactions).
+ * Workspace nav (mint / manage) lives in the left drawer on app routes.
+ * Cap-table section names align with OCF objects the protocol supports onchain.
+ * Landing (`/`) is marketing — logo returns home; it is not a drawer item.
  */
 
 export type CapTableView =
@@ -17,33 +17,28 @@ export interface NavItem {
 	id: string;
 	label: string;
 	href: string;
-	/** Match pathname (and optional view query) for active state */
+	/** Match pathname for active state */
 	match: (pathname: string, view?: string | null) => boolean;
 }
 
-/** Global app destinations always shown in the left drawer. */
+/** Product workspace destinations in the left drawer (not marketing Home). */
 export const APP_NAV_ITEMS: NavItem[] = [
 	{
-		id: "home",
-		label: "Home",
-		href: "/",
-		match: (pathname) => pathname === "/",
-	},
-	{
 		id: "mint",
-		label: "Mint Cap Table",
+		label: "Mint",
 		href: "/mint",
 		match: (pathname) => pathname === "/mint",
 	},
 	{
 		id: "manage",
-		label: "Manage Cap Tables",
+		label: "Cap Tables",
 		href: "/manage",
-		match: (pathname) => pathname === "/manage",
+		// Parent stays active while working inside a single issuer
+		match: (pathname) => pathname === "/manage" || pathname.startsWith("/manage/"),
 	},
 ];
 
-/** Cap-table management sections (OCF-aligned) shown when an issuer is selected. */
+/** Cap-table management sections (OCF-aligned) when an issuer is selected. */
 export const CAP_TABLE_SECTIONS: Array<{
 	id: CapTableView;
 	label: string;
@@ -51,7 +46,7 @@ export const CAP_TABLE_SECTIONS: Array<{
 }> = [
 	{
 		id: "overview",
-		label: "Overview & Holdings",
+		label: "Overview",
 		description: "Issuer summary and active positions",
 	},
 	{
@@ -105,4 +100,9 @@ export function mintViewToCapTableView(
 ): CapTableView {
 	if (view === "activity") return "transactions";
 	return view;
+}
+
+/** True for product workspace routes that use the left drawer. */
+export function isWorkspaceRoute(pathname: string): boolean {
+	return pathname === "/mint" || pathname === "/manage" || pathname.startsWith("/manage/");
 }

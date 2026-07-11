@@ -39,7 +39,7 @@ const StyledA = styled.button`
 	transition: color ${({ theme }) => theme.transitions.default};
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.text};
+		color: ${({ theme }) => theme.colors.main};
 	}
 `;
 
@@ -54,6 +54,7 @@ const buttonBase = css`
 	letter-spacing: -0.01em;
 	border: 1px solid transparent;
 	cursor: pointer;
+	text-decoration: none !important;
 	transition: background ${({ theme }) => theme.transitions.default},
 		border-color ${({ theme }) => theme.transitions.default},
 		color ${({ theme }) => theme.transitions.default},
@@ -82,9 +83,14 @@ const PrimaryButton = styled.button`
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	box-shadow: ${({ theme }) => theme.shadows.glow};
 
-	&:hover:not(:disabled) {
+	&:hover:not(:disabled),
+	&:focus:not(:disabled) {
 		transform: translateY(-1px);
 		box-shadow: 0 0 32px rgba(200, 245, 66, 0.28);
+		/* Keep dark ink on signal green — never white */
+		color: ${({ theme }) => theme.colors.inverse};
+		background: ${({ theme }) => theme.colors.main};
+		opacity: 1;
 	}
 
 	&:active:not(:disabled) {
@@ -111,9 +117,13 @@ const WalletButtonStyled = styled.button`
 	white-space: nowrap;
 	box-shadow: ${({ theme }) => theme.shadows.glow};
 
-	&:hover:not(:disabled) {
+	&:hover:not(:disabled),
+	&:focus:not(:disabled) {
 		box-shadow: 0 0 28px rgba(200, 245, 66, 0.32);
 		transform: translateY(-1px);
+		color: ${({ theme }) => theme.colors.inverse};
+		background: ${({ theme }) => theme.colors.main};
+		opacity: 1;
 	}
 `;
 
@@ -128,9 +138,13 @@ const MintButton = styled.button`
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	box-shadow: ${({ theme }) => theme.shadows.glow};
 
-	&:hover:not(:disabled) {
+	&:hover:not(:disabled),
+	&:focus:not(:disabled) {
 		transform: translateY(-1px);
 		box-shadow: 0 0 32px rgba(200, 245, 66, 0.28);
+		color: ${({ theme }) => theme.colors.inverse};
+		background: ${({ theme }) => theme.colors.main};
+		opacity: 1;
 	}
 
 	&:disabled {
@@ -156,8 +170,13 @@ const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "dange
 				border-color: ${theme.colors.main};
 				box-shadow: ${theme.shadows.glow};
 
-				&:hover:not(:disabled) {
+				&:hover:not(:disabled),
+				&:focus:not(:disabled) {
 					transform: translateY(-1px);
+					color: ${theme.colors.inverse};
+					background: ${theme.colors.main};
+					opacity: 1;
+					text-decoration: none;
 				}
 
 				&:disabled {
@@ -174,9 +193,13 @@ const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "dange
 				color: ${theme.colors.error};
 				border-color: rgba(251, 113, 133, 0.35);
 
-				&:hover:not(:disabled) {
+				&:hover:not(:disabled),
+				&:focus:not(:disabled) {
 					background: ${theme.colors.errorBg};
 					border-color: ${theme.colors.error};
+					color: ${theme.colors.error};
+					opacity: 1;
+					text-decoration: none;
 				}
 			`;
 		}
@@ -186,22 +209,28 @@ const InlineButton = styled.button<{ $variant?: "primary" | "secondary" | "dange
 				color: ${theme.colors.muted};
 				border-color: transparent;
 
-				&:hover:not(:disabled) {
-					color: ${theme.colors.text};
+				&:hover:not(:disabled),
+				&:focus:not(:disabled) {
+					color: ${theme.colors.main};
 					background: ${theme.colors.input};
+					opacity: 1;
+					text-decoration: none;
 				}
 			`;
 		}
-		// secondary
+		// secondary — green accent on hover, never white
 		return css`
 			background: transparent;
 			color: ${theme.colors.text};
 			border-color: ${theme.colors.borderStrong};
 
-			&:hover:not(:disabled) {
+			&:hover:not(:disabled),
+			&:focus:not(:disabled) {
 				border-color: ${theme.colors.main};
 				color: ${theme.colors.main};
 				background: ${theme.colors.accentMuted};
+				opacity: 1;
+				text-decoration: none;
 			}
 		`;
 	}}

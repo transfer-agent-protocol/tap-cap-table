@@ -8,23 +8,24 @@ import {
 	APP_NAV_ITEMS,
 	CAP_TABLE_SECTIONS,
 	capTableHref,
+	isWorkspaceRoute,
 	mintViewToCapTableView,
 	parseCapTableView,
 	VALID_CAP_TABLE_VIEWS,
 } from "./navConfig.js";
 
 describe("APP_NAV_ITEMS", () => {
-	it("includes Home, Mint, and Manage destinations", () => {
+	it("includes Mint and Cap Tables workspace destinations (not Home)", () => {
 		const ids = APP_NAV_ITEMS.map((i) => i.id);
-		assert.deepEqual(ids, ["home", "mint", "manage"]);
+		assert.deepEqual(ids, ["mint", "manage"]);
 		assert.equal(APP_NAV_ITEMS.find((i) => i.id === "mint")?.href, "/mint");
 		assert.equal(APP_NAV_ITEMS.find((i) => i.id === "manage")?.href, "/manage");
 	});
 
-	it("match() distinguishes app routes", () => {
+	it("match() treats manage as parent of issuer routes", () => {
 		const manage = APP_NAV_ITEMS.find((i) => i.id === "manage")!;
 		assert.equal(manage.match("/manage"), true);
-		assert.equal(manage.match("/manage/cap-table"), false);
+		assert.equal(manage.match("/manage/cap-table"), true);
 		assert.equal(manage.match("/mint"), false);
 	});
 });
@@ -85,5 +86,14 @@ describe("mintViewToCapTableView", () => {
 		assert.equal(mintViewToCapTableView("activity"), "transactions");
 		assert.equal(mintViewToCapTableView("overview"), "overview");
 		assert.equal(mintViewToCapTableView("stakeholders"), "stakeholders");
+	});
+});
+
+describe("isWorkspaceRoute", () => {
+	it("is true only for mint/manage product routes", () => {
+		assert.equal(isWorkspaceRoute("/"), false);
+		assert.equal(isWorkspaceRoute("/mint"), true);
+		assert.equal(isWorkspaceRoute("/manage"), true);
+		assert.equal(isWorkspaceRoute("/manage/cap-table"), true);
 	});
 });

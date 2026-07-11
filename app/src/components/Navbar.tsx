@@ -1,18 +1,22 @@
 import styled from "styled-components";
 import dynamic from "next/dynamic";
 import { Nav, NavBrand, NavTitle } from "./wrappers";
-import { WalletButtonStyled } from "./buttons";
+import { InlineButton, WalletButtonStyled } from "./buttons";
 import { useAppShell } from "./AppShellContext";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { CAP_TABLE_SECTIONS, parseCapTableView } from "./navConfig";
+import {
+	CAP_TABLE_SECTIONS,
+	isWorkspaceRoute,
+	parseCapTableView,
+} from "./navConfig";
 
 const NavActions = styled.span`
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
-	gap: ${({ theme }) => theme.spacing.md};
+	gap: ${({ theme }) => theme.spacing.sm};
 	margin-left: auto;
 `;
 
@@ -37,7 +41,7 @@ const CollapseToggle = styled.button`
 	&:hover {
 		background: ${({ theme }) => theme.colors.input};
 		border-color: ${({ theme }) => theme.colors.borderStrong};
-		color: ${({ theme }) => theme.colors.text};
+		color: ${({ theme }) => theme.colors.main};
 	}
 `;
 
@@ -95,17 +99,43 @@ const LiveDot = styled.span`
 	}
 `;
 
+const TopLink = styled.a`
+	display: inline-flex;
+	align-items: center;
+	height: 2.125rem;
+	padding: 0 ${({ theme }) => theme.spacing.sm};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-weight: ${({ theme }) => theme.fontWeights.medium};
+	color: ${({ theme }) => theme.colors.muted} !important;
+	text-decoration: none !important;
+	opacity: 1 !important;
+	border-radius: ${({ theme }) => theme.radii.sm};
+	transition: color ${({ theme }) => theme.transitions.default},
+		background ${({ theme }) => theme.transitions.default};
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.main} !important;
+		background: ${({ theme }) => theme.colors.accentMuted};
+		text-decoration: none !important;
+		opacity: 1 !important;
+	}
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+		display: none;
+	}
+`;
+
 const ROUTE_TITLES: Record<string, string> = {
-	"/": "Home",
+	"/": "Transfer Agent Protocol",
 	"/mint": "Mint Cap Table",
-	"/manage": "Manage Cap Tables",
-	"/manage/cap-table": "Cap Table Manager",
+	"/manage": "Cap Tables",
+	"/manage/cap-table": "Cap Table",
 };
 
 const ROUTE_META: Record<string, string> = {
 	"/": "Protocol",
-	"/mint": "Deploy",
-	"/manage": "Admin",
+	"/mint": "Workspace",
+	"/manage": "Workspace",
 	"/manage/cap-table": "Issuer",
 };
 
@@ -116,11 +146,13 @@ const WalletButton = dynamic(() => import("./WalletButtonClient"), {
 
 /**
  * Top primary chrome: brand/context + account/wallet.
- * Page navigation lives in the left drawer.
+ * Workspace routes also get the left-drawer toggle.
+ * Landing keeps Mint/Manage entry points in the top bar (no left Home nav).
  */
 export default function Navbar() {
 	const { pathname, query } = useRouter();
 	const { collapsed, toggleCollapsed, mobileOpen, toggleMobileOpen } = useAppShell();
+	const workspace = isWorkspaceRoute(pathname);
 
 	let title = ROUTE_TITLES[pathname] || "Transfer Agent Protocol";
 	let meta = ROUTE_META[pathname] || "TAP";
@@ -154,15 +186,17 @@ export default function Navbar() {
 	return (
 		<Nav data-testid="top-nav" role="banner">
 			<NavBrand>
-				<CollapseToggle
-					type="button"
-					onClick={handleToggle}
-					aria-label={toggleLabel}
-					title={toggleLabel}
-					data-testid="nav-collapse-toggle"
-				>
-					{collapsed ? "›" : "‹"}
-				</CollapseToggle>
+				{workspace && (
+					<CollapseToggle
+						type="button"
+						onClick={handleToggle}
+						aria-label={toggleLabel}
+						title={toggleLabel}
+						data-testid="nav-collapse-toggle"
+					>
+						{collapsed ? "›" : "‹"}
+					</CollapseToggle>
+				)}
 				<BrandLink>
 					<Link href="/" aria-label="Home">
 						<Image src="/tap-logo.svg" alt="Transfer Agent Protocol" width={36} height={36} />
@@ -174,7 +208,35 @@ export default function Navbar() {
 				</TitleStack>
 			</NavBrand>
 			<NavActions data-testid="top-nav-account">
-				<LiveDot>Onchain</LiveDot>
+				{!workspace && (
+					<>
+						<Link href="/mint" passHref legacyBehavior>
+							<InlineButton as="a" $variant="ghost">
+								Mint
+							</InlineButton>
+						</Link>
+						<Link href="/manage" passHref legacyBehavior>
+							<InlineButton as="a" $variant="ghost">
+								Manage
+							</InlineButton>
+						</Link>
+						<TopLink
+							href="https://docs.transferagentprotocol.xyz"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Docs
+						</TopLink>
+						<TopLink
+							href="https://x.com/thatalexpalmer"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							@thatalexpalmer
+						</TopLink>
+					</>
+				)}
+				{workspace && <LiveDot>Onchain</LiveDot>}
 				<WalletButton />
 			</NavActions>
 		</Nav>

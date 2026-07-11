@@ -64,7 +64,7 @@ const DrawerInner = styled.div`
 	min-height: 0;
 `;
 
-const BrandRow = styled.div`
+const BrandRow = styled(Link)`
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
@@ -72,6 +72,15 @@ const BrandRow = styled.div`
 	padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
 	margin-bottom: ${({ theme }) => theme.spacing.lg};
 	min-height: 2.75rem;
+	text-decoration: none !important;
+	color: inherit !important;
+	opacity: 1 !important;
+
+	&:hover {
+		text-decoration: none !important;
+		opacity: 1 !important;
+		color: inherit !important;
+	}
 `;
 
 const BrandMark = styled.span`
@@ -160,8 +169,9 @@ const NavLink = styled.a<{ $active?: boolean; $collapsed?: boolean }>`
 	font-weight: ${({ $active, theme }) =>
 		$active ? theme.fontWeights.semibold : theme.fontWeights.medium};
 	background: ${({ $active, theme }) => ($active ? theme.colors.accentMuted : "transparent")};
-	color: ${({ $active, theme }) => ($active ? theme.colors.main : theme.colors.muted)};
-	text-decoration: none;
+	color: ${({ $active, theme }) => ($active ? theme.colors.main : theme.colors.muted)} !important;
+	text-decoration: none !important;
+	opacity: 1 !important;
 	cursor: pointer;
 	border: none;
 	width: 100%;
@@ -186,7 +196,9 @@ const NavLink = styled.a<{ $active?: boolean; $collapsed?: boolean }>`
 
 	&:hover {
 		background: ${({ theme }) => theme.colors.input};
-		color: ${({ theme }) => theme.colors.text};
+		color: ${({ theme }) => theme.colors.main} !important;
+		text-decoration: none !important;
+		opacity: 1 !important;
 	}
 `;
 
@@ -197,7 +209,6 @@ const NavIcon = styled.span`
 	min-width: 1.25rem;
 	font-size: 0.85rem;
 	opacity: 0.9;
-	font-variant-numeric: tabular-nums;
 `;
 
 const NavText = styled.span<{ $collapsed: boolean }>`
@@ -213,6 +224,49 @@ const NavText = styled.span<{ $collapsed: boolean }>`
 	}
 `;
 
+const BackLink = styled(NavLink)`
+	margin-bottom: ${({ theme }) => theme.spacing.sm};
+	color: ${({ theme }) => theme.colors.subtle} !important;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.main} !important;
+	}
+`;
+
+const IssuerChip = styled.div<{ $collapsed: boolean }>`
+	margin: 0 ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.sm};
+	padding: ${({ theme }) => theme.spacing.sm};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	background: ${({ theme }) => theme.colors.elevated};
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	display: ${({ $collapsed }) => ($collapsed ? "none" : "flex")};
+	flex-flow: column nowrap;
+	gap: 0.2rem;
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		display: flex;
+	}
+`;
+
+const IssuerChipLabel = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: ${({ theme }) => theme.colors.subtle};
+`;
+
+const IssuerChipId = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.main};
+	font-family: inherit;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+`;
+
 const DrawerFooter = styled.div`
 	margin-top: auto;
 	padding: ${({ theme }) => theme.spacing.md};
@@ -224,17 +278,20 @@ const DrawerFooter = styled.div`
 
 const ExternalLink = styled.a<{ $collapsed: boolean }>`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	color: ${({ theme }) => theme.colors.subtle};
-	text-decoration: none;
+	color: ${({ theme }) => theme.colors.subtle} !important;
+	text-decoration: none !important;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	white-space: nowrap;
 	overflow: hidden;
 	padding: ${({ theme }) => theme.spacing.xs} 0;
+	opacity: 1 !important;
 	transition: color ${({ theme }) => theme.transitions.default};
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main};
+		color: ${({ theme }) => theme.colors.main} !important;
+		text-decoration: none !important;
+		opacity: 1 !important;
 	}
 
 	${({ $collapsed }) =>
@@ -248,10 +305,9 @@ const ExternalLink = styled.a<{ $collapsed: boolean }>`
 `;
 
 const SECTION_ICONS: Record<string, string> = {
-	home: "01",
-	mint: "02",
-	manage: "03",
-	overview: "◆",
+	mint: "◆",
+	manage: "☰",
+	overview: "◎",
 	stakeholders: "◎",
 	"stock-classes": "▣",
 	"issue-stock": "→",
@@ -283,10 +339,10 @@ export function LeftNavDrawer() {
 				$collapsed={showCollapsed}
 				$mobileOpen={mobileOpen}
 				data-testid="left-nav-drawer"
-				aria-label="Primary navigation"
+				aria-label="Workspace navigation"
 			>
 				<DrawerInner>
-					<BrandRow>
+					<BrandRow href="/" onClick={closeMobile} title="Back to site home">
 						<BrandMark aria-hidden>TAP</BrandMark>
 						<BrandText $collapsed={showCollapsed}>
 							<BrandTitle>Transfer Agent</BrandTitle>
@@ -295,8 +351,10 @@ export function LeftNavDrawer() {
 					</BrandRow>
 
 					<NavSection>
-						<NavLabel $collapsed={showCollapsed}>Navigate</NavLabel>
+						<NavLabel $collapsed={showCollapsed}>Workspace</NavLabel>
 						{APP_NAV_ITEMS.map((item) => {
+							// When inside a specific issuer, only "Cap Tables" parent is active
+							// via match(); mint stays inactive.
 							const active = item.match(pathname);
 							return (
 								<Link key={item.id} href={item.href} passHref legacyBehavior>
@@ -317,7 +375,18 @@ export function LeftNavDrawer() {
 
 					{isCapTableRoute && issuerId && (
 						<NavSection data-testid="cap-table-sections">
-							<NavLabel $collapsed={showCollapsed}>Cap Table</NavLabel>
+							<NavLabel $collapsed={showCollapsed}>This issuer</NavLabel>
+							{!showCollapsed && (
+								<Link href="/manage" passHref legacyBehavior>
+									<BackLink onClick={closeMobile} $collapsed={showCollapsed}>
+										← All cap tables
+									</BackLink>
+								</Link>
+							)}
+							<IssuerChip $collapsed={showCollapsed}>
+								<IssuerChipLabel>Issuer</IssuerChipLabel>
+								<IssuerChipId title={issuerId}>{issuerId}</IssuerChipId>
+							</IssuerChip>
 							{CAP_TABLE_SECTIONS.map((section) => {
 								const active = currentView === section.id;
 								return (
@@ -347,7 +416,15 @@ export function LeftNavDrawer() {
 							rel="noopener noreferrer"
 							$collapsed={showCollapsed}
 						>
-							{showCollapsed ? "Docs" : "Documentation →"}
+							{showCollapsed ? "Docs" : "Docs →"}
+						</ExternalLink>
+						<ExternalLink
+							href="https://x.com/thatalexpalmer"
+							target="_blank"
+							rel="noopener noreferrer"
+							$collapsed={showCollapsed}
+						>
+							{showCollapsed ? "X" : "@thatalexpalmer"}
 						</ExternalLink>
 						<ExternalLink
 							href="https://github.com/transfer-agent-protocol/tap-cap-table"

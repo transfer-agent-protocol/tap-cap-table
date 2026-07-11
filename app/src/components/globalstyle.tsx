@@ -49,10 +49,16 @@ const GlobalStyle = createGlobalStyle`
 		font-weight: ${({ theme }) => theme.fontWeights.medium};
 		text-decoration: none;
 		transition: color ${({ theme }) => theme.transitions.default},
-			background ${({ theme }) => theme.transitions.default};
+			opacity ${({ theme }) => theme.transitions.default},
+			text-decoration-color ${({ theme }) => theme.transitions.default};
 
+		/* Never flip body links to white — keeps contrast on dark surfaces */
 		&:hover {
-			color: ${({ theme }) => theme.colors.white};
+			color: ${({ theme }) => theme.colors.main};
+			text-decoration: underline;
+			text-decoration-thickness: 1px;
+			text-underline-offset: 0.2em;
+			opacity: 0.92;
 		}
 	}
 
