@@ -3,6 +3,7 @@ import { InlineButton } from "./buttons";
 import { DataTable, type Column } from "./DataTable";
 import { SectionActions, SectionHeader, TableTitle } from "./wrappers";
 import { copy } from "../lib/copy";
+import { holdingStatusForIssuance } from "../utils/holdingStatus";
 
 interface HoldingsTableProps {
 	holdingsData: any;
@@ -19,11 +20,11 @@ interface HoldingsTableProps {
 		stock_class_name?: string;
 		custom_id?: string;
 		txHash?: string;
+		confirmed?: boolean;
 	}>;
 	onRefresh?: () => void;
 	isLoading?: boolean;
 	error?: string | null;
-	/** Hide the title band when the parent page already labels the section */
 	compact?: boolean;
 }
 
@@ -85,9 +86,17 @@ export function HoldingsTable({
 	const allStakeholders = [...(holdingsData?.stakeholders || []), ...createdStakeholders];
 	const allClasses = [...(holdingsData?.stockClasses || []), ...createdStockClasses];
 
-	const holdingKeys = new Set<string>(holdings.map((h) => `${h.stakeholder?._id}|${h.stockClass?._id}`));
-	const pendingIssuances = createdIssuances.filter(
+	const holdingKeys = new Set<string>(
+		holdings.map((h) => `${h.stakeholder?._id}|${h.stockClass?._id}`),
+	);
+
+	// Drop session rows once chain holdings API has the same holder+class pair
+	const sessionIssuances = createdIssuances.filter(
 		(iss) => !holdingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`),
+	);
+
+	const waitingOnReceipt = sessionIssuances.some(
+		(iss) => holdingStatusForIssuance(iss) === "Pending",
 	);
 
 	const rows: HoldingRow[] = [
@@ -99,14 +108,17 @@ export function HoldingsTable({
 			sharePrice: formatSharePrice(h.sharePrice),
 			status: copy.status.onchain,
 		})),
-		...pendingIssuances.map((iss, i) => ({
-			key: `iss-${i}`,
-			stakeholder: resolveName(iss.stakeholder_id, iss.stakeholder_name, allStakeholders, "stakeholder"),
-			stockClass: resolveName(iss.stock_class_id, iss.stock_class_name, allClasses, "stockClass"),
-			quantity: iss.quantity,
-			sharePrice: formatSharePrice(iss.share_price),
-			status: copy.status.pending,
-		})),
+		...sessionIssuances.map((iss, i) => {
+			const status = holdingStatusForIssuance(iss);
+			return {
+				key: `iss-${i}`,
+				stakeholder: resolveName(iss.stakeholder_id, iss.stakeholder_name, allStakeholders, "stakeholder"),
+				stockClass: resolveName(iss.stock_class_id, iss.stock_class_name, allClasses, "stockClass"),
+				quantity: iss.quantity,
+				sharePrice: formatSharePrice(iss.share_price),
+				status: status === "Confirmed" ? copy.status.onchain : copy.status.pending,
+			};
+		}),
 	];
 
 	return (
@@ -124,7 +136,6 @@ export function HoldingsTable({
 				</SectionHeader>
 			)}
 
-			{/* Always a real table (headers + body) — empty state is a table row */}
 			<DataTable<HoldingRow>
 				columns={columns}
 				rows={rows}
@@ -133,8 +144,8 @@ export function HoldingsTable({
 				error={error}
 				emptyMessage={copy.holdings.empty}
 				caption={
-					pendingIssuances.length > 0
-						? "Pending = this session, waiting for confirmation / chain index."
+					waitingOnReceipt
+						? "Pending = waiting for the wallet transaction to confirm."
 						: undefined
 				}
 			/>

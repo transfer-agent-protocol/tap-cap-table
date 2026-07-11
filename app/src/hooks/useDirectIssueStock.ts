@@ -35,7 +35,6 @@ export function useDirectIssueStock() {
 			const stockClassIdBytes = uuidToBytes16(params.stockClassId);
 			const zeroId = `0x${"0".repeat(32)}` as `0x${string}`;
 
-			// 1e10 fixed point — shared @tap/units (poller unscales by 1e10 on read).
 			const scaledPrice = scaleAmount(params.sharePriceAmount);
 			const scaledQuantity = scaleShares(params.quantity);
 
@@ -61,12 +60,14 @@ export function useDirectIssueStock() {
 				security_law_exemptions: [] as string[],
 			};
 
-			write.writeContract({
+			// Wait for user signature + hash so reverts/rejects throw before UI optimizes
+			const writeAsync = write.writeContractAsync ?? write.writeContract;
+			const hash = await writeAsync({
 				address: params.capTableAddress,
 				args: [issuanceParams],
 			});
 
-			return { issuanceId, securityId };
+			return { issuanceId, securityId, hash: typeof hash === "string" ? hash : undefined };
 		},
 		[write, action.isConnected],
 	);

@@ -33,6 +33,7 @@ import { registerStockIssuanceOnchain, type StockIssuanceData } from "../service
 import type { IssuerResponse } from "../services/registerIssuer";
 import { copy } from "../lib/copy";
 import { parseCapTableView, type CapTableView } from "./navConfig";
+import { issuanceStillSyncing } from "../utils/holdingStatus";
 
 interface CapTableDashboardProps {
 	issuerResult: IssuerResponse;
@@ -61,6 +62,8 @@ interface OptimisticIssuance {
 	stock_class_name?: string;
 	custom_id?: string;
 	txHash?: string;
+	/** Wallet receipt status === success */
+	confirmed?: boolean;
 	date?: string;
 }
 
@@ -142,18 +145,27 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				title: copy.tx.confirmedTitle.issuance,
 				txHash: directIssuance.hash,
 			});
-			// Attach hash onto last optimistic row
-			if (directIssuance.hash) {
-				setDirectIssuances((prev) => {
-					if (!prev.length) return prev;
-					const next = [...prev];
-					next[next.length - 1] = { ...next[next.length - 1], txHash: directIssuance.hash };
-					return next;
-				});
-			}
+			// Mark session row Confirmed as soon as the receipt succeeds
+			setDirectIssuances((prev) => {
+				if (!prev.length) return prev;
+				const next = [...prev];
+				next[next.length - 1] = {
+					...next[next.length - 1],
+					txHash: directIssuance.hash || next[next.length - 1].txHash,
+					confirmed: true,
+				};
+				return next;
+			});
 			setPendingIssuance(false);
 			directIssuance.reset();
 			manager.refreshHoldings();
+			// Poll chain holdings briefly so the Confirmed row can flip to the API row
+			const t1 = setTimeout(() => manager.refreshHoldings(), 1500);
+			const t2 = setTimeout(() => manager.refreshHoldings(), 4000);
+			return () => {
+				clearTimeout(t1);
+				clearTimeout(t2);
+			};
 		} else if (directIssuance.isReverted) {
 			setSuccessModal({
 				title: copy.tx.revertedTitle,
@@ -206,10 +218,12 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const syncedHoldingKeys = new Set(
 		(manager.holdings?.holdings || []).map((h: any) => `${h.stakeholder?._id}|${h.stockClass?._id}`),
 	);
+	// "syncing…" only while a wallet receipt is still outstanding — not forever after confirm
 	const hasPendingSync =
-		directStockClasses.some((sc) => !syncedStockClassIds.has(sc._id)) ||
-		directStakeholders.some((sh) => !syncedStakeholderIds.has(sh._id)) ||
-		directIssuances.some((iss) => !syncedHoldingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`));
+		pendingStockClass ||
+		pendingStakeholder ||
+		pendingIssuance ||
+		directIssuances.some((iss) => issuanceStillSyncing(iss, syncedHoldingKeys));
 
 	useEffect(() => {
 		setHasPendingSyncFlag(hasPendingSync);
@@ -353,6 +367,16 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 
 		try {
+			// Guard: class must exist onchain (Mongo can have metadata-only rows)
+			if (stockClass && stockClass.is_onchain_synced === false) {
+				setSuccessModal({
+					title: "Share class not onchain",
+					message:
+						"This share class is only saved as metadata. Create it again under Classes and wait for the wallet confirmation before issuing.",
+				});
+				return;
+			}
+
 			const result = await directIssuance.issueStock({
 				capTableAddress,
 				stakeholderId: data.stakeholder_id,
@@ -376,6 +400,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 					stakeholder_name: stakeholder?.name?.legal_name || stakeholder?.name?.first_name,
 					stock_class_name: stockClass?.name,
 					custom_id: data.custom_id,
+					txHash: result.hash,
 					date: new Date().toISOString().slice(0, 10),
 				},
 			]);

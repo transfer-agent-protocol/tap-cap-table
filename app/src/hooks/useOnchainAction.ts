@@ -26,6 +26,7 @@ export interface OnchainActionState {
 
 type WriteContractLike = {
 	writeContract: (...args: any[]) => void;
+	writeContractAsync?: (...args: any[]) => Promise<`0x${string}`>;
 	data: `0x${string}` | undefined;
 	isPending: boolean;
 	error: Error | null;

@@ -30,12 +30,13 @@ export function useDirectCreateStockClass() {
 			// Shares authorized must be scaled by 1e10 (same as issuer + issuance quantity).
 			const sharesAuthorized = scaleShares(params.initialSharesAuthorized);
 
-			write.writeContract({
+			const writeAsync = write.writeContractAsync ?? write.writeContract;
+			const hash = await writeAsync({
 				address: params.capTableAddress,
 				args: [stockClassId, params.classType, scaledPrice, sharesAuthorized],
 			});
 
-			return { stockClassId };
+			return { stockClassId, hash: typeof hash === "string" ? hash : undefined };
 		},
 		[write, action.isConnected],
 	);
