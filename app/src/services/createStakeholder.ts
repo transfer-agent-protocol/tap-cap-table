@@ -10,7 +10,6 @@ export interface StakeholderData {
 	current_relationship: string;
 	issuer_assigned_id?: string;
 	comments?: string[];
-	// Optional contact fields can be added later for richer forms
 }
 
 export interface CreateStakeholderPayload {
@@ -27,21 +26,6 @@ export interface StakeholderResponse {
 		is_onchain_synced: boolean;
 		[key: string]: unknown;
 	};
-}
-
-export async function createStakeholder(payload: CreateStakeholderPayload): Promise<StakeholderResponse> {
-	const res = await fetch("/api/stakeholder/create", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(payload),
-	});
-
-	if (!res.ok) {
-		const text = await res.text();
-		throw new Error(text || `Server returned ${res.status}`);
-	}
-
-	return res.json();
 }
 
 /**

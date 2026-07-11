@@ -32,21 +32,6 @@ export interface StockIssuanceResponse {
 	};
 }
 
-export async function createStockIssuance(payload: CreateStockIssuancePayload): Promise<StockIssuanceResponse> {
-	const res = await fetch("/api/transactions/issuance/stock", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(payload),
-	});
-
-	if (!res.ok) {
-		const text = await res.text();
-		throw new Error(text || `Server returned ${res.status}`);
-	}
-
-	return res.json();
-}
-
 /**
  * Register a stock issuance that the caller already submitted onchain via their own wallet.
  * No id is required — the contract assigns issuance + security ids internally, and the poller

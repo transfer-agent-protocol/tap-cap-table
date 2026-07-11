@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useConnection, useWaitForTransactionReceipt } from "wagmi";
 import { parseEventLogs } from "viem";
 import { generateBytes16Id } from "../utils/uuid";
+import { scaleShares } from "@tap/units";
 import {
 	FACTORY_ADDRESS,
-	DECIMAL_SCALE,
 	OPERATOR_ADDRESS,
 	capTableFactoryAbi,
 	useWriteCapTableFactoryCreateCapTable,
@@ -28,10 +28,6 @@ export interface IssuerFormFields {
 	addressSubdivision: string;
 	addressCountry: string;
 	postalCode: string;
-}
-
-function scaleShares(value: string): bigint {
-	return BigInt(value) * DECIMAL_SCALE;
 }
 
 export interface UseMintIssuerReturn {

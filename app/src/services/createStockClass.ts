@@ -26,21 +26,6 @@ export interface StockClassResponse {
 	};
 }
 
-export async function createStockClass(payload: CreateStockClassPayload): Promise<StockClassResponse> {
-	const res = await fetch("/api/stock-class/create", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(payload),
-	});
-
-	if (!res.ok) {
-		const text = await res.text();
-		throw new Error(text || `Server returned ${res.status}`);
-	}
-
-	return res.json();
-}
-
 /**
  * Register a stock class that the caller already created onchain via their own wallet.
  * `id` is the UUID form of the bytes16 used in the onchain createStockClass tx.

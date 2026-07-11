@@ -1,20 +1,33 @@
-import { MutedText, SectionActions, SectionHeader, StyledTable, TableScroll, TableTitle } from "./wrappers";
+import type { ReactNode } from "react";
 import { InlineButton } from "./buttons";
+import { DataTable, type Column } from "./DataTable";
+import { SectionActions, SectionHeader, TableTitle } from "./wrappers";
+import { copy } from "../lib/copy";
 
 interface HoldingsTableProps {
-	holdingsData: any; // debug/hybrid data from /cap-table/holdings/stock + optimistic direct creations
+	holdingsData: any; // response from /cap-table/holdings/stock
 	createdStockClasses?: any[];
 	createdStakeholders?: any[];
 	createdIssuances?: any[];
 	onRefresh?: () => void;
 	isLoading?: boolean;
+	error?: string | null;
 }
 
-function formatSharePrice(sharePrice: unknown, currency: string = "USD"): string {
+// One flat row shape for every kind of entry (server holding, pending issuance, optimistic
+// class/stakeholder) so the generic DataTable can render them uniformly.
+interface HoldingRow {
+	key: string;
+	stakeholder: ReactNode;
+	stockClass: ReactNode;
+	quantity: ReactNode;
+	sharePrice: ReactNode;
+	status: ReactNode;
+}
+
+function formatSharePrice(sharePrice: unknown, currency = "USD"): string {
 	if (sharePrice == null) return "—";
-	// Server (`/cap-table/holdings/stock`) returns sharePrice as a plain number
-	// (`Number(quantityPrice / quantity) / decimalScaleValue`). Optimistic rows
-	// constructed client-side use the OCF shape `{ amount, currency }`.
+	// Server returns a plain number; optimistic rows use the OCF `{ amount, currency }` shape.
 	if (typeof sharePrice === "number") {
 		if (!Number.isFinite(sharePrice) || sharePrice === 0) return "—";
 		return `${sharePrice.toFixed(2)} ${currency}`;
@@ -27,145 +40,100 @@ function formatSharePrice(sharePrice: unknown, currency: string = "USD"): string
 	return "—";
 }
 
-export function HoldingsTable({ holdingsData, createdStockClasses = [], createdStakeholders = [], createdIssuances = [], onRefresh, isLoading }: HoldingsTableProps) {
-	const holdings = holdingsData?.holdings || [];
-
-	// Drop optimistic issuances once a matching real row arrives from the server. We dedupe on
-	// stakeholder_id + stock_class_id because that's the join key the poller uses to materialize
-	// a holding row, and the optimistic item carries those ids from the issuance form.
-	const holdingKeys = new Set<string>(
-		holdings.map((h: any) => `${h.stakeholder?._id}|${h.stockClass?._id}`),
+function ExplorerLink({ txHash, label }: { txHash: string; label: string }) {
+	return (
+		<a href={`https://explorer.plume.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
+			{label}
+		</a>
 	);
+}
+
+const columns: Column<HoldingRow>[] = [
+	{ key: "stakeholder", header: copy.holdings.columns.stakeholder, render: (r) => r.stakeholder },
+	{ key: "stockClass", header: copy.holdings.columns.stockClass, render: (r) => r.stockClass },
+	{ key: "quantity", header: copy.holdings.columns.quantity, align: "right", render: (r) => r.quantity },
+	{ key: "sharePrice", header: copy.holdings.columns.sharePrice, align: "right", render: (r) => r.sharePrice },
+	{ key: "status", header: copy.holdings.columns.status, render: (r) => r.status },
+];
+
+export function HoldingsTable({
+	holdingsData,
+	createdStockClasses = [],
+	createdStakeholders = [],
+	createdIssuances = [],
+	onRefresh,
+	isLoading,
+	error = null,
+}: HoldingsTableProps) {
+	const holdings: any[] = holdingsData?.holdings || [];
+
+	// Drop optimistic issuances once a matching server row exists (join key: stakeholder + class).
+	const holdingKeys = new Set<string>(holdings.map((h) => `${h.stakeholder?._id}|${h.stockClass?._id}`));
 	const pendingIssuances = createdIssuances.filter(
-		(iss: any) => !holdingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`),
+		(iss) => !holdingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`),
 	);
 
+	const rows: HoldingRow[] = [
+		...holdings.map((h, i) => ({
+			key: `h-${i}`,
+			stakeholder: h.stakeholder?.name?.legal_name || h.stakeholder?._id || "—",
+			stockClass: h.stockClass?.name || h.stockClass?._id || "—",
+			quantity: h.quantity,
+			sharePrice: formatSharePrice(h.sharePrice),
+			status: copy.status.onchain,
+		})),
+		...pendingIssuances.map((iss, i) => ({
+			key: `iss-${i}`,
+			stakeholder: iss.stakeholder_id,
+			stockClass: iss.stock_class_id,
+			quantity: `${iss.quantity} (pending)`,
+			sharePrice: formatSharePrice(iss.share_price),
+			status: iss.txHash ? <ExplorerLink txHash={iss.txHash} label="Onchain ✓" /> : copy.status.pending,
+		})),
+		...createdStockClasses
+			.filter((sc) => sc.txHash)
+			.map((sc, i) => ({
+				key: `sc-${i}`,
+				stakeholder: "—",
+				stockClass: `Stock Class: ${sc.name}`,
+				quantity: "—",
+				sharePrice: "—",
+				status: <ExplorerLink txHash={sc.txHash} label="Onchain ✓" />,
+			})),
+		...createdStakeholders
+			.filter((sh) => sh.txHash)
+			.map((sh, i) => ({
+				key: `sh-${i}`,
+				stakeholder: `Stakeholder: ${sh.name?.legal_name || sh.name || sh._id}`,
+				stockClass: "—",
+				quantity: "—",
+				sharePrice: "—",
+				status: <ExplorerLink txHash={sh.txHash} label="Onchain ✓" />,
+			})),
+	];
 
 	return (
 		<div>
 			<SectionHeader>
-				<TableTitle>Cap Table Holdings (live from server + optimistic)</TableTitle>
+				<TableTitle>{copy.holdings.title}</TableTitle>
 				{onRefresh && (
 					<SectionActions>
 						<InlineButton onClick={onRefresh} disabled={isLoading}>
-							{isLoading ? "Refreshing..." : "Refresh"}
-						</InlineButton>
-						<InlineButton
-							onClick={onRefresh}
-							disabled={isLoading}
-							title="Force re-fetch from MongoDB (bypasses cache)"
-						>
-							Force DB Refresh
+							{isLoading ? "Refreshing…" : "Refresh"}
 						</InlineButton>
 					</SectionActions>
 				)}
 			</SectionHeader>
 
-			<TableScroll>
-			<StyledTable>
-				<thead>
-					<tr>
-						<th>Stakeholder</th>
-						<th>Stock Class</th>
-						<th>Quantity</th>
-						<th>Share Price</th>
-						<th>Status</th>
-					</tr>
-				</thead>
-				<tbody>
-					{holdings.length === 0 && createdStockClasses.length === 0 && createdStakeholders.length === 0 ? (
-						<tr>
-							<td colSpan={5} style={{ textAlign: "center", opacity: 0.7, padding: "1.5rem", lineHeight: 1.5 }}>
-								<strong>No holdings yet.</strong><br /><br />
-								The table shows live onchain positions (via <code>getAveragePosition</code>) joined with the latest issuance records from Mongo.<br />
-								Recent direct onchain work appears here via optimistic state immediately, and becomes permanent once the poller has synced the events + rich metadata exists for the joins.
-							</td>
-						</tr>
-					) : null}
-
-					{holdings.map((h: any, idx: number) => (
-						<tr key={idx}>
-							<td>{h.stakeholder?.name?.legal_name || h.stakeholder?._id || "—"}</td>
-							<td>{h.stockClass?.name || h.stockClass?._id || "—"}</td>
-							<td style={{ fontFamily: "monospace" }}>{h.quantity}</td>
-							<td>{formatSharePrice(h.sharePrice)}</td>
-							<td>Onchain</td>
-						</tr>
-					))}
-
-					{/* Optimistic rows from direct onchain creations (user wallet signed) — only ones the poller hasn't materialized yet */}
-					{pendingIssuances.map((iss, i) => (
-						<tr key={`iss-${i}`} style={{ opacity: 0.75 }}>
-							<td>{iss.stakeholder_id}</td>
-							<td>{iss.stock_class_id}</td>
-							<td style={{ fontFamily: "monospace" }}>{iss.quantity} (pending)</td>
-							<td>{formatSharePrice(iss.share_price)}</td>
-							<td>
-								{iss.txHash ? (
-									<a 
-										href={`https://explorer.plume.org/tx/${iss.txHash}`} 
-										target="_blank" 
-										rel="noopener noreferrer"
-										style={{ color: "#16a34a", textDecoration: "underline" }}
-									>
-										Onchain ✓
-									</a>
-								) : "Pending sync"}
-							</td>
-						</tr>
-					))}
-
-					{/* Direct optimistic stock classes / stakeholders (for visibility in main table) */}
-					{createdStockClasses
-						.filter((sc: any) => sc.txHash)
-						.map((sc: any, i: number) => (
-							<tr key={`sc-opt-${i}`} style={{ opacity: 0.75, background: "#f8fafc" }}>
-								<td colSpan={2}>Stock Class: {sc.name}</td>
-								<td>—</td>
-								<td>—</td>
-								<td>
-									<a 
-										href={`https://explorer.plume.org/tx/${sc.txHash}`} 
-										target="_blank" 
-										rel="noopener noreferrer"
-										style={{ color: "#16a34a", textDecoration: "underline" }}
-									>
-										Onchain ✓
-									</a>
-								</td>
-							</tr>
-						))}
-
-					{createdStakeholders
-						.filter((sh: any) => sh.txHash)
-						.map((sh: any, i: number) => (
-							<tr key={`sh-opt-${i}`} style={{ opacity: 0.75, background: "#f8fafc" }}>
-								<td>Stakeholder: {(sh.name?.legal_name || sh.name) || sh._id}</td>
-								<td>—</td>
-								<td>—</td>
-								<td>—</td>
-								<td>
-									<a 
-										href={`https://explorer.plume.org/tx/${sh.txHash}`} 
-										target="_blank" 
-										rel="noopener noreferrer"
-										style={{ color: "#16a34a", textDecoration: "underline" }}
-									>
-										Onchain ✓
-									</a>
-								</td>
-							</tr>
-						))}
-				</tbody>
-			</StyledTable>
-			</TableScroll>
-
-			<MutedText>
-				Holdings come from <code>/cap-table/holdings/stock</code> (latest Mongo issuances + live
-				onchain <code>getAveragePosition</code> — only positive quantities are shown), merged with
-				optimistic direct creations from this session. Recent onchain activity may take a moment
-				to fully surface after the poller and metadata registration.
-			</MutedText>
+			<DataTable<HoldingRow>
+				columns={columns}
+				rows={rows}
+				rowKey={(r) => r.key}
+				isLoading={isLoading}
+				error={error}
+				emptyMessage={copy.holdings.empty}
+				caption={copy.holdings.caption}
+			/>
 		</div>
 	);
 }

@@ -23,11 +23,13 @@ import { useDirectCreateStockClass } from "../hooks/useDirectCreateStockClass";
 import { useDirectCreateStakeholder } from "../hooks/useDirectCreateStakeholder";
 import { useDirectIssueStock } from "../hooks/useDirectIssueStock";
 import { bytes16ToUuid, generateBytes16Id } from "../utils/uuid";
+import { validateShareCaps } from "@tap/units";
 import { fetchHistoricalTransactions } from "../services/fetchHistoricalTransactions";
 import { registerStockClassOnchain, type StockClassData } from "../services/createStockClass";
 import { registerStakeholderOnchain, type StakeholderData } from "../services/createStakeholder";
 import { registerStockIssuanceOnchain, type StockIssuanceData } from "../services/createStockIssuance";
 import type { IssuerResponse } from "../services/registerIssuer";
+import { copy } from "../lib/copy";
 
 interface CapTableDashboardProps {
 	issuerResult: IssuerResponse;
@@ -37,10 +39,29 @@ interface CapTableDashboardProps {
 interface PendingModal {
 	title: string;
 	message?: string;
+	kind: "stockClass" | "stakeholder" | "issuance";
+}
+
+interface OptimisticStockClass {
+	_id: string;
+	name: string;
+	class_type: string;
+	initial_shares_authorized?: string;
+}
+interface OptimisticStakeholder {
+	_id: string;
+	name: any;
+	stakeholder_type: string;
+}
+interface OptimisticIssuance {
+	_id: string;
+	security_id: string;
+	quantity: string;
+	stakeholder_id: string;
+	stock_class_id: string;
 }
 
 export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardProps) {
-	const manager = useCapTableManager(issuerResult);
 	const directStockClass = useDirectCreateStockClass();
 	const directStakeholder = useDirectCreateStakeholder();
 	const directIssuance = useDirectIssueStock();
@@ -50,8 +71,26 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const [currentView, setCurrentView] = useState<MintView>("overview");
 	const { isOpen: isDrawerOpen, setOpen: setIsDrawerOpen, setEnabled: setMenuEnabled } = useCapTableMenu();
 
-	// Tell the navbar that the menu trigger is meaningful while this dashboard
-	// is mounted; clean up so other routes don't render the trigger.
+	const [directStockClasses, setDirectStockClasses] = useState<OptimisticStockClass[]>([]);
+	const [directStakeholders, setDirectStakeholders] = useState<OptimisticStakeholder[]>([]);
+	const [directIssuances, setDirectIssuances] = useState<OptimisticIssuance[]>([]);
+
+	// Pending until receipt is confirmed or reverted — never "success on submit".
+	const [pendingStockClass, setPendingStockClass] = useState<PendingModal | null>(null);
+	const [pendingStakeholder, setPendingStakeholder] = useState<PendingModal | null>(null);
+	const [pendingIssuance, setPendingIssuance] = useState<PendingModal | null>(null);
+
+	const [successModal, setSuccessModal] = useState<{ title: string; txHash?: string; message?: string } | null>(null);
+
+	const [historicalTransactions, setHistoricalTransactions] = useState<any[]>([]);
+	const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+	// Compute pending sync for holdings polling *before* manager so we can pass shouldPoll.
+	// (We recompute after manager for id matching — first pass uses optimistic lengths.)
+	const [hasPendingSyncFlag, setHasPendingSyncFlag] = useState(false);
+
+	const manager = useCapTableManager(issuerResult, { shouldPoll: hasPendingSyncFlag });
+
 	useEffect(() => {
 		setMenuEnabled(true);
 		return () => {
@@ -60,74 +99,78 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		};
 	}, [setMenuEnabled, setIsDrawerOpen]);
 
-	// Local optimistic state for items created via direct wallet signing in this session.
-	interface OptimisticStockClass { _id: string; name: string; class_type: string; }
-	interface OptimisticStakeholder { _id: string; name: any; stakeholder_type: string; }
-	interface OptimisticIssuance {
-		_id: string;
-		security_id: string;
-		quantity: string;
-		stakeholder_id: string;
-		stock_class_id: string;
-	}
-
-	const [directStockClasses, setDirectStockClasses] = useState<OptimisticStockClass[]>([]);
-	const [directStakeholders, setDirectStakeholders] = useState<OptimisticStakeholder[]>([]);
-	const [directIssuances, setDirectIssuances] = useState<OptimisticIssuance[]>([]);
-
-	// Pending success modals: filled in on submit; the txHash is patched in via useEffect once
-	// the wagmi hook surfaces it. writeContract returns synchronously but `hash` populates async.
-	const [pendingStockClass, setPendingStockClass] = useState<PendingModal | null>(null);
-	const [pendingStakeholder, setPendingStakeholder] = useState<PendingModal | null>(null);
-	const [pendingIssuance, setPendingIssuance] = useState<PendingModal | null>(null);
-
-	const [successModal, setSuccessModal] = useState<{ title: string; txHash?: string; message?: string } | null>(null);
-
-	// Historical transactions for the Activity view (poller-populated)
-	const [historicalTransactions, setHistoricalTransactions] = useState<any[]>([]); // TODO: proper HistoricalTransaction type
-	const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-
-	// When the direct hooks finally surface a hash, open the corresponding success modal.
-	// These effects exist because wagmi's writeContract is async — the `hash` field on the hook
-	// becomes defined a tick after the function call returns, so reading it inside the submit
-	// handler always gets undefined.
 	useEffect(() => {
-		if (directStockClass.hash && pendingStockClass) {
-			setSuccessModal({ ...pendingStockClass, txHash: directStockClass.hash });
+		if (!pendingStockClass) return;
+		if (directStockClass.isConfirmed) {
+			setSuccessModal({
+				title: copy.tx.confirmedTitle.stockClass,
+				txHash: directStockClass.hash,
+				message: pendingStockClass.message,
+			});
+			setPendingStockClass(null);
+			directStockClass.reset();
+		} else if (directStockClass.isReverted) {
+			setSuccessModal({
+				title: copy.tx.revertedTitle,
+				message: directStockClass.errorMessage || copy.tx.revertedGeneric,
+			});
+			setDirectStockClasses((prev) => prev.slice(0, -1));
 			setPendingStockClass(null);
 			directStockClass.reset();
 		}
-	}, [directStockClass.hash, pendingStockClass, directStockClass]);
+	}, [directStockClass.isConfirmed, directStockClass.isReverted, directStockClass.hash, pendingStockClass, directStockClass]);
 
 	useEffect(() => {
-		if (directStakeholder.hash && pendingStakeholder) {
-			setSuccessModal({ ...pendingStakeholder, txHash: directStakeholder.hash });
+		if (!pendingStakeholder) return;
+		if (directStakeholder.isConfirmed) {
+			setSuccessModal({
+				title: copy.tx.confirmedTitle.stakeholder,
+				txHash: directStakeholder.hash,
+				message: pendingStakeholder.message,
+			});
+			setPendingStakeholder(null);
+			directStakeholder.reset();
+		} else if (directStakeholder.isReverted) {
+			setSuccessModal({
+				title: copy.tx.revertedTitle,
+				message: directStakeholder.errorMessage || copy.tx.revertedGeneric,
+			});
+			setDirectStakeholders((prev) => prev.slice(0, -1));
 			setPendingStakeholder(null);
 			directStakeholder.reset();
 		}
-	}, [directStakeholder.hash, pendingStakeholder, directStakeholder]);
+	}, [directStakeholder.isConfirmed, directStakeholder.isReverted, directStakeholder.hash, pendingStakeholder, directStakeholder]);
 
 	useEffect(() => {
-		if (directIssuance.hash && pendingIssuance) {
-			setSuccessModal({ ...pendingIssuance, txHash: directIssuance.hash });
+		if (!pendingIssuance) return;
+		if (directIssuance.isConfirmed) {
+			setSuccessModal({
+				title: copy.tx.confirmedTitle.issuance,
+				txHash: directIssuance.hash,
+				message: pendingIssuance.message,
+			});
+			setPendingIssuance(null);
+			directIssuance.reset();
+		} else if (directIssuance.isReverted) {
+			setSuccessModal({
+				title: copy.tx.revertedTitle,
+				message: directIssuance.errorMessage || copy.tx.issuanceReverted,
+			});
+			setDirectIssuances((prev) => prev.slice(0, -1));
 			setPendingIssuance(null);
 			directIssuance.reset();
 		}
-	}, [directIssuance.hash, pendingIssuance, directIssuance]);
+	}, [directIssuance.isConfirmed, directIssuance.isReverted, directIssuance.hash, pendingIssuance, directIssuance]);
 
-	// Lazy-load historical transactions when the Activity view is opened.
 	useEffect(() => {
 		if (currentView !== "activity" || !issuerResult?._id) return;
 		setIsLoadingHistory(true);
 		fetchHistoricalTransactions(issuerResult._id)
-			.then((res: any) => setHistoricalTransactions(Array.isArray(res?.transactions) ? res.transactions : res || [])) // TODO: proper type
+			.then((res: any) => setHistoricalTransactions(Array.isArray(res?.transactions) ? res.transactions : res || []))
 			.catch((err) => console.warn("Failed to load historical transactions", err))
 			.finally(() => setIsLoadingHistory(false));
 	}, [currentView, issuerResult?._id]);
 
-	// Build options for the Issue form + drawer from holdings + optimistic + direct onchain creates
-	// De-dupe by _id so an entity that is both returned by the server and present in this
-	// session's optimistic list (e.g. after a refresh) doesn't appear twice in the dropdown.
 	const dedupeById = (items: any[]) => {
 		const byId = new Map(items.filter(Boolean).map((x: any) => [x._id, x]));
 		return Array.from(byId.values());
@@ -135,29 +178,45 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 
 	const stockClassOptions = useMemo(() => {
 		const fromHoldings = manager.holdings?.stockClasses || [];
-		return dedupeById([...fromHoldings, ...manager.createdStockClasses, ...directStockClasses]);
-	}, [manager.holdings?.stockClasses, manager.createdStockClasses, directStockClasses]);
+		return dedupeById([...fromHoldings, ...directStockClasses]);
+	}, [manager.holdings?.stockClasses, directStockClasses]);
 
 	const stakeholderOptions = useMemo(() => {
-		// Full stakeholder list from the server (works even before any stock is issued)...
 		const fromServer = manager.holdings?.stakeholders || [];
-		// ...plus any surfaced via existing holdings, plus this session's optimistic creates.
 		const fromHoldings = (manager.holdings?.holdings || []).map((h: { stakeholder?: any }) => h.stakeholder).filter(Boolean);
-		return dedupeById([...fromServer, ...fromHoldings, ...manager.createdStakeholders, ...directStakeholders]);
-	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, manager.createdStakeholders, directStakeholders]);
+		return dedupeById([...fromServer, ...fromHoldings, ...directStakeholders]);
+	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, directStakeholders]);
+
+	const syncedStockClassIds = new Set((manager.holdings?.stockClasses || []).map((s: any) => s._id));
+	const syncedStakeholderIds = new Set((manager.holdings?.stakeholders || []).map((s: any) => s._id));
+	const syncedHoldingKeys = new Set(
+		(manager.holdings?.holdings || []).map((h: any) => `${h.stakeholder?._id}|${h.stockClass?._id}`),
+	);
+	const hasPendingSync =
+		directStockClasses.some((sc) => !syncedStockClassIds.has(sc._id)) ||
+		directStakeholders.some((sh) => !syncedStakeholderIds.has(sh._id)) ||
+		directIssuances.some((iss) => !syncedHoldingKeys.has(`${iss.stakeholder_id}|${iss.stock_class_id}`));
+
+	useEffect(() => {
+		setHasPendingSyncFlag(hasPendingSync);
+	}, [hasPendingSync]);
 
 	const handleStockClass = async (data: StockClassData) => {
 		if (!capTableAddress || !directStockClass.isConnected) {
-			setSuccessModal({
-				title: "Wallet Required",
-				message: "Please connect your wallet (as Admin) to create a stock class onchain.",
-			});
+			setSuccessModal({ title: "Wallet Required", message: copy.tx.walletRequired });
 			return;
 		}
 
+		const issuerAuthorized = Number(manager.holdings?.issuer?.initial_shares_authorized ?? 0);
+		const classAuth = Number(data.initial_shares_authorized);
+		if (issuerAuthorized > 0 && Number.isFinite(classAuth) && classAuth > issuerAuthorized) {
+			// Creation is allowed onchain, but warn clearly (issuance will still be bounded by issuer).
+			console.warn(
+				`Stock class authorized (${classAuth}) exceeds issuer authorized (${issuerAuthorized}). Issuance remains bounded by the issuer total.`,
+			);
+		}
+
 		try {
-			// One id is used for both the onchain bytes16 and the offchain _id (UUID form). The poller's
-			// updateStockClassById converts the event's bytes16 back to this same UUID for sync.
 			const stockClassBytes16 = generateBytes16Id() as `0x${string}`;
 			const stockClassUuid = bytes16ToUuid(stockClassBytes16);
 
@@ -170,11 +229,20 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			});
 
 			setPendingStockClass({
-				title: "Stock Class Created Onchain",
-				message: "Your wallet successfully submitted the transaction to the CapTable contract.",
+				kind: "stockClass",
+				title: copy.tx.submittedTitle.stockClass,
+				message: copy.tx.submittedBody,
 			});
 
-			setDirectStockClasses((prev) => [...prev, { _id: stockClassUuid, name: data.name, class_type: data.class_type }]);
+			setDirectStockClasses((prev) => [
+				...prev,
+				{
+					_id: stockClassUuid,
+					name: data.name,
+					class_type: data.class_type,
+					initial_shares_authorized: data.initial_shares_authorized,
+				},
+			]);
 
 			registerStockClassOnchain({ issuerId: issuerResult._id, data, id: stockClassUuid }).catch((err) =>
 				console.warn("Failed to register stock class metadata:", err),
@@ -185,17 +253,14 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			console.error("Direct stock class creation failed", err);
 			setSuccessModal({
 				title: "Transaction Failed",
-				message: "Failed to create stock class onchain. Check the console for details.",
+				message: err instanceof Error ? err.message : "Failed to create stock class onchain.",
 			});
 		}
 	};
 
 	const handleStakeholder = async (data: StakeholderData) => {
 		if (!capTableAddress || !directStakeholder.isConnected) {
-			setSuccessModal({
-				title: "Wallet Required",
-				message: "Please connect your wallet (as Admin) to create a stakeholder onchain.",
-			});
+			setSuccessModal({ title: "Wallet Required", message: copy.tx.walletRequired });
 			return;
 		}
 
@@ -211,8 +276,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			});
 
 			setPendingStakeholder({
-				title: "Stakeholder Created Onchain",
-				message: "Your wallet successfully submitted the transaction.",
+				kind: "stakeholder",
+				title: copy.tx.submittedTitle.stakeholder,
+				message: copy.tx.submittedBody,
 			});
 
 			setDirectStakeholders((prev) => [
@@ -229,16 +295,40 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			console.error("Direct stakeholder creation failed", err);
 			setSuccessModal({
 				title: "Transaction Failed",
-				message: "Failed to create stakeholder onchain.",
+				message: err instanceof Error ? err.message : "Failed to create stakeholder onchain.",
 			});
 		}
 	};
 
 	const handleIssuance = async (data: StockIssuanceData) => {
 		if (!capTableAddress || !directIssuance.isConnected) {
+			setSuccessModal({ title: "Wallet Required", message: copy.tx.walletRequired });
+			return;
+		}
+
+		const issuer = manager.holdings?.issuer;
+		const stockClass =
+			stockClassOptions.find((sc: any) => sc._id === data.stock_class_id) ||
+			(manager.holdings?.stockClasses || []).find((sc: any) => sc._id === data.stock_class_id);
+
+		const cap = validateShareCaps({
+			quantity: data.quantity,
+			issuerAuthorized: issuer?.initial_shares_authorized ?? 0,
+			// Mongo issuer may not track shares_issued; sum holdings as a best-effort floor.
+			issuerIssued: (manager.holdings?.holdings || []).reduce(
+				(sum: number, h: any) => sum + (Number(h.quantity) || 0),
+				0,
+			),
+			classAuthorized: stockClass?.initial_shares_authorized ?? stockClass?.shares_authorized,
+			classIssued: (manager.holdings?.holdings || [])
+				.filter((h: any) => h.stockClass?._id === data.stock_class_id)
+				.reduce((sum: number, h: any) => sum + (Number(h.quantity) || 0), 0),
+		});
+
+		if (!cap.ok) {
 			setSuccessModal({
-				title: "Wallet Required",
-				message: "Please connect your wallet (as Admin) to issue stock onchain.",
+				title: "Not enough authorized shares",
+				message: cap.errors.join(" "),
 			});
 			return;
 		}
@@ -255,8 +345,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			});
 
 			setPendingIssuance({
-				title: "Stock Issued Onchain",
-				message: "Your wallet successfully submitted the issuance transaction.",
+				kind: "issuance",
+				title: copy.tx.submittedTitle.issuance,
+				message: copy.tx.submittedBody,
 			});
 
 			setDirectIssuances((prev) => [
@@ -279,7 +370,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			console.error("Direct stock issuance failed", err);
 			setSuccessModal({
 				title: "Transaction Failed",
-				message: "Failed to issue stock onchain.",
+				message: err instanceof Error ? err.message : "Failed to issue stock onchain.",
 			});
 		}
 	};
@@ -287,6 +378,18 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const handleNavigate = (view: MintView) => {
 		setCurrentView(view);
 	};
+
+	const holdingsTable = (
+		<HoldingsTable
+			holdingsData={manager.holdings}
+			createdStockClasses={directStockClasses}
+			createdStakeholders={directStakeholders}
+			createdIssuances={directIssuances}
+			onRefresh={manager.refreshHoldings}
+			isLoading={manager.isLoadingHoldings}
+			error={manager.holdingsError}
+		/>
+	);
 
 	const renderMainContent = () => {
 		if (currentView === "stock-classes") {
@@ -298,16 +401,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						</SectionHeader>
 						<StockClassForm onSubmit={handleStockClass} />
 					</Panel>
-					<TablePanel>
-						<HoldingsTable
-							holdingsData={manager.holdings}
-							createdStockClasses={[...manager.createdStockClasses, ...directStockClasses]}
-							createdStakeholders={[...manager.createdStakeholders, ...directStakeholders]}
-							createdIssuances={[...manager.createdIssuances, ...directIssuances]}
-							onRefresh={manager.refreshHoldings}
-							isLoading={manager.isLoadingHoldings}
-						/>
-					</TablePanel>
+					<TablePanel>{holdingsTable}</TablePanel>
 				</ActionTableLayout>
 			);
 		}
@@ -321,16 +415,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						</SectionHeader>
 						<StakeholderForm onSubmit={handleStakeholder} />
 					</Panel>
-					<TablePanel>
-						<HoldingsTable
-							holdingsData={manager.holdings}
-							createdStockClasses={[...manager.createdStockClasses, ...directStockClasses]}
-							createdStakeholders={[...manager.createdStakeholders, ...directStakeholders]}
-							createdIssuances={[...manager.createdIssuances, ...directIssuances]}
-							onRefresh={manager.refreshHoldings}
-							isLoading={manager.isLoadingHoldings}
-						/>
-					</TablePanel>
+					<TablePanel>{holdingsTable}</TablePanel>
 				</ActionTableLayout>
 			);
 		}
@@ -354,20 +439,20 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 									</tr>
 								</thead>
 								<tbody>
-									{historicalTransactions.map((tx: any, idx: number) => { // TODO: type HistoricalTransaction
+									{historicalTransactions.map((tx: any, idx: number) => {
 										const t = tx.transaction || {};
+										// Poller already unscales share_price.amount via toDecimal (1e10).
+										const priceAmount = t.share_price?.amount;
+										const priceLabel =
+											priceAmount != null && priceAmount !== ""
+												? `${priceAmount} ${t.share_price?.currency || "USD"}`
+												: "—";
 										return (
 											<tr key={idx}>
 												<td>{tx.transactionType}</td>
-												<td style={{ fontSize: "0.8rem" }}>
-													{t.custom_id || t.security_id?.slice(0, 8) || "—"}
-												</td>
-												<td style={{ fontFamily: "monospace" }}>{t.quantity}</td>
-												<td>
-													{t.share_price?.amount
-														? `${(parseInt(t.share_price.amount) / 10000).toFixed(2)} ${t.share_price.currency}`
-														: "—"}
-												</td>
+												<td>{t.custom_id || t.security_id?.slice(0, 8) || "—"}</td>
+												<td>{t.quantity}</td>
+												<td>{priceLabel}</td>
 												<td>{t.date || "—"}</td>
 											</tr>
 										);
@@ -382,16 +467,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						</div>
 					)}
 
-					<HoldingsTable
-						holdingsData={manager.holdings}
-						createdIssuances={[...manager.createdIssuances, ...directIssuances]}
-						onRefresh={manager.refreshHoldings}
-					/>
+					{holdingsTable}
 				</TablePanel>
 			);
 		}
 
-		// Default: Overview
 		return (
 			<ActionTableLayout>
 				<Panel>
@@ -404,39 +484,22 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 						disabled={manager.isLoadingHoldings || stockClassOptions.length === 0 || stakeholderOptions.length === 0}
 						hint={
 							!manager.isLoadingHoldings && (stockClassOptions.length === 0 || stakeholderOptions.length === 0)
-								? "Add a stakeholder and a stock class first, then click Refresh to load them here."
+								? copy.issueStock.needsSetup
 								: undefined
 						}
 					/>
 				</Panel>
 
-				<TablePanel>
-					<HoldingsTable
-						holdingsData={manager.holdings}
-						createdStockClasses={[...manager.createdStockClasses, ...directStockClasses]}
-						createdStakeholders={[...manager.createdStakeholders, ...directStakeholders]}
-						createdIssuances={[...manager.createdIssuances, ...directIssuances]}
-						onRefresh={manager.refreshHoldings}
-						isLoading={manager.isLoadingHoldings}
-					/>
-				</TablePanel>
+				<TablePanel>{holdingsTable}</TablePanel>
 			</ActionTableLayout>
 		);
 	};
 
 	return (
 		<FullScreenStack>
-			<IssuerHeader
-				issuer={issuerResult}
-				contractAddress={manager.contractAddress}
-				onReset={onReset}
-			/>
+			<IssuerHeader issuer={issuerResult} contractAddress={manager.contractAddress} onReset={onReset} />
 
-			{(manager.lastError || manager.holdingsError) && (
-				<StatusBox $variant="error">
-					{manager.lastError || manager.holdingsError}
-				</StatusBox>
-			)}
+			{manager.holdingsError && <StatusBox $variant="error">{manager.holdingsError}</StatusBox>}
 
 			{renderMainContent()}
 
@@ -445,11 +508,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				onClose={() => setIsDrawerOpen(false)}
 				currentView={currentView}
 				onNavigate={handleNavigate}
-				stockClasses={[...manager.createdStockClasses, ...directStockClasses].map((sc) => ({
+				stockClasses={directStockClasses.map((sc) => ({
 					_id: sc._id,
 					name: sc.name,
 				}))}
-				stakeholders={[...manager.createdStakeholders, ...directStakeholders].map((sh) => ({
+				stakeholders={directStakeholders.map((sh) => ({
 					_id: sh._id,
 					name: sh.name,
 				}))}

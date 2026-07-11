@@ -23,21 +23,38 @@ const plex = IBM_Plex_Mono({
 });
 
 export default function App({ Component, pageProps }: AppProps & { Component: NextPage<any> }) {
-	// Suppress unhandled rejections from wallet SDK analytics blocked by ad blockers
+	// Suppress wallet-extension / analytics noise that Next's dev overlay surfaces as
+	// Runtime TypeError "Failed to fetch" (stack points at chrome-extension://…). Not our API.
 	useEffect(() => {
-	const handler = (e: PromiseRejectionEvent) => {
+		const isWalletNoise = (msg: string, source?: string) => {
+			const m = msg || "";
+			const s = source || "";
+			return (
+				s.startsWith("chrome-extension://") ||
+				s.startsWith("moz-extension://") ||
+				m.includes("ERR_BLOCKED_BY_CLIENT") ||
+				m.includes("AnalyticsSDK") ||
+				m.includes("pulse.walletconnect") ||
+				m.includes("Failed to fetch")
+			);
+		};
+		const onRejection = (e: PromiseRejectionEvent) => {
 			const msg = e.reason?.message || String(e.reason || "");
-			if (
-				msg.includes("Failed to fetch") ||
-				msg.includes("ERR_BLOCKED_BY_CLIENT") ||
-				msg.includes("AnalyticsSDK") ||
-				msg.includes("pulse.walletconnect")
-			) {
+			const stack = e.reason?.stack || "";
+			if (isWalletNoise(msg, stack)) e.preventDefault();
+		};
+		const onError = (e: ErrorEvent) => {
+			const msg = e.message || String(e.error || "");
+			if (isWalletNoise(msg, e.filename || e.error?.stack || "")) {
 				e.preventDefault();
 			}
 		};
-		window.addEventListener("unhandledrejection", handler);
-		return () => window.removeEventListener("unhandledrejection", handler);
+		window.addEventListener("unhandledrejection", onRejection);
+		window.addEventListener("error", onError);
+		return () => {
+			window.removeEventListener("unhandledrejection", onRejection);
+			window.removeEventListener("error", onError);
+		};
 	}, []);
 
 	return (

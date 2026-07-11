@@ -6,7 +6,6 @@
         "christian-kohler.npm-intellisense",
         "esbenp.prettier-vscode",
         "redhat.vscode-yaml",
-        "mongodb.mongodb-vscode",
-		"eamodio.gitlens"
-    ]
+		"mongodb.mongodb-vscode"
+	]
 }

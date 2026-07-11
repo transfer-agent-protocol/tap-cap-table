@@ -10,6 +10,7 @@ This is a **pnpm monorepo** with the following workspaces:
 - `app/` - Next.js frontend (tap-app)
 - `docs/` - Nextra documentation site (tap-docs)
 - `ocf/` - OCF standard git submodule
+- `packages/units` (`@tap/units`) - shared 1e10 scaling, UUID↔bytes16, share-cap validation (app + server)
 
 ### Licensing
 
@@ -58,7 +59,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
 
 2. **Event Poller** (`server/chain-operations/transactionPoller.ts`):
     - Long-running process that polls blockchain for contract events
-    - Processes events through XState state machines (`server/state-machines/`)
+    - Processes events via `transactionHandlers` into Mongo (authoritative mirror)
     - Synchronizes onchain state to MongoDB
     - Can run in two modes: `--finalized-only` (production) or latest blocks (testing)
     - **Slated for replacement by a proper indexer.** Kept intentionally simple: round-robin across issuers with `runWithConcurrency` (`POLLER_MAX_CONCURRENCY`, default 5). Per-cycle query window is `maxBlocks=5000` (raised from the historical 500 to drain backlog faster on fast chains like Plume) with a `maxEvents=250` safety cap per DB transaction. Do not re-add prioritization/backoff/dynamic-sleep machinery — the indexer will obviate it.
@@ -68,15 +69,15 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Validates input against OCF schemas (`ocf/schema/`)
     - Submits transactions to smart contracts
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
-    - **Two route conventions** for entity creation:
-      - `POST /<entity>/create` — server-signed (server's OPERATOR key submits onchain, then persists metadata). Legacy default.
-      - `POST /<entity>/register-onchain` — caller's wallet already submitted onchain (direct flow); endpoint only validates + persists metadata. The poller is still authoritative for the resulting record. Currently exposed for `/stakeholder`, `/stock-class`, and `/transactions/issuance/stock`.
+    - **Route conventions** for entity creation:
+      - `POST /<entity>/register-onchain` — **manage UI path**: caller's wallet already submitted onchain; endpoint validates (+ share-cap checks for issuance) and persists metadata. Poller remains authoritative.
+      - `POST /<entity>/create` — server-signed legacy/API path (server OPERATOR key submits onchain). Still used by manifest seed tooling; **not** used by the `/manage` UI.
     - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (uses the new `Issuer.deployed_by` field).
     - `GET /issuer/full/:id` — full Issuer document (read-only) for the management UI.
 
 4. **State Machines** (`server/state-machines/`):
-    - XState machines model stock lifecycle: Issued → Transferred/Cancelled/Retracted/Reissued/Repurchased
-    - Used to maintain active positions and track security IDs by stock class
+    - XState machines used by **OCF manifest preprocess/seed** (not the live poller path) to compute active positions before minting
+    - Live day-to-day manage UI does not depend on these machines
 
 5. **Database Layer** (`server/db/`):
     - Mongoose models for OCF objects (Issuer, Stakeholder, StockClass, VestingTerms, etc.)
@@ -94,19 +95,17 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
 
 ### Data Flow
 
-**Transaction Creation (server-signed, legacy)**:
+**Transaction Creation (direct wallet — `/manage` UI)**:
 
-1. API receives OCF-formatted transaction request at `/<entity>/create`
-2. Validates against OCF schema
-3. Converts to Solidity structs and submits to contract via the server's OPERATOR key
-4. Transaction emits events onchain
-5. Event poller picks up events and updates MongoDB
+1. Frontend generates a bytes16 id and submits the tx from the connected admin wallet via wagmi (`useDirect*` + `useOnchainAction`: submit → wait receipt → success/reverted). Scaling/IDs/share-caps use `@tap/units`. The chain assigns issuance + security ids internally for `issueStock`; the frontend supplies its own ids for `createStakeholder` and `createStockClass`.
+2. Frontend POSTs OCF metadata to `/<entity>/register-onchain`. Server validates (and asserts share caps on issuance) and persists offchain metadata; **does not** submit onchain again.
+3. The poller is still authoritative — it picks up the event and writes the canonical record (joining on the bytes16 id where applicable).
 
-**Transaction Creation (direct wallet, current default for the `/manage` UI)**:
+**Transaction Creation (server-signed, legacy / API / manifest seed)**:
 
-1. Frontend generates a bytes16 id and submits the tx from the connected admin wallet via wagmi (`useDirectCreateStockClass`, `useDirectCreateStakeholder`, `useDirectIssueStock`). The chain assigns issuance + security ids internally for `issueStock`; the frontend supplies its own ids only for `createStakeholder` and `createStockClass`.
-2. Frontend POSTs OCF metadata to `/<entity>/register-onchain`. Server validates and persists offchain metadata; **does not** submit onchain again.
-3. The poller is still authoritative — it picks up the TxCreated/StakeholderCreated/StockClassCreated event and writes the canonical record (joining on the bytes16 id where applicable).
+1. API receives OCF-formatted request at `/<entity>/create`
+2. Validates against OCF schema, converts, submits via the server's OPERATOR key
+3. Poller mirrors events to MongoDB
 
 **Minting**:
 When a manifest is created, the system:
@@ -185,6 +184,9 @@ make test-invariant-deep      # Deep run (2000 runs, 100 depth)
 ### Linting and Formatting
 
 ```bash
+# Shared units package (@tap/units)
+pnpm test:units
+
 # Lint TypeScript/JavaScript
 pnpm lint
 
@@ -267,7 +269,7 @@ The docs are a Nextra/Next.js site in the `docs/` workspace. See `docs/README.md
 When editing pages under `docs/src/pages/`, follow these conventions established during a readability/DX review:
 
 - **Intro paragraphs**: Use plain language. Avoid unexplained implementation terms (e.g. "beacon proxy pattern") unless the page is specifically about that concept.
-- **Price/scaling gotchas**: Surface `share_price.amount` scaling rules (÷10000) in a `<Callout type="warning">` immediately after the response overview — never only at the bottom of a page.
+- **Price/scaling gotchas**: Surface `share_price.amount` scaling rules (**1e10** on write; poller unscales by 1e10) in a `<Callout type="warning">` immediately after the response overview — never only at the bottom of a page. Docs that still say ×10000 are wrong.
 - **Dependency lists**: Each tool in an install/setup page should have a one-line purpose annotation so readers understand why it is required.
 - **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
@@ -338,6 +340,7 @@ tap-cap-table/
 │   ├── src/pages/      # MDX documentation pages
 │   └── public/         # Static assets
 ├── ocf/                # OCF standard (git submodule, workspace)
+├── packages/units/     # @tap/units — shared scale / UUID / share-caps
 ├── .env.example        # Environment template
 ├── docker-compose.yml  # Docker services (MongoDB, server, app)
 ├── pnpm-workspace.yaml # Workspace config
@@ -359,7 +362,7 @@ Share quantities and prices use scaled BigNumbers (1e10 precision):
 
 - `toScaledBigNumber(value)` to convert before contract calls
 - Always scale quantities and prices in transaction parameters
-- The poller unscales by 1e10 on read (`toDecimal()` in `transactionHandlers.js`). Any new direct-wallet path must scale on the write side to match — see `app/src/hooks/useDirectIssueStock.ts` where `scaleAmount` (1e10) is applied to both `quantity` and `share_price`.
+- The poller unscales by 1e10 on read (`toDecimal()` in `transactionHandlers.js`). Any new direct-wallet path must scale on the write side via `@tap/units` (`scaleShares` / `scaleAmount`).
 
 ### OCF Validation
 
@@ -517,7 +520,7 @@ Libraries:
 8. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
 9. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
 10. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
-11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The root `.env` `NEXT_PUBLIC_*` only feed `docker-compose` interpolation into the **server**, not the Docker `app`. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables; for `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` that owner is the `.env` server wallet `0x366aA8…` and its current impl is `0xB63C08…` (the docs page's `0xef269…` is the stale pre-upgrade impl). Only reuse a factory whose owner wallet you control.
+11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The root `.env` `NEXT_PUBLIC_*` only feed `docker-compose` interpolation into the **server**, not the Docker `app`. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it — often the operator's **user** wallet, not the server key) controls beacon upgrades for all its cap tables. Implementation is the upgradeable beacon target (read live; docs may show stale impl addresses). Only reuse a factory whose owner wallet you control. Keep Mongo `factories` and `app/.env.local` on the same factory address.
 12. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
 
 ## Debugging

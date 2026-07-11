@@ -4,8 +4,9 @@ description: >
   Project-aware self-review for the Transfer Agent Protocol (TAP) Cap Table monorepo.
   Spawns a verifier that reads WARP.md, app/WARP.md, and CONTRIBUTING.md before checking
   the actual changes against the hybrid onchain/offchain model, OCF validation, fixed-point
-  scaling, UUID↔bytes16 conversion, ADMIN/OPERATOR roles, atomic MongoDB transactions,
-  invariant + security tooling, and the styled-components rules in `app/`.
+  scaling via @tap/units (1e10), UUID↔bytes16, share-cap checks, ADMIN/OPERATOR roles,
+  atomic MongoDB transactions, invariant + security tooling, and the styled-components
+  rules in `app/`.
   Triggers on: "/review", "review my work", "check my changes", "self-review", "verify this".
 metadata:
   short-description: "TAP-aware self-review and verification"
@@ -47,28 +48,30 @@ Everything that follows assumes those docs are the authoritative spec. Do not du
 
 1. Restate the user's request in one sentence.
 2. Reconstruct what the agent actually did: `git diff --cached`, `git diff`, recent commit log on the active branch.
-3. List every file domain touched (`chain/`, `server/`, `app/`, `docs/`, root config).
+3. List every file domain touched (`chain/`, `server/`, `app/`, `packages/`, `docs/`, root config).
 
 ### Phase B — Per-domain checks
 
 For each touched domain, apply the matching rule set from the docs:
 
 - `chain/src/**/*.sol` or `chain/test/**/*.sol`: NatSpec, custom errors, events, SPDX 0.8.30, via-ir compatibility, `onlyOperator`/`onlyAdmin` correctness, snake_case struct fields, and that new logic is covered by both unit **and** invariant tests.
-- `server/**`: OCF validation via `validateInputAgainstSchema`, conversion helpers (`convertUUIDToBytes16`, `toScaledBigNumber`), `withGlobalTransaction` for atomic multi-doc writes, poller/state-machine consistency.
-- `app/src/**`: every rule in `app/WARP.md` — file naming (lowercase styled vs PascalCase logic), theme tokens only (no hard-coded colors/sizes/breakpoints/transitions), transient `$` props, `theme.transitions.*` / `theme.breakpoints.*` over raw values, and no fontWeights beyond `normal`/`medium`/`semibold`/`bold`. For onchain frontend code: `src/generated.ts` is generated (never hand-edited; regenerate via `pnpm --filter tap-app generate:wagmi` after ABI changes), write-side `1e10` scaling on `quantity`/`share_price`, UUID↔bytes16 conversion via `src/utils/uuid.ts`, and correct use of direct-wallet hooks (`useDirect*` + `registerXxxOnchain`) vs server-signed `create*` services.
-- `docs/src/pages/**/*.mdx`: every bullet in the "Documentation DX conventions" section of root `WARP.md` and the bar in `DOCS_AUDIT.md`.
+- `packages/units/**` or any shared units usage: scale is **1e10** (not ×10000); share counts use BigInt-safe helpers; UUID↔bytes16 is shared; share-cap checks cover issuer **and** class remaining. Run `pnpm test:units`.
+- `server/**`: OCF validation via `validateInputAgainstSchema`, conversion helpers, `withGlobalTransaction` for atomic multi-doc writes. Manage-UI path is `/register-onchain` (metadata only); do not reintroduce dual `/create` semantics into the app. Live poller uses `transactionHandlers` — XState is for manifest preprocess/seed only.
+- `app/src/**`: every rule in `app/WARP.md` — file naming (lowercase styled vs PascalCase logic), theme tokens only, transient `$` props, `theme.transitions.*` / `theme.breakpoints.*`. For onchain frontend code: never hand-edit `src/generated.ts`; write-side **1e10** via `@tap/units`; UUID↔bytes16 via `@tap/units` / `src/utils/uuid.ts`; **one write path** — `useDirect*` + `useOnchainAction` (submit → receipt → success/reverted) + `registerXxxOnchain`. No success-on-submit UI; drop optimistic rows on revert. Pre-sign with `validateShareCaps`.
+- `docs/src/pages/**/*.mdx`: Documentation DX conventions in root `WARP.md`. Scaling callouts must say **1e10**, never ×10000.
 
-Run the actual commands appropriate to the scope: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `make test`, `make test-invariant`, `make security`, `pnpm docs:build`, `pnpm app:build`. When frontend contract bindings or wallet code changed, also run `pnpm --filter tap-app generate:wagmi` and confirm `src/generated.ts` is in sync. A broken build, lint, or relevant test = automatic FAIL.
+Run the actual commands appropriate to the scope: `pnpm test:units`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `make test`, `make test-invariant`, `make security`, `pnpm docs:build`, `pnpm app:build`. When frontend contract bindings changed, run `pnpm --filter tap-app generate:wagmi`. A broken build, lint, or relevant test = automatic FAIL.
 
 ### Phase C — Architecture invariants
 
 Answer each explicitly:
 
 - Is the blockchain still the source of truth (no DB writes that bypass the contract)?
-- Are all cross-boundary values scaled and converted (UUID↔bytes16, prices/quantities scaled)?
+- Are all cross-boundary values scaled and converted via `@tap/units` (or equivalent 1e10 + UUID helpers)?
 - If multi-document DB writes were added, are they wrapped in `withGlobalTransaction`?
 - If access-control surfaces changed, is the ADMIN/OPERATOR model still respected?
-- Were the right tests (including invariants and security tools for contract work) added or run?
+- Does the manage UI still use a single direct-wallet write path (no new server-signed UI path)?
+- Were the right tests (including `pnpm test:units`, invariants, and security tools for contract work) added or run?
 
 ### VERDICT
 

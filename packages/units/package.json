@@ -1,0 +1,23 @@
+{
+	"name": "@tap/units",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "Shared 1e10 scaling, UUID↔bytes16, and share-cap validation for TAP app + server",
+	"main": "./src/index.js",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		}
+	},
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"test": "node --test src/*.test.js",
+		"typecheck": "tsc --noEmit -p tsconfig.json"
+	},
+	"files": [
+		"src"
+	]
+}

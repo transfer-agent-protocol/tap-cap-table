@@ -36,3 +36,5 @@ jobs:
               run: pnpm --filter tap-app lint
             - name: Typecheck app
               run: pnpm --filter tap-app typecheck
+            - name: Test units
+              run: pnpm test:units
