@@ -8,6 +8,7 @@ import { useCapTableManager } from "../../hooks/useCapTableManager";
 import { useDirectCreateStockClass } from "../../hooks/useDirectCreateStockClass";
 import { useDirectCreateStakeholder } from "../../hooks/useDirectCreateStakeholder";
 import { useDirectIssueStock } from "../../hooks/useDirectIssueStock";
+import { useDirectTransferStock } from "../../hooks/useDirectTransferStock";
 import { bytes16ToUuid, generateBytes16Id } from "../../utils/uuid";
 import { validateShareCaps } from "@tap/units";
 import { fetchHistoricalTransactions } from "../../services/fetchHistoricalTransactions";
@@ -25,6 +26,7 @@ import {
 	updateActivity,
 	type ActivityEntry,
 } from "../../utils/activityLog";
+import type { TransferStockFormData } from "../TransferStockForm";
 import {
 	dedupeById,
 	type CapTableDashboardProps,
@@ -38,6 +40,7 @@ import { HoldingsView } from "./views/HoldingsView";
 import { ShareholdersView } from "./views/ShareholdersView";
 import { StockClassesView } from "./views/StockClassesView";
 import { IssueStockView } from "./views/IssueStockView";
+import { TransferStockView } from "./views/TransferStockView";
 import { TransactionsView } from "./views/TransactionsView";
 
 /**
@@ -51,6 +54,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const directStockClass = useDirectCreateStockClass();
 	const directStakeholder = useDirectCreateStakeholder();
 	const directIssuance = useDirectIssueStock();
+	const directTransfer = useDirectTransferStock();
 
 	// Prefer live holdings.issuer.deployed_to when the page hydrated without it
 	// (stale localStorage) so writes and the header use the real contract.
@@ -62,6 +66,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const [pendingStockClass, setPendingStockClass] = useState(false);
 	const [pendingStakeholder, setPendingStakeholder] = useState(false);
 	const [pendingIssuance, setPendingIssuance] = useState(false);
+	const [pendingTransfer, setPendingTransfer] = useState(false);
 
 	const [successModal, setSuccessModal] = useState<SuccessModalState | null>(null);
 
@@ -132,7 +137,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		const connected =
 			directStockClass.isConnected ||
 			directStakeholder.isConnected ||
-			directIssuance.isConnected;
+			directIssuance.isConnected ||
+			directTransfer.isConnected;
 		if (!connected) {
 			setSuccessModal({
 				title: "Wallet required",
@@ -380,6 +386,62 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		issuerResult._id,
 	]);
 
+	// Transfer receipt
+	useEffect(() => {
+		if (!pendingTransfer) return;
+		if (directTransfer.isConfirmed) {
+			const hash = directTransfer.hash;
+			setSuccessModal({
+				title: copy.transfer.confirmedTitle,
+				txHash: hash,
+				variant: "success",
+			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, {
+						status: "confirmed",
+						txHash: hash || undefined,
+					}),
+				);
+			} else if (hash && issuerResult._id) {
+				setActivityLog(markActivityByTx(issuerResult._id, hash, "confirmed"));
+			}
+			setPendingActivityId(null);
+			setPendingTransfer(false);
+			directTransfer.reset();
+			manager.refreshHoldings();
+			const t1 = setTimeout(() => manager.refreshHoldings(), 1500);
+			const t2 = setTimeout(() => manager.refreshHoldings(), 4000);
+			return () => {
+				clearTimeout(t1);
+				clearTimeout(t2);
+			};
+		} else if (directTransfer.isReverted) {
+			setSuccessModal({
+				title: copy.tx.revertedTitle,
+				message: directTransfer.errorMessage || copy.tx.revertedGeneric,
+				variant: "error",
+			});
+			if (pendingActivityId && issuerResult._id) {
+				setActivityLog(
+					updateActivity(issuerResult._id, pendingActivityId, { status: "reverted" }),
+				);
+			}
+			setPendingActivityId(null);
+			setPendingTransfer(false);
+			directTransfer.reset();
+		}
+	}, [
+		directTransfer.isConfirmed,
+		directTransfer.isReverted,
+		directTransfer.hash,
+		pendingTransfer,
+		directTransfer,
+		manager,
+		pendingActivityId,
+		issuerResult._id,
+	]);
+
 	const loadHistory = useCallback(() => {
 		if (!issuerResult?._id) return;
 		setIsLoadingHistory(true);
@@ -435,6 +497,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		pendingStockClass ||
 		pendingStakeholder ||
 		pendingIssuance ||
+		pendingTransfer ||
 		directIssuances.some((iss) => issuanceStillSyncing(iss, syncedHoldingKeys));
 
 	useEffect(() => {
@@ -683,6 +746,84 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 	};
 
+	const handleTransfer = async (data: TransferStockFormData) => {
+		if (!requireWriteReady()) return;
+
+		const from = stakeholderOptions.find((s: any) => s._id === data.transferor_id);
+		const to = stakeholderOptions.find((s: any) => s._id === data.transferee_id);
+		const sc =
+			stockClassOptions.find((c: any) => c._id === data.stock_class_id) ||
+			(manager.holdings?.stockClasses || []).find((c: any) => c._id === data.stock_class_id);
+
+		const held = (manager.holdings?.holdings || [])
+			.filter(
+				(h: any) =>
+					h.stakeholder?._id === data.transferor_id &&
+					h.stockClass?._id === data.stock_class_id,
+			)
+			.reduce((sum: number, h: any) => sum + (Number(h.quantity) || 0), 0);
+
+		const qty = Number(data.quantity);
+		if (!Number.isFinite(qty) || qty <= 0) {
+			setSuccessModal({
+				title: "Invalid quantity",
+				message: "Enter a positive number of shares to transfer.",
+				variant: "info",
+			});
+			return;
+		}
+		if (qty > held) {
+			setSuccessModal({
+				title: "Not enough shares",
+				message: `${from?.name?.legal_name || "Transferor"} only holds ${held.toLocaleString()} of this class.`,
+				variant: "info",
+			});
+			return;
+		}
+
+		try {
+			const result = await directTransfer.transferStock({
+				capTableAddress: capTableAddress as `0x${string}`,
+				transferorId: data.transferor_id,
+				transfereeId: data.transferee_id,
+				stockClassId: data.stock_class_id,
+				quantity: data.quantity,
+				sharePriceAmount: data.share_price?.amount || "0",
+			});
+
+			const fromName = from?.name?.legal_name || "From";
+			const toName = to?.name?.legal_name || "To";
+			const className = sc?.name || "Class";
+			const activityId = `xfer-${data.transferor_id.slice(0, 8)}-${Date.now()}`;
+			setPendingActivityId(activityId);
+			setPendingTransfer(true);
+			setActivityLog(
+				appendActivity(issuerResult._id, {
+					id: activityId,
+					issuerId: issuerResult._id,
+					kind: "stock_transfer",
+					type: "Stock transferred",
+					details: `${fromName} → ${toName} · ${className}`,
+					quantity: data.quantity,
+					price: data.share_price?.amount
+						? `${data.share_price.amount} ${data.share_price.currency || "USD"}`
+						: undefined,
+					date: new Date().toISOString().slice(0, 10),
+					txHash: result.hash,
+					status: "pending",
+					createdAt: Date.now(),
+				}),
+			);
+			manager.refreshHoldings();
+		} catch (err) {
+			setSuccessModal({
+				title: "Transaction failed",
+				message: err instanceof Error ? err.message : "Failed to transfer stock.",
+				variant: "error",
+			});
+		}
+	};
+
 	const onchainClassCount = issuableStockClasses.length;
 	const peopleCount = stakeholderOptions.length;
 	const positionCount =
@@ -760,6 +901,18 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				isLoading={manager.isLoadingHoldings}
 				syncNote={syncNote}
 				onSubmit={handleIssuance}
+				toolbar={toolbar}
+			/>
+		);
+	} else if (currentView === "transfer-stock") {
+		main = (
+			<TransferStockView
+				stakeholders={stakeholderOptions}
+				stockClasses={stockClassOptions}
+				holdings={manager.holdings?.holdings || []}
+				isLoading={manager.isLoadingHoldings}
+				syncNote={syncNote}
+				onSubmit={handleTransfer}
 				toolbar={toolbar}
 			/>
 		);

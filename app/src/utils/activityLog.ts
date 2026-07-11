@@ -7,6 +7,7 @@ export type ActivityKind =
 	| "stock_class"
 	| "stakeholder"
 	| "stock_issuance"
+	| "stock_transfer"
 	| "other";
 
 export type ActivityStatus = "pending" | "confirmed" | "reverted";

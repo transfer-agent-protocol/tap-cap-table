@@ -43,6 +43,13 @@ export const copy = {
 		needsClass: "Create a stock class and confirm it in your wallet first.",
 		needsPeople: "Add a shareholder first.",
 	},
+	transfer: {
+		title: "Transfer stock",
+		needsPeople: "Add at least two shareholders before transferring.",
+		needsHoldings: "Issue stock first — transfers move existing holdings.",
+		confirmedTitle: "Stock transferred",
+		submittedTitle: "Transfer submitted",
+	},
 	transactions: {
 		title: "Transactions",
 		empty: "No transactions yet. Issuances and other actions will show up here.",
@@ -128,10 +135,12 @@ export const copy = {
 			stock_class: "Stock class created",
 			stakeholder: "Shareholder created",
 			stock_issuance: "Stock issued",
+			stock_transfer: "Stock transferred",
 			// Legacy activity labels already written to localStorage
 			"Stock class": "Stock class created",
 			Shareholder: "Shareholder created",
 			"Stock issuance": "Stock issued",
+			"Stock transfer": "Stock transferred",
 		};
 		return map[raw] || raw.replace(/_/g, " ").replace(/^TX\s+/i, "");
 	},

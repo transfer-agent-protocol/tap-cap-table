@@ -35,7 +35,8 @@ describe("APP_NAV_ITEMS", () => {
 describe("CAP_TABLE_SECTIONS", () => {
 	it("exposes company manage sections with user-facing labels", () => {
 		const ids = CAP_TABLE_SECTIONS.map((s) => s.id);
-		assert.equal(ids.length, 5);
+		assert.equal(ids.length, 6);
+		assert.ok(ids.includes("transfer-stock"));
 		const labels = Object.fromEntries(CAP_TABLE_SECTIONS.map((s) => [s.id, s.label]));
 		assert.equal(labels.overview, "Holdings");
 		assert.equal(labels["stock-classes"], "Stock classes");

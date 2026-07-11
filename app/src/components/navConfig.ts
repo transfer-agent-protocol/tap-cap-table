@@ -10,6 +10,7 @@ export type CapTableView =
 	| "stakeholders"
 	| "stock-classes"
 	| "issue-stock"
+	| "transfer-stock"
 	| "transactions";
 
 export interface NavItem {
@@ -50,6 +51,7 @@ export const CAP_TABLE_SECTIONS: Array<{
 	{ id: "stock-classes", label: "Stock classes", description: "Common, preferred, etc." },
 	{ id: "stakeholders", label: "Shareholders", description: "People and entities on the cap table" },
 	{ id: "issue-stock", label: "Issue stock", description: "Grant shares to a shareholder" },
+	{ id: "transfer-stock", label: "Transfer", description: "Move shares between shareholders" },
 	{ id: "transactions", label: "Transactions", description: "Issuances and other history" },
 ];
 
