@@ -4,6 +4,7 @@ import stockClassSchema from "../../ocf/schema/objects/StockClass.schema.json" w
 import { convertAndReflectStockClassOnchain, getStockClassById, getTotalNumberOfStockClasses } from "../controllers/stockClassController.js";
 import { createStockClass } from "../db/operations/create.js";
 import { readIssuerById } from "../db/operations/read.js";
+import { upsertStockClassOnchainMetadata } from "../db/operations/update.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stockClass = Router();
@@ -71,12 +72,13 @@ stockClass.post("/create", async (req, res) => {
     }
 });
 
-// Register a stock class that the caller already created onchain from their own wallet.
-// The caller MUST supply `id` (the UUID form of the bytes16 used in their onchain tx).
-// We persist it as `_id` so the poller's update-by-_id lookup matches when it processes
-// the StockClassCreated event.
+// Register a stock class the caller already created onchain (wallet receipt confirmed).
+// Caller MUST supply `id` (UUID form of the bytes16 used in the onchain tx).
+// First principles: if the wallet confirmed createStockClass, this row is onchain —
+// set is_onchain_synced true so a lagging/skipped poller cannot leave a permanent ghost.
+// Upsert is idempotent with the poller's update-by-_id path.
 stockClass.post("/register-onchain", async (req, res) => {
-    const { data, issuerId, id } = req.body;
+    const { data, issuerId, id, tx_hash: txHash } = req.body;
 
     if (!id) {
         return res.status(400).send("id is required (UUID form of the bytes16 used in the onchain createStockClass tx)");
@@ -95,13 +97,14 @@ stockClass.post("/register-onchain", async (req, res) => {
             ...incomingStockClassToValidate,
             _id: id,
             issuer: issuer._id,
+            ...(txHash ? { tx_hash: txHash } : {}),
         };
 
         await validateInputAgainstOCF(incomingStockClassToValidate, stockClassSchema);
 
-        const stockClass = await createStockClass(incomingStockClassForDB);
+        const stockClass = await upsertStockClassOnchainMetadata(id, incomingStockClassForDB);
 
-        console.log("✅ | Stock Class metadata registered for onchain id:", id);
+        console.log("✅ | Stock Class metadata registered (onchain) id:", id);
 
         res.status(200).send({ stockClass });
     } catch (error) {

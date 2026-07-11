@@ -224,15 +224,20 @@ const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
 const persistEvents = async (issuerId, events: QueuedEvent[]) => {
     // Persist all the necessary changes for each event gathered in process events
     for (const event of events) {
-        const { type, data, timestamp } = event;
+        const { type, data, timestamp, o } = event;
+        // Ethereum tx hash from the log — required for Activity explorer links
+        const meta = {
+            txHash: o?.transactionHash || null,
+            blockNumber: o?.blockNumber ?? null,
+        };
         const txHandleFunc = txFuncs[type];
         if (txHandleFunc) {
-            await txHandleFunc(data, issuerId, timestamp);
+            await txHandleFunc(data, issuerId, timestamp, meta);
             continue;
         }
         const contractHandleFunc = contractFuncs.get(type);
         if (contractHandleFunc) {
-            await contractHandleFunc(data);
+            await contractHandleFunc(data, meta);
             continue;
         }
         console.error("Invalid transaction type: ", type, event);

@@ -49,6 +49,29 @@ export const updateStockClassById = async (id, updatedData) => {
     return await retryOnMiss(async () => findByIdAndUpdate(StockClass, id, updatedData, { new: true }));
 };
 
+/**
+ * Upsert stock class / stakeholder metadata after a wallet-confirmed onchain create.
+ * Sets is_onchain_synced: true — register-onchain is only called once the receipt succeeds.
+ * Idempotent: safe if the poller already flipped the flag or the client retries.
+ */
+export const upsertStockClassOnchainMetadata = async (id, data) => {
+    return await findByIdAndUpdate(
+        StockClass,
+        id,
+        { ...data, _id: id, is_onchain_synced: true },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+};
+
+export const upsertStakeholderOnchainMetadata = async (id, data) => {
+    return await findByIdAndUpdate(
+        Stakeholder,
+        id,
+        { ...data, _id: id, is_onchain_synced: true },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+};
+
 export const updateStockLegendTemplateById = async (id, updatedData) => {
     return await findByIdAndUpdate(StockLegendTemplate, id, updatedData, { new: true });
 };

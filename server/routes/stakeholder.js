@@ -12,6 +12,7 @@ import {
 import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" with { type: "json" };
 import { createStakeholder } from "../db/operations/create.js";
 import { readIssuerById, readStakeholderByIssuerAssignedId, readStakeholderByIssuerAndIssuerAssignedId } from "../db/operations/read.js";
+import { upsertStakeholderOnchainMetadata } from "../db/operations/update.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
 
 const stakeholder = Router();
@@ -126,12 +127,11 @@ stakeholder.post("/create", async (req, res) => {
     }
 });
 
-// Register a stakeholder that the caller already created onchain from their own wallet.
-// The caller MUST supply `id` (the UUID form of the bytes16 used in their createStakeholder tx).
-// We persist it as `_id` so the poller's update-by-_id lookup matches when it processes the
-// StakeholderCreated event.
+// Register a stakeholder the caller already created onchain (wallet receipt confirmed).
+// Sets is_onchain_synced true so a lagging/skipped poller cannot leave a permanent ghost.
+// Upsert is idempotent with the poller's update-by-_id path.
 stakeholder.post("/register-onchain", async (req, res) => {
-    const { data, issuerId, id } = req.body;
+    const { data, issuerId, id, tx_hash: txHash } = req.body;
 
     if (!id) {
         return res.status(400).send("id is required (UUID form of the bytes16 used in the onchain createStakeholder tx)");
@@ -150,13 +150,14 @@ stakeholder.post("/register-onchain", async (req, res) => {
             ...incomingStakeholderToValidate,
             _id: id,
             issuer: issuer._id,
+            ...(txHash ? { tx_hash: txHash } : {}),
         };
 
         await validateInputAgainstOCF(incomingStakeholderToValidate, stakeholderSchema);
 
-        const stakeholder = await createStakeholder(incomingStakeholderForDB);
+        const stakeholder = await upsertStakeholderOnchainMetadata(id, incomingStakeholderForDB);
 
-        console.log("✅ | Stakeholder metadata registered for onchain id:", id);
+        console.log("✅ | Stakeholder metadata registered (onchain) id:", id);
 
         res.status(200).send({ stakeholder });
     } catch (error) {

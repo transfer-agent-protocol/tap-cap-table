@@ -25,10 +25,11 @@ const options = {
     minute: "2-digit",
     second: "2-digit",
 };
-export const handleStockIssuance = async (stock, issuerId, timestamp) => {
+export const handleStockIssuance = async (stock, issuerId, timestamp, meta = {}) => {
     const currency = "USD";
     const { id, object_type, security_id, params } = stock;
-    console.log("StockIssuanceCreated Event Emitted!", id);
+    const txHash = meta?.txHash || null;
+    console.log("StockIssuanceCreated Event Emitted!", id, txHash || "");
     const {
         stock_class_id,
         stock_plan_id,
@@ -92,12 +93,14 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: createdStockIssuance._id,
         issuer: issuerId,
         transactionType: "StockIssuance",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     console.log(
@@ -106,8 +109,9 @@ export const handleStockIssuance = async (stock, issuerId, timestamp) => {
     );
 };
 
-export const handleStockTransfer = async (stock, issuerId) => {
+export const handleStockTransfer = async (stock, issuerId, _timestamp, meta = {}) => {
     console.log(`Stock Transfer with quantity ${toDecimal(stock.quantity).toString()} received at `, new Date(Date.now()).toLocaleDateString());
+    const txHash = meta?.txHash || null;
 
     const id = convertBytes16ToUUID(stock.id);
     const quantity = toDecimal(stock.quantity).toString();
@@ -123,6 +127,7 @@ export const handleStockTransfer = async (stock, issuerId) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     console.log("Stock Transfer reflected and validated off-chain", createdStockTransfer);
@@ -131,6 +136,7 @@ export const handleStockTransfer = async (stock, issuerId) => {
         transaction: createdStockTransfer._id,
         issuer: createdStockTransfer.issuer,
         transactionType: "StockTransfer",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     console.log(
@@ -138,22 +144,27 @@ export const handleStockTransfer = async (stock, issuerId) => {
         createdStockTransfer
     );
 };
-export const handleStakeholder = async (id) => {
+export const handleStakeholder = async (id, meta = {}) => {
     console.log("StakeholderCreated Event Emitted!", id);
     const incomingStakeholderId = convertBytes16ToUUID(id);
-    const stakeholder = await updateStakeholderById(incomingStakeholderId, { is_onchain_synced: true });
+    const patch = { is_onchain_synced: true };
+    if (meta?.txHash) patch.tx_hash = meta.txHash;
+    const stakeholder = await updateStakeholderById(incomingStakeholderId, patch);
     console.log("✅ | Stakeholder confirmation onchain ", stakeholder);
 };
 
-export const handleStockClass = async (id) => {
+export const handleStockClass = async (id, meta = {}) => {
     console.log("StockClassCreated Event Emitted!", id);
     const incomingStockClassId = convertBytes16ToUUID(id);
-    const stockClass = await updateStockClassById(incomingStockClassId, { is_onchain_synced: true });
+    const patch = { is_onchain_synced: true };
+    if (meta?.txHash) patch.tx_hash = meta.txHash;
+    const stockClass = await updateStockClassById(incomingStockClassId, patch);
     console.log("✅ | StockClass confirmation onchain ", stockClass);
 };
 
-export const handleStockCancellation = async (stock, issuerId, timestamp) => {
+export const handleStockCancellation = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockCancellationCreated Event Emitted!", stock.id);
+    const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(stock.id);
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
     const createdStockCancellation = await upsertStockCancellationById(id, {
@@ -168,12 +179,14 @@ export const handleStockCancellation = async (stock, issuerId, timestamp) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: createdStockCancellation._id,
         issuer: createdStockCancellation.issuer,
         transactionType: "StockCancellation",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | StockCancellation confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
@@ -181,8 +194,9 @@ export const handleStockCancellation = async (stock, issuerId, timestamp) => {
     );
 };
 
-export const handleStockRetraction = async (stock, issuerId, timestamp) => {
+export const handleStockRetraction = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockRetractionCreated Event Emitted!", stock.id);
+    const txHash = meta?.txHash || null;
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
     const id = convertBytes16ToUUID(stock.id);
     const createdStockRetraction = await upsertStockRetractionById(id, {
@@ -195,12 +209,14 @@ export const handleStockRetraction = async (stock, issuerId, timestamp) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: createdStockRetraction._id,
         issuer: createdStockRetraction.issuer,
         transactionType: "StockRetraction",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | StockRetraction confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
@@ -208,8 +224,9 @@ export const handleStockRetraction = async (stock, issuerId, timestamp) => {
     );
 };
 
-export const handleStockReissuance = async (stock, issuerId, timestamp) => {
+export const handleStockReissuance = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockReissuanceCreated Event Emitted!", stock.id);
+    const txHash = meta?.txHash || null;
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
     const id = convertBytes16ToUUID(stock.id);
     const createdStockReissuance = await upsertStockReissuanceById(id, {
@@ -223,12 +240,14 @@ export const handleStockReissuance = async (stock, issuerId, timestamp) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: createdStockReissuance._id,
         issuer: createdStockReissuance.issuer,
         transactionType: "StockReissuance",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | StockReissuance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
@@ -236,8 +255,9 @@ export const handleStockReissuance = async (stock, issuerId, timestamp) => {
     );
 };
 
-export const handleStockRepurchase = async (stock, issuerId, timestamp) => {
+export const handleStockRepurchase = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockRepurchaseCreated Event Emitted!", stock.id);
+    const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(stock.id);
 
     const sharePriceOCF = {
@@ -261,12 +281,14 @@ export const handleStockRepurchase = async (stock, issuerId, timestamp) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: createdStockRepurchase._id,
         issuer: createdStockRepurchase.issuer,
         transactionType: "StockRepurchase",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | StockRepurchase confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
@@ -274,8 +296,9 @@ export const handleStockRepurchase = async (stock, issuerId, timestamp) => {
     );
 };
 
-export const handleStockAcceptance = async (stock, issuerId, timestamp) => {
+export const handleStockAcceptance = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockAcceptanceCreated Event Emitted!", stock.id);
+    const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(stock.id);
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
 
@@ -289,12 +312,14 @@ export const handleStockAcceptance = async (stock, issuerId, timestamp) => {
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: createdStockAcceptance._id,
         issuer: createdStockAcceptance.issuer,
         transactionType: "StockAcceptance",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | StockAcceptance confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
@@ -302,8 +327,9 @@ export const handleStockAcceptance = async (stock, issuerId, timestamp) => {
     );
 };
 
-export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, timestamp) => {
+export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockClassAuthorizedSharesAdjusted Event Emitted!", stock.id);
+    const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(stock.id);
     console.log("stock price", stock.price);
 
@@ -322,12 +348,14 @@ export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, 
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: upsert._id,
         issuer: issuerId,
         transactionType: "StockClassAuthorizedSharesAdjustment",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | StockClassAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
@@ -335,8 +363,9 @@ export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, 
     );
 };
 
-export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, timestamp) => {
+export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, timestamp, meta = {}) => {
     console.log("IssuerAuthorizedSharesAdjusted Event Emitted!", issuer.id);
+    const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(issuer.id);
     console.log("stock price", issuer.price);
 
@@ -355,12 +384,14 @@ export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, tim
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
 
     await createHistoricalTransaction({
         transaction: upsert._id,
         issuer: issuerId,
         transactionType: "IssuerAuthorizedSharesAdjustment",
+        ...(txHash ? { tx_hash: txHash } : {}),
     });
     console.log(
         `✅ | IssuerAuthorizedSharesAdjusted confirmation onchain with date ${new Date(Date.now()).toLocaleDateString("en-US", options)}`,
