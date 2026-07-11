@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { P } from "../components/typography";
+import { Eyebrow, P } from "../components/typography";
 import {
 	ActionTableLayout,
 	FullScreenStack,
@@ -32,10 +32,13 @@ export default function MintPage() {
 		return (
 			<FullScreenStack>
 				<PageIntro>
-					<TableTitle>Cap Table Minted Successfully</TableTitle>
+					<Eyebrow>Deploy complete</Eyebrow>
+					<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
+						Cap table is live
+					</TableTitle>
 					<MutedText>
-						Your new cap table has been deployed and registered. Continue to the cap table manager
-						to create stock classes, stakeholders, and issue stock.
+						Deployed and registered. Continue to the manager to create stock classes, stakeholders,
+						and issue stock.
 					</MutedText>
 				</PageIntro>
 
@@ -75,9 +78,13 @@ export default function MintPage() {
 	return (
 		<FullScreenStack>
 			<PageIntro>
+				<Eyebrow>Factory mint</Eyebrow>
+				<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
+					Deploy a new issuer
+				</TableTitle>
 				<P>
-					Deploy a new onchain cap table with your wallet. After minting, go to the Dashboard to create
-					stock classes, stakeholders, and issue stock.
+					Sign with your admin wallet to mint an OCF issuer onchain. After confirmation, manage stock
+					classes, stakeholders, and issuances from the left rail.
 				</P>
 			</PageIntro>
 

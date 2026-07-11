@@ -10,9 +10,6 @@ import {
 	type CapTableView,
 } from "./navConfig";
 
-const DRAWER_WIDTH = "15.5rem";
-const DRAWER_COLLAPSED_WIDTH = "3.75rem";
-
 const Overlay = styled.div<{ $open: boolean }>`
 	display: none;
 
@@ -20,11 +17,12 @@ const Overlay = styled.div<{ $open: boolean }>`
 		display: block;
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
+		background: ${({ theme }) => theme.colors.overlay};
 		opacity: ${({ $open }) => ($open ? 1 : 0)};
 		pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
 		transition: opacity ${({ theme }) => theme.transitions.default};
 		z-index: ${({ theme }) => theme.zIndices.dropdown};
+		backdrop-filter: blur(4px);
 	}
 `;
 
@@ -34,27 +32,27 @@ const Drawer = styled.aside<{ $collapsed: boolean; $mobileOpen: boolean }>`
 	align-self: flex-start;
 	display: flex;
 	flex-flow: column nowrap;
-	width: ${({ $collapsed }) => ($collapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH)};
-	min-width: ${({ $collapsed }) => ($collapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH)};
+	width: ${({ theme, $collapsed }) => ($collapsed ? theme.layout.navCollapsed : theme.layout.navWidth)};
+	min-width: ${({ theme, $collapsed }) => ($collapsed ? theme.layout.navCollapsed : theme.layout.navWidth)};
 	height: 100vh;
-	background: ${({ theme }) => theme.colors.background};
+	background: ${({ theme }) => theme.colors.surface};
 	border-right: 1px solid ${({ theme }) => theme.colors.outline};
 	box-sizing: border-box;
 	overflow-x: hidden;
 	overflow-y: auto;
-	transition: width ${({ theme }) => theme.transitions.default},
-		min-width ${({ theme }) => theme.transitions.default},
-		transform ${({ theme }) => theme.transitions.default};
+	transition: width ${({ theme }) => theme.transitions.slow},
+		min-width ${({ theme }) => theme.transitions.slow},
+		transform ${({ theme }) => theme.transitions.slow};
 	z-index: ${({ theme }) => theme.zIndices.dropdown};
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
 		position: fixed;
 		left: 0;
 		top: 0;
-		width: ${DRAWER_WIDTH};
-		min-width: ${DRAWER_WIDTH};
+		width: ${({ theme }) => theme.layout.navWidth};
+		min-width: ${({ theme }) => theme.layout.navWidth};
 		transform: translateX(${({ $mobileOpen }) => ($mobileOpen ? "0" : "-100%")});
-		box-shadow: ${({ $mobileOpen }) => ($mobileOpen ? "4px 0 20px rgba(0,0,0,0.12)" : "none")};
+		box-shadow: ${({ $mobileOpen, theme }) => ($mobileOpen ? theme.shadows.lg : "none")};
 	}
 `;
 
@@ -66,23 +64,40 @@ const DrawerInner = styled.div`
 	min-height: 0;
 `;
 
-const BrandRow = styled.div<{ $collapsed: boolean }>`
+const BrandRow = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
 	gap: ${({ theme }) => theme.spacing.sm};
-	padding: 0 ${({ theme }) => theme.spacing.md};
+	padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
 	margin-bottom: ${({ theme }) => theme.spacing.lg};
-	min-height: 2.5rem;
+	min-height: 2.75rem;
+`;
+
+const BrandMark = styled.span`
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: ${({ theme }) => theme.radii.sm};
+	background: ${({ theme }) => theme.colors.main};
+	color: ${({ theme }) => theme.colors.inverse};
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	font-weight: ${({ theme }) => theme.fontWeights.bold};
+	letter-spacing: 0.04em;
+	flex-shrink: 0;
+	box-shadow: ${({ theme }) => theme.shadows.glow};
 `;
 
 const BrandText = styled.span<{ $collapsed: boolean }>`
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	white-space: nowrap;
-	overflow: hidden;
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 0.1rem;
+	min-width: 0;
 	opacity: ${({ $collapsed }) => ($collapsed ? 0 : 1)};
 	width: ${({ $collapsed }) => ($collapsed ? 0 : "auto")};
+	overflow: hidden;
 	transition: opacity ${({ theme }) => theme.transitions.default};
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
@@ -91,53 +106,87 @@ const BrandText = styled.span<{ $collapsed: boolean }>`
 	}
 `;
 
+const BrandTitle = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-weight: ${({ theme }) => theme.fontWeights.bold};
+	letter-spacing: -0.02em;
+	color: ${({ theme }) => theme.colors.text};
+	white-space: nowrap;
+`;
+
+const BrandSub = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.subtle};
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
+`;
+
 const NavSection = styled.div`
 	display: flex;
 	flex-flow: column nowrap;
 	margin-bottom: ${({ theme }) => theme.spacing.md};
+	padding: 0 ${({ theme }) => theme.spacing.sm};
 `;
 
 const NavLabel = styled.div<{ $collapsed: boolean }>`
-	font-size: ${({ theme }) => theme.fontSizes.small};
+	font-size: ${({ theme }) => theme.fontSizes.xs};
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-	opacity: ${({ $collapsed }) => ($collapsed ? 0 : 0.55)};
+	letter-spacing: 0.1em;
+	padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+	margin-bottom: ${({ theme }) => theme.spacing.xs};
+	color: ${({ theme }) => theme.colors.subtle};
+	opacity: ${({ $collapsed }) => ($collapsed ? 0 : 1)};
 	height: ${({ $collapsed }) => ($collapsed ? 0 : "auto")};
 	overflow: hidden;
-	white-space: nowrap;
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-		opacity: 0.55;
+		opacity: 1;
 		height: auto;
 	}
 `;
 
 const NavLink = styled.a<{ $active?: boolean; $collapsed?: boolean }>`
+	position: relative;
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
 	gap: ${({ theme }) => theme.spacing.sm};
-	padding: ${({ theme }) => theme.spacing.sm}
-		${({ theme, $collapsed }) => ($collapsed ? theme.spacing.sm : theme.spacing.md)};
-	margin: 0 ${({ theme }) => theme.spacing.xs};
+	padding: 0.65rem ${({ theme }) => theme.spacing.sm};
+	margin-bottom: 2px;
 	border-radius: ${({ theme }) => theme.radii.sm};
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-size: ${({ theme }) => theme.fontSizes.small};
 	font-weight: ${({ $active, theme }) =>
-		$active ? theme.fontWeights.semibold : theme.fontWeights.normal};
-	background: ${({ $active, theme }) => ($active ? theme.colors.input : "transparent")};
-	color: ${({ theme }) => theme.colors.text};
+		$active ? theme.fontWeights.semibold : theme.fontWeights.medium};
+	background: ${({ $active, theme }) => ($active ? theme.colors.accentMuted : "transparent")};
+	color: ${({ $active, theme }) => ($active ? theme.colors.main : theme.colors.muted)};
 	text-decoration: none;
 	cursor: pointer;
 	border: none;
-	width: calc(100% - ${({ theme }) => theme.spacing.sm});
+	width: 100%;
 	box-sizing: border-box;
 	text-align: left;
-	transition: background ${({ theme }) => theme.transitions.default};
+	transition: background ${({ theme }) => theme.transitions.default},
+		color ${({ theme }) => theme.transitions.default};
+
+	&::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 20%;
+		bottom: 20%;
+		width: 2px;
+		border-radius: ${({ theme }) => theme.radii.pill};
+		background: ${({ theme }) => theme.colors.main};
+		opacity: ${({ $active }) => ($active ? 1 : 0)};
+		box-shadow: ${({ $active, theme }) => ($active ? theme.shadows.glow : "none")};
+		transition: opacity ${({ theme }) => theme.transitions.default};
+	}
 
 	&:hover {
 		background: ${({ theme }) => theme.colors.input};
+		color: ${({ theme }) => theme.colors.text};
 	}
 `;
 
@@ -146,8 +195,9 @@ const NavIcon = styled.span`
 	align-items: center;
 	justify-content: center;
 	min-width: 1.25rem;
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	opacity: 0.85;
+	font-size: 0.85rem;
+	opacity: 0.9;
+	font-variant-numeric: tabular-nums;
 `;
 
 const NavText = styled.span<{ $collapsed: boolean }>`
@@ -163,7 +213,7 @@ const NavText = styled.span<{ $collapsed: boolean }>`
 	}
 `;
 
-const DrawerFooter = styled.div<{ $collapsed: boolean }>`
+const DrawerFooter = styled.div`
 	margin-top: auto;
 	padding: ${({ theme }) => theme.spacing.md};
 	border-top: 1px solid ${({ theme }) => theme.colors.outline};
@@ -173,38 +223,39 @@ const DrawerFooter = styled.div<{ $collapsed: boolean }>`
 `;
 
 const ExternalLink = styled.a<{ $collapsed: boolean }>`
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	color: ${({ theme }) => theme.colors.text};
-	opacity: 0.7;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.subtle};
 	text-decoration: none;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 	white-space: nowrap;
 	overflow: hidden;
+	padding: ${({ theme }) => theme.spacing.xs} 0;
+	transition: color ${({ theme }) => theme.transitions.default};
 
 	&:hover {
-		opacity: 1;
+		color: ${({ theme }) => theme.colors.main};
 	}
 
 	${({ $collapsed }) =>
 		$collapsed &&
 		`
 		@media (min-width: 769px) {
-			font-size: 0.65rem;
 			text-align: center;
+			font-size: 0.6rem;
 		}
 	`}
 `;
 
 const SECTION_ICONS: Record<string, string> = {
-	home: "⌂",
-	mint: "＋",
-	manage: "☰",
-	overview: "◎",
+	home: "01",
+	mint: "02",
+	manage: "03",
+	overview: "◆",
 	stakeholders: "◎",
 	"stock-classes": "▣",
-	"issue-stock": "⇢",
-	transactions: "↕",
-	docs: "?",
-	github: "⟨/⟩",
+	"issue-stock": "→",
+	transactions: "≡",
 };
 
 export function LeftNavDrawer() {
@@ -217,16 +268,13 @@ export function LeftNavDrawer() {
 	const currentView = parseCapTableView(query.view as string | undefined);
 
 	const closeMobile = () => setMobileOpen(false);
+	const showCollapsed = collapsed;
 
 	const handleSectionNav = (view: CapTableView) => {
 		if (!issuerId) return;
-		const href = capTableHref(issuerId, view);
-		router.push(href);
+		router.push(capTableHref(issuerId, view));
 		closeMobile();
 	};
-
-	// On desktop collapse is controlled by shell; on mobile always show labels.
-	const showCollapsed = collapsed;
 
 	return (
 		<>
@@ -238,13 +286,16 @@ export function LeftNavDrawer() {
 				aria-label="Primary navigation"
 			>
 				<DrawerInner>
-					<BrandRow $collapsed={showCollapsed}>
-						<NavIcon aria-hidden>TAP</NavIcon>
-						<BrandText $collapsed={showCollapsed}>Cap Table</BrandText>
+					<BrandRow>
+						<BrandMark aria-hidden>TAP</BrandMark>
+						<BrandText $collapsed={showCollapsed}>
+							<BrandTitle>Transfer Agent</BrandTitle>
+							<BrandSub>Protocol</BrandSub>
+						</BrandText>
 					</BrandRow>
 
 					<NavSection>
-						<NavLabel $collapsed={showCollapsed}>App</NavLabel>
+						<NavLabel $collapsed={showCollapsed}>Navigate</NavLabel>
 						{APP_NAV_ITEMS.map((item) => {
 							const active = item.match(pathname);
 							return (
@@ -289,14 +340,14 @@ export function LeftNavDrawer() {
 						</NavSection>
 					)}
 
-					<DrawerFooter $collapsed={showCollapsed}>
+					<DrawerFooter>
 						<ExternalLink
 							href="https://docs.transferagentprotocol.xyz"
 							target="_blank"
 							rel="noopener noreferrer"
 							$collapsed={showCollapsed}
 						>
-							{showCollapsed ? "Docs" : "Documentation"}
+							{showCollapsed ? "Docs" : "Documentation →"}
 						</ExternalLink>
 						<ExternalLink
 							href="https://github.com/transfer-agent-protocol/tap-cap-table"
@@ -304,7 +355,7 @@ export function LeftNavDrawer() {
 							rel="noopener noreferrer"
 							$collapsed={showCollapsed}
 						>
-							{showCollapsed ? "GH" : "Github"}
+							{showCollapsed ? "GH" : "Source →"}
 						</ExternalLink>
 					</DrawerFooter>
 				</DrawerInner>
@@ -312,6 +363,3 @@ export function LeftNavDrawer() {
 		</>
 	);
 }
-
-export const LEFT_NAV_DRAWER_WIDTH = DRAWER_WIDTH;
-export const LEFT_NAV_DRAWER_COLLAPSED_WIDTH = DRAWER_COLLAPSED_WIDTH;

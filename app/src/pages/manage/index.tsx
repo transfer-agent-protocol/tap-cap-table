@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { P } from "../../components/typography";
+import { Eyebrow, P } from "../../components/typography";
 import {
 	ActionTableLayout,
 	FullScreenStack,
@@ -129,9 +129,13 @@ export default function ManageHub() {
 	return (
 		<FullScreenStack data-testid="manage-hub">
 			<PageIntro>
+				<Eyebrow>Admin hub</Eyebrow>
+				<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
+					Your cap tables
+				</TableTitle>
 				<P>
-					This is your central hub for all cap tables you have deployed as Admin. Your connected wallet
-					can manage any of these. Use the left navigation to move between Mint, Manage, and Home.
+					Issuers you deployed or added. Connect the admin wallet in the top bar, then open a table to
+					manage stakeholders, stock classes, and issuances.
 				</P>
 			</PageIntro>
 

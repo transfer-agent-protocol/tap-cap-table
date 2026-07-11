@@ -11,6 +11,10 @@ import {
 	TableScroll,
 	TableTitle,
 	MutedText,
+	StatGrid,
+	StatCard,
+	StatLabel,
+	StatValue,
 } from "./wrappers";
 import { IssuerHeader } from "./IssuerHeader";
 import { StockClassForm } from "./StockClassForm";
@@ -553,19 +557,35 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		}
 
 		// overview — holdings summary
+		const holdingsCount = (manager.holdings?.holdings || []).length + directIssuances.length;
 		return (
 			<div data-testid="view-overview">
+				<StatGrid>
+					<StatCard>
+						<StatLabel>Stock Classes</StatLabel>
+						<StatValue>{stockClassOptions.length}</StatValue>
+					</StatCard>
+					<StatCard>
+						<StatLabel>Stakeholders</StatLabel>
+						<StatValue>{stakeholderOptions.length}</StatValue>
+					</StatCard>
+					<StatCard>
+						<StatLabel>Positions</StatLabel>
+						<StatValue>{holdingsCount}</StatValue>
+					</StatCard>
+					<StatCard>
+						<StatLabel>Pending Sync</StatLabel>
+						<StatValue>{hasPendingSync ? "Yes" : "—"}</StatValue>
+					</StatCard>
+				</StatGrid>
 				<ActionTableLayout>
 					<Panel>
 						<SectionHeader>
 							<TableTitle>Issuer Overview</TableTitle>
 						</SectionHeader>
 						<MutedText>
-							Active positions and entities on this OCF issuer. Use the left navigation to create
-							stakeholders, stock classes, issue stock, or browse transactions.
-						</MutedText>
-						<MutedText>
-							Stock classes: {stockClassOptions.length} · Stakeholders: {stakeholderOptions.length}
+							Active positions on this OCF issuer. Use the left rail to create stakeholders, stock
+							classes, issue stock, or browse the transaction ledger.
 						</MutedText>
 					</Panel>
 					<TablePanel>{holdingsTable}</TablePanel>

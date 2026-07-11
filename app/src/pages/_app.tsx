@@ -96,10 +96,10 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 
 							<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
 
-							<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0c0b0c" />
+							<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#09090b" />
 							<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-							<meta name="theme-color" content="#fafafc" />
-							<meta name="msapplication-TileColor" content="#0c0b0c" />
+							<meta name="theme-color" content="#09090b" />
+							<meta name="msapplication-TileColor" content="#09090b" />
 							<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 						</Head>
 						<Component {...pageProps} />

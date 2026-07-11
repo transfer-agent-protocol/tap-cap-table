@@ -6,29 +6,65 @@ import type { IssuerResponse } from "../services/registerIssuer";
 const IssuerSummary = styled.div`
 	display: flex;
 	flex-flow: column nowrap;
-	gap: ${({ theme }) => theme.spacing.xs};
+	gap: ${({ theme }) => theme.spacing.sm};
 	min-width: 0;
+	padding-left: ${({ theme }) => theme.spacing.sm};
 `;
 
 const IssuerName = styled.div`
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	font-size: ${({ theme }) => theme.fontSizes.medium};
+	font-size: ${({ theme }) => theme.fontSizes.H3};
+	letter-spacing: -0.03em;
+	color: ${({ theme }) => theme.colors.text};
 `;
 
 const IssuerMeta = styled.div`
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	opacity: 0.7;
+	color: ${({ theme }) => theme.colors.muted};
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	gap: ${({ theme }) => theme.spacing.sm};
+
+	code {
+		font-size: 0.85em;
+	}
+
+	a {
+		color: ${({ theme }) => theme.colors.main};
+	}
+`;
+
+const MetaLabel = styled.span`
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: ${({ theme }) => theme.colors.subtle};
+	margin-right: 0.35rem;
 `;
 
 const MintedTag = styled.span`
 	display: inline-flex;
 	align-items: center;
-	padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-	background: ${({ theme }) => theme.colors.success};
-	color: ${({ theme }) => theme.colors.background};
-	font-size: ${({ theme }) => theme.fontSizes.small};
+	gap: 0.35rem;
+	padding: 0.35rem 0.7rem;
+	background: ${({ theme }) => theme.colors.successBg};
+	color: ${({ theme }) => theme.colors.success};
+	border: 1px solid rgba(52, 211, 153, 0.3);
+	font-size: ${({ theme }) => theme.fontSizes.xs};
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	border-radius: ${({ theme }) => theme.radii.pill};
+
+	&::before {
+		content: "";
+		width: 0.4rem;
+		height: 0.4rem;
+		border-radius: 50%;
+		background: currentColor;
+		box-shadow: 0 0 8px currentColor;
+	}
 `;
 
 interface IssuerHeaderProps {
@@ -40,28 +76,37 @@ interface IssuerHeaderProps {
 export function IssuerHeader({ issuer, contractAddress, onReset }: IssuerHeaderProps) {
 	if (!issuer) return null;
 
-	const explorerBase = "https://explorer.plume.org"; // TODO: make chain-aware later if needed
+	const explorerBase = "https://explorer.plume.org";
 
 	return (
 		<DashboardHeader>
 			<IssuerSummary>
 				<IssuerName>{issuer.legal_name}</IssuerName>
 				<IssuerMeta>
-					Issuer ID: <code>{issuer._id}</code>
+					<span>
+						<MetaLabel>Issuer</MetaLabel>
+						<code>{issuer._id}</code>
+					</span>
 				</IssuerMeta>
 				{contractAddress && (
 					<IssuerMeta>
-						Contract:{" "}
-						<a href={`${explorerBase}/address/${contractAddress}`} target="_blank" rel="noopener noreferrer">
-							{contractAddress.slice(0, 10)}…{contractAddress.slice(-6)}
-						</a>
+						<span>
+							<MetaLabel>Contract</MetaLabel>
+							<a
+								href={`${explorerBase}/address/${contractAddress}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{contractAddress.slice(0, 10)}…{contractAddress.slice(-6)}
+							</a>
+						</span>
 					</IssuerMeta>
 				)}
 			</IssuerSummary>
 
 			<SectionActions>
-				<MintedTag>MINTED</MintedTag>
-				<InlineButton onClick={onReset} $variant="primary">
+				<MintedTag>Live</MintedTag>
+				<InlineButton onClick={onReset} $variant="secondary">
 					Mint Another
 				</InlineButton>
 			</SectionActions>

@@ -1,180 +1,203 @@
 import styled from "styled-components";
 
 const FormWrapper = styled.form`
-    position: relative;
-    display: flex;
-    flex-flow: column nowrap;
-    align-items: left;
-    justify-content: flex-start;
-    align-self: flex-start;
-    width: 95%;
-	height: 100%;
-	min-height: 100vh;
-    margin: 0 auto;
+	position: relative;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	width: 100%;
+	gap: ${({ theme }) => theme.spacing.md};
 
 	label {
-		font-size: 1.25rem;
-		font-weight: 600;
-		color: ${({ theme }) => theme.colors.text};
-		margin: 1rem 0 1rem 0;
+		font-size: ${({ theme }) => theme.fontSizes.xs};
+		font-weight: ${({ theme }) => theme.fontWeights.semibold};
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: ${({ theme }) => theme.colors.subtle};
 	}
 
 	p {
-		color: ${({ theme }) => theme.colors.text};
-		font-size: 0.9rem;
-		margin: 0.1rem 0 0 0;
+		color: ${({ theme }) => theme.colors.muted};
+		font-size: ${({ theme }) => theme.fontSizes.small};
+		margin: 0;
 	}
 `;
 
 const FormInput = styled.input`
-    width: 30rem;
-    height: 3rem;
-    padding: 0 1.25rem;
-    background: ${({ theme }) => theme.colors.input};
-    border: none;
-    border-radius: 4px;
-    box-sizing: border-box;
-    outline: none;
-    color: ${({ theme }) => theme.colors.text};
-    font-size: 1rem;
-	font-family: "IBM Plex Mono", sans-serif;
-    margin-bottom: 0.5rem;
+	width: 100%;
+	max-width: 30rem;
+	height: 2.75rem;
+	padding: 0 ${({ theme }) => theme.spacing.md};
+	background: ${({ theme }) => theme.colors.surface};
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	color: ${({ theme }) => theme.colors.text};
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-family: inherit;
+	transition: border-color ${({ theme }) => theme.transitions.default},
+		box-shadow ${({ theme }) => theme.transitions.default};
 
-    &:focus {
-        outline: 1px solid ${({ theme }) => theme.colors.accent};
-    }
+	&::placeholder {
+		color: ${({ theme }) => theme.colors.subtle};
+	}
 
-    &:hover {
-        outline: 1px solid ${({ theme }) => theme.colors.accent};
-    }
+	&:hover:not(:disabled) {
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+	}
 
-    @media only screen and (max-width: 768px) {
-        position: relative;
-        width: 100%;
-        height: 3rem;
-        margin-right: 0;
-        margin-bottom: 0.5rem;
-    }
+	&:focus {
+		outline: none;
+		border-color: ${({ theme }) => theme.colors.main};
+		box-shadow: ${({ theme }) => theme.shadows.focus};
+	}
+
+	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		max-width: 100%;
+	}
 `;
 
 const FormTextArea = styled.textarea`
-    width: 30rem;
-    height: 10rem;
-    padding: 1.25rem;
-    background: ${({ theme }) => theme.colors.input};
-    border: none;
-    border-radius: 4px;
-    box-sizing: border-box;
-    outline: none;
-    color: ${({ theme }) => theme.colors.text};
-    font-size: 1rem;
-	font-family: "IBM Plex Mono", sans-serif;
-    margin-bottom: 0.5rem;
-    resize: vertical;
+	width: 100%;
+	max-width: 30rem;
+	min-height: 8rem;
+	padding: ${({ theme }) => theme.spacing.md};
+	background: ${({ theme }) => theme.colors.surface};
+	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border-radius: ${({ theme }) => theme.radii.sm};
+	color: ${({ theme }) => theme.colors.text};
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-family: inherit;
+	resize: vertical;
+	transition: border-color ${({ theme }) => theme.transitions.default},
+		box-shadow ${({ theme }) => theme.transitions.default};
 
-    &:focus {
-        outline: 1px solid ${({ theme }) => theme.colors.accent};
-    }
+	&:focus {
+		outline: none;
+		border-color: ${({ theme }) => theme.colors.main};
+		box-shadow: ${({ theme }) => theme.shadows.focus};
+	}
 
-    &:hover {
-        outline: 1px solid ${({ theme }) => theme.colors.accent};
-    }
-
-    @media only screen and (max-width: 768px) {
-        position: relative;
-        width: 100%;
-        height: 10rem;
-        margin-right: 0;
-        margin-bottom: 0.5rem;
-    }
+	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		max-width: 100%;
+	}
 `;
 
 const FormValidation = styled.span`
-    display: relative;
-    position: absolute;
-    bottom: -1.5rem;
-    right: -2.5rem;
-    color: ${({ theme }) => theme.colors.text};
+	display: block;
+	color: ${({ theme }) => theme.colors.error};
+	font-size: ${({ theme }) => theme.fontSizes.small};
 `;
 
 const FieldGroup = styled.div`
 	display: flex;
 	flex-flow: column nowrap;
-	gap: 0.25rem;
-	min-width: 0; /* Allow flex children to shrink below content size */
+	gap: ${({ theme }) => theme.spacing.xs};
+	min-width: 0;
 `;
 
 const FieldRow = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
-	gap: 1rem;
-	align-items: flex-end; /* Align inputs at bottom when labels wrap */
+	gap: ${({ theme }) => theme.spacing.md};
+	align-items: flex-end;
 
 	& > * {
-		flex: 1 1 0; /* Equal basis so columns are same width */
+		flex: 1 1 0;
 		min-width: 0;
 	}
 
 	@media only screen and (max-width: 600px) {
 		flex-flow: column nowrap;
-		gap: 0.75rem;
+		gap: ${({ theme }) => theme.spacing.sm};
 	}
 `;
 
 const FieldLabel = styled.label`
-	font-size: ${({ theme }) => theme.fontSizes.small};
-	font-weight: bold;
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	letter-spacing: 0.05rem;
+	color: ${({ theme }) => theme.colors.subtle};
 `;
 
 const SectionLabel = styled.h3`
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-weight: bold;
-	margin: 0.5rem 0 0;
+	font-weight: ${({ theme }) => theme.fontWeights.semibold};
+	margin: ${({ theme }) => theme.spacing.sm} 0 0;
+	color: ${({ theme }) => theme.colors.text};
+	letter-spacing: -0.02em;
 `;
 
 const Input = styled.input`
 	width: 100%;
-	padding: 0.75rem;
+	height: 2.625rem;
+	padding: 0 ${({ theme }) => theme.spacing.md};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	font-family: inherit;
-	background: ${({ theme }) => theme.colors.background};
+	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.borderRadius.main};
+	border-radius: ${({ theme }) => theme.radii.sm};
 	color: ${({ theme }) => theme.colors.text};
 	box-sizing: border-box;
+	transition: border-color ${({ theme }) => theme.transitions.default},
+		box-shadow ${({ theme }) => theme.transitions.default},
+		background ${({ theme }) => theme.transitions.default};
+
+	&::placeholder {
+		color: ${({ theme }) => theme.colors.subtle};
+	}
+
+	&:hover:not(:disabled) {
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+	}
 
 	&:focus {
-		outline: 2px solid ${({ theme }) => theme.colors.main};
-		outline-offset: 1px;
+		outline: none;
+		border-color: ${({ theme }) => theme.colors.main};
+		box-shadow: ${({ theme }) => theme.shadows.focus};
+		background: ${({ theme }) => theme.colors.elevated};
 	}
 
 	&:disabled {
-		opacity: 0.5;
+		opacity: 0.45;
 		cursor: not-allowed;
 	}
 `;
 
 const Select = styled.select`
 	width: 100%;
-	padding: 0.75rem;
+	height: 2.625rem;
+	padding: 0 ${({ theme }) => theme.spacing.md};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	font-family: inherit;
-	background: ${({ theme }) => theme.colors.background};
+	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.borderRadius.main};
+	border-radius: ${({ theme }) => theme.radii.sm};
 	color: ${({ theme }) => theme.colors.text};
 	box-sizing: border-box;
+	cursor: pointer;
+	transition: border-color ${({ theme }) => theme.transitions.default},
+		box-shadow ${({ theme }) => theme.transitions.default};
+
+	&:hover:not(:disabled) {
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+	}
 
 	&:focus {
-		outline: 2px solid ${({ theme }) => theme.colors.main};
-		outline-offset: 1px;
+		outline: none;
+		border-color: ${({ theme }) => theme.colors.main};
+		box-shadow: ${({ theme }) => theme.shadows.focus};
 	}
 
 	&:disabled {
-		opacity: 0.5;
+		opacity: 0.45;
 		cursor: not-allowed;
+	}
+
+	option {
+		background: ${({ theme }) => theme.colors.elevated};
+		color: ${({ theme }) => theme.colors.text};
 	}
 `;
 
@@ -182,7 +205,19 @@ const Divider = styled.hr`
 	width: 100%;
 	border: none;
 	border-top: 1px solid ${({ theme }) => theme.colors.outline};
-	margin: 0.5rem 0;
+	margin: ${({ theme }) => theme.spacing.sm} 0;
 `;
 
-export { FormWrapper, FormInput, FormTextArea, FormValidation, FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Select, Divider }
+export {
+	FormWrapper,
+	FormInput,
+	FormTextArea,
+	FormValidation,
+	FieldGroup,
+	FieldRow,
+	FieldLabel,
+	SectionLabel,
+	Input,
+	Select,
+	Divider,
+};

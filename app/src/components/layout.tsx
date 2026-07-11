@@ -16,7 +16,10 @@ const ShellRoot = styled.div`
 	align-items: stretch;
 	width: 100%;
 	min-height: 100vh;
-	background: ${({ theme }) => theme.colors.background};
+	background:
+		radial-gradient(1200px 600px at 10% -10%, rgba(200, 245, 66, 0.07), transparent 55%),
+		radial-gradient(900px 500px at 100% 0%, rgba(125, 211, 252, 0.05), transparent 50%),
+		${({ theme }) => theme.colors.background};
 `;
 
 const ShellMainColumn = styled.div`
@@ -57,7 +60,10 @@ export default function Layout({ children, className }: Props) {
 					)}
 				</ContentArea>
 				<FooterWrapper>
-					<FooterContent>© {new Date().getFullYear()} Transfer Agent Protocol</FooterContent>
+					<FooterContent>
+						<span>© {new Date().getFullYear()} Transfer Agent Protocol</span>
+						<span>Open Cap Table · Onchain</span>
+					</FooterContent>
 				</FooterWrapper>
 			</ShellMainColumn>
 		</ShellRoot>
