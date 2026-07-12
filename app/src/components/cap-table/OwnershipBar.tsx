@@ -87,6 +87,22 @@ const Seg = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
 	}
 `;
 
+/** Authorized-but-unissued capacity — visibly empty, hatched. */
+const UnissuedSeg = styled.div<{ $pct: number }>`
+	flex: 0 0 ${({ $pct }) => $pct}%;
+	max-width: ${({ $pct }) => $pct}%;
+	height: 100%;
+	box-sizing: border-box;
+	background: repeating-linear-gradient(
+		-45deg,
+		transparent,
+		transparent 6px,
+		${({ theme }) => theme.colors.elevated} 6px,
+		${({ theme }) => theme.colors.elevated} 7px
+	);
+	cursor: default;
+`;
+
 const HolderRow = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
@@ -172,6 +188,8 @@ interface OwnershipBarProps {
 		confirmed?: boolean;
 		txHash?: string;
 	}>;
+	/** Issuer authorization — when provided, the bar shows unissued capacity too */
+	authorized?: number;
 }
 
 function sliceTitle(s: {
@@ -179,18 +197,28 @@ function sliceTitle(s: {
 	stockClassName: string;
 	quantity: number;
 	pct: number;
+	pctOfIssued: number;
 }): string {
-	return `${s.shareholderName} · ${s.stockClassName} · ${formatShares(s.quantity)} (${formatPct(s.pct)})`;
+	const ofAuthorized =
+		Math.round(s.pct * 10) !== Math.round(s.pctOfIssued * 10)
+			? ` · ${formatPct(s.pct)} of authorized`
+			: "";
+	return `${s.shareholderName} · ${s.stockClassName} · ${formatShares(s.quantity)} (${formatPct(s.pctOfIssued)} of issued${ofAuthorized})`;
 }
 
-export function OwnershipBar({ holdingsData, createdIssuances = [] }: OwnershipBarProps) {
+export function OwnershipBar({
+	holdingsData,
+	createdIssuances = [],
+	authorized,
+}: OwnershipBarProps) {
 	const model: OwnershipChartModel | null = buildOwnershipChart(
 		holdingsData,
 		createdIssuances,
+		{ authorized },
 	);
 	if (!model) return null;
 
-	const { total, slices, classBands } = model;
+	const { total, barTotal, slices, classBands, unissued } = model;
 	const tiny = slices.filter((s) => !shouldShowSliceLabel(s.pct));
 	let cursor = 0;
 	const starts = slices.map((s) => {
@@ -199,10 +227,22 @@ export function OwnershipBar({ holdingsData, createdIssuances = [] }: OwnershipB
 		return start;
 	});
 
+	// One tone per shareholder — the same person holding multiple stock
+	// classes reads as one color across class bands.
+	const toneByHolder = new Map<string, number>();
+	for (const s of slices) {
+		if (!s.isOther && !toneByHolder.has(s.shareholderId)) {
+			toneByHolder.set(s.shareholderId, toneByHolder.size);
+		}
+	}
+	const toneOf = (s: (typeof slices)[number]) => toneByHolder.get(s.shareholderId) ?? 0;
+
 	return (
 		<Wrap data-testid="ownership-bar">
 			<TotalLine>
-				Issued ownership · {formatShares(total)} shares
+				{unissued
+					? `Issued ${formatShares(total)} of ${formatShares(barTotal)} authorized shares`
+					: `Issued ownership · ${formatShares(total)} shares`}
 			</TotalLine>
 
 			{/* Class labels above the bar */}
@@ -219,20 +259,33 @@ export function OwnershipBar({ holdingsData, createdIssuances = [] }: OwnershipB
 				))}
 			</ClassRow>
 
-			{/* Filled bar */}
-			<Bar role="img" aria-label={`Ownership breakdown of ${formatShares(total)} issued shares`}>
-				{slices.map((s, i) => (
+			{/* Filled bar (+ unissued capacity when authorization is known) */}
+			<Bar
+				role="img"
+				aria-label={
+					unissued
+						? `Ownership of ${formatShares(barTotal)} authorized shares — ${formatShares(total)} issued`
+						: `Ownership breakdown of ${formatShares(total)} issued shares`
+				}
+			>
+				{slices.map((s) => (
 					<Seg
 						key={s.key}
 						$pct={s.pct}
-						$tone={i}
+						$tone={toneOf(s)}
 						$isOther={s.isOther}
 						title={sliceTitle(s)}
 					/>
 				))}
+				{unissued && (
+					<UnissuedSeg
+						$pct={unissued.pct}
+						title={`Unissued · ${formatShares(unissued.quantity)} (${formatPct(unissued.pct)} of authorized)`}
+					/>
+				)}
 			</Bar>
 
-			{/* Shareholder names below */}
+			{/* Shareholder names below — % of issued (ownership) */}
 			<HolderRow>
 				{slices.map((s, i) => {
 					if (!shouldShowSliceLabel(s.pct)) return null;
@@ -245,27 +298,36 @@ export function OwnershipBar({ holdingsData, createdIssuances = [] }: OwnershipB
 						>
 							<Name>{s.shareholderName}</Name>
 							<Meta>
-								{formatPct(s.pct)} · {formatShares(s.quantity)}
+								{formatPct(s.pctOfIssued)} · {formatShares(s.quantity)}
 							</Meta>
 						</HolderLabel>
 					);
 				})}
+				{unissued && shouldShowSliceLabel(unissued.pct) && (
+					<HolderLabel
+						$start={100 - unissued.pct}
+						$width={unissued.pct}
+						title={`Unissued · ${formatShares(unissued.quantity)} (${formatPct(unissued.pct)} of authorized)`}
+					>
+						<Name>Unissued</Name>
+						<Meta>
+							{formatPct(unissued.pct)} of authorized · {formatShares(unissued.quantity)}
+						</Meta>
+					</HolderLabel>
+				)}
 			</HolderRow>
 
 			{/* Legend for slices too narrow to label under the bar */}
 			{tiny.length > 0 && (
 				<Legend>
-					{tiny.map((s, i) => {
-						const tone = slices.findIndex((x) => x.key === s.key);
-						return (
-							<LegendItem key={s.key} title={sliceTitle(s)}>
-								<Swatch $tone={tone >= 0 ? tone : i} $isOther={s.isOther} />
-								<span>
-									{s.shareholderName} · {formatPct(s.pct)}
-								</span>
-							</LegendItem>
-						);
-					})}
+					{tiny.map((s) => (
+						<LegendItem key={s.key} title={sliceTitle(s)}>
+							<Swatch $tone={toneOf(s)} $isOther={s.isOther} />
+							<span>
+								{s.shareholderName} · {s.stockClassName} · {formatPct(s.pctOfIssued)}
+							</span>
+						</LegendItem>
+					))}
 				</Legend>
 			)}
 		</Wrap>

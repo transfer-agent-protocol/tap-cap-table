@@ -110,6 +110,7 @@ export function HoldingsView({
 					<OwnershipBar
 						holdingsData={holdingsData}
 						createdIssuances={createdIssuances}
+						authorized={hasAuthorized ? authorized : undefined}
 					/>
 				)}
 				{holdingsTable}

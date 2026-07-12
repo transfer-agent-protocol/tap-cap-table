@@ -22,7 +22,12 @@ test.describe("company workspace", () => {
 
 		await expect(page.getByTestId("cap-table-dashboard")).toBeVisible();
 		await expect(page.getByTestId("view-overview")).toBeVisible();
-		await expect(page.getByTestId("ownership-bar")).toBeVisible();
+		const bar = page.getByTestId("ownership-bar");
+		await expect(bar).toBeVisible();
+		// Bar shows unissued capacity, not just issued ownership (1M of 10M)
+		await expect(bar).toContainText("Issued 1,000,000 of 10,000,000 authorized shares");
+		await expect(bar).toContainText("Unissued");
+		await expect(bar).toContainText("90% of authorized");
 
 		// Authorized vs issued surfaced honestly (10M authorized, 1M issued)
 		const stats = page.getByTestId("share-stats");
