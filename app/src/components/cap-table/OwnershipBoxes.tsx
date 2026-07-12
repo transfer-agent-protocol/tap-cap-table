@@ -9,20 +9,19 @@ import {
 import { MutedText } from "../typography";
 
 /**
- * Distinct hue palette — each holder reads as its own person at a glance.
- * Tone 0 = accent (lime) for the biggest holder; remaining tones span
- * clearly different hues: blue, orange, violet, teal, coral, amber.
- * "Others" collapsed slices always use the elevated neutral tone.
+ * Palette: top 8 holders by total shares get a distinct hue in rank order.
+ * Everyone else (small shareholders, Others) always renders in neutral gray —
+ * so adding 50 employee-option grants never reshuffles anyone's color.
  */
-const PALETTE: string[] = [
-	"#c8f542", // lime (accent)
-	"#5b8dee", // slate blue
-	"#f0944d", // warm orange
-	"#9b7fe8", // dusty violet
-	"#3ecfb2", // teal
-	"#f26c6c", // coral
-	"#f5c542", // amber
-	"#5bc4a1", // seafoam
+const PALETTE: readonly string[] = [
+	"#c8f542", // rank 0 — lime (accent, biggest holder)
+	"#5b8dee", // rank 1 — slate blue
+	"#f0944d", // rank 2 — warm orange
+	"#9b7fe8", // rank 3 — dusty violet
+	"#3ecfb2", // rank 4 — teal
+	"#f26c6c", // rank 5 — coral
+	"#f5c542", // rank 6 — amber
+	"#5bc4a1", // rank 7 — seafoam
 ];
 
 const Wrap = styled.div`
@@ -40,7 +39,6 @@ const BoxRow = styled.div`
 	flex-flow: row nowrap;
 	width: 100%;
 	height: 5rem;
-	gap: 1px;
 	border: 1px solid ${({ theme }) => theme.colors.border};
 	overflow: hidden;
 `;
@@ -52,12 +50,13 @@ const BoxLabel = styled.div`
 	padding: ${({ theme }) => theme.spacing.sm};
 	overflow: hidden;
 	pointer-events: none;
+	height: 100%;
 `;
 
 const BoxName = styled.span`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	color: ${({ theme }) => theme.colors.inverse};
+	color: rgba(0, 0, 0, 0.82);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -66,40 +65,47 @@ const BoxName = styled.span`
 
 const BoxMeta = styled.span`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	color: rgba(0, 0, 0, 0.65);
+	color: rgba(0, 0, 0, 0.55);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	line-height: 1.3;
 `;
 
-/** Minimum segment width (% of total) to show inline text. */
-const MIN_LABEL_PCT = 4;
+/** Show inline label if segment is wide enough for readable text. */
+const MIN_LABEL_PCT = 5;
 
-const HolderBox = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
+/**
+ * $rank:
+ *   0-7  = named holder, picks PALETTE[rank]
+ *   -1   = minor/neutral (small shareholders, "Others") — uniform gray
+ */
+const HolderBox = styled.div<{ $pct: number; $rank: number }>`
 	flex: 0 0 ${({ $pct }) => $pct}%;
-	min-width: ${({ $pct }) => ($pct > 0 && $pct < 0.5 ? "2px" : undefined)};
+	min-width: ${({ $pct }) => ($pct > 0 && $pct < 0.4 ? "2px" : undefined)};
 	height: 100%;
-	background: ${({ theme, $tone, $isOther }) => {
-		if ($isOther) return theme.colors.elevated;
-		return PALETTE[$tone % PALETTE.length];
+	background: ${({ $rank }) => {
+		if ($rank < 0) return "rgba(255, 255, 255, 0.12)"; // neutral gray for minor holders
+		return PALETTE[$rank % PALETTE.length];
 	}};
 	position: relative;
+	border-right: 1px solid rgba(0, 0, 0, 0.08);
 	transition: filter ${({ theme }) => theme.transitions.default};
 	cursor: default;
 
 	&:hover {
-		filter: brightness(1.1);
+		filter: brightness(1.08);
 	}
 
-	/* Show label only when wide enough */
+	/* Show label only when segment is wide enough */
 	${BoxLabel} {
 		display: ${({ $pct }) => ($pct >= MIN_LABEL_PCT ? "flex" : "none")};
 	}
 
-	/* Narrow segments: floating tooltip on hover via ::after */
-	&[title]:hover::after {
+	/* Narrow segments: tooltip above box on hover */
+	&:hover::after {
 		content: attr(data-label);
+		display: ${({ $pct }) => ($pct < MIN_LABEL_PCT ? "block" : "none")};
 		position: absolute;
 		bottom: calc(100% + 4px);
 		left: 50%;
@@ -112,7 +118,6 @@ const HolderBox = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }
 		color: ${({ theme }) => theme.colors.text};
 		z-index: ${({ theme }) => theme.zIndices.dropdown};
 		pointer-events: none;
-		display: ${({ $pct }) => ($pct < MIN_LABEL_PCT ? "block" : "none")};
 	}
 `;
 
@@ -125,8 +130,8 @@ const UnissuedBox = styled.div<{ $pct: number }>`
 		-45deg,
 		transparent,
 		transparent 6px,
-		${({ theme }) => theme.colors.elevated} 6px,
-		${({ theme }) => theme.colors.elevated} 7px
+		${({ theme }) => theme.colors.surface} 6px,
+		${({ theme }) => theme.colors.surface} 7px
 	);
 
 	${BoxLabel} {
@@ -142,12 +147,10 @@ const UnissuedMeta = styled(BoxMeta)`
 	color: ${({ theme }) => theme.colors.textSubtle};
 `;
 
-/** Small legend for holders too narrow to show inside their box. */
 const Legend = styled.div`
 	display: flex;
 	flex-flow: row wrap;
 	gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-	margin-top: ${({ theme }) => theme.spacing.xs};
 	padding-top: ${({ theme }) => theme.spacing.sm};
 	border-top: 1px solid ${({ theme }) => theme.colors.border};
 `;
@@ -159,18 +162,16 @@ const LegendItem = styled.div`
 	gap: 0.35rem;
 	font-size: ${({ theme }) => theme.fontSizes.xs};
 	color: ${({ theme }) => theme.colors.textMuted};
-	max-width: 14rem;
+	max-width: 16rem;
 `;
 
-const Swatch = styled.span<{ $tone: number; $isOther?: boolean }>`
+const Swatch = styled.span<{ $rank: number }>`
 	width: 0.55rem;
 	height: 0.55rem;
 	flex-shrink: 0;
-	background: ${({ theme, $tone, $isOther }) => {
-		if ($isOther) return theme.colors.elevated;
-		return PALETTE[$tone % PALETTE.length];
-	}};
-	border: 1px solid ${({ theme }) => theme.colors.border};
+	background: ${({ $rank }) =>
+		$rank >= 0 ? PALETTE[$rank % PALETTE.length] : "rgba(255, 255, 255, 0.2)"};
+	border: 1px solid rgba(255, 255, 255, 0.12);
 `;
 
 const TotalLine = styled(MutedText)`
@@ -189,7 +190,6 @@ interface OwnershipBoxesProps {
 		confirmed?: boolean;
 		txHash?: string;
 	}>;
-	/** Issuer authorization — when provided, the chart shows unissued capacity. */
 	authorized?: number;
 }
 
@@ -207,16 +207,40 @@ export function OwnershipBoxes({
 
 	const { total, barTotal, slices, unissued } = model;
 
-	// One tone per shareholder — consistent across all classes they hold.
-	const toneByHolder = new Map<string, number>();
+	// ── Rank holders by their TOTAL shares across all classes ──────────────
+	// Biggest holder = rank 0 (lime). Rank drives both box order and color.
+	// Small holders that don't earn a palette slot always get neutral gray,
+	// so adding new employees never reshuffles existing colors.
+	const totalByHolder = new Map<string, number>();
 	for (const s of slices) {
-		if (!s.isOther && !toneByHolder.has(s.shareholderId)) {
-			toneByHolder.set(s.shareholderId, toneByHolder.size);
+		if (!s.isOther) {
+			totalByHolder.set(
+				s.shareholderId,
+				(totalByHolder.get(s.shareholderId) ?? 0) + s.quantity,
+			);
 		}
 	}
-	const toneOf = (s: (typeof slices)[number]) => toneByHolder.get(s.shareholderId) ?? 0;
 
-	// Legend: only truly minor holders (<7% of issued).
+	const holderRank = new Map<string, number>();
+	Array.from(totalByHolder.entries())
+		.sort(([, a], [, b]) => b - a)
+		.forEach(([id], rank) => holderRank.set(id, rank));
+
+	// ── Sort slices: biggest holder first, their classes adjacent, Others last
+	const orderedSlices = [...slices].sort((a, b) => {
+		const rA = a.isOther ? 9999 : (holderRank.get(a.shareholderId) ?? 9999);
+		const rB = b.isOther ? 9999 : (holderRank.get(b.shareholderId) ?? 9999);
+		if (rA !== rB) return rA - rB;
+		return b.quantity - a.quantity; // within a holder: larger class first
+	});
+
+	const rankOf = (s: (typeof slices)[number]): number => {
+		if (s.isOther) return -1;
+		const r = holderRank.get(s.shareholderId) ?? 9999;
+		return r < PALETTE.length ? r : -1; // -1 = minor, renders neutral
+	};
+
+	// ── Legend: minor holders (<7% of issued) aggregated ──────────────────
 	const LEGEND_MAX = 5;
 	const minorByHolder = new Map<
 		string,
@@ -226,12 +250,13 @@ export function OwnershipBoxes({
 			classNames: string[];
 			quantity: number;
 			pctOfIssued: number;
-			isOther?: boolean;
+			rank: number;
 		}
 	>();
-	for (const s of slices) {
-		if (shouldShowSliceLabel(s.pctOfIssued)) continue;
+	for (const s of orderedSlices) {
+		if (shouldShowSliceLabel(s.pctOfIssued) && !s.isOther) continue;
 		const prev = minorByHolder.get(s.shareholderId);
+		const rank = rankOf(s);
 		if (prev) {
 			prev.quantity += s.quantity;
 			prev.pctOfIssued += s.pctOfIssued;
@@ -243,10 +268,11 @@ export function OwnershipBoxes({
 				classNames: [s.stockClassName],
 				quantity: s.quantity,
 				pctOfIssued: s.pctOfIssued,
-				isOther: s.isOther,
+				rank,
 			});
 		}
 	}
+
 	const sorted = Array.from(minorByHolder.values()).sort((a, b) => b.quantity - a.quantity);
 	const legendEntries = sorted.slice(0, LEGEND_MAX);
 	const legendRest = sorted.slice(LEGEND_MAX);
@@ -260,7 +286,6 @@ export function OwnershipBoxes({
 					: `Issued ownership · ${formatShares(total)} shares`}
 			</TotalLine>
 
-			{/* Proportional box chart — class names live inside each box */}
 			<BoxRow
 				role="img"
 				aria-label={
@@ -269,25 +294,27 @@ export function OwnershipBoxes({
 						: `Ownership of ${formatShares(total)} issued shares`
 				}
 			>
-				{slices.map((s) => (
-					<HolderBox
-						key={s.key}
-						$pct={s.pct}
-						$tone={toneOf(s)}
-						$isOther={s.isOther}
-						title={`${s.shareholderName} · ${s.stockClassName} · ${formatShares(s.quantity)} (${formatPct(s.pctOfIssued)} of issued)`}
-						data-label={`${s.shareholderName} · ${s.stockClassName} · ${formatPct(s.pctOfIssued)}`}
-					>
-						<BoxLabel>
-							<BoxName>
-								{s.isOther ? `Others (${s.otherCount ?? ""})` : s.shareholderName}
-							</BoxName>
-							<BoxMeta>
-								{s.stockClassName} · {formatPct(s.pctOfIssued)}
-							</BoxMeta>
-						</BoxLabel>
-					</HolderBox>
-				))}
+				{orderedSlices.map((s) => {
+					const rank = rankOf(s);
+					return (
+						<HolderBox
+							key={s.key}
+							$pct={s.pct}
+							$rank={rank}
+							title={`${s.shareholderName} · ${s.stockClassName} · ${formatShares(s.quantity)} (${formatPct(s.pctOfIssued)} of issued)`}
+							data-label={`${s.shareholderName} · ${s.stockClassName} · ${formatPct(s.pctOfIssued)}`}
+						>
+							<BoxLabel>
+								<BoxName>
+									{s.isOther ? `Others (${s.otherCount ?? ""})` : s.shareholderName}
+								</BoxName>
+								<BoxMeta>
+									{s.stockClassName} · {formatPct(s.pctOfIssued)}
+								</BoxMeta>
+							</BoxLabel>
+						</HolderBox>
+					);
+				})}
 
 				{unissued && (
 					<UnissuedBox
@@ -304,7 +331,6 @@ export function OwnershipBoxes({
 				)}
 			</BoxRow>
 
-			{/* Compact legend for minor holders */}
 			{legendEntries.length > 0 && (
 				<Legend>
 					{legendEntries.map((e) => (
@@ -312,10 +338,7 @@ export function OwnershipBoxes({
 							key={e.shareholderId}
 							title={`${e.shareholderName} · ${e.classNames.join(", ")} · ${formatShares(e.quantity)} (${formatPct(e.pctOfIssued)} of issued)`}
 						>
-							<Swatch
-								$tone={toneByHolder.get(e.shareholderId) ?? 0}
-								$isOther={e.isOther}
-							/>
+							<Swatch $rank={e.rank} />
 							<span>
 								{e.shareholderName} · {e.classNames.join(", ")} · {formatPct(e.pctOfIssued)}
 							</span>
@@ -326,7 +349,7 @@ export function OwnershipBoxes({
 							title={legendRest.map((e) => e.shareholderName).join(", ")}
 							data-testid="legend-more"
 						>
-							<Swatch $tone={0} $isOther />
+							<Swatch $rank={-1} />
 							<span>
 								+ {legendRest.length} more · {formatPct(legendRestPct)} of issued
 							</span>
