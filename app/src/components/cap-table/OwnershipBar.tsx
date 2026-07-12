@@ -52,14 +52,14 @@ const Bar = styled.div`
 	overflow: hidden;
 `;
 
-/** Rust + monochrome ramp — accent leads, grays alternate for legibility. */
+/** Lime + muted greens on dark — accent leads, tones alternate for legibility. */
 const SEGMENT_TONES = (theme: any): string[] => [
 	theme.colors.accent,
-	"rgba(255, 255, 255, 0.45)",
-	"rgba(217, 95, 51, 0.55)",
-	"rgba(255, 255, 255, 0.25)",
-	"rgba(217, 95, 51, 0.3)",
-	"rgba(255, 255, 255, 0.6)",
+	"rgba(200, 245, 66, 0.55)",
+	"rgba(52, 211, 153, 0.75)",
+	"rgba(200, 245, 66, 0.35)",
+	"rgba(163, 230, 53, 0.65)",
+	"rgba(74, 222, 128, 0.55)",
 ];
 
 const Seg = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`

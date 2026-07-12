@@ -24,9 +24,9 @@ const theme: DefaultTheme = {
 		text: "rgba(255, 255, 255, 0.92)",
 		textMuted: "rgba(255, 255, 255, 0.64)",
 		textSubtle: "rgba(255, 255, 255, 0.44)",
-		// Accent — rust (brand-adjacent, tuned for AA contrast on dark)
-		accent: "#d95f33",
-		accentMuted: "rgba(217, 95, 51, 0.12)",
+		// Accent — lime (dark text on accent surfaces)
+		accent: "#c8f542",
+		accentMuted: "rgba(200, 245, 66, 0.1)",
 		onAccent: "#0a0a0a",
 		// Status (desaturated to sit in the monochrome field)
 		success: "#5cb887",
@@ -90,7 +90,7 @@ const theme: DefaultTheme = {
 	},
 	shadows: {
 		overlay: "0 16px 40px rgba(0, 0, 0, 0.45)",
-		focus: "0 0 0 1px #d95f33",
+		focus: "0 0 0 1px #c8f542",
 	},
 	transitions: {
 		default: "120ms ease",

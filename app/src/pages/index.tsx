@@ -1,6 +1,6 @@
 import { ContentColumn, Section, Stack } from "../components/layout";
 import { Table, TableFrame } from "../components/elements";
-import { H2, P } from "../components/typography";
+import { H1, H2, P } from "../components/typography";
 
 /**
  * Landing — marketing only (no product entry until API is public).
@@ -11,7 +11,7 @@ export default function Home() {
 		<ContentColumn data-testid="home-page">
 			<Stack $gap="2xl">
 			<Stack $gap="md">
-				<P>Tokenize RWA cap tables and handle post-trade settlement.</P>
+				<H1>Tokenize RWA cap tables and handle post-trade settlement.</H1>
 				<P>
 					Fully onchain protocol that&apos;s based on{" "}
 					<a href="https://www.opencaptablecoalition.com/" target="_blank" rel="noopener noreferrer">
