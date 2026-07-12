@@ -1,99 +1,44 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
-const FormWrapper = styled.form`
+/**
+ * Forms — one input set. Labels uppercase micro-type, inputs mono
+ * (users type numbers, names, addresses into a ledger), hairline borders.
+ */
+
+const Form = styled.form`
 	position: relative;
 	display: flex;
 	flex-flow: column nowrap;
 	align-items: stretch;
-	justify-content: flex-start;
 	width: 100%;
+	max-width: ${({ theme }) => theme.maxWidths.form};
+	gap: ${({ theme }) => theme.spacing.lg};
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		max-width: 100%;
+	}
+`;
+
+/** Group of related fields (Proximity: related things sit together). */
+const Fieldset = styled.fieldset`
+	display: flex;
+	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.md};
-
-	label {
-		font-size: ${({ theme }) => theme.fontSizes.xs};
-		font-weight: ${({ theme }) => theme.fontWeights.semibold};
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: ${({ theme }) => theme.colors.subtle};
-	}
-
-	p {
-		color: ${({ theme }) => theme.colors.muted};
-		font-size: ${({ theme }) => theme.fontSizes.small};
-		margin: 0;
-	}
+	margin: 0;
+	padding: 0;
+	border: none;
+	min-width: 0;
 `;
 
-const FormInput = styled.input`
-	width: 100%;
-	max-width: 30rem;
-	height: 2.75rem;
-	padding: 0 ${({ theme }) => theme.spacing.md};
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: 0;
-	color: ${({ theme }) => theme.colors.text};
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-family: inherit;
-	transition: border-color ${({ theme }) => theme.transitions.default};
-
-	&::placeholder {
-		color: ${({ theme }) => theme.colors.subtle};
-	}
-
-	&:hover:not(:disabled) {
-		border-color: ${({ theme }) => theme.colors.borderStrong};
-	}
-
-	&:focus {
-		outline: none;
-		border-color: ${({ theme }) => theme.colors.main};
-	}
-
-	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-		max-width: 100%;
-	}
-`;
-
-const FormTextArea = styled.textarea`
-	width: 100%;
-	max-width: 30rem;
-	min-height: 8rem;
-	padding: ${({ theme }) => theme.spacing.md};
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: 0;
-	color: ${({ theme }) => theme.colors.text};
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-family: inherit;
-	resize: vertical;
-	transition: border-color ${({ theme }) => theme.transitions.default},
-		box-shadow ${({ theme }) => theme.transitions.default};
-
-	&:focus {
-		outline: none;
-		border-color: ${({ theme }) => theme.colors.main};
-		box-shadow: ${({ theme }) => theme.shadows.focus};
-	}
-
-	@media only screen and (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-		max-width: 100%;
-	}
-`;
-
-const FormValidation = styled.span`
-	display: block;
-	color: ${({ theme }) => theme.colors.error};
-	font-size: ${({ theme }) => theme.fontSizes.small};
-`;
-
-const FieldGroup = styled.div`
+/** One label + input + validation unit. */
+const Field = styled.div`
 	display: flex;
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.xs};
 	min-width: 0;
 `;
 
+/** Fields side by side; stacks on phones. */
 const FieldRow = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
@@ -105,9 +50,10 @@ const FieldRow = styled.div`
 		min-width: 0;
 	}
 
-	@media only screen and (max-width: 600px) {
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
 		flex-flow: column nowrap;
 		gap: ${({ theme }) => theme.spacing.sm};
+		align-items: stretch;
 	}
 `;
 
@@ -116,32 +62,22 @@ const FieldLabel = styled.label`
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
 `;
 
-const SectionLabel = styled.h3`
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	margin: ${({ theme }) => theme.spacing.sm} 0 0;
-	color: ${({ theme }) => theme.colors.text};
-	letter-spacing: -0.02em;
-`;
-
-const Input = styled.input`
+const inputBase = css`
 	width: 100%;
-	height: 2.625rem;
+	height: 2.5rem;
 	padding: 0 ${({ theme }) => theme.spacing.md};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-family: inherit;
+	font-family: ${({ theme }) => theme.fonts.mono};
 	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: 0;
+	border: 1px solid ${({ theme }) => theme.colors.border};
 	color: ${({ theme }) => theme.colors.text};
-	box-sizing: border-box;
 	transition: border-color ${({ theme }) => theme.transitions.default};
 
 	&::placeholder {
-		color: ${({ theme }) => theme.colors.subtle};
+		color: ${({ theme }) => theme.colors.textSubtle};
 	}
 
 	&:hover:not(:disabled) {
@@ -150,8 +86,7 @@ const Input = styled.input`
 
 	&:focus {
 		outline: none;
-		border-color: ${({ theme }) => theme.colors.main};
-		background: ${({ theme }) => theme.colors.elevated};
+		border-color: ${({ theme }) => theme.colors.accent};
 	}
 
 	&:disabled {
@@ -160,57 +95,33 @@ const Input = styled.input`
 	}
 `;
 
+const TextInput = styled.input`
+	${inputBase}
+`;
+
 const Select = styled.select`
-	width: 100%;
-	height: 2.625rem;
-	padding: 0 ${({ theme }) => theme.spacing.md};
-	font-size: ${({ theme }) => theme.fontSizes.baseline};
-	font-family: inherit;
-	background: ${({ theme }) => theme.colors.surface};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: 0;
-	color: ${({ theme }) => theme.colors.text};
-	box-sizing: border-box;
+	${inputBase}
 	cursor: pointer;
-	transition: border-color ${({ theme }) => theme.transitions.default};
-
-	&:hover:not(:disabled) {
-		border-color: ${({ theme }) => theme.colors.borderStrong};
-	}
-
-	&:focus {
-		outline: none;
-		border-color: ${({ theme }) => theme.colors.main};
-	}
-
-	&:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
 
 	option {
-		background: ${({ theme }) => theme.colors.elevated};
+		background: ${({ theme }) => theme.colors.background};
 		color: ${({ theme }) => theme.colors.text};
 	}
 `;
 
-const Divider = styled.hr`
-	width: 100%;
-	border: none;
-	border-top: 1px solid ${({ theme }) => theme.colors.outline};
-	margin: ${({ theme }) => theme.spacing.sm} 0;
+const TextArea = styled.textarea`
+	${inputBase}
+	height: auto;
+	min-height: 8rem;
+	padding: ${({ theme }) => theme.spacing.md};
+	resize: vertical;
 `;
 
-export {
-	FormWrapper,
-	FormInput,
-	FormTextArea,
-	FormValidation,
-	FieldGroup,
-	FieldRow,
-	FieldLabel,
-	SectionLabel,
-	Input,
-	Select,
-	Divider,
-};
+/** Inline error under a field. */
+const ValidationMessage = styled.span`
+	display: block;
+	color: ${({ theme }) => theme.colors.error};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+`;
+
+export { Form, Fieldset, Field, FieldRow, FieldLabel, TextInput, Select, TextArea, ValidationMessage };

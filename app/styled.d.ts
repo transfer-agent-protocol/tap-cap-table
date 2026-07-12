@@ -6,15 +6,14 @@ declare module "styled-components" {
 			background: string;
 			surface: string;
 			elevated: string;
-			main: string;
-			input: string;
+			border: string;
+			borderStrong: string;
+			text: string;
+			textMuted: string;
+			textSubtle: string;
 			accent: string;
 			accentMuted: string;
-			text: string;
-			muted: string;
-			subtle: string;
-			outline: string;
-			borderStrong: string;
+			onAccent: string;
 			success: string;
 			successBg: string;
 			error: string;
@@ -23,7 +22,10 @@ declare module "styled-components" {
 			pendingBg: string;
 			overlay: string;
 			inverse: string;
-			white: string;
+		};
+		fonts: {
+			sans: string;
+			mono: string;
 		};
 		fontSizes: {
 			H1: string;
@@ -41,9 +43,11 @@ declare module "styled-components" {
 			H3: string;
 			P: string;
 		};
-		borderRadius: {
-			none: string;
-			main: string;
+		fontWeights: {
+			normal: number;
+			medium: number;
+			semibold: number;
+			bold: number;
 		};
 		spacing: {
 			0: string;
@@ -54,46 +58,29 @@ declare module "styled-components" {
 			xl: string;
 			"2xl": string;
 			"3xl": string;
-		};
-		fontWeights: {
-			normal: number;
-			medium: number;
-			semibold: number;
-			bold: number;
+			"4xl": string;
 		};
 		breakpoints: {
-			sm: string;
-			mobile: string;
+			phone: string;
 			tablet: string;
-			mintCollapse: string;
+			tabletLandscape: string;
 			desktop: string;
 		};
 		radii: {
 			none: string;
-			main: string;
-			sm: string;
-			md: string;
-			lg: string;
-			pill: string;
 		};
 		shadows: {
-			sm: string;
-			md: string;
-			lg: string;
+			overlay: string;
 			focus: string;
-			glow: string;
 		};
 		transitions: {
 			default: string;
-			spring: string;
 			slow: string;
 		};
 		maxWidths: {
-			main: string;
-			article: string;
-			h1: string;
+			text: string;
+			form: string;
 			content: string;
-			wide: string;
 		};
 		zIndices: {
 			base: number;
@@ -104,7 +91,6 @@ declare module "styled-components" {
 		};
 		layout: {
 			navWidth: string;
-			navCollapsed: string;
 			topBar: string;
 		};
 	}
