@@ -92,14 +92,15 @@ These mirror the rules in the root `WARP.md` — keep them in sync.
 
 ### Company workspace UX
 - Table-first lists (`DataTable`) full width of the main column (no artificial 72rem content cap on product pages).
+- **Scale**: `DataTable` supports opt-in per-column sorting (`sortValue`) and incremental pagination (`pageSize` + "Show N more"). Holdings adds search and a "By holding | By shareholder" toggle (grouped mode aggregates one person's positions across classes); Shareholders adds search plus Total shares / Holdings columns. All client-side — the holdings endpoint returns the full set. **Follow-up past ~1k holders: server-side pagination/search on `/cap-table/holdings/stock`.**
 - Forms open on demand (Add shareholder / Add stock class); setup checklist on empty holdings (class → person → issue).
-- Ownership bar on Holdings when positions exist.
+- Ownership bar on Holdings when positions exist: scales to authorized shares (hatched Unissued tail), names the top holders globally, colors segments per shareholder, and caps the tiny-slice legend at 6 entries + a "+N more" summary chip.
 - Activity log (localStorage) + historical transactions with explorer TX links.
 - Human copy only — see `lib/copy.ts`.
 
 ### Theming
 
-The theme is defined in `src/components/theme.ts` and typed in `styled.d.ts`. Design direction: **strict ledger** — monochrome white-opacity gray ramp on near-black, one rust accent, 0 radius, 1px hairlines, 4px spacing grid. Token groups:
+The theme is defined in `src/components/theme.ts` and typed in `styled.d.ts`. Design direction: **strict ledger** — monochrome white-opacity gray ramp on near-black, one lime accent (`#c8f542`), 0 radius, 1px hairlines, 4px spacing grid. Token groups:
 
 - `colors`: background, surface, elevated, border, borderStrong, text, textMuted, textSubtle, accent, accentMuted, onAccent, success/successBg, error/errorBg, pending/pendingBg, overlay, inverse
 - `fonts`: sans (Inter — UI copy), mono (IBM Plex Mono — numbers, addresses, tables, inputs)
