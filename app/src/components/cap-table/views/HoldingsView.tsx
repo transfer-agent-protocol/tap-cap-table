@@ -4,7 +4,7 @@ import { Button, StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from 
 import { H3, MutedText } from "../../typography";
 import { copy } from "../../../lib/copy";
 import { SetupChecklist } from "../SetupChecklist";
-import { OwnershipBar } from "../OwnershipBar";
+import { OwnershipBoxes } from "../OwnershipBoxes";
 import { buildOwnershipChart, formatPct, formatShares } from "../ownershipModel";
 import type { CapTableView } from "../../shell/navConfig";
 
@@ -120,7 +120,7 @@ export function HoldingsView({
 					</StatGrid>
 				)}
 				{showBar && (
-					<OwnershipBar
+					<OwnershipBoxes
 						holdingsData={holdingsData}
 						createdIssuances={createdIssuances}
 						authorized={hasAuthorized ? authorized : undefined}

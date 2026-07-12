@@ -14,8 +14,9 @@ test.beforeEach(async ({ page }) => {
 
 test.describe("cap table at scale", () => {
 	test("ownership legend is capped with a summary chip", async ({ page }) => {
-		const bar = page.getByTestId("ownership-bar");
-		await expect(bar).toBeVisible();
+		const boxes = page.getByTestId("ownership-boxes");
+		await expect(boxes).toBeVisible();
+		const bar = boxes;
 
 		// 30 tiny holders must not produce 30 chips
 		const more = page.getByTestId("legend-more");
