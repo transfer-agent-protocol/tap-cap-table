@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import styled from "styled-components";
 import { PageHeaderBar } from "./layout";
-import { H2, MutedText } from "./typography";
+import { H2 } from "./typography";
 
 const HeaderText = styled.div`
 	display: flex;
@@ -15,6 +15,15 @@ const HeaderActions = styled.div`
 	flex-flow: row wrap;
 	align-items: center;
 	gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+// Div wrapper — callers may pass <P> (a block element) as description;
+// wrapping in another <p> would produce invalid HTML and a hydration error.
+const DescriptionText = styled.div`
+	max-width: ${({ theme }) => theme.maxWidths.text};
+	font-size: ${({ theme }) => theme.fontSizes.small};
+	line-height: ${({ theme }) => theme.lineHeights.P};
+	color: ${({ theme }) => theme.colors.textMuted};
 `;
 
 interface PageHeaderProps {
@@ -32,7 +41,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
 		<PageHeaderBar data-testid="page-header">
 			<HeaderText>
 				<H2 data-testid="page-title">{title}</H2>
-				{description ? <MutedText>{description}</MutedText> : null}
+				{description ? <DescriptionText>{description}</DescriptionText> : null}
 			</HeaderText>
 			{actions ? <HeaderActions>{actions}</HeaderActions> : null}
 		</PageHeaderBar>
