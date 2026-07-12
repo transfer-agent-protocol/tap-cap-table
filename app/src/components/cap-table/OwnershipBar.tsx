@@ -219,7 +219,44 @@ export function OwnershipBar({
 	if (!model) return null;
 
 	const { total, barTotal, slices, classBands, unissued } = model;
-	const tiny = slices.filter((s) => !shouldShowSliceLabel(s.pct));
+
+	// Legend for slices too small to label under the bar — aggregated by
+	// shareholder (one entry per person, classes joined), capped so 100
+	// holders never produce 100 chips.
+	const LEGEND_MAX = 6;
+	const tinyByHolder = new Map<
+		string,
+		{
+			shareholderId: string;
+			shareholderName: string;
+			classNames: string[];
+			quantity: number;
+			pctOfIssued: number;
+			isOther?: boolean;
+		}
+	>();
+	for (const s of slices) {
+		if (shouldShowSliceLabel(s.pct)) continue;
+		const prev = tinyByHolder.get(s.shareholderId);
+		if (prev) {
+			prev.quantity += s.quantity;
+			prev.pctOfIssued += s.pctOfIssued;
+			if (!prev.classNames.includes(s.stockClassName)) prev.classNames.push(s.stockClassName);
+		} else {
+			tinyByHolder.set(s.shareholderId, {
+				shareholderId: s.shareholderId,
+				shareholderName: s.shareholderName,
+				classNames: [s.stockClassName],
+				quantity: s.quantity,
+				pctOfIssued: s.pctOfIssued,
+				isOther: s.isOther,
+			});
+		}
+	}
+	const tinyEntries = Array.from(tinyByHolder.values()).sort((a, b) => b.quantity - a.quantity);
+	const legendEntries = tinyEntries.slice(0, LEGEND_MAX);
+	const legendRest = tinyEntries.slice(LEGEND_MAX);
+	const legendRestPct = legendRest.reduce((sum, e) => sum + e.pctOfIssued, 0);
 	let cursor = 0;
 	const starts = slices.map((s) => {
 		const start = cursor;
@@ -318,16 +355,33 @@ export function OwnershipBar({
 			</HolderRow>
 
 			{/* Legend for slices too narrow to label under the bar */}
-			{tiny.length > 0 && (
+			{legendEntries.length > 0 && (
 				<Legend>
-					{tiny.map((s) => (
-						<LegendItem key={s.key} title={sliceTitle(s)}>
-							<Swatch $tone={toneOf(s)} $isOther={s.isOther} />
+					{legendEntries.map((e) => (
+						<LegendItem
+							key={e.shareholderId}
+							title={`${e.shareholderName} · ${e.classNames.join(", ")} · ${formatShares(e.quantity)} (${formatPct(e.pctOfIssued)} of issued)`}
+						>
+							<Swatch
+								$tone={toneByHolder.get(e.shareholderId) ?? 0}
+								$isOther={e.isOther}
+							/>
 							<span>
-								{s.shareholderName} · {s.stockClassName} · {formatPct(s.pctOfIssued)}
+								{e.shareholderName} · {formatPct(e.pctOfIssued)}
 							</span>
 						</LegendItem>
 					))}
+					{legendRest.length > 0 && (
+						<LegendItem
+							title={legendRest.map((e) => e.shareholderName).join(", ")}
+							data-testid="legend-more"
+						>
+							<Swatch $tone={0} $isOther />
+							<span>
+								+ {legendRest.length} more · {formatPct(legendRestPct)} of issued
+							</span>
+						</LegendItem>
+					)}
 				</Legend>
 			)}
 		</Wrap>

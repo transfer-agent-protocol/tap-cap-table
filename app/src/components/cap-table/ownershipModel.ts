@@ -182,17 +182,24 @@ export function buildOwnershipChart(
 		return band;
 	});
 
-	// Within each class, sort holders by size; collapse tail into Others
+	// Name the biggest positions globally (top-N by quantity across classes) so
+	// major holders stay visible no matter how many classes exist; everything
+	// else collapses into a per-class Others slice.
+	const namedKeys = new Set(
+		[...rows]
+			.sort((a, b) => b.quantity - a.quantity)
+			.slice(0, maxNamed)
+			.map((r) => `${r.shareholderId}|${r.stockClassId}`),
+	);
+
 	const slices: OwnershipSlice[] = [];
 	for (const [classId, cInfo] of classList) {
 		const inClass = rows
 			.filter((r) => r.stockClassId === classId)
 			.sort((a, b) => b.quantity - a.quantity);
 
-		// Budget named slices per class proportional-ish, at least 2, cap maxNamed total later
-		const namedHere = Math.max(2, Math.ceil(maxNamed / classList.length));
-		const head = inClass.slice(0, namedHere);
-		const tail = inClass.slice(namedHere);
+		const head = inClass.filter((r) => namedKeys.has(`${r.shareholderId}|${r.stockClassId}`));
+		const tail = inClass.filter((r) => !namedKeys.has(`${r.shareholderId}|${r.stockClassId}`));
 
 		for (const r of head) {
 			slices.push({
