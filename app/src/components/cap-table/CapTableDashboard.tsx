@@ -889,6 +889,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				activityLog={activityLog}
 				isLoading={manager.isLoadingHoldings}
 				syncNote={syncNote}
+				holdings={manager.holdings?.holdings || []}
 				adding={addingShareholder}
 				onAddingChange={setAddingShareholder}
 				onSubmit={handleStakeholder}

@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import { StatusMessage, Table, TableFrame } from "./elements";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import styled from "styled-components";
+import { Button, StatusMessage, Table, TableFrame } from "./elements";
 import { MutedText } from "./typography";
 
 export interface Column<T> {
@@ -9,6 +10,11 @@ export interface Column<T> {
 	/** Optional fixed/min width e.g. "8rem" or "12%" */
 	width?: string;
 	render: (row: T) => ReactNode;
+	/**
+	 * Presence makes the column sortable. Return a number for numeric
+	 * columns (shares, prices) or a string for text.
+	 */
+	sortValue?: (row: T) => number | string;
 }
 
 export interface DataTableProps<T> {
@@ -23,12 +29,51 @@ export interface DataTableProps<T> {
 	caption?: ReactNode;
 	/** Accessible label for the table */
 	"aria-label"?: string;
+	/** Render at most this many rows, with a "Show N more" control. */
+	pageSize?: number;
+	/** Initial sort; users can override by clicking sortable headers. */
+	initialSort?: { key: string; dir: "asc" | "desc" };
+}
+
+const SortHeader = styled.button`
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	cursor: pointer;
+
+	&:hover {
+		color: ${({ theme }) => theme.colors.text};
+	}
+`;
+
+const TableFooter = styled.div`
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: ${({ theme }) => theme.spacing.sm};
+	margin-top: ${({ theme }) => theme.spacing.sm};
+`;
+
+function compare(a: number | string, b: number | string): number {
+	if (typeof a === "number" && typeof b === "number") {
+		return a - b;
+	}
+	return String(a).localeCompare(String(b), undefined, { sensitivity: "base" });
 }
 
 /**
  * Shared data table for the manage workspace.
  * Always renders one explicit state: error, first-load, empty, or rows.
- * Styling comes from `Table` / `TableFrame` so every list looks the same.
+ * Opt-in per-column sorting (`sortValue`) and incremental pagination
+ * (`pageSize`) keep large cap tables scannable without virtualization.
  */
 export function DataTable<T>({
 	columns,
@@ -39,8 +84,38 @@ export function DataTable<T>({
 	emptyMessage = "Nothing here yet.",
 	caption,
 	"aria-label": ariaLabel,
+	pageSize,
+	initialSort,
 }: DataTableProps<T>) {
 	const span = columns.length;
+	const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(
+		initialSort ?? null,
+	);
+	const [visible, setVisible] = useState(pageSize ?? Infinity);
+
+	// New data (search, refresh) resets pagination so results aren't hidden.
+	useEffect(() => {
+		setVisible(pageSize ?? Infinity);
+	}, [rows.length, pageSize]);
+
+	const sorted = useMemo(() => {
+		if (!sort) return rows;
+		const col = columns.find((c) => c.key === sort.key);
+		if (!col?.sortValue) return rows;
+		const dir = sort.dir === "asc" ? 1 : -1;
+		return [...rows].sort((a, b) => dir * compare(col.sortValue!(a), col.sortValue!(b)));
+	}, [rows, columns, sort]);
+
+	const shown = Number.isFinite(visible) ? sorted.slice(0, visible) : sorted;
+	const hiddenCount = sorted.length - shown.length;
+
+	const toggleSort = (key: string) => {
+		setSort((prev) =>
+			prev?.key === key
+				? { key, dir: prev.dir === "desc" ? "asc" : "desc" }
+				: { key, dir: "desc" },
+		);
+	};
 
 	return (
 		<div style={{ width: "100%" }}>
@@ -55,8 +130,26 @@ export function DataTable<T>({
 										textAlign: c.align ?? "left",
 										width: c.width,
 									}}
+									aria-sort={
+										sort?.key === c.key
+											? sort.dir === "asc"
+												? "ascending"
+												: "descending"
+											: undefined
+									}
 								>
-									{c.header}
+									{c.sortValue ? (
+										<SortHeader
+											type="button"
+											onClick={() => toggleSort(c.key)}
+											title="Sort"
+										>
+											{c.header}
+											{sort?.key === c.key ? (sort.dir === "asc" ? " ↑" : " ↓") : ""}
+										</SortHeader>
+									) : (
+										c.header
+									)}
 								</th>
 							))}
 						</tr>
@@ -84,7 +177,7 @@ export function DataTable<T>({
 								</td>
 							</tr>
 						) : (
-							rows.map((row, i) => (
+							shown.map((row, i) => (
 								<tr key={rowKey(row, i)}>
 									{columns.map((c) => (
 										<td key={c.key} style={{ textAlign: c.align ?? "left" }}>
@@ -97,9 +190,28 @@ export function DataTable<T>({
 					</tbody>
 				</Table>
 			</TableFrame>
-			{caption ? (
-				<MutedText style={{ marginTop: "0.5rem" }}>{caption}</MutedText>
-			) : null}
+			{(hiddenCount > 0 || caption) && (
+				<TableFooter>
+					{hiddenCount > 0 ? (
+						<>
+							<MutedText data-testid="table-row-count">
+								Showing {shown.length} of {sorted.length}
+							</MutedText>
+							<Button
+								$variant="ghost"
+								type="button"
+								onClick={() => setVisible((v) => v + (pageSize ?? 25))}
+								data-testid="table-show-more"
+							>
+								Show {Math.min(pageSize ?? 25, hiddenCount)} more
+							</Button>
+						</>
+					) : (
+						<span />
+					)}
+					{caption ? <MutedText>{caption}</MutedText> : null}
+				</TableFooter>
+			)}
 		</div>
 	);
 }

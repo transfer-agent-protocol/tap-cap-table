@@ -23,7 +23,8 @@ test.describe("companies list", () => {
 		await expect(page.getByText("Has holdings")).toBeVisible();
 		await expect(page.getByText("2 shareholders")).toBeVisible();
 
-		await page.getByRole("button", { name: "Open", exact: true }).click();
+		// Two companies are seeded; the one with holdings sorts first.
+		await page.getByRole("button", { name: "Open", exact: true }).first().click();
 		await expect(page).toHaveURL(new RegExp(`/app/companies/${ISSUER_ID}`));
 		await expect(page.getByTestId("cap-table-dashboard")).toBeVisible();
 	});
