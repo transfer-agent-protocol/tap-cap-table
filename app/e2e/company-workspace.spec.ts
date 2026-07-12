@@ -45,6 +45,15 @@ test.describe("company workspace", () => {
 		await expect(page.getByRole("cell", { name: "800,000" })).toBeVisible();
 	});
 
+	test("holdings offers a direct path to issue stock", async ({ page }) => {
+		await page.goto(`/app/companies/${ISSUER_ID}`);
+		await expect(page.getByTestId("view-overview")).toBeVisible();
+
+		await page.getByTestId("holdings-issue-stock").click();
+		await expect(page).toHaveURL(/view=issue-stock/);
+		await expect(page.getByTestId("view-issue-stock")).toBeVisible();
+	});
+
 	test("side nav drives section changes via ?view=", async ({ page }) => {
 		await page.goto(`/app/companies/${ISSUER_ID}`);
 		await expect(page.getByTestId("view-overview")).toBeVisible();

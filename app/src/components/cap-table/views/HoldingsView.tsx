@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Section, SectionHeader, Stack } from "../../layout";
-import { StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from "../../elements";
+import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
+import { Button, StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from "../../elements";
 import { H3, MutedText } from "../../typography";
 import { copy } from "../../../lib/copy";
 import { SetupChecklist } from "../SetupChecklist";
@@ -73,7 +73,20 @@ export function HoldingsView({
 							{hasPendingSync ? " · waiting on wallet…" : ""}
 						</MutedText>
 					</div>
-					{toolbar}
+					<SectionActions>
+						{/* Seeing unissued capacity invites the next step — offer it here */}
+						{!showSetup && (
+							<Button
+								$variant="primary"
+								onClick={() => onNavigate("issue-stock")}
+								disabled={isLoading}
+								data-testid="holdings-issue-stock"
+							>
+								{copy.issueStock.title}
+							</Button>
+						)}
+						{toolbar}
+					</SectionActions>
 				</SectionHeader>
 				{showSetup && (
 					<SetupChecklist
