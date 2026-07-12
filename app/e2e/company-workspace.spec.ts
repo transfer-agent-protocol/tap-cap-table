@@ -24,6 +24,17 @@ test.describe("company workspace", () => {
 		await expect(page.getByTestId("view-overview")).toBeVisible();
 		await expect(page.getByTestId("ownership-bar")).toBeVisible();
 
+		// Authorized vs issued surfaced honestly (10M authorized, 1M issued)
+		const stats = page.getByTestId("share-stats");
+		await expect(stats).toBeVisible();
+		await expect(stats).toContainText("Authorized");
+		await expect(stats).toContainText("10,000,000");
+		await expect(stats).toContainText("Issued");
+		await expect(stats).toContainText("1,000,000");
+		await expect(stats).toContainText("Remaining");
+		await expect(stats).toContainText("9,000,000");
+		await expect(stats).toContainText("10%");
+
 		// Mocked holdings render as table rows (mono/tabular data)
 		await expect(page.getByRole("cell", { name: "Alex Palmer" })).toBeVisible();
 		await expect(page.getByRole("cell", { name: "800,000" })).toBeVisible();
@@ -39,6 +50,13 @@ test.describe("company workspace", () => {
 		// Name and Type columns both read "Common" for the common class
 		await expect(
 			page.getByTestId("view-stock-classes").getByRole("cell", { name: "Common", exact: true }).first(),
+		).toBeVisible();
+		// Per-class Authorized and Issued
+		await expect(
+			page.getByTestId("view-stock-classes").getByRole("cell", { name: "10,000,000" }),
+		).toBeVisible();
+		await expect(
+			page.getByTestId("view-stock-classes").getByRole("cell", { name: "1,000,000", exact: true }),
 		).toBeVisible();
 
 		await openSection(page, "stakeholders");

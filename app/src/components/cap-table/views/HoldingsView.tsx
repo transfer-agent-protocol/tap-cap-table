@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Section, SectionHeader, Stack } from "../../layout";
-import { StatusMessage } from "../../elements";
+import { StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from "../../elements";
 import { H3, MutedText } from "../../typography";
 import { copy } from "../../../lib/copy";
 import { SetupChecklist } from "../SetupChecklist";
 import { OwnershipBar } from "../OwnershipBar";
+import { buildOwnershipChart, formatPct, formatShares } from "../ownershipModel";
 import type { CapTableView } from "../../shell/navConfig";
 
 interface HoldingsViewProps {
@@ -47,6 +48,16 @@ export function HoldingsView({
 	const showSetup = !isLoading && positionCount === 0;
 	const showBar = !isLoading && positionCount > 0;
 
+	// Authorized vs issued — don't let a 10B-share authorization hide behind a
+	// 1M-share issuance. Issued reuses the ownership chart total (chain holdings
+	// + optimistic session rows, deduped).
+	const authorized = Number(holdingsData?.issuer?.initial_shares_authorized);
+	const issued = buildOwnershipChart(holdingsData, createdIssuances)?.total ?? 0;
+	const hasAuthorized = Number.isFinite(authorized) && authorized > 0;
+	const remaining = hasAuthorized ? Math.max(authorized - issued, 0) : 0;
+	const issuedPct = hasAuthorized ? (issued / authorized) * 100 : 0;
+	const showStats = !isLoading && hasAuthorized;
+
 	return (
 		<Stack $gap="xl" data-testid="view-overview">
 			<Section>
@@ -75,6 +86,26 @@ export function HoldingsView({
 					<StatusMessage $variant="pending">{copy.sync.ghostClasses}</StatusMessage>
 				)}
 				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
+				{showStats && (
+					<StatGrid data-testid="share-stats">
+						<StatCard>
+							<StatLabel>Authorized</StatLabel>
+							<StatValue>{formatShares(authorized)}</StatValue>
+						</StatCard>
+						<StatCard>
+							<StatLabel>Issued</StatLabel>
+							<StatValue>{formatShares(issued)}</StatValue>
+						</StatCard>
+						<StatCard>
+							<StatLabel>Remaining</StatLabel>
+							<StatValue>{formatShares(remaining)}</StatValue>
+						</StatCard>
+						<StatCard>
+							<StatLabel>% issued</StatLabel>
+							<StatValue>{formatPct(issuedPct)}</StatValue>
+						</StatCard>
+					</StatGrid>
+				)}
 				{showBar && (
 					<OwnershipBar
 						holdingsData={holdingsData}

@@ -879,6 +879,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				onAddingChange={setAddingStockClass}
 				onSubmit={handleStockClass}
 				toolbar={toolbar}
+				holdings={manager.holdings?.holdings || []}
 			/>
 		);
 	} else if (currentView === "stakeholders") {

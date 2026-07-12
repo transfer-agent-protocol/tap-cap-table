@@ -20,6 +20,8 @@ interface StockClassesViewProps {
 	onAddingChange: (v: boolean) => void;
 	onSubmit: (data: StockClassData) => Promise<void>;
 	toolbar: ReactNode;
+	/** Current positions — drives the per-class Issued column */
+	holdings?: Array<{ stockClass?: { _id?: string }; quantity?: number | string }>;
 }
 
 interface ClassRow {
@@ -27,6 +29,7 @@ interface ClassRow {
 	name: string;
 	type: string;
 	authorized: string;
+	issued: string;
 	status: string;
 	tx: ReactNode;
 }
@@ -54,17 +57,24 @@ function renderTx(tx: string | undefined): ReactNode {
 }
 
 const columns: Column<ClassRow>[] = [
-	{ key: "name", header: "Name", width: "24%", render: (r) => r.name },
-	{ key: "type", header: "Type", width: "14%", render: (r) => r.type },
+	{ key: "name", header: "Name", width: "22%", render: (r) => r.name },
+	{ key: "type", header: "Type", width: "12%", render: (r) => r.type },
 	{
 		key: "authorized",
 		header: "Authorized",
 		align: "right",
-		width: "16%",
+		width: "15%",
 		render: (r) => r.authorized,
 	},
-	{ key: "status", header: "Status", width: "14%", render: (r) => r.status },
-	{ key: "tx", header: "Transaction", width: "18%", render: (r) => r.tx },
+	{
+		key: "issued",
+		header: "Issued",
+		align: "right",
+		width: "15%",
+		render: (r) => r.issued,
+	},
+	{ key: "status", header: "Status", width: "12%", render: (r) => r.status },
+	{ key: "tx", header: "Transaction", width: "16%", render: (r) => r.tx },
 ];
 
 export function StockClassesView({
@@ -78,7 +88,17 @@ export function StockClassesView({
 	onAddingChange,
 	onSubmit,
 	toolbar,
+	holdings = [],
 }: StockClassesViewProps) {
+	// Issued per class from current positions
+	const issuedByClass = new Map<string, number>();
+	for (const h of holdings) {
+		const id = h.stockClass?._id;
+		const qty = Number(h.quantity);
+		if (!id || !Number.isFinite(qty) || qty <= 0) continue;
+		issuedByClass.set(id, (issuedByClass.get(id) || 0) + qty);
+	}
+
 	const rows: ClassRow[] = stockClasses.map((sc: any) => {
 		const session = sessionClasses.find((d) => d._id === sc._id);
 		const live =
@@ -86,6 +106,7 @@ export function StockClassesView({
 			sc.is_onchain_synced === true ||
 			(sc.is_onchain_synced !== false && !session);
 		const authorized = sc.initial_shares_authorized ?? sc.shares_authorized;
+		const issued = issuedByClass.get(sc._id) || 0;
 		return {
 			key: sc._id,
 			name: sc.name || "—",
@@ -94,6 +115,7 @@ export function StockClassesView({
 				authorized != null && authorized !== ""
 					? Number(authorized).toLocaleString()
 					: "—",
+			issued: issued > 0 ? issued.toLocaleString() : "—",
 			status: live ? copy.stockClasses.live : copy.stockClasses.notLive,
 			tx: renderTx(txForClass(sc, activityLog)),
 		};
