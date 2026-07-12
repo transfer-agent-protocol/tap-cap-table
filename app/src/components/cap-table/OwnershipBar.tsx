@@ -49,7 +49,8 @@ const Bar = styled.div`
 	height: 1.75rem;
 	background: ${({ theme }) => theme.colors.surface};
 	border: 1px solid ${({ theme }) => theme.colors.border};
-	overflow: hidden;
+	/* overflow: visible so segment hover popovers can float above the bar */
+	overflow: visible;
 `;
 
 /** Lime + muted greens on dark — accent leads, tones alternate for legibility. */
@@ -62,7 +63,32 @@ const SEGMENT_TONES = (theme: any): string[] => [
 	"rgba(74, 222, 128, 0.55)",
 ];
 
+/**
+ * Floating name popover that appears when hovering a segment — essential
+ * when the bar segment is too narrow to display a permanent label beneath.
+ * Must be declared BEFORE Seg so the `&:hover ${SegPopover}` selector works.
+ */
+const SegPopover = styled.div`
+	position: absolute;
+	bottom: calc(100% + 6px);
+	left: 50%;
+	transform: translateX(-50%);
+	white-space: nowrap;
+	padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+	background: ${({ theme }) => theme.colors.background};
+	border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+	font-size: ${({ theme }) => theme.fontSizes.xs};
+	color: ${({ theme }) => theme.colors.text};
+	font-family: ${({ theme }) => theme.fonts.sans};
+	line-height: 1.5;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity ${({ theme }) => theme.transitions.default};
+	z-index: ${({ theme }) => theme.zIndices.dropdown};
+`;
+
 const Seg = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
+	position: relative;
 	flex: 0 0 ${({ $pct }) => $pct}%;
 	max-width: ${({ $pct }) => $pct}%;
 	height: 100%;
@@ -80,6 +106,10 @@ const Seg = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
 
 	&:hover {
 		filter: brightness(1.08);
+	}
+
+	&:hover ${SegPopover} {
+		opacity: 1;
 	}
 
 	&:last-child {
@@ -220,10 +250,22 @@ export function OwnershipBar({
 
 	const { total, barTotal, slices, classBands, unissued } = model;
 
+	const MIN_BAR_PCT = 3; // segment must be at least 3% wide for readable permanent text
+
+	// A slice gets a permanent label when the holder owns >= MIN_LABEL_PCT of
+	// *issued* shares AND the bar segment is wide enough for readable text.
+	// Significant holders with a narrow segment get a hover popover instead.
+	const hasPermLabel = (s: (typeof slices)[number]) =>
+		shouldShowSliceLabel(s.pctOfIssued) && s.pct >= MIN_BAR_PCT;
+
+	// Legend entries: only truly minor holders (low ownership %).
+	// Significant-but-narrow holders get hover popovers, not legend chips.
+	const isMinorHolder = (s: (typeof slices)[number]) => !shouldShowSliceLabel(s.pctOfIssued);
+
 	// Legend for slices too small to label under the bar — aggregated by
 	// shareholder (one entry per person, classes joined), capped so 100
 	// holders never produce 100 chips.
-	const LEGEND_MAX = 6;
+	const LEGEND_MAX = 5;
 	const tinyByHolder = new Map<
 		string,
 		{
@@ -236,7 +278,7 @@ export function OwnershipBar({
 		}
 	>();
 	for (const s of slices) {
-		if (shouldShowSliceLabel(s.pct)) continue;
+		if (!isMinorHolder(s)) continue; // significant holders: hover popover only, no legend chip
 		const prev = tinyByHolder.get(s.shareholderId);
 		if (prev) {
 			prev.quantity += s.quantity;
@@ -312,7 +354,14 @@ export function OwnershipBar({
 						$tone={toneOf(s)}
 						$isOther={s.isOther}
 						title={sliceTitle(s)}
-					/>
+					>
+						{/* Hover popover — always available, essential when bar segment is narrow */}
+						<SegPopover>
+							{s.shareholderName}
+							{!s.isOther && ` · ${s.stockClassName}`}
+							{` · ${formatShares(s.quantity)} (${formatPct(s.pctOfIssued)})`}
+						</SegPopover>
+					</Seg>
 				))}
 				{unissued && (
 					<UnissuedSeg
@@ -325,7 +374,7 @@ export function OwnershipBar({
 			{/* Shareholder names below — % of issued (ownership) */}
 			<HolderRow>
 				{slices.map((s, i) => {
-					if (!shouldShowSliceLabel(s.pct)) return null;
+					if (!hasPermLabel(s)) return null;
 					return (
 						<HolderLabel
 							key={s.key}
