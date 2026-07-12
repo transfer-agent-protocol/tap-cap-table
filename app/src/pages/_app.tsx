@@ -4,19 +4,25 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { ThemeProvider } from "styled-components";
 import theme from "../components/theme";
-import GlobalStyle from "../components/globalstyle";
-import { IBM_Plex_Mono } from "next/font/google";
+import GlobalStyle from "../components/global-style";
+import { IBM_Plex_Mono, Inter } from "next/font/google";
 
-import Layout from "../components/layout";
-import { AppShellProvider } from "../components/AppShellContext";
+import AppShell from "../components/shell/AppShell";
+import { AppShellProvider } from "../components/shell/AppShellContext";
 import Web3Provider from "../config/Web3Provider";
+
+// Sans for UI copy; mono reserved for data (numbers, addresses, tables).
+const inter = Inter({
+	subsets: ["latin"],
+	display: "swap",
+	variable: "--font-sans",
+});
 
 const plex = IBM_Plex_Mono({
 	weight: ["400", "500", "600", "700"],
-	style: ["normal", "italic"],
 	subsets: ["latin-ext"],
 	display: "swap",
-	preload: true,
+	variable: "--font-mono",
 });
 
 function isExtensionNoise(msg: string, source?: string, stack?: string): boolean {
@@ -70,7 +76,7 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 			<ThemeProvider theme={theme}>
 				<GlobalStyle />
 				<AppShellProvider>
-					<Layout className={plex.className}>
+					<AppShell className={`${inter.variable} ${plex.variable}`}>
 						<Head>
 							<meta charSet="utf-8" />
 							<meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -97,13 +103,13 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 							<link rel="icon" href="/favicon.ico" />
 							<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 							<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-							<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#09090b" />
+							<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0a0a0a" />
 							<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-							<meta name="theme-color" content="#09090b" />
-							<meta name="msapplication-TileColor" content="#09090b" />
+							<meta name="theme-color" content="#0a0a0a" />
+							<meta name="msapplication-TileColor" content="#0a0a0a" />
 						</Head>
 						<Component {...pageProps} />
-					</Layout>
+					</AppShell>
 				</AppShellProvider>
 			</ThemeProvider>
 		</Web3Provider>

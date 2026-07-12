@@ -1,5 +1,6 @@
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
-import { WalletButtonStyled } from "./buttons";
+import { Button } from "../elements";
+import { Mono } from "../typography";
 
 function truncateAddress(address: string): string {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -10,8 +11,8 @@ export default function WalletButtonClient() {
 	const { address, isConnected } = useAppKitAccount();
 
 	return (
-		<WalletButtonStyled onClick={() => open()}>
-			{isConnected && address ? truncateAddress(address) : "Connect Wallet"}
-		</WalletButtonStyled>
+		<Button $variant="primary" onClick={() => open()}>
+			{isConnected && address ? <Mono>{truncateAddress(address)}</Mono> : "Connect Wallet"}
+		</Button>
 	);
 }
