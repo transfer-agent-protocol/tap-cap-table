@@ -38,12 +38,13 @@ const Field = styled.div`
 	min-width: 0;
 `;
 
-/** Fields side by side; stacks on phones. */
+/** Fields side by side; stacks on phones. Top-aligned so labels line up
+ * even when one field carries helper/validation text below its input. */
 const FieldRow = styled.div`
 	display: flex;
 	flex-flow: row nowrap;
 	gap: ${({ theme }) => theme.spacing.md};
-	align-items: flex-end;
+	align-items: flex-start;
 
 	& > * {
 		flex: 1 1 0;
