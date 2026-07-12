@@ -243,24 +243,25 @@ export function SideNav() {
 								{APP_NAV_ITEMS.map((item) => {
 									const active = item.match(pathname);
 									return (
-										<Link key={item.id} href={item.href} passHref legacyBehavior>
-											<NavLink
-												$active={active}
-												onClick={closeMobile}
-												data-nav-id={item.id}
-											>
-												{item.label}
-											</NavLink>
-										</Link>
+										<NavLink
+											key={item.id}
+											as={Link}
+											href={item.href}
+											$active={active}
+											onClick={closeMobile}
+											data-nav-id={item.id}
+										>
+											{item.label}
+										</NavLink>
 									);
 								})}
 							</NavSection>
 
 							{isCapTableRoute && issuerId && (
 								<NavSection data-testid="cap-table-sections">
-									<Link href="/app/companies" passHref legacyBehavior>
-										<BackLink onClick={closeMobile}>← Companies</BackLink>
-									</Link>
+									<BackLink as={Link} href="/app/companies" onClick={closeMobile}>
+										← Companies
+									</BackLink>
 									<NavLabel>Company</NavLabel>
 									{CAP_TABLE_SECTIONS.map((section) => {
 										const active = currentView === section.id;
