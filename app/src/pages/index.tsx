@@ -1,4 +1,5 @@
-import { Content, Heading, StyledTable, TableScroll } from "../components/wrappers";
+import { ContentColumn, Section, Stack } from "../components/layout";
+import { Table, TableFrame } from "../components/elements";
 import { H2, P } from "../components/typography";
 
 /**
@@ -7,8 +8,9 @@ import { H2, P } from "../components/typography";
  */
 export default function Home() {
 	return (
-		<Content data-testid="home-page">
-			<Heading>
+		<ContentColumn data-testid="home-page">
+			<Stack $gap="2xl">
+			<Stack $gap="md">
 				<P>Tokenize RWA cap tables and handle post-trade settlement.</P>
 				<P>
 					Fully onchain protocol that&apos;s based on{" "}
@@ -24,7 +26,8 @@ export default function Home() {
 				>
 					Read how this started
 				</a>
-			</Heading>
+			</Stack>
+			<Section>
 
 			<H2>Demo contracts:</H2>
 			<P>
@@ -49,8 +52,8 @@ export default function Home() {
 				</a>
 			</P>
 
-			<TableScroll>
-				<StyledTable>
+			<TableFrame>
+				<Table>
 					<thead>
 						<tr>
 							<th>Name</th>
@@ -127,8 +130,10 @@ export default function Home() {
 							</td>
 						</tr>
 					</tbody>
-				</StyledTable>
-			</TableScroll>
-		</Content>
+				</Table>
+			</TableFrame>
+			</Section>
+			</Stack>
+		</ContentColumn>
 	);
 }

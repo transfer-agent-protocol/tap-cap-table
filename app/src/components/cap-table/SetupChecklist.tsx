@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
-import { StatusBox } from "../wrappers";
+import { StatusMessage } from "../elements";
 import { copy } from "../../lib/copy";
-import type { CapTableView } from "../navConfig";
+import type { CapTableView } from "../shell/navConfig";
 
 interface SetupChecklistProps {
 	peopleCount: number;
@@ -25,7 +25,7 @@ const linkStyle: CSSProperties = {
  */
 export function SetupChecklist({ peopleCount, onchainClassCount, onNavigate }: SetupChecklistProps) {
 	return (
-		<StatusBox $variant="pending">
+		<StatusMessage $variant="pending">
 			<strong>{copy.setup.title}</strong>
 			<ol style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
 				<li style={{ opacity: onchainClassCount > 0 ? 0.55 : 1 }}>
@@ -46,6 +46,6 @@ export function SetupChecklist({ peopleCount, onchainClassCount, onNavigate }: S
 					</button>
 				</li>
 			</ol>
-		</StatusBox>
+		</StatusMessage>
 	);
 }

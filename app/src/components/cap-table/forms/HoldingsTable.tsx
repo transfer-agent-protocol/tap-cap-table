@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { InlineButton } from "./buttons";
-import { DataTable, type Column } from "./DataTable";
-import { SectionActions, SectionHeader, TableTitle } from "./wrappers";
-import { copy } from "../lib/copy";
-import { holdingStatusForIssuance } from "../utils/holdingStatus";
+import { Button } from "../../elements";
+import { DataTable, type Column } from "../../DataTable";
+import { SectionActions, SectionHeader } from "../../layout";
+import { H3 } from "../../typography";
+import { copy } from "../../../lib/copy";
+import { holdingStatusForIssuance } from "../../../utils/holdingStatus";
 
 interface HoldingsTableProps {
 	holdingsData: any;
@@ -133,12 +134,12 @@ export function HoldingsTable({
 		<div>
 			{!compact && (
 				<SectionHeader>
-					<TableTitle>{copy.holdings.title}</TableTitle>
+					<H3>{copy.holdings.title}</H3>
 					{onRefresh && (
 						<SectionActions>
-							<InlineButton onClick={onRefresh} disabled={isLoading}>
+							<Button onClick={onRefresh} disabled={isLoading}>
 								{isLoading ? "Refreshing…" : "Refresh"}
-							</InlineButton>
+							</Button>
 						</SectionActions>
 					)}
 				</SectionHeader>

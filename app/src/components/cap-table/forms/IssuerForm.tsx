@@ -1,5 +1,7 @@
-import { FieldGroup, FieldRow, FieldLabel, SectionLabel, Input, Divider } from "./forms";
-import type { IssuerFormFields } from "../hooks/useMintIssuer";
+import { Field, FieldRow, FieldLabel, TextInput } from "../../forms";
+import { Divider } from "../../elements";
+import { H3 } from "../../typography";
+import type { IssuerFormFields } from "../../../hooks/useMintIssuer";
 
 export interface IssuerFormProps {
 	fields: IssuerFormFields;
@@ -13,85 +15,85 @@ export function IssuerForm({ fields, setField, disabled }: IssuerFormProps) {
 
 	return (
 		<>
-			<FieldGroup>
+			<Field>
 				<FieldLabel>Legal Name *</FieldLabel>
-				<Input value={fields.legalName} onChange={(e) => setField("legalName", e.target.value)} disabled={disabled} />
-			</FieldGroup>
+				<TextInput value={fields.legalName} onChange={(e) => setField("legalName", e.target.value)} disabled={disabled} />
+			</Field>
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Formation Date *</FieldLabel>
-					<Input type="date" value={fields.formationDate} onChange={(e) => setField("formationDate", e.target.value)} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput type="date" value={fields.formationDate} onChange={(e) => setField("formationDate", e.target.value)} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>Country *</FieldLabel>
-					<Input value={fields.countryOfFormation} onChange={upper((v) => setField("countryOfFormation", v))} maxLength={2} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput value={fields.countryOfFormation} onChange={upper((v) => setField("countryOfFormation", v))} maxLength={2} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>State / Subdivision</FieldLabel>
-					<Input value={fields.subdivision} onChange={upper((v) => setField("subdivision", v))} disabled={disabled} />
-				</FieldGroup>
+					<TextInput value={fields.subdivision} onChange={upper((v) => setField("subdivision", v))} disabled={disabled} />
+				</Field>
 			</FieldRow>
 
-			<FieldGroup>
+			<Field>
 				<FieldLabel>Initial Shares Authorized *</FieldLabel>
-				<Input type="number" min="1" value={fields.sharesAuthorized} onChange={(e) => setField("sharesAuthorized", e.target.value)} disabled={disabled} />
-			</FieldGroup>
+				<TextInput type="number" min="1" value={fields.sharesAuthorized} onChange={(e) => setField("sharesAuthorized", e.target.value)} disabled={disabled} />
+			</Field>
 
 			<Divider />
 
-			<SectionLabel>Tax ID</SectionLabel>
+			<H3>Tax ID</H3>
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Tax ID</FieldLabel>
-					<Input value={fields.taxId} onChange={(e) => setField("taxId", e.target.value)} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput value={fields.taxId} onChange={(e) => setField("taxId", e.target.value)} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>Country</FieldLabel>
-					<Input value={fields.taxCountry} onChange={upper((v) => setField("taxCountry", v))} maxLength={2} disabled={disabled} />
-				</FieldGroup>
+					<TextInput value={fields.taxCountry} onChange={upper((v) => setField("taxCountry", v))} maxLength={2} disabled={disabled} />
+				</Field>
 			</FieldRow>
 
-			<SectionLabel>Email</SectionLabel>
+			<H3>Email</H3>
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Email Address</FieldLabel>
-					<Input type="email" value={fields.emailAddress} onChange={(e) => setField("emailAddress", e.target.value)} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput type="email" value={fields.emailAddress} onChange={(e) => setField("emailAddress", e.target.value)} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>Type</FieldLabel>
-					<Input value={fields.emailType} onChange={upper((v) => setField("emailType", v))} disabled={disabled} />
-				</FieldGroup>
+					<TextInput value={fields.emailType} onChange={upper((v) => setField("emailType", v))} disabled={disabled} />
+				</Field>
 			</FieldRow>
 
-			<SectionLabel>Address</SectionLabel>
-			<FieldGroup>
+			<H3>Address</H3>
+			<Field>
 				<FieldLabel>Street / Suite</FieldLabel>
-				<Input value={fields.streetSuite} onChange={(e) => setField("streetSuite", e.target.value)} disabled={disabled} />
-			</FieldGroup>
+				<TextInput value={fields.streetSuite} onChange={(e) => setField("streetSuite", e.target.value)} disabled={disabled} />
+			</Field>
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>City</FieldLabel>
-					<Input value={fields.city} onChange={(e) => setField("city", e.target.value)} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput value={fields.city} onChange={(e) => setField("city", e.target.value)} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>State</FieldLabel>
-					<Input value={fields.addressSubdivision} onChange={upper((v) => setField("addressSubdivision", v))} disabled={disabled} />
-				</FieldGroup>
+					<TextInput value={fields.addressSubdivision} onChange={upper((v) => setField("addressSubdivision", v))} disabled={disabled} />
+				</Field>
 			</FieldRow>
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Country</FieldLabel>
-					<Input value={fields.addressCountry} onChange={upper((v) => setField("addressCountry", v))} maxLength={2} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput value={fields.addressCountry} onChange={upper((v) => setField("addressCountry", v))} maxLength={2} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>Postal Code</FieldLabel>
-					<Input value={fields.postalCode} onChange={(e) => setField("postalCode", e.target.value)} disabled={disabled} />
-				</FieldGroup>
-				<FieldGroup>
+					<TextInput value={fields.postalCode} onChange={(e) => setField("postalCode", e.target.value)} disabled={disabled} />
+				</Field>
+				<Field>
 					<FieldLabel>Address Type</FieldLabel>
-					<Input value={fields.addressType} onChange={upper((v) => setField("addressType", v))} disabled={disabled} />
-				</FieldGroup>
+					<TextInput value={fields.addressType} onChange={upper((v) => setField("addressType", v))} disabled={disabled} />
+				</Field>
 			</FieldRow>
 		</>
 	);

@@ -1,25 +1,15 @@
 import { useRouter } from "next/router";
-import { Eyebrow, P } from "../../components/typography";
-import {
-	ActionTableLayout,
-	FullScreenStack,
-	MutedText,
-	PageIntro,
-	Panel,
-	ResponseBlock,
-	SectionActions,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../components/wrappers";
-import { InlineButton } from "../../components/buttons";
-import { FieldGroup as FormFieldGroup, FieldLabel as FormFieldLabel } from "../../components/forms";
-import { IssuerForm } from "../../components/IssuerForm";
-import { MintActions } from "../../components/MintActions";
+import { Eyebrow, H3, MutedText, P } from "../../components/typography";
+import { Grid, Page, SectionActions, SectionHeader, Stack } from "../../components/layout";
+import { Button, Panel, ResponseBlock, StatusMessage } from "../../components/elements";
+import { Field, FieldLabel } from "../../components/forms";
+import { PageHeader } from "../../components/PageHeader";
+import { IssuerForm } from "../../components/cap-table/forms/IssuerForm";
+import { MintActions } from "../../components/cap-table/forms/MintActions";
 import { useMintIssuer } from "../../hooks/useMintIssuer";
 import { saveLastMintedIssuer } from "../../utils/lastMintedIssuer";
 import { loadMyIssuers, mergeIssuers, saveMyIssuers } from "../../utils/myIssuers";
-import { capTableHref } from "../../components/navConfig";
+import { capTableHref } from "../../components/shell/navConfig";
 
 /**
  * /app/mint — create a new onchain company cap table.
@@ -47,70 +37,70 @@ export default function AppMintPage() {
 		const companyUrl = capTableHref(mint.result._id, "overview");
 
 		return (
-			<FullScreenStack>
-				<PageIntro>
+			<Page>
+				<Stack $gap="sm">
 					<Eyebrow>Done</Eyebrow>
-					<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
-						Your cap table is live
-					</TableTitle>
+					<H3>Your cap table is live</H3>
 					<MutedText>
 						Next: create a stock class, add shareholders, then issue stock.
 					</MutedText>
-				</PageIntro>
+				</Stack>
 
-				<StatusBox $variant="success">Company deployed successfully.</StatusBox>
+				<StatusMessage $variant="success">Company deployed successfully.</StatusMessage>
 
-				<FormFieldGroup>
-					<FormFieldLabel>Company ID</FormFieldLabel>
-					<ResponseBlock>{mint.result._id}</ResponseBlock>
-				</FormFieldGroup>
-				<FormFieldGroup>
-					<FormFieldLabel>Contract</FormFieldLabel>
-					<ResponseBlock>{mint.result.deployed_to}</ResponseBlock>
-				</FormFieldGroup>
-				<FormFieldGroup>
-					<FormFieldLabel>Transaction</FormFieldLabel>
-					<ResponseBlock>{mint.result.tx_hash}</ResponseBlock>
-				</FormFieldGroup>
+				<Stack $gap="md">
+					<Field>
+						<FieldLabel>Company ID</FieldLabel>
+						<ResponseBlock>{mint.result._id}</ResponseBlock>
+					</Field>
+					<Field>
+						<FieldLabel>Contract</FieldLabel>
+						<ResponseBlock>{mint.result.deployed_to}</ResponseBlock>
+					</Field>
+					<Field>
+						<FieldLabel>Transaction</FieldLabel>
+						<ResponseBlock>{mint.result.tx_hash}</ResponseBlock>
+					</Field>
+				</Stack>
 
 				<SectionActions>
-					<InlineButton onClick={() => router.push(companyUrl)} $variant="primary">
+					<Button onClick={() => router.push(companyUrl)} $variant="primary">
 						Open company
-					</InlineButton>
-					<InlineButton onClick={() => router.push("/app/companies")} $variant="secondary">
+					</Button>
+					<Button onClick={() => router.push("/app/companies")} $variant="secondary">
 						All companies
-					</InlineButton>
-					<InlineButton onClick={() => mint.reset()} $variant="ghost">
+					</Button>
+					<Button onClick={() => mint.reset()} $variant="ghost">
 						Create another
-					</InlineButton>
+					</Button>
 				</SectionActions>
-			</FullScreenStack>
+			</Page>
 		);
 	}
 
 	return (
-		<FullScreenStack>
-			<PageIntro>
-				<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
-					Create a new cap table
-				</TableTitle>
-				<P>
-					Enter company details and confirm with your wallet. You&apos;ll be the admin of this
-					cap table.
-				</P>
-			</PageIntro>
+		<Page>
+			<PageHeader
+				title="Create a new cap table"
+				description={
+					<P>
+						Enter company details and confirm with your wallet. You&apos;ll be the admin
+						of this cap table.
+					</P>
+				}
+			/>
 
-			<ActionTableLayout>
+			<Grid $columns="minmax(18rem, 30rem) minmax(0, 1fr)">
 				<Panel>
 					<SectionHeader>
-						<TableTitle>Company details</TableTitle>
+						<H3>Company details</H3>
 					</SectionHeader>
 					<IssuerForm fields={mint.fields} setField={mint.setField} disabled={mint.isBusy} />
 				</Panel>
 
 				<Panel>
 					<SectionHeader>
-						<TableTitle>Deploy</TableTitle>
+						<H3>Deploy</H3>
 					</SectionHeader>
 					<MintActions
 						isConnected={mint.isConnected}
@@ -127,7 +117,7 @@ export default function AppMintPage() {
 						onMint={mint.handleMint}
 					/>
 				</Panel>
-			</ActionTableLayout>
-		</FullScreenStack>
+			</Grid>
+		</Page>
 	);
 }

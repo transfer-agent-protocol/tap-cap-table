@@ -3,7 +3,7 @@ import type { StakeholderData } from "../../services/createStakeholder";
 import type { StockIssuanceData } from "../../services/createStockIssuance";
 import type { IssuerResponse } from "../../services/registerIssuer";
 import type { ActivityEntry } from "../../utils/activityLog";
-import type { CapTableView } from "../navConfig";
+import type { CapTableView } from "../shell/navConfig";
 
 export interface OptimisticStockClass {
 	_id: string;

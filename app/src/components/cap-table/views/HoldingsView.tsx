@@ -1,16 +1,11 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	MutedText,
-	PageLayout,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
+import { Section, SectionHeader, Stack } from "../../layout";
+import { StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
 import { copy } from "../../../lib/copy";
 import { SetupChecklist } from "../SetupChecklist";
 import { OwnershipBar } from "../OwnershipBar";
-import type { CapTableView } from "../../navConfig";
+import type { CapTableView } from "../../shell/navConfig";
 
 interface HoldingsViewProps {
 	positionCount: number;
@@ -53,11 +48,11 @@ export function HoldingsView({
 	const showBar = !isLoading && positionCount > 0;
 
 	return (
-		<PageLayout data-testid="view-overview">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-overview">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.holdings.title}</TableTitle>
+						<H3>{copy.holdings.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							{positionCount} holding{positionCount === 1 ? "" : "s"}
 							{" · "}
@@ -77,9 +72,9 @@ export function HoldingsView({
 					/>
 				)}
 				{ghostClassCount > 0 && positionCount === 0 && !showSetup && (
-					<StatusBox $variant="pending">{copy.sync.ghostClasses}</StatusBox>
+					<StatusMessage $variant="pending">{copy.sync.ghostClasses}</StatusMessage>
 				)}
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
 				{showBar && (
 					<OwnershipBar
 						holdingsData={holdingsData}
@@ -87,7 +82,7 @@ export function HoldingsView({
 					/>
 				)}
 				{holdingsTable}
-			</DataBand>
-		</PageLayout>
+			</Section>
+		</Stack>
 	);
 }

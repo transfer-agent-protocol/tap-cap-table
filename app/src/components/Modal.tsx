@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import styled from "styled-components";
-import { InlineButton } from "./buttons";
+import { Button } from "./elements";
 
 interface ModalProps {
 	isOpen: boolean;
@@ -34,12 +34,11 @@ const Backdrop = styled.div`
 `;
 
 const Dialog = styled.div<{ $maxWidth: string }>`
-	background: ${({ theme }) => theme.colors.elevated};
+	background: ${({ theme }) => theme.colors.background};
 	border: 1px solid ${({ theme }) => theme.colors.borderStrong};
-	border-radius: ${({ theme }) => theme.radii.md};
 	width: 100%;
 	max-width: ${({ $maxWidth }) => $maxWidth};
-	box-shadow: ${({ theme }) => theme.shadows.lg}, ${({ theme }) => theme.shadows.glow};
+	box-shadow: ${({ theme }) => theme.shadows.overlay};
 	overflow: hidden;
 	animation: rise 200ms cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -57,7 +56,7 @@ const Dialog = styled.div<{ $maxWidth: string }>`
 
 const Header = styled.div`
 	padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -73,14 +72,13 @@ const Title = styled.span`
 
 const CloseBtn = styled.button`
 	background: transparent;
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	border-radius: ${({ theme }) => theme.radii.sm};
+	border: 1px solid ${({ theme }) => theme.colors.border};
 	width: 2rem;
 	height: 2rem;
 	font-size: 1.1rem;
 	line-height: 1;
 	cursor: pointer;
-	color: ${({ theme }) => theme.colors.muted};
+	color: ${({ theme }) => theme.colors.textMuted};
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -91,15 +89,15 @@ const CloseBtn = styled.button`
 	&:hover {
 		color: ${({ theme }) => theme.colors.text};
 		border-color: ${({ theme }) => theme.colors.borderStrong};
-		background: ${({ theme }) => theme.colors.input};
+		background: ${({ theme }) => theme.colors.elevated};
 	}
 `;
 
 const Body = styled.div`
 	padding: ${({ theme }) => theme.spacing.lg};
-	color: ${({ theme }) => theme.colors.muted};
+	color: ${({ theme }) => theme.colors.textMuted};
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	line-height: 1.55;
+	line-height: ${({ theme }) => theme.lineHeights.P};
 `;
 
 const Footer = styled.div`
@@ -140,9 +138,9 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "440px" }: 
 				<Body>{children}</Body>
 				{!title && (
 					<Footer>
-						<InlineButton onClick={onClose} $variant="primary" type="button">
+						<Button onClick={onClose} $variant="primary" type="button">
 							Close
-						</InlineButton>
+						</Button>
 					</Footer>
 				)}
 			</Dialog>

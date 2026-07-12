@@ -1,8 +1,8 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { DashboardHeader, SectionActions } from "./wrappers";
-import { InlineButton } from "./buttons";
-import type { IssuerResponse } from "../services/registerIssuer";
+import { PageHeaderBar, SectionActions } from "../../layout";
+import { Button } from "../../elements";
+import type { IssuerResponse } from "../../../services/registerIssuer";
 
 const IssuerSummary = styled.div`
 	display: flex;
@@ -31,7 +31,7 @@ const MetaLine = styled.div`
 `;
 
 const MetaLink = styled.a`
-	color: ${({ theme }) => theme.colors.main} !important;
+	color: ${({ theme }) => theme.colors.accent} !important;
 	word-break: break-all;
 	overflow-wrap: anywhere;
 	text-decoration: none !important;
@@ -67,12 +67,12 @@ const DetailsToggle = styled.button`
 	padding: 0;
 	font: inherit;
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
 	cursor: pointer;
 	text-align: left;
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main};
+		color: ${({ theme }) => theme.colors.accent};
 	}
 `;
 
@@ -82,7 +82,8 @@ const DetailsBlock = styled.div`
 	gap: 0.35rem;
 	margin-top: 0.25rem;
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	color: ${({ theme }) => theme.colors.muted};
+	color: ${({ theme }) => theme.colors.textMuted};
+	font-family: ${({ theme }) => theme.fonts.mono};
 	font-variant-numeric: tabular-nums;
 	word-break: break-all;
 `;
@@ -102,7 +103,7 @@ export function IssuerHeader({ issuer, contractAddress, onReset }: IssuerHeaderP
 	const hasContract = !!contract && String(contract).startsWith("0x");
 
 	return (
-		<DashboardHeader>
+		<PageHeaderBar>
 			<IssuerSummary>
 				<IssuerName>{issuer.legal_name}</IssuerName>
 				<MetaLine>
@@ -142,10 +143,10 @@ export function IssuerHeader({ issuer, contractAddress, onReset }: IssuerHeaderP
 			</IssuerSummary>
 
 			<SectionActions>
-				<InlineButton onClick={onReset} $variant="ghost" title="Deploy a different company">
+				<Button onClick={onReset} $variant="ghost" title="Deploy a different company">
 					New company
-				</InlineButton>
+				</Button>
 			</SectionActions>
-		</DashboardHeader>
+		</PageHeaderBar>
 	);
 }

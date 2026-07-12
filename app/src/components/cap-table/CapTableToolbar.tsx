@@ -1,5 +1,5 @@
-import { SectionActions } from "../wrappers";
-import { InlineButton } from "../buttons";
+import { SectionActions } from "../layout";
+import { Button } from "../elements";
 import { copy } from "../../lib/copy";
 
 interface CapTableToolbarProps {
@@ -11,14 +11,14 @@ interface CapTableToolbarProps {
 export function CapTableToolbar({ onRefresh, busy }: CapTableToolbarProps) {
 	return (
 		<SectionActions>
-			<InlineButton
+			<Button
 				onClick={onRefresh}
 				disabled={busy}
 				$variant="ghost"
 				title="Refresh holdings and transactions from the blockchain"
 			>
 				{busy ? copy.sync.working : copy.sync.idle}
-			</InlineButton>
+			</Button>
 		</SectionActions>
 	);
 }

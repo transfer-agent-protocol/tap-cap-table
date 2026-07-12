@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { MutedText, StatusBox, StyledTable, TableScroll } from "./wrappers";
+import { StatusMessage, Table, TableFrame } from "./elements";
+import { MutedText } from "./typography";
 
 export interface Column<T> {
 	key: string;
@@ -27,7 +28,7 @@ export interface DataTableProps<T> {
 /**
  * Shared data table for the manage workspace.
  * Always renders one explicit state: error, first-load, empty, or rows.
- * Styling comes from `StyledTable` / `TableScroll` so every list looks the same.
+ * Styling comes from `Table` / `TableFrame` so every list looks the same.
  */
 export function DataTable<T>({
 	columns,
@@ -43,8 +44,8 @@ export function DataTable<T>({
 
 	return (
 		<div style={{ width: "100%" }}>
-			<TableScroll>
-				<StyledTable aria-label={ariaLabel}>
+			<TableFrame>
+				<Table aria-label={ariaLabel}>
 					<thead>
 						<tr>
 							{columns.map((c) => (
@@ -64,7 +65,7 @@ export function DataTable<T>({
 						{error ? (
 							<tr>
 								<td colSpan={span} style={{ padding: "1rem" }}>
-									<StatusBox $variant="error">{error}</StatusBox>
+									<StatusMessage $variant="error">{error}</StatusMessage>
 								</td>
 							</tr>
 						) : isLoading && rows.length === 0 ? (
@@ -94,8 +95,8 @@ export function DataTable<T>({
 							))
 						)}
 					</tbody>
-				</StyledTable>
-			</TableScroll>
+				</Table>
+			</TableFrame>
 			{caption ? (
 				<MutedText style={{ marginTop: "0.5rem" }}>{caption}</MutedText>
 			) : null}

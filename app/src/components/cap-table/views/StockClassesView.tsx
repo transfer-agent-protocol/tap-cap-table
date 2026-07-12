@@ -1,17 +1,9 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	FormBand,
-	MutedText,
-	PageLayout,
-	SectionActions,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
-import { InlineButton } from "../../buttons";
+import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
+import { Button, StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
 import { DataTable, type Column } from "../../DataTable";
-import { StockClassForm } from "../../StockClassForm";
+import { StockClassForm } from "../forms/StockClassForm";
 import { copy, shortTx } from "../../../lib/copy";
 import type { StockClassData } from "../../../services/createStockClass";
 import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
@@ -108,11 +100,11 @@ export function StockClassesView({
 	});
 
 	return (
-		<PageLayout data-testid="view-stock-classes">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-stock-classes">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.stockClasses.title}</TableTitle>
+						<H3>{copy.stockClasses.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							{stockClasses.length} class{stockClasses.length === 1 ? "" : "es"}
 							{ghostClassCount > 0 ? ` · ${ghostClassCount} not ready` : ""}
@@ -120,20 +112,20 @@ export function StockClassesView({
 					</div>
 					<SectionActions>
 						{!adding && (
-							<InlineButton
+							<Button
 								onClick={() => onAddingChange(true)}
 								$variant="primary"
 								disabled={isLoading}
 							>
 								{copy.stockClasses.add}
-							</InlineButton>
+							</Button>
 						)}
 						{toolbar}
 					</SectionActions>
 				</SectionHeader>
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
 				{adding && (
-					<FormBand style={{ marginBottom: "1rem" }}>
+					<Section style={{ marginBottom: "1rem" }}>
 						<StockClassForm
 							compact
 							onSubmit={async (data) => {
@@ -143,7 +135,7 @@ export function StockClassesView({
 							onCancel={() => onAddingChange(false)}
 							disabled={isLoading}
 						/>
-					</FormBand>
+					</Section>
 				)}
 				<DataTable<ClassRow>
 					aria-label={copy.stockClasses.title}
@@ -153,7 +145,7 @@ export function StockClassesView({
 					isLoading={isLoading}
 					emptyMessage={copy.stockClasses.empty}
 				/>
-			</DataBand>
-		</PageLayout>
+			</Section>
+		</Stack>
 	);
 }

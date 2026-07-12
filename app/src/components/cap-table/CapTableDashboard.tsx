@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/router";
-import { FullScreenStack, StatusBox } from "../wrappers";
-import { IssuerHeader } from "../IssuerHeader";
-import { HoldingsTable } from "../HoldingsTable";
+import { Stack } from "../layout";
+import { StatusMessage } from "../elements";
+import { IssuerHeader } from "./forms/IssuerHeader";
+import { HoldingsTable } from "./forms/HoldingsTable";
 import { TxSuccessModal } from "../TxSuccessModal";
 import { useCapTableManager } from "../../hooks/useCapTableManager";
 import { useDirectCreateStockClass } from "../../hooks/useDirectCreateStockClass";
@@ -17,7 +18,7 @@ import { registerStakeholderOnchain, type StakeholderData } from "../../services
 import { registerStockIssuanceOnchain, type StockIssuanceData } from "../../services/createStockIssuance";
 import type { IssuerResponse } from "../../services/registerIssuer";
 import { copy } from "../../lib/copy";
-import { capTableHref, parseCapTableView, type CapTableView } from "../navConfig";
+import { capTableHref, parseCapTableView, type CapTableView } from "../shell/navConfig";
 import { issuanceStillSyncing } from "../../utils/holdingStatus";
 import {
 	appendActivity,
@@ -26,7 +27,7 @@ import {
 	updateActivity,
 	type ActivityEntry,
 } from "../../utils/activityLog";
-import type { TransferStockFormData } from "../TransferStockForm";
+import type { TransferStockFormData } from "./forms/TransferStockForm";
 import {
 	dedupeById,
 	type CapTableDashboardProps,
@@ -946,7 +947,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	}
 
 	return (
-		<FullScreenStack data-testid="cap-table-dashboard">
+		<Stack $gap="lg" data-testid="cap-table-dashboard">
 			<IssuerHeader
 				issuer={{
 					...effectiveIssuer,
@@ -956,9 +957,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				onReset={onReset}
 			/>
 			{manager.holdingsError && (
-				<StatusBox $variant="error">
+				<StatusMessage $variant="error">
 					{copy.errors.holdingsHttp(manager.holdingsError)}
-				</StatusBox>
+				</StatusMessage>
 			)}
 			{main}
 			<TxSuccessModal
@@ -969,6 +970,6 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				message={successModal?.message}
 				variant={successModal?.variant || "success"}
 			/>
-		</FullScreenStack>
+		</Stack>
 	);
 }

@@ -1,17 +1,9 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	FormBand,
-	MutedText,
-	PageLayout,
-	SectionActions,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
-import { InlineButton } from "../../buttons";
+import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
+import { Button, StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
 import { DataTable, type Column } from "../../DataTable";
-import { StakeholderForm } from "../../StakeholderForm";
+import { StakeholderForm } from "../forms/StakeholderForm";
 import { copy, shortTx } from "../../../lib/copy";
 import type { StakeholderData } from "../../../services/createStakeholder";
 import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
@@ -85,31 +77,31 @@ export function ShareholdersView({
 	}));
 
 	return (
-		<PageLayout data-testid="view-stakeholders">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-stakeholders">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.shareholders.title}</TableTitle>
+						<H3>{copy.shareholders.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							{stakeholders.length} shareholder{stakeholders.length === 1 ? "" : "s"}
 						</MutedText>
 					</div>
 					<SectionActions>
 						{!adding && (
-							<InlineButton
+							<Button
 								onClick={() => onAddingChange(true)}
 								$variant="primary"
 								disabled={isLoading}
 							>
 								{copy.shareholders.add}
-							</InlineButton>
+							</Button>
 						)}
 						{toolbar}
 					</SectionActions>
 				</SectionHeader>
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
 				{adding && (
-					<FormBand style={{ marginBottom: "1rem" }}>
+					<Section style={{ marginBottom: "1rem" }}>
 						<StakeholderForm
 							compact
 							onSubmit={async (data) => {
@@ -119,7 +111,7 @@ export function ShareholdersView({
 							onCancel={() => onAddingChange(false)}
 							disabled={isLoading}
 						/>
-					</FormBand>
+					</Section>
 				)}
 				<DataTable<ShareholderRow>
 					aria-label={copy.shareholders.title}
@@ -129,7 +121,7 @@ export function ShareholdersView({
 					isLoading={isLoading}
 					emptyMessage={copy.shareholders.empty}
 				/>
-			</DataBand>
-		</PageLayout>
+			</Section>
+		</Stack>
 	);
 }

@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { MutedText } from "../wrappers";
+import { MutedText } from "../typography";
 import {
 	buildOwnershipChart,
 	formatPct,
@@ -14,7 +14,7 @@ const Wrap = styled.div`
 	gap: ${({ theme }) => theme.spacing.md};
 	width: 100%;
 	padding: ${({ theme }) => theme.spacing.md} 0 ${({ theme }) => theme.spacing.lg};
-	border-bottom: 1px solid ${({ theme }) => theme.colors.outline};
+	border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 	margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
@@ -35,7 +35,7 @@ const ClassLabel = styled.div<{ $start: number; $width: number }>`
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -47,10 +47,20 @@ const Bar = styled.div`
 	flex-flow: row nowrap;
 	width: 100%;
 	height: 1.75rem;
-	background: ${({ theme }) => theme.colors.input};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
+	background: ${({ theme }) => theme.colors.surface};
+	border: 1px solid ${({ theme }) => theme.colors.border};
 	overflow: hidden;
 `;
+
+/** Rust + monochrome ramp — accent leads, grays alternate for legibility. */
+const SEGMENT_TONES = (theme: any): string[] => [
+	theme.colors.accent,
+	"rgba(255, 255, 255, 0.45)",
+	"rgba(217, 95, 51, 0.55)",
+	"rgba(255, 255, 255, 0.25)",
+	"rgba(217, 95, 51, 0.3)",
+	"rgba(255, 255, 255, 0.6)",
+];
 
 const Seg = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
 	flex: 0 0 ${({ $pct }) => $pct}%;
@@ -60,18 +70,9 @@ const Seg = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
 	border-right: 1px solid ${({ theme }) => theme.colors.background};
 	background: ${({ theme, $tone, $isOther }) => {
 		if ($isOther) return theme.colors.elevated;
-		// Alternate lime / muted greens on dark for legibility
-		const tones = [
-			theme.colors.main,
-			"rgba(200, 245, 66, 0.55)",
-			"rgba(52, 211, 153, 0.75)",
-			"rgba(200, 245, 66, 0.35)",
-			"rgba(163, 230, 53, 0.65)",
-			"rgba(74, 222, 128, 0.55)",
-		];
+		const tones = SEGMENT_TONES(theme);
 		return tones[$tone % tones.length];
 	}};
-	/* dark text on bright lime segments */
 	opacity: 1;
 	min-width: ${({ $pct }) => ($pct > 0 && $pct < 0.8 ? "2px" : undefined)};
 	cursor: default;
@@ -102,7 +103,7 @@ const HolderLabel = styled.div<{ $start: number; $width: number }>`
 	box-sizing: border-box;
 	font-size: ${({ theme }) => theme.fontSizes.xs};
 	line-height: 1.3;
-	color: ${({ theme }) => theme.colors.muted};
+	color: ${({ theme }) => theme.colors.textMuted};
 	/* center under segment when wide enough */
 	text-align: ${({ $width }) => ($width >= 12 ? "center" : "left")};
 	overflow: hidden;
@@ -117,7 +118,7 @@ const Name = styled.div`
 `;
 
 const Meta = styled.div`
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -136,7 +137,7 @@ const LegendItem = styled.div`
 	align-items: center;
 	gap: 0.35rem;
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	color: ${({ theme }) => theme.colors.muted};
+	color: ${({ theme }) => theme.colors.textMuted};
 	max-width: 14rem;
 `;
 
@@ -146,17 +147,10 @@ const Swatch = styled.span<{ $tone: number; $isOther?: boolean }>`
 	flex-shrink: 0;
 	background: ${({ theme, $tone, $isOther }) => {
 		if ($isOther) return theme.colors.elevated;
-		const tones = [
-			theme.colors.main,
-			"rgba(200, 245, 66, 0.55)",
-			"rgba(52, 211, 153, 0.75)",
-			"rgba(200, 245, 66, 0.35)",
-			"rgba(163, 230, 53, 0.65)",
-			"rgba(74, 222, 128, 0.55)",
-		];
+		const tones = SEGMENT_TONES(theme);
 		return tones[$tone % tones.length];
 	}};
-	border: 1px solid ${({ theme }) => theme.colors.outline};
+	border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const TotalLine = styled(MutedText)`
