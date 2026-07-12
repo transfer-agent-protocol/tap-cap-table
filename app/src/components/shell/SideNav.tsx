@@ -27,30 +27,34 @@ const Overlay = styled.div<{ $open: boolean }>`
 	}
 `;
 
+const RAIL_WIDTH = "3rem";
+
 const Drawer = styled.aside<{ $collapsed: boolean; $mobileOpen: boolean }>`
 	position: sticky;
 	top: 0;
 	align-self: flex-start;
-	display: ${({ $collapsed }) => ($collapsed ? "none" : "flex")};
+	display: flex;
 	flex-flow: column nowrap;
-	width: ${({ theme }) => theme.layout.navWidth};
-	min-width: ${({ theme }) => theme.layout.navWidth};
+	width: ${({ theme, $collapsed }) => ($collapsed ? RAIL_WIDTH : theme.layout.navWidth)};
+	min-width: ${({ theme, $collapsed }) => ($collapsed ? RAIL_WIDTH : theme.layout.navWidth)};
 	height: 100vh;
-	background: ${({ theme }) => theme.colors.surface};
-	border-right: 1px solid ${({ theme }) => theme.colors.outline};
-	box-sizing: border-box;
+	background: ${({ theme }) => theme.colors.background};
+	border-right: 1px solid ${({ theme }) => theme.colors.border};
 	overflow-x: hidden;
 	overflow-y: auto;
 	z-index: ${({ theme }) => theme.zIndices.dropdown};
+	transition: width ${({ theme }) => theme.transitions.slow},
+		min-width ${({ theme }) => theme.transitions.slow};
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-		display: flex;
 		position: fixed;
 		left: 0;
 		top: 0;
+		width: ${({ theme }) => theme.layout.navWidth};
+		min-width: ${({ theme }) => theme.layout.navWidth};
 		transform: translateX(${({ $mobileOpen }) => ($mobileOpen ? "0" : "-100%")});
 		transition: transform ${({ theme }) => theme.transitions.default};
-		box-shadow: ${({ $mobileOpen, theme }) => ($mobileOpen ? theme.shadows.lg : "none")};
+		box-shadow: ${({ $mobileOpen, theme }) => ($mobileOpen ? theme.shadows.overlay : "none")};
 	}
 `;
 
@@ -62,21 +66,37 @@ const DrawerInner = styled.div`
 	min-height: 0;
 `;
 
-const BrandRow = styled(Link)`
+/** Collapse/expand control on the side nav edge (desktop only). */
+const CollapseRow = styled.div<{ $collapsed: boolean }>`
 	display: flex;
-	align-items: center;
-	padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+	flex-flow: row nowrap;
+	justify-content: ${({ $collapsed }) => ($collapsed ? "center" : "flex-end")};
+	padding: 0 ${({ theme }) => theme.spacing.sm};
 	margin-bottom: ${({ theme }) => theme.spacing.lg};
+
+	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+		display: none;
+	}
+`;
+
+const CollapseToggle = styled.button`
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 1px solid ${({ theme }) => theme.colors.border};
+	background: transparent;
+	color: ${({ theme }) => theme.colors.textMuted};
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	letter-spacing: -0.02em;
-	color: ${({ theme }) => theme.colors.text} !important;
-	text-decoration: none !important;
-	opacity: 1 !important;
+	cursor: pointer;
+	transition: border-color ${({ theme }) => theme.transitions.default},
+		color ${({ theme }) => theme.transitions.default};
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main} !important;
-		text-decoration: none !important;
+		border-color: ${({ theme }) => theme.colors.borderStrong};
+		color: ${({ theme }) => theme.colors.text};
 	}
 `;
 
@@ -95,27 +115,27 @@ const NavLabel = styled.div`
 	text-transform: uppercase;
 	padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
 	margin-bottom: ${({ theme }) => theme.spacing.xs};
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
+	white-space: nowrap;
 `;
 
 const NavLink = styled.a<{ $active?: boolean }>`
 	display: block;
 	width: 100%;
-	padding: 0.55rem ${({ theme }) => theme.spacing.sm};
+	padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.sm};
 	border: none;
 	border-left: 1px solid
-		${({ $active, theme }) => ($active ? theme.colors.main : "transparent")};
+		${({ $active, theme }) => ($active ? theme.colors.accent : "transparent")};
 	background: ${({ $active, theme }) => ($active ? theme.colors.accentMuted : "transparent")};
-	color: ${({ $active, theme }) => ($active ? theme.colors.main : theme.colors.muted)} !important;
+	color: ${({ $active, theme }) => ($active ? theme.colors.accent : theme.colors.textMuted)} !important;
 	font-size: ${({ theme }) => theme.fontSizes.small};
 	font-weight: ${({ $active, theme }) =>
 		$active ? theme.fontWeights.semibold : theme.fontWeights.normal};
 	font-family: inherit;
 	text-align: left;
 	text-decoration: none !important;
-	opacity: 1 !important;
+	white-space: nowrap;
 	cursor: pointer;
-	box-sizing: border-box;
 	transition: background ${({ theme }) => theme.transitions.default},
 		color ${({ theme }) => theme.transitions.default},
 		border-color ${({ theme }) => theme.transitions.default};
@@ -128,18 +148,18 @@ const NavLink = styled.a<{ $active?: boolean }>`
 `;
 
 const BackLink = styled(NavLink)`
-	color: ${({ theme }) => theme.colors.subtle} !important;
+	color: ${({ theme }) => theme.colors.textSubtle} !important;
 	margin-bottom: ${({ theme }) => theme.spacing.sm};
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main} !important;
+		color: ${({ theme }) => theme.colors.text} !important;
 	}
 `;
 
 const DrawerFooter = styled.div`
 	margin-top: auto;
 	padding: ${({ theme }) => theme.spacing.md};
-	border-top: 1px solid ${({ theme }) => theme.colors.outline};
+	border-top: 1px solid ${({ theme }) => theme.colors.border};
 	display: flex;
 	flex-flow: column nowrap;
 	gap: ${({ theme }) => theme.spacing.xs};
@@ -147,20 +167,25 @@ const DrawerFooter = styled.div`
 
 const ExternalLink = styled.a`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
-	color: ${({ theme }) => theme.colors.subtle} !important;
+	color: ${({ theme }) => theme.colors.textSubtle} !important;
 	text-decoration: none !important;
 	letter-spacing: 0.04em;
-	opacity: 1 !important;
+	white-space: nowrap;
 
 	&:hover {
-		color: ${({ theme }) => theme.colors.main} !important;
+		color: ${({ theme }) => theme.colors.text} !important;
 		text-decoration: none !important;
 	}
 `;
 
-export function LeftNavDrawer() {
+/**
+ * Side nav — the working navigation.
+ * App destinations, company sections when inside a company, and doc links.
+ * Collapses to a slim rail on desktop; overlay drawer on mobile.
+ */
+export function SideNav() {
 	const router = useRouter();
-	const { collapsed, mobileOpen, setMobileOpen } = useAppShell();
+	const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useAppShell();
 	const { pathname, query, asPath } = router;
 
 	// router.pathname is the *pattern* (e.g. /app/companies/[issuerId]) — never use it
@@ -199,68 +224,82 @@ export function LeftNavDrawer() {
 				aria-label="Workspace navigation"
 			>
 				<DrawerInner>
-					<BrandRow href="/" onClick={closeMobile}>
-						Home
-					</BrandRow>
+					<CollapseRow $collapsed={collapsed}>
+						<CollapseToggle
+							type="button"
+							onClick={toggleCollapsed}
+							aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+							title={collapsed ? "Expand navigation" : "Collapse navigation"}
+							data-testid="nav-collapse-toggle"
+						>
+							{collapsed ? "»" : "«"}
+						</CollapseToggle>
+					</CollapseRow>
 
-					<NavSection>
-						{APP_NAV_ITEMS.map((item) => {
-							const active = item.match(pathname);
-							return (
-								<Link key={item.id} href={item.href} passHref legacyBehavior>
-									<NavLink
-										$active={active}
-										onClick={closeMobile}
-										data-nav-id={item.id}
-									>
-										{item.label}
-									</NavLink>
-								</Link>
-							);
-						})}
-					</NavSection>
+					{!collapsed && (
+						<>
+							<NavSection>
+								<NavLabel>Workspace</NavLabel>
+								{APP_NAV_ITEMS.map((item) => {
+									const active = item.match(pathname);
+									return (
+										<NavLink
+											key={item.id}
+											as={Link}
+											href={item.href}
+											$active={active}
+											onClick={closeMobile}
+											data-nav-id={item.id}
+										>
+											{item.label}
+										</NavLink>
+									);
+								})}
+							</NavSection>
 
-					{isCapTableRoute && issuerId && (
-						<NavSection data-testid="cap-table-sections">
-							<Link href="/app/companies" passHref legacyBehavior>
-								<BackLink onClick={closeMobile}>← Companies</BackLink>
-							</Link>
-							<NavLabel>Company</NavLabel>
-							{CAP_TABLE_SECTIONS.map((section) => {
-								const active = currentView === section.id;
-								return (
-									<NavLink
-										as="button"
-										key={section.id}
-										type="button"
-										$active={active}
-										onClick={() => handleSectionNav(section.id)}
-										data-nav-id={section.id}
-										data-cap-section={section.id}
-									>
-										{section.label}
-									</NavLink>
-								);
-							})}
-						</NavSection>
+							{isCapTableRoute && issuerId && (
+								<NavSection data-testid="cap-table-sections">
+									<BackLink as={Link} href="/app/companies" onClick={closeMobile}>
+										← Companies
+									</BackLink>
+									<NavLabel>Company</NavLabel>
+									{CAP_TABLE_SECTIONS.map((section) => {
+										const active = currentView === section.id;
+										return (
+											<NavLink
+												as="button"
+												key={section.id}
+												type="button"
+												$active={active}
+												onClick={() => handleSectionNav(section.id)}
+												data-nav-id={section.id}
+												data-cap-section={section.id}
+											>
+												{section.label}
+											</NavLink>
+										);
+									})}
+								</NavSection>
+							)}
+
+							<DrawerFooter>
+								<ExternalLink
+									href="https://docs.transferagentprotocol.xyz"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									Docs
+								</ExternalLink>
+								<ExternalLink
+									href="https://github.com/transfer-agent-protocol/tap-cap-table"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									GitHub
+								</ExternalLink>
+							</DrawerFooter>
+						</>
 					)}
-
-					<DrawerFooter>
-						<ExternalLink
-							href="https://docs.transferagentprotocol.xyz"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Docs
-						</ExternalLink>
-						<ExternalLink
-							href="https://github.com/transfer-agent-protocol/tap-cap-table"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							GitHub
-						</ExternalLink>
-					</DrawerFooter>
 				</DrawerInner>
 			</Drawer>
 		</>

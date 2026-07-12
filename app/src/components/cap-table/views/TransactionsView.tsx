@@ -1,12 +1,7 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	MutedText,
-	PageLayout,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
+import { Section, SectionHeader, Stack } from "../../layout";
+import { StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
 import { DataTable, type Column } from "../../DataTable";
 import { copy, shortTx } from "../../../lib/copy";
 import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
@@ -129,18 +124,18 @@ export function TransactionsView({
 	const rows = [...localRows, ...historyRows];
 
 	return (
-		<PageLayout data-testid="view-transactions">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-transactions">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.transactions.title}</TableTitle>
+						<H3>{copy.transactions.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							{rows.length} record{rows.length === 1 ? "" : "s"}
 						</MutedText>
 					</div>
 					{toolbar}
 				</SectionHeader>
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
 				<DataTable<TxRow>
 					aria-label={copy.transactions.title}
 					columns={columns}
@@ -149,7 +144,7 @@ export function TransactionsView({
 					isLoading={isLoadingHistory}
 					emptyMessage={copy.transactions.empty}
 				/>
-			</DataBand>
-		</PageLayout>
+			</Section>
+		</Stack>
 	);
 }

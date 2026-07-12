@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, Input, Select, Divider } from "./forms";
-import { InlineButton, MintButton } from "./buttons";
-import { SectionActions } from "./wrappers";
-import type { StockClassData } from "../services/createStockClass";
-import { copy } from "../lib/copy";
+import { Form, Field, FieldRow, FieldLabel, TextInput, Select } from "../../forms";
+import { Button, Divider } from "../../elements";
+import { SectionActions } from "../../layout";
+import type { StockClassData } from "../../../services/createStockClass";
+import { copy } from "../../../lib/copy";
 
 interface Props {
 	onSubmit: (data: StockClassData) => Promise<void>;
@@ -46,20 +46,20 @@ export function StockClassForm({ onSubmit, onCancel, disabled, compact }: Props)
 	};
 
 	return (
-		<div>
-			<FieldGroup>
+		<Form as="div">
+			<Field>
 				<FieldLabel>Name</FieldLabel>
-				<Input
+				<TextInput
 					value={data.name}
 					onChange={(e) => update("name", e.target.value)}
 					disabled={isBusy}
 					placeholder="e.g. Common"
 					autoFocus={compact}
 				/>
-			</FieldGroup>
+			</Field>
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Type</FieldLabel>
 					<Select
 						value={data.class_type}
@@ -69,59 +69,60 @@ export function StockClassForm({ onSubmit, onCancel, disabled, compact }: Props)
 						<option value="COMMON">Common</option>
 						<option value="PREFERRED">Preferred</option>
 					</Select>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Certificate prefix</FieldLabel>
-					<Input
+					<TextInput
 						value={data.default_id_prefix}
 						onChange={(e) => update("default_id_prefix", e.target.value)}
 						disabled={isBusy}
 						placeholder="CS"
 					/>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Shares authorized</FieldLabel>
-					<Input
+					<TextInput
 						value={data.initial_shares_authorized}
 						onChange={(e) => update("initial_shares_authorized", e.target.value)}
 						disabled={isBusy}
 					/>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Votes per share</FieldLabel>
-					<Input
+					<TextInput
 						value={data.votes_per_share}
 						onChange={(e) => update("votes_per_share", e.target.value)}
 						disabled={isBusy}
 					/>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Price per share (USD)</FieldLabel>
-					<Input
+					<TextInput
 						value={data.price_per_share.amount}
 						onChange={(e) => updatePrice(e.target.value)}
 						disabled={isBusy}
 					/>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
 			<Divider />
 			<SectionActions>
-				<MintButton
+				<Button
+					$variant="primary"
 					onClick={handleSubmit}
 					disabled={isBusy || !data.name.trim() || !data.initial_shares_authorized}
 				>
 					{submitting ? copy.stockClasses.creating : copy.stockClasses.create}
-				</MintButton>
+				</Button>
 				{onCancel && (
-					<InlineButton type="button" onClick={onCancel} disabled={isBusy} $variant="ghost">
+					<Button type="button" onClick={onCancel} disabled={isBusy} $variant="ghost">
 						{copy.stockClasses.cancel}
-					</InlineButton>
+					</Button>
 				)}
 			</SectionActions>
-		</div>
+		</Form>
 	);
 }

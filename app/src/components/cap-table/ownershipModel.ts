@@ -9,8 +9,10 @@ export interface OwnershipSlice {
 	stockClassId: string;
 	stockClassName: string;
 	quantity: number;
-	/** 0–100 within the whole chart */
+	/** 0–100 of the bar (authorized when known, else issued) — drives widths */
 	pct: number;
+	/** 0–100 of issued shares — the ownership number people mean */
+	pctOfIssued: number;
 	/** true if merged small holders */
 	isOther?: boolean;
 	otherCount?: number;
@@ -26,9 +28,14 @@ export interface OwnershipClassBand {
 }
 
 export interface OwnershipChartModel {
+	/** Issued shares (sum of slices) */
 	total: number;
+	/** Denominator for widths: authorized when known, else issued */
+	barTotal: number;
 	slices: OwnershipSlice[];
 	classBands: OwnershipClassBand[];
+	/** Authorized-but-unissued remainder — only when authorized is provided */
+	unissued?: { quantity: number; pct: number };
 }
 
 const MAX_NAMED_SLICES = 8;
@@ -69,7 +76,7 @@ export function buildOwnershipChart(
 		confirmed?: boolean;
 		txHash?: string;
 	}> = [],
-	opts: { maxNamed?: number } = {},
+	opts: { maxNamed?: number; authorized?: number } = {},
 ): OwnershipChartModel | null {
 	const maxNamed = opts.maxNamed ?? MAX_NAMED_SLICES;
 	const holdings: any[] = holdingsData?.holdings || [];
@@ -145,6 +152,12 @@ export function buildOwnershipChart(
 	const total = rows.reduce((s, r) => s + r.quantity, 0);
 	if (total <= 0) return null;
 
+	// When the authorization is known, the bar represents authorized capacity;
+	// the tail past issued renders as an explicit "Unissued" segment.
+	const authorized = Number(opts.authorized);
+	const barTotal =
+		Number.isFinite(authorized) && authorized > total ? authorized : total;
+
 	// Class bands (across full bar)
 	const classMap = new Map<string, { name: string; quantity: number }>();
 	for (const r of rows) {
@@ -157,7 +170,7 @@ export function buildOwnershipChart(
 	const classList = Array.from(classMap.entries()).sort((a, b) => b[1].quantity - a[1].quantity);
 	let classCursor = 0;
 	const classBands: OwnershipClassBand[] = classList.map(([id, c]) => {
-		const pct = (c.quantity / total) * 100;
+		const pct = (c.quantity / barTotal) * 100;
 		const band = {
 			stockClassId: id,
 			stockClassName: c.name,
@@ -169,17 +182,24 @@ export function buildOwnershipChart(
 		return band;
 	});
 
-	// Within each class, sort holders by size; collapse tail into Others
+	// Name the biggest positions globally (top-N by quantity across classes) so
+	// major holders stay visible no matter how many classes exist; everything
+	// else collapses into a per-class Others slice.
+	const namedKeys = new Set(
+		[...rows]
+			.sort((a, b) => b.quantity - a.quantity)
+			.slice(0, maxNamed)
+			.map((r) => `${r.shareholderId}|${r.stockClassId}`),
+	);
+
 	const slices: OwnershipSlice[] = [];
 	for (const [classId, cInfo] of classList) {
 		const inClass = rows
 			.filter((r) => r.stockClassId === classId)
 			.sort((a, b) => b.quantity - a.quantity);
 
-		// Budget named slices per class proportional-ish, at least 2, cap maxNamed total later
-		const namedHere = Math.max(2, Math.ceil(maxNamed / classList.length));
-		const head = inClass.slice(0, namedHere);
-		const tail = inClass.slice(namedHere);
+		const head = inClass.filter((r) => namedKeys.has(`${r.shareholderId}|${r.stockClassId}`));
+		const tail = inClass.filter((r) => !namedKeys.has(`${r.shareholderId}|${r.stockClassId}`));
 
 		for (const r of head) {
 			slices.push({
@@ -189,7 +209,8 @@ export function buildOwnershipChart(
 				stockClassId: r.stockClassId,
 				stockClassName: r.stockClassName,
 				quantity: r.quantity,
-				pct: (r.quantity / total) * 100,
+				pct: (r.quantity / barTotal) * 100,
+				pctOfIssued: (r.quantity / total) * 100,
 			});
 		}
 		if (tail.length > 0) {
@@ -201,7 +222,8 @@ export function buildOwnershipChart(
 				stockClassId: classId,
 				stockClassName: cInfo.name,
 				quantity: q,
-				pct: (q / total) * 100,
+				pct: (q / barTotal) * 100,
+				pctOfIssued: (q / total) * 100,
 				isOther: true,
 				otherCount: tail.length,
 			});
@@ -214,7 +236,12 @@ export function buildOwnershipChart(
 		ordered.push(...slices.filter((s) => s.stockClassId === band.stockClassId));
 	}
 
-	return { total, slices: ordered, classBands };
+	const unissued =
+		barTotal > total
+			? { quantity: barTotal - total, pct: ((barTotal - total) / barTotal) * 100 }
+			: undefined;
+
+	return { total, barTotal, slices: ordered, classBands, unissued };
 }
 
 export function shouldShowSliceLabel(pct: number): boolean {

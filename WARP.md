@@ -300,9 +300,12 @@ pnpm app:build
 
 # Serve production build
 pnpm app:start
+
+# Playwright e2e (desktop + iPad + iPhone, mocked API)
+pnpm app:test:e2e
 ```
 
-The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, Reown AppKit, and TanStack Query. It serves the marketing landing page (`/`) and the product workspace under `/app/*` (companies, mint, company cap table). Legacy `/mint` and `/manage*` redirect to `/app`. Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
+The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, Reown AppKit, and TanStack Query. It serves the marketing landing page (`/`) and the product workspace under `/app/*` (companies, mint, company cap table). Legacy `/mint` and `/manage*` redirect to `/app`. The UI follows a strict design system (monochrome + rust accent, 4px grid, sans UI copy + mono data) defined in `app/src/components/theme.ts`; the side nav is the working navigation and the top bar is system-only. Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
 
 ### Deployment
 

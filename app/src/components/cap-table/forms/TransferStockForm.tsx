@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, Input, Divider, Select } from "./forms";
-import { MintButton } from "./buttons";
-import { MutedText } from "./wrappers";
-import { copy } from "../lib/copy";
+import { Form, Field, FieldRow, FieldLabel, TextInput, Select } from "../../forms";
+import { Button, Divider } from "../../elements";
+import { MutedText } from "../../typography";
+import { copy } from "../../../lib/copy";
 
 export interface TransferStockFormData {
 	transferor_id: string;
@@ -129,13 +129,13 @@ export function TransferStockForm({
 	const isBusy = disabled || submitting;
 
 	return (
-		<div>
+		<Form as="div">
 			{hint && (
 				<p style={{ opacity: 0.75, fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{hint}</p>
 			)}
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>From</FieldLabel>
 					<Select
 						value={fromId}
@@ -149,8 +149,8 @@ export function TransferStockForm({
 							</option>
 						))}
 					</Select>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>To</FieldLabel>
 					<Select
 						value={toId}
@@ -164,31 +164,33 @@ export function TransferStockForm({
 							</option>
 						))}
 					</Select>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
+			{/* Stock class gets its own row — names can be long */}
+			<Field>
+				<FieldLabel>Stock class</FieldLabel>
+				<Select
+					value={classId}
+					onChange={(e) => {
+						setClassId(e.target.value);
+						setQuantity("");
+					}}
+					disabled={isBusy || !fromId}
+				>
+					<option value="">Select class…</option>
+					{classesFromOwns.map((c) => (
+						<option key={c._id} value={c._id}>
+							{c.name || c._id}
+						</option>
+					))}
+				</Select>
+			</Field>
+
 			<FieldRow>
-				<FieldGroup>
-					<FieldLabel>Stock class</FieldLabel>
-					<Select
-						value={classId}
-						onChange={(e) => {
-							setClassId(e.target.value);
-							setQuantity("");
-						}}
-						disabled={isBusy || !fromId}
-					>
-						<option value="">Select class…</option>
-						{classesFromOwns.map((c) => (
-							<option key={c._id} value={c._id}>
-								{c.name || c._id}
-							</option>
-						))}
-					</Select>
-				</FieldGroup>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Shares to transfer</FieldLabel>
-					<Input
+					<TextInput
 						value={quantity}
 						onChange={(e) => setQuantity(e.target.value)}
 						disabled={isBusy || !classId}
@@ -200,22 +202,22 @@ export function TransferStockForm({
 							{overMax ? " — exceeds balance" : ""}
 						</MutedText>
 					)}
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Price per share (USD)</FieldLabel>
-					<Input
+					<TextInput
 						value={price}
 						onChange={(e) => setPrice(e.target.value)}
 						disabled={isBusy}
 						placeholder="0"
 					/>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
 			<Divider />
-			<MintButton onClick={handleSubmit} disabled={isBusy || !canSubmit}>
+			<Button $variant="primary" $block onClick={handleSubmit} disabled={isBusy || !canSubmit}>
 				{submitting ? "Confirm in wallet…" : copy.transfer.title}
-			</MintButton>
-		</div>
+			</Button>
+		</Form>
 	);
 }

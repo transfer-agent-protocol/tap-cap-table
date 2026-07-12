@@ -1,12 +1,12 @@
 import dynamic from "next/dynamic";
-import { MintButton, WalletButtonStyled } from "./buttons";
-import { StatusBox, ResponseBlock, MutedText } from "./wrappers";
-import { FieldGroup, FieldLabel } from "./forms";
-import type { IssuerResponse } from "../services/registerIssuer";
+import { Button, StatusMessage, ResponseBlock } from "../../elements";
+import { MutedText } from "../../typography";
+import { Field, FieldLabel } from "../../forms";
+import type { IssuerResponse } from "../../../services/registerIssuer";
 
-const WalletButton = dynamic(() => import("./WalletButtonClient"), {
+const WalletButton = dynamic(() => import("../../shell/WalletButtonClient"), {
 	ssr: false,
-	loading: () => <WalletButtonStyled>Connect Wallet</WalletButtonStyled>,
+	loading: () => <Button $variant="primary">Connect Wallet</Button>,
 });
 
 export interface MintActionsProps {
@@ -41,9 +41,9 @@ export function MintActions({
 	if (!isConnected) {
 		return (
 			<>
-				<StatusBox $variant="pending">
+				<StatusMessage $variant="pending">
 					Connect your wallet to create a cap table. That wallet becomes the admin.
-				</StatusBox>
+				</StatusMessage>
 				<div style={{ marginTop: "0.75rem" }}>
 					<WalletButton />
 				</div>
@@ -53,7 +53,7 @@ export function MintActions({
 
 	return (
 		<>
-			<MintButton onClick={onMint} disabled={!canMint} type="button">
+			<Button $variant="primary" $size="lg" $block onClick={onMint} disabled={!canMint} type="button">
 				{isWritePending
 					? "Confirm in wallet…"
 					: isConfirming
@@ -61,51 +61,51 @@ export function MintActions({
 						: isRegistering
 							? "Finishing up…"
 							: "Create company"}
-			</MintButton>
+			</Button>
 
 			<MutedText>
 				You&apos;ll sign one transaction. When it confirms, the company is ready.
 			</MutedText>
 
 			{writeError && (
-				<StatusBox $variant="error">
+				<StatusMessage $variant="error">
 					{writeError.includes("User rejected") || writeError.includes("denied")
 						? "You rejected the transaction."
 						: writeError.slice(0, 300)}
-				</StatusBox>
+				</StatusMessage>
 			)}
 
 			{serverError && (
-				<StatusBox $variant="error">
+				<StatusMessage $variant="error">
 					The chain deploy may have worked, but saving company details failed: {serverError.slice(0, 300)}
-				</StatusBox>
+				</StatusMessage>
 			)}
 
 			{txHash && !isConfirmed && (
-				<StatusBox $variant="pending">Transaction submitted: {txHash}</StatusBox>
+				<StatusMessage $variant="pending">Transaction submitted: {txHash}</StatusMessage>
 			)}
 
 			{isConfirmed && deployedAddress && !result && !serverError && (
-				<StatusBox $variant="pending">
+				<StatusMessage $variant="pending">
 					Deployed at {deployedAddress}. Saving company details...
-				</StatusBox>
+				</StatusMessage>
 			)}
 
 			{result && (
 				<>
-					<StatusBox $variant="success">Cap table created.</StatusBox>
-					<FieldGroup>
+					<StatusMessage $variant="success">Cap table created.</StatusMessage>
+					<Field>
 						<FieldLabel>Issuer ID</FieldLabel>
 						<ResponseBlock>{result._id}</ResponseBlock>
-					</FieldGroup>
-					<FieldGroup>
+					</Field>
+					<Field>
 						<FieldLabel>Contract</FieldLabel>
 						<ResponseBlock>{result.deployed_to}</ResponseBlock>
-					</FieldGroup>
-					<FieldGroup>
+					</Field>
+					<Field>
 						<FieldLabel>Transaction</FieldLabel>
 						<ResponseBlock>{result.tx_hash}</ResponseBlock>
-					</FieldGroup>
+					</Field>
 				</>
 			)}
 		</>

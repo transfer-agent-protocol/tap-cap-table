@@ -1,5 +1,6 @@
-import { Content, Heading, StyledTable, TableScroll } from "../components/wrappers";
-import { H2, P } from "../components/typography";
+import { ContentColumn, Section, Stack } from "../components/layout";
+import { Table, TableFrame } from "../components/elements";
+import { H1, H2, P } from "../components/typography";
 
 /**
  * Landing — marketing only (no product entry until API is public).
@@ -7,9 +8,10 @@ import { H2, P } from "../components/typography";
  */
 export default function Home() {
 	return (
-		<Content data-testid="home-page">
-			<Heading>
-				<P>Tokenize RWA cap tables and handle post-trade settlement.</P>
+		<ContentColumn data-testid="home-page">
+			<Stack $gap="2xl">
+			<Stack $gap="md">
+				<H1>Tokenize RWA cap tables and handle post-trade settlement.</H1>
 				<P>
 					Fully onchain protocol that&apos;s based on{" "}
 					<a href="https://www.opencaptablecoalition.com/" target="_blank" rel="noopener noreferrer">
@@ -24,7 +26,8 @@ export default function Home() {
 				>
 					Read how this started
 				</a>
-			</Heading>
+			</Stack>
+			<Section>
 
 			<H2>Demo contracts:</H2>
 			<P>
@@ -49,8 +52,8 @@ export default function Home() {
 				</a>
 			</P>
 
-			<TableScroll>
-				<StyledTable>
+			<TableFrame>
+				<Table>
 					<thead>
 						<tr>
 							<th>Name</th>
@@ -127,8 +130,10 @@ export default function Home() {
 							</td>
 						</tr>
 					</tbody>
-				</StyledTable>
-			</TableScroll>
-		</Content>
+				</Table>
+			</TableFrame>
+			</Section>
+			</Stack>
+		</ContentColumn>
 	);
 }

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, Input, Select, Divider } from "./forms";
-import { InlineButton, MintButton } from "./buttons";
-import { SectionActions } from "./wrappers";
-import type { StakeholderData } from "../services/createStakeholder";
-import { copy } from "../lib/copy";
+import { Form, Field, FieldRow, FieldLabel, TextInput, Select } from "../../forms";
+import { Button, Divider } from "../../elements";
+import { SectionActions } from "../../layout";
+import type { StakeholderData } from "../../../services/createStakeholder";
+import { copy } from "../../../lib/copy";
 
 interface Props {
 	onSubmit: (data: StakeholderData) => Promise<void>;
@@ -45,20 +45,20 @@ export function StakeholderForm({ onSubmit, onCancel, disabled, compact }: Props
 	const isBusy = disabled || submitting;
 
 	return (
-		<div>
-			<FieldGroup>
+		<Form as="div">
+			<Field>
 				<FieldLabel>Legal name</FieldLabel>
-				<Input
+				<TextInput
 					value={data.name.legal_name}
 					onChange={(e) => updateName(e.target.value)}
 					disabled={isBusy}
 					placeholder="e.g. Alex Palmer"
 					autoFocus={compact}
 				/>
-			</FieldGroup>
+			</Field>
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Type</FieldLabel>
 					<Select
 						value={data.stakeholder_type}
@@ -68,8 +68,8 @@ export function StakeholderForm({ onSubmit, onCancel, disabled, compact }: Props
 						<option value="INDIVIDUAL">Individual</option>
 						<option value="INSTITUTION">Institution</option>
 					</Select>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Relationship</FieldLabel>
 					<Select
 						value={data.current_relationship}
@@ -83,20 +83,24 @@ export function StakeholderForm({ onSubmit, onCancel, disabled, compact }: Props
 						<option value="BOARD_MEMBER">Board member</option>
 						<option value="OTHER">Other</option>
 					</Select>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
 			<Divider />
 			<SectionActions>
-				<MintButton onClick={handleSubmit} disabled={isBusy || !data.name.legal_name.trim()}>
+				<Button
+					$variant="primary"
+					onClick={handleSubmit}
+					disabled={isBusy || !data.name.legal_name.trim()}
+				>
 					{submitting ? copy.shareholders.creating : copy.shareholders.create}
-				</MintButton>
+				</Button>
 				{onCancel && (
-					<InlineButton type="button" onClick={onCancel} disabled={isBusy} $variant="ghost">
+					<Button type="button" onClick={onCancel} disabled={isBusy} $variant="ghost">
 						{copy.shareholders.cancel}
-					</InlineButton>
+					</Button>
 				)}
 			</SectionActions>
-		</div>
+		</Form>
 	);
 }

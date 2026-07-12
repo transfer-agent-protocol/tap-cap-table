@@ -3,25 +3,17 @@ import { useRouter } from "next/router";
 import styled from "styled-components";
 import { useAccount } from "wagmi";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { Eyebrow, P } from "../../../components/typography";
-import {
-	FullScreenStack,
-	MutedText,
-	PageIntro,
-	SectionActions,
-	SectionHeader,
-	TablePanel,
-	TableTitle,
-	StatusBox,
-} from "../../../components/wrappers";
-import { InlineButton } from "../../../components/buttons";
+import { H3, MutedText, P } from "../../../components/typography";
+import { Page, Section, SectionHeader } from "../../../components/layout";
+import { Button, StatusMessage } from "../../../components/elements";
+import { PageHeader } from "../../../components/PageHeader";
 import {
 	loadMyIssuers,
 	mergeIssuers,
 	saveMyIssuers,
 	type StoredIssuer,
 } from "../../../utils/myIssuers";
-import { capTableHref } from "../../../components/navConfig";
+import { capTableHref } from "../../../components/shell/navConfig";
 
 export interface IssuerSummary {
 	people: number;
@@ -46,9 +38,9 @@ const StatChip = styled.span<{ $tone?: "ok" | "warn" | "muted" }>`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
 	letter-spacing: 0.02em;
 	padding: 0.15rem 0.45rem;
-	border-radius: 999px;
-	border: 1px solid ${({ theme }) => theme.colors.outline};
-	color: ${({ theme, $tone }) => ($tone === "ok" ? theme.colors.main : theme.colors.muted)};
+	border: 1px solid ${({ theme }) => theme.colors.border};
+	color: ${({ theme, $tone }) =>
+		$tone === "ok" ? theme.colors.accent : theme.colors.textMuted};
 	background: transparent;
 `;
 
@@ -67,7 +59,7 @@ const IssuerCard = styled.div`
 	padding: ${({ theme }) => theme.spacing.md} 0;
 	background: transparent;
 	border: none;
-	border-top: 1px solid ${({ theme }) => theme.colors.outline};
+	border-top: 1px solid ${({ theme }) => theme.colors.border};
 
 	@media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
 		grid-template-columns: 1fr;
@@ -99,18 +91,19 @@ const MetaLabel = styled.span`
 	font-size: ${({ theme }) => theme.fontSizes.xs};
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
 `;
 
 const ContractLink = styled.a`
 	display: block;
 	font-size: ${({ theme }) => theme.fontSizes.xs} !important;
 	line-height: 1.5;
-	color: ${({ theme }) => theme.colors.main} !important;
+	color: ${({ theme }) => theme.colors.accent} !important;
 	word-break: break-all;
 	overflow-wrap: anywhere;
 	text-decoration: none !important;
 	opacity: 1 !important;
+	font-family: ${({ theme }) => theme.fonts.mono};
 	font-variant-numeric: tabular-nums;
 
 	&:hover {
@@ -242,43 +235,39 @@ export default function ManageHub() {
 	};
 
 	return (
-		<FullScreenStack data-testid="manage-hub">
-			<PageIntro>
-				<Eyebrow>Companies</Eyebrow>
-				<TableTitle style={{ fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
-					Your companies
-				</TableTitle>
-				<P>
-					Cap tables you&apos;ve created. Open one to manage shareholders, stock classes, and
-					issuances.
-				</P>
-			</PageIntro>
-
-			<TablePanel>
-				<SectionHeader>
-					<TableTitle>Your list</TableTitle>
-					<SectionActions>
-						<InlineButton
-							onClick={() => router.push("/app/mint")}
-							$variant="primary"
-						>
+		<Page data-testid="manage-hub">
+			<PageHeader
+				title="Your companies"
+				description={
+					<P>
+						Cap tables you&apos;ve created. Open one to manage shareholders, stock
+						classes, and issuances.
+					</P>
+				}
+				actions={
+					<>
+						<Button onClick={() => router.push("/app/mint")} $variant="primary">
 							New company
-						</InlineButton>
-						<InlineButton
+						</Button>
+						<Button
 							onClick={syncIssuersFromServer}
 							disabled={isSyncingIssuers || !adminAddress}
 							$variant="secondary"
 							title="Load companies this wallet deployed"
 						>
 							{isSyncingIssuers ? "Loading…" : "Load from wallet"}
-						</InlineButton>
-					</SectionActions>
+						</Button>
+					</>
+				}
+			/>
+
+			<Section>
+				<SectionHeader>
+					<H3>Your list</H3>
 				</SectionHeader>
 
 				{syncMessage && (
-					<StatusBox $variant="success" style={{ marginBottom: 0 }}>
-						{syncMessage}
-					</StatusBox>
+					<StatusMessage $variant="success">{syncMessage}</StatusMessage>
 				)}
 
 				{!hydrated ? (
@@ -331,22 +320,22 @@ export default function ManageHub() {
 										)}
 									</IssuerBody>
 									<CardActions>
-										<InlineButton
+										<Button
 											onClick={() => router.push(capTableHref(issuer._id, "overview"))}
 											$variant="primary"
 										>
 											Open
-										</InlineButton>
-										<InlineButton onClick={() => removeIssuer(issuer._id)} $variant="ghost">
+										</Button>
+										<Button onClick={() => removeIssuer(issuer._id)} $variant="ghost">
 											Remove
-										</InlineButton>
+										</Button>
 									</CardActions>
 								</IssuerCard>
 							);
 						})}
 					</IssuerList>
 				)}
-			</TablePanel>
-		</FullScreenStack>
+			</Section>
+		</Page>
 	);
 }

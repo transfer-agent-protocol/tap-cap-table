@@ -1,14 +1,8 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	FormBand,
-	MutedText,
-	PageLayout,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
-import { TransferStockForm, type TransferStockFormData } from "../../TransferStockForm";
+import { Section, SectionHeader, Stack } from "../../layout";
+import { StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
+import { TransferStockForm, type TransferStockFormData } from "../forms/TransferStockForm";
 import { copy } from "../../../lib/copy";
 
 interface TransferStockViewProps {
@@ -41,19 +35,19 @@ export function TransferStockView({
 	}
 
 	return (
-		<PageLayout data-testid="view-transfer-stock">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-transfer-stock">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.transfer.title}</TableTitle>
+						<H3>{copy.transfer.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							Move shares from one shareholder to another
 						</MutedText>
 					</div>
 					{toolbar}
 				</SectionHeader>
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
-				<FormBand>
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
+				<Section>
 					<TransferStockForm
 						stakeholders={stakeholders}
 						stockClasses={stockClasses}
@@ -62,8 +56,8 @@ export function TransferStockView({
 						disabled={isLoading || !canTransfer}
 						hint={hint}
 					/>
-				</FormBand>
-			</DataBand>
-		</PageLayout>
+				</Section>
+			</Section>
+		</Stack>
 	);
 }

@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { Modal } from "./Modal";
-import { InlineButton } from "./buttons";
-import { ResponseBlock } from "./wrappers";
+import { Button, ResponseBlock } from "./elements";
 
 interface TxSuccessModalProps {
 	isOpen: boolean;
@@ -21,9 +20,9 @@ const Stack = styled.div`
 
 const Message = styled.p`
 	margin: 0;
-	color: ${({ theme }) => theme.colors.muted};
+	color: ${({ theme }) => theme.colors.textMuted};
 	font-size: ${({ theme }) => theme.fontSizes.small};
-	line-height: 1.55;
+	line-height: ${({ theme }) => theme.lineHeights.P};
 `;
 
 const Label = styled.div`
@@ -31,7 +30,7 @@ const Label = styled.div`
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: ${({ theme }) => theme.colors.subtle};
+	color: ${({ theme }) => theme.colors.textSubtle};
 	margin-bottom: ${({ theme }) => theme.spacing.xs};
 `;
 
@@ -64,7 +63,7 @@ export function TxSuccessModal({
 						<ResponseBlock>{txHash}</ResponseBlock>
 						{explorerUrl && (
 							<Actions style={{ justifyContent: "flex-start", marginTop: "0.75rem" }}>
-								<InlineButton
+								<Button
 									as="a"
 									href={explorerUrl}
 									target="_blank"
@@ -72,7 +71,7 @@ export function TxSuccessModal({
 									$variant="primary"
 								>
 									View on explorer
-								</InlineButton>
+								</Button>
 							</Actions>
 						)}
 					</div>
@@ -85,9 +84,9 @@ export function TxSuccessModal({
 				)}
 
 				<Actions>
-					<InlineButton onClick={onClose} $variant="secondary" type="button">
+					<Button onClick={onClose} $variant="secondary" type="button">
 						Close
-					</InlineButton>
+					</Button>
 				</Actions>
 			</Stack>
 		</Modal>

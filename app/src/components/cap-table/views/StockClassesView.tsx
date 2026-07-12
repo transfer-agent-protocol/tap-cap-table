@@ -1,17 +1,9 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	FormBand,
-	MutedText,
-	PageLayout,
-	SectionActions,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
-import { InlineButton } from "../../buttons";
+import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
+import { Button, StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
 import { DataTable, type Column } from "../../DataTable";
-import { StockClassForm } from "../../StockClassForm";
+import { StockClassForm } from "../forms/StockClassForm";
 import { copy, shortTx } from "../../../lib/copy";
 import type { StockClassData } from "../../../services/createStockClass";
 import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
@@ -28,6 +20,8 @@ interface StockClassesViewProps {
 	onAddingChange: (v: boolean) => void;
 	onSubmit: (data: StockClassData) => Promise<void>;
 	toolbar: ReactNode;
+	/** Current positions — drives the per-class Issued column */
+	holdings?: Array<{ stockClass?: { _id?: string }; quantity?: number | string }>;
 }
 
 interface ClassRow {
@@ -35,6 +29,7 @@ interface ClassRow {
 	name: string;
 	type: string;
 	authorized: string;
+	issued: string;
 	status: string;
 	tx: ReactNode;
 }
@@ -62,17 +57,24 @@ function renderTx(tx: string | undefined): ReactNode {
 }
 
 const columns: Column<ClassRow>[] = [
-	{ key: "name", header: "Name", width: "24%", render: (r) => r.name },
-	{ key: "type", header: "Type", width: "14%", render: (r) => r.type },
+	{ key: "name", header: "Name", width: "22%", render: (r) => r.name },
+	{ key: "type", header: "Type", width: "12%", render: (r) => r.type },
 	{
 		key: "authorized",
 		header: "Authorized",
 		align: "right",
-		width: "16%",
+		width: "15%",
 		render: (r) => r.authorized,
 	},
-	{ key: "status", header: "Status", width: "14%", render: (r) => r.status },
-	{ key: "tx", header: "Transaction", width: "18%", render: (r) => r.tx },
+	{
+		key: "issued",
+		header: "Issued",
+		align: "right",
+		width: "15%",
+		render: (r) => r.issued,
+	},
+	{ key: "status", header: "Status", width: "12%", render: (r) => r.status },
+	{ key: "tx", header: "Transaction", width: "16%", render: (r) => r.tx },
 ];
 
 export function StockClassesView({
@@ -86,7 +88,17 @@ export function StockClassesView({
 	onAddingChange,
 	onSubmit,
 	toolbar,
+	holdings = [],
 }: StockClassesViewProps) {
+	// Issued per class from current positions
+	const issuedByClass = new Map<string, number>();
+	for (const h of holdings) {
+		const id = h.stockClass?._id;
+		const qty = Number(h.quantity);
+		if (!id || !Number.isFinite(qty) || qty <= 0) continue;
+		issuedByClass.set(id, (issuedByClass.get(id) || 0) + qty);
+	}
+
 	const rows: ClassRow[] = stockClasses.map((sc: any) => {
 		const session = sessionClasses.find((d) => d._id === sc._id);
 		const live =
@@ -94,6 +106,7 @@ export function StockClassesView({
 			sc.is_onchain_synced === true ||
 			(sc.is_onchain_synced !== false && !session);
 		const authorized = sc.initial_shares_authorized ?? sc.shares_authorized;
+		const issued = issuedByClass.get(sc._id) || 0;
 		return {
 			key: sc._id,
 			name: sc.name || "—",
@@ -102,17 +115,18 @@ export function StockClassesView({
 				authorized != null && authorized !== ""
 					? Number(authorized).toLocaleString()
 					: "—",
+			issued: issued > 0 ? issued.toLocaleString() : "—",
 			status: live ? copy.stockClasses.live : copy.stockClasses.notLive,
 			tx: renderTx(txForClass(sc, activityLog)),
 		};
 	});
 
 	return (
-		<PageLayout data-testid="view-stock-classes">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-stock-classes">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.stockClasses.title}</TableTitle>
+						<H3>{copy.stockClasses.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							{stockClasses.length} class{stockClasses.length === 1 ? "" : "es"}
 							{ghostClassCount > 0 ? ` · ${ghostClassCount} not ready` : ""}
@@ -120,20 +134,20 @@ export function StockClassesView({
 					</div>
 					<SectionActions>
 						{!adding && (
-							<InlineButton
+							<Button
 								onClick={() => onAddingChange(true)}
 								$variant="primary"
 								disabled={isLoading}
 							>
 								{copy.stockClasses.add}
-							</InlineButton>
+							</Button>
 						)}
 						{toolbar}
 					</SectionActions>
 				</SectionHeader>
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
 				{adding && (
-					<FormBand style={{ marginBottom: "1rem" }}>
+					<Section style={{ marginBottom: "1rem" }}>
 						<StockClassForm
 							compact
 							onSubmit={async (data) => {
@@ -143,7 +157,7 @@ export function StockClassesView({
 							onCancel={() => onAddingChange(false)}
 							disabled={isLoading}
 						/>
-					</FormBand>
+					</Section>
 				)}
 				<DataTable<ClassRow>
 					aria-label={copy.stockClasses.title}
@@ -153,7 +167,7 @@ export function StockClassesView({
 					isLoading={isLoading}
 					emptyMessage={copy.stockClasses.empty}
 				/>
-			</DataBand>
-		</PageLayout>
+			</Section>
+		</Stack>
 	);
 }

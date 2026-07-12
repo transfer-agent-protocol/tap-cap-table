@@ -25,6 +25,7 @@
         "app:dev": "pnpm --filter tap-app dev",
         "app:build": "pnpm --filter tap-app build",
         "app:start": "pnpm --filter tap-app start",
+        "app:test:e2e": "pnpm --filter tap-app test:e2e",
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",
         "docker:logs": "docker compose logs -f",

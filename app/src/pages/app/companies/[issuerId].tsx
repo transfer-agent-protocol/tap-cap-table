@@ -1,18 +1,13 @@
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { P } from "../../../components/typography";
-import {
-	FullScreenStack,
-	PageIntro,
-	SectionActions,
-	StatusBox,
-} from "../../../components/wrappers";
-import { InlineButton } from "../../../components/buttons";
-import { CapTableDashboard } from "../../../components/CapTableDashboard";
+import { Page, SectionActions, Stack } from "../../../components/layout";
+import { Button, StatusMessage } from "../../../components/elements";
+import { CapTableDashboard } from "../../../components/cap-table";
 import type { IssuerResponse } from "../../../services/registerIssuer";
 import { getLastMintedIssuer } from "../../../utils/lastMintedIssuer";
 import { loadMyIssuers } from "../../../utils/myIssuers";
-import { issuerIdFromPath } from "../../../components/navConfig";
+import { issuerIdFromPath } from "../../../components/shell/navConfig";
 
 function resolveIssuerId(query: Record<string, string | string[] | undefined>, asPath: string): string | null {
 	const raw = query.issuerId;
@@ -146,42 +141,44 @@ export default function CompanyWorkspacePage() {
 
 	if (isLoading) {
 		return (
-			<FullScreenStack>
-				<PageIntro>
-					<P>Loading cap table…</P>
-				</PageIntro>
-			</FullScreenStack>
+			<Page>
+				<P>Loading cap table…</P>
+			</Page>
 		);
 	}
 
 	if (!issuer || loadError) {
 		return (
-			<FullScreenStack>
-				<PageIntro>
-					<StatusBox $variant="error">{loadError || "No company selected."}</StatusBox>
-					<P style={{ marginTop: "1rem" }}>
+			<Page>
+				<Stack $gap="lg">
+					<StatusMessage $variant="error">
+						{loadError || "No company selected."}
+					</StatusMessage>
+					<P>
 						<a href="/app/companies">← Companies</a>
 						{" · "}
 						<a href="/app/mint">Create a company</a>
 					</P>
 					{issuerId && (
-						<SectionActions style={{ marginTop: "1rem" }}>
-							<InlineButton onClick={() => void load(issuerId)} $variant="secondary">
+						<SectionActions>
+							<Button onClick={() => void load(issuerId)} $variant="secondary">
 								Retry
-							</InlineButton>
+							</Button>
 						</SectionActions>
 					)}
-				</PageIntro>
-			</FullScreenStack>
+				</Stack>
+			</Page>
 		);
 	}
 
 	return (
-		<CapTableDashboard
-			issuerResult={issuer}
-			onReset={() => {
-				router.push("/app/mint");
-			}}
-		/>
+		<Page>
+			<CapTableDashboard
+				issuerResult={issuer}
+				onReset={() => {
+					router.push("/app/mint");
+				}}
+			/>
+		</Page>
 	);
 }

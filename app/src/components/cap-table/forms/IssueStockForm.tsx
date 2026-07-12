@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { FieldGroup, FieldRow, FieldLabel, Input, Divider, Select } from "./forms";
-import { MintButton } from "./buttons";
-import type { StockIssuanceData } from "../services/createStockIssuance";
-import { copy } from "../lib/copy";
+import { Form, Field, FieldRow, FieldLabel, TextInput, Select } from "../../forms";
+import { Button, Divider } from "../../elements";
+import type { StockIssuanceData } from "../../../services/createStockIssuance";
+import { copy } from "../../../lib/copy";
 
 interface Option {
 	_id: string;
@@ -56,13 +56,13 @@ export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled,
 	const canSubmit = !!stakeholderId && !!stockClassId && !!data.quantity;
 
 	return (
-		<div>
+		<Form as="div">
 			{disabled && hint ? (
 				<p style={{ opacity: 0.75, fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{hint}</p>
 			) : null}
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Shareholder</FieldLabel>
 					<Select
 						value={stakeholderId}
@@ -80,8 +80,8 @@ export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled,
 							);
 						})}
 					</Select>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Stock class</FieldLabel>
 					<Select
 						value={stockClassId}
@@ -98,41 +98,41 @@ export function IssueStockForm({ stockClasses, stakeholders, onSubmit, disabled,
 							);
 						})}
 					</Select>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
 			<FieldRow>
-				<FieldGroup>
+				<Field>
 					<FieldLabel>Shares</FieldLabel>
-					<Input
+					<TextInput
 						value={data.quantity}
 						onChange={(e) => setData((d) => ({ ...d, quantity: e.target.value }))}
 						disabled={isBusy}
 					/>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Price per share (USD)</FieldLabel>
-					<Input
+					<TextInput
 						value={data.share_price.amount}
 						onChange={(e) => updatePrice(e.target.value)}
 						disabled={isBusy}
 					/>
-				</FieldGroup>
-				<FieldGroup>
+				</Field>
+				<Field>
 					<FieldLabel>Certificate ID</FieldLabel>
-					<Input
+					<TextInput
 						value={data.custom_id || ""}
 						onChange={(e) => setData((d) => ({ ...d, custom_id: e.target.value }))}
 						disabled={isBusy}
 						placeholder="CS-001"
 					/>
-				</FieldGroup>
+				</Field>
 			</FieldRow>
 
 			<Divider />
-			<MintButton onClick={handleSubmit} disabled={isBusy || !canSubmit}>
+			<Button $variant="primary" onClick={handleSubmit} disabled={isBusy || !canSubmit}>
 				{submitting ? "Confirm in wallet…" : copy.issueStock.title}
-			</MintButton>
-		</div>
+			</Button>
+		</Form>
 	);
 }

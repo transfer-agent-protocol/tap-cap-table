@@ -1,16 +1,12 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	MutedText,
-	PageLayout,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
+import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
+import { Button, StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
 import { copy } from "../../../lib/copy";
 import { SetupChecklist } from "../SetupChecklist";
-import { OwnershipBar } from "../OwnershipBar";
-import type { CapTableView } from "../../navConfig";
+import { OwnershipBoxes } from "../OwnershipBoxes";
+import { buildOwnershipChart, formatPct, formatShares } from "../ownershipModel";
+import type { CapTableView } from "../../shell/navConfig";
 
 interface HoldingsViewProps {
 	positionCount: number;
@@ -52,12 +48,22 @@ export function HoldingsView({
 	const showSetup = !isLoading && positionCount === 0;
 	const showBar = !isLoading && positionCount > 0;
 
+	// Authorized vs issued — don't let a 10B-share authorization hide behind a
+	// 1M-share issuance. Issued reuses the ownership chart total (chain holdings
+	// + optimistic session rows, deduped).
+	const authorized = Number(holdingsData?.issuer?.initial_shares_authorized);
+	const issued = buildOwnershipChart(holdingsData, createdIssuances)?.total ?? 0;
+	const hasAuthorized = Number.isFinite(authorized) && authorized > 0;
+	const remaining = hasAuthorized ? Math.max(authorized - issued, 0) : 0;
+	const issuedPct = hasAuthorized ? (issued / authorized) * 100 : 0;
+	const showStats = !isLoading && hasAuthorized;
+
 	return (
-		<PageLayout data-testid="view-overview">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-overview">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.holdings.title}</TableTitle>
+						<H3>{copy.holdings.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							{positionCount} holding{positionCount === 1 ? "" : "s"}
 							{" · "}
@@ -67,7 +73,20 @@ export function HoldingsView({
 							{hasPendingSync ? " · waiting on wallet…" : ""}
 						</MutedText>
 					</div>
-					{toolbar}
+					<SectionActions>
+						{/* Seeing unissued capacity invites the next step — offer it here */}
+						{!showSetup && (
+							<Button
+								$variant="primary"
+								onClick={() => onNavigate("issue-stock")}
+								disabled={isLoading}
+								data-testid="holdings-issue-stock"
+							>
+								{copy.issueStock.title}
+							</Button>
+						)}
+						{toolbar}
+					</SectionActions>
 				</SectionHeader>
 				{showSetup && (
 					<SetupChecklist
@@ -77,17 +96,38 @@ export function HoldingsView({
 					/>
 				)}
 				{ghostClassCount > 0 && positionCount === 0 && !showSetup && (
-					<StatusBox $variant="pending">{copy.sync.ghostClasses}</StatusBox>
+					<StatusMessage $variant="pending">{copy.sync.ghostClasses}</StatusMessage>
 				)}
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
+				{showStats && (
+					<StatGrid data-testid="share-stats">
+						<StatCard>
+							<StatLabel>Authorized</StatLabel>
+							<StatValue>{formatShares(authorized)}</StatValue>
+						</StatCard>
+						<StatCard>
+							<StatLabel>Issued</StatLabel>
+							<StatValue>{formatShares(issued)}</StatValue>
+						</StatCard>
+						<StatCard>
+							<StatLabel>Remaining</StatLabel>
+							<StatValue>{formatShares(remaining)}</StatValue>
+						</StatCard>
+						<StatCard>
+							<StatLabel>% issued</StatLabel>
+							<StatValue>{formatPct(issuedPct)}</StatValue>
+						</StatCard>
+					</StatGrid>
+				)}
 				{showBar && (
-					<OwnershipBar
+					<OwnershipBoxes
 						holdingsData={holdingsData}
 						createdIssuances={createdIssuances}
+						authorized={hasAuthorized ? authorized : undefined}
 					/>
 				)}
 				{holdingsTable}
-			</DataBand>
-		</PageLayout>
+			</Section>
+		</Stack>
 	);
 }

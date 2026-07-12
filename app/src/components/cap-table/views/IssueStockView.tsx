@@ -1,14 +1,8 @@
 import type { ReactNode } from "react";
-import {
-	DataBand,
-	FormBand,
-	MutedText,
-	PageLayout,
-	SectionHeader,
-	StatusBox,
-	TableTitle,
-} from "../../wrappers";
-import { IssueStockForm } from "../../IssueStockForm";
+import { Section, SectionHeader, Stack } from "../../layout";
+import { StatusMessage } from "../../elements";
+import { H3, MutedText } from "../../typography";
+import { IssueStockForm } from "../forms/IssueStockForm";
 import { copy } from "../../../lib/copy";
 import type { StockIssuanceData } from "../../../services/createStockIssuance";
 
@@ -38,19 +32,19 @@ export function IssueStockView({
 				: undefined;
 
 	return (
-		<PageLayout data-testid="view-issue-stock">
-			<DataBand>
+		<Stack $gap="xl" data-testid="view-issue-stock">
+			<Section>
 				<SectionHeader>
 					<div>
-						<TableTitle>{copy.issueStock.title}</TableTitle>
+						<H3>{copy.issueStock.title}</H3>
 						<MutedText style={{ marginTop: "0.35rem" }}>
 							Grant shares to a shareholder
 						</MutedText>
 					</div>
 					{toolbar}
 				</SectionHeader>
-				{syncNote && <StatusBox $variant="pending">{syncNote}</StatusBox>}
-				<FormBand>
+				{syncNote && <StatusMessage $variant="pending">{syncNote}</StatusMessage>}
+				<Section>
 					<IssueStockForm
 						stockClasses={stockClasses}
 						stakeholders={stakeholders}
@@ -58,8 +52,8 @@ export function IssueStockView({
 						disabled={disabled}
 						hint={hint}
 					/>
-				</FormBand>
-			</DataBand>
-		</PageLayout>
+				</Section>
+			</Section>
+		</Stack>
 	);
 }
