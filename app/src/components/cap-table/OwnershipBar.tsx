@@ -97,7 +97,8 @@ const HolderRow = styled.div`
 
 const HolderLabel = styled.div<{ $start: number; $width: number }>`
 	position: absolute;
-	left: ${({ $start }) => $start}%;
+	/* Clamp: a widened label near the right edge must not overflow the row */
+	left: ${({ $start, $width }) => Math.min($start, 100 - Math.max($width, 8))}%;
 	width: ${({ $width }) => Math.max($width, 8)}%;
 	padding: 0.15rem 0.2rem 0;
 	box-sizing: border-box;
@@ -128,7 +129,9 @@ const Legend = styled.div`
 	display: flex;
 	flex-flow: row wrap;
 	gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-	margin-top: ${({ theme }) => theme.spacing.xs};
+	margin-top: ${({ theme }) => theme.spacing.md};
+	padding-top: ${({ theme }) => theme.spacing.sm};
+	border-top: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const LegendItem = styled.div`

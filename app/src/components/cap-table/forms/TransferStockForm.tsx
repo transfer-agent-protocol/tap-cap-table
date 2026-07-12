@@ -167,25 +167,27 @@ export function TransferStockForm({
 				</Field>
 			</FieldRow>
 
+			{/* Stock class gets its own row — names can be long */}
+			<Field>
+				<FieldLabel>Stock class</FieldLabel>
+				<Select
+					value={classId}
+					onChange={(e) => {
+						setClassId(e.target.value);
+						setQuantity("");
+					}}
+					disabled={isBusy || !fromId}
+				>
+					<option value="">Select class…</option>
+					{classesFromOwns.map((c) => (
+						<option key={c._id} value={c._id}>
+							{c.name || c._id}
+						</option>
+					))}
+				</Select>
+			</Field>
+
 			<FieldRow>
-				<Field>
-					<FieldLabel>Stock class</FieldLabel>
-					<Select
-						value={classId}
-						onChange={(e) => {
-							setClassId(e.target.value);
-							setQuantity("");
-						}}
-						disabled={isBusy || !fromId}
-					>
-						<option value="">Select class…</option>
-						{classesFromOwns.map((c) => (
-							<option key={c._id} value={c._id}>
-								{c.name || c._id}
-							</option>
-						))}
-					</Select>
-				</Field>
 				<Field>
 					<FieldLabel>Shares to transfer</FieldLabel>
 					<TextInput
@@ -213,7 +215,7 @@ export function TransferStockForm({
 			</FieldRow>
 
 			<Divider />
-			<Button $variant="primary" onClick={handleSubmit} disabled={isBusy || !canSubmit}>
+			<Button $variant="primary" $block onClick={handleSubmit} disabled={isBusy || !canSubmit}>
 				{submitting ? "Confirm in wallet…" : copy.transfer.title}
 			</Button>
 		</Form>
