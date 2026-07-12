@@ -8,16 +8,21 @@ import {
 } from "./ownershipModel";
 import { MutedText } from "../typography";
 
-/** ─────────────────────────────────────────────────────
- *  Design token: tones shared with the legend swatches.
- * ───────────────────────────────────────────────────── */
-const SEGMENT_TONES = (theme: any): string[] => [
-	theme.colors.accent,
-	"rgba(200, 245, 66, 0.55)",
-	"rgba(52, 211, 153, 0.75)",
-	"rgba(200, 245, 66, 0.35)",
-	"rgba(163, 230, 53, 0.65)",
-	"rgba(74, 222, 128, 0.55)",
+/**
+ * Distinct hue palette — each holder reads as its own person at a glance.
+ * Tone 0 = accent (lime) for the biggest holder; remaining tones span
+ * clearly different hues: blue, orange, violet, teal, coral, amber.
+ * "Others" collapsed slices always use the elevated neutral tone.
+ */
+const PALETTE: string[] = [
+	"#c8f542", // lime (accent)
+	"#5b8dee", // slate blue
+	"#f0944d", // warm orange
+	"#9b7fe8", // dusty violet
+	"#3ecfb2", // teal
+	"#f26c6c", // coral
+	"#f5c542", // amber
+	"#5bc4a1", // seafoam
 ];
 
 const Wrap = styled.div`
@@ -68,7 +73,7 @@ const BoxMeta = styled.span`
 	line-height: 1.3;
 `;
 
-/** Minimum segment width (in % of total bar) to show any text. */
+/** Minimum segment width (% of total) to show inline text. */
 const MIN_LABEL_PCT = 4;
 
 const HolderBox = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }>`
@@ -77,24 +82,22 @@ const HolderBox = styled.div<{ $pct: number; $tone: number; $isOther?: boolean }
 	height: 100%;
 	background: ${({ theme, $tone, $isOther }) => {
 		if ($isOther) return theme.colors.elevated;
-		const tones = SEGMENT_TONES(theme);
-		return tones[$tone % tones.length];
+		return PALETTE[$tone % PALETTE.length];
 	}};
 	position: relative;
 	transition: filter ${({ theme }) => theme.transitions.default};
 	cursor: default;
 
-	/* Hover: slight brighten + show detail tooltip */
 	&:hover {
 		filter: brightness(1.1);
 	}
 
-	/* Only render text when segment is wide enough */
+	/* Show label only when wide enough */
 	${BoxLabel} {
 		display: ${({ $pct }) => ($pct >= MIN_LABEL_PCT ? "flex" : "none")};
 	}
 
-	/* Tiny segments get a tooltip on hover */
+	/* Narrow segments: floating tooltip on hover via ::after */
 	&[title]:hover::after {
 		content: attr(data-label);
 		position: absolute;
@@ -139,31 +142,6 @@ const UnissuedMeta = styled(BoxMeta)`
 	color: ${({ theme }) => theme.colors.textSubtle};
 `;
 
-/** Class band label row above the boxes (one label per stock class). */
-const BandRow = styled.div`
-	display: flex;
-	flex-flow: row nowrap;
-	width: 100%;
-	min-height: 1.1rem;
-	position: relative;
-`;
-
-const BandLabel = styled.div<{ $start: number; $width: number }>`
-	position: absolute;
-	left: ${({ $start }) => $start}%;
-	width: ${({ $width }) => $width}%;
-	padding: 0 0.15rem;
-	font-size: ${({ theme }) => theme.fontSizes.xs};
-	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: ${({ theme }) => theme.colors.textSubtle};
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	box-sizing: border-box;
-`;
-
 /** Small legend for holders too narrow to show inside their box. */
 const Legend = styled.div`
 	display: flex;
@@ -190,8 +168,7 @@ const Swatch = styled.span<{ $tone: number; $isOther?: boolean }>`
 	flex-shrink: 0;
 	background: ${({ theme, $tone, $isOther }) => {
 		if ($isOther) return theme.colors.elevated;
-		const tones = SEGMENT_TONES(theme);
-		return tones[$tone % tones.length];
+		return PALETTE[$tone % PALETTE.length];
 	}};
 	border: 1px solid ${({ theme }) => theme.colors.border};
 `;
@@ -201,9 +178,6 @@ const TotalLine = styled(MutedText)`
 	font-variant-numeric: tabular-nums;
 `;
 
-/** ─────────────────────────────────────────────────────
- *  Props
- * ───────────────────────────────────────────────────── */
 interface OwnershipBoxesProps {
 	holdingsData: any;
 	createdIssuances?: Array<{
@@ -219,9 +193,6 @@ interface OwnershipBoxesProps {
 	authorized?: number;
 }
 
-/** ─────────────────────────────────────────────────────
- *  Component
- * ───────────────────────────────────────────────────── */
 export function OwnershipBoxes({
 	holdingsData,
 	createdIssuances = [],
@@ -234,9 +205,9 @@ export function OwnershipBoxes({
 	);
 	if (!model) return null;
 
-	const { total, barTotal, slices, classBands, unissued } = model;
+	const { total, barTotal, slices, unissued } = model;
 
-	// One tone per shareholder — consistent across classes.
+	// One tone per shareholder — consistent across all classes they hold.
 	const toneByHolder = new Map<string, number>();
 	for (const s of slices) {
 		if (!s.isOther && !toneByHolder.has(s.shareholderId)) {
@@ -245,7 +216,7 @@ export function OwnershipBoxes({
 	}
 	const toneOf = (s: (typeof slices)[number]) => toneByHolder.get(s.shareholderId) ?? 0;
 
-	// Legend: minor holders only (<7% of issued), aggregated per shareholder.
+	// Legend: only truly minor holders (<7% of issued).
 	const LEGEND_MAX = 5;
 	const minorByHolder = new Map<
 		string,
@@ -259,7 +230,7 @@ export function OwnershipBoxes({
 		}
 	>();
 	for (const s of slices) {
-		if (shouldShowSliceLabel(s.pctOfIssued)) continue; // significant → handled in box
+		if (shouldShowSliceLabel(s.pctOfIssued)) continue;
 		const prev = minorByHolder.get(s.shareholderId);
 		if (prev) {
 			prev.quantity += s.quantity;
@@ -276,12 +247,9 @@ export function OwnershipBoxes({
 			});
 		}
 	}
-	const legendEntries = Array.from(minorByHolder.values())
-		.sort((a, b) => b.quantity - a.quantity)
-		.slice(0, LEGEND_MAX);
-	const legendRest = Array.from(minorByHolder.values())
-		.sort((a, b) => b.quantity - a.quantity)
-		.slice(LEGEND_MAX);
+	const sorted = Array.from(minorByHolder.values()).sort((a, b) => b.quantity - a.quantity);
+	const legendEntries = sorted.slice(0, LEGEND_MAX);
+	const legendRest = sorted.slice(LEGEND_MAX);
 	const legendRestPct = legendRest.reduce((sum, e) => sum + e.pctOfIssued, 0);
 
 	return (
@@ -292,21 +260,7 @@ export function OwnershipBoxes({
 					: `Issued ownership · ${formatShares(total)} shares`}
 			</TotalLine>
 
-			{/* Class band labels above boxes */}
-			<BandRow aria-hidden={classBands.length === 0}>
-				{classBands.map((b) => (
-					<BandLabel
-						key={b.stockClassId}
-						$start={b.startPct}
-						$width={b.pct}
-						title={`${b.stockClassName} · ${formatShares(b.quantity)} (${formatPct(b.pct)})`}
-					>
-						{b.pct >= 6 ? b.stockClassName : b.pct >= 3 ? b.stockClassName.slice(0, 8) : "·"}
-					</BandLabel>
-				))}
-			</BandRow>
-
-			{/* Proportional box chart */}
+			{/* Proportional box chart — class names live inside each box */}
 			<BoxRow
 				role="img"
 				aria-label={
@@ -322,12 +276,14 @@ export function OwnershipBoxes({
 						$tone={toneOf(s)}
 						$isOther={s.isOther}
 						title={`${s.shareholderName} · ${s.stockClassName} · ${formatShares(s.quantity)} (${formatPct(s.pctOfIssued)} of issued)`}
-						data-label={`${s.shareholderName} · ${formatPct(s.pctOfIssued)}`}
+						data-label={`${s.shareholderName} · ${s.stockClassName} · ${formatPct(s.pctOfIssued)}`}
 					>
 						<BoxLabel>
-							<BoxName>{s.isOther ? `Others (${s.otherCount ?? ""})` : s.shareholderName}</BoxName>
+							<BoxName>
+								{s.isOther ? `Others (${s.otherCount ?? ""})` : s.shareholderName}
+							</BoxName>
 							<BoxMeta>
-								{formatPct(s.pctOfIssued)} · {formatShares(s.quantity)}
+								{s.stockClassName} · {formatPct(s.pctOfIssued)}
 							</BoxMeta>
 						</BoxLabel>
 					</HolderBox>
@@ -361,7 +317,7 @@ export function OwnershipBoxes({
 								$isOther={e.isOther}
 							/>
 							<span>
-								{e.shareholderName} · {formatPct(e.pctOfIssued)}
+								{e.shareholderName} · {e.classNames.join(", ")} · {formatPct(e.pctOfIssued)}
 							</span>
 						</LegendItem>
 					))}
