@@ -2,7 +2,7 @@
     "name": "tap-app",
     "version": "4.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "BUSL-1.1",
     "description": "TAP's frontend",
     "scripts": {
         "dev": "next dev",
