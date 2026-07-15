@@ -40,7 +40,17 @@ const anvil = {
 	testnet: true,
 } as const satisfies AppKitNetwork;
 
-const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || "";
+const rawProjectId = (process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || "").trim();
+
+/** False when unset or still the .env.example placeholder — Reown returns 403 for these. */
+export const isReownConfigured =
+	rawProjectId.length > 0 &&
+	rawProjectId !== "UPDATE_ME" &&
+	!rawProjectId.toLowerCase().includes("your_project");
+
+// AppKit requires a non-empty string; use a dummy only when unconfigured so
+// WagmiAdapter still constructs. createAppKit is skipped until a real id is set.
+const projectId = isReownConfigured ? rawProjectId : "unconfigured";
 
 const networks: [AppKitNetwork, ...AppKitNetwork[]] = [plumeMainnet, plumeTestnet, anvil];
 
@@ -55,7 +65,7 @@ const RABBY = "18388be9ac2d02726dbac9777c96efaac06d744b2f6d580fccdd4127a6d01fd1"
 const ZERION = "ecc4036f814562b41a5268adc86270fba1365471402006302e70169465b7ac18";
 const BINANCE = "8a0ee50d1f22f6651afcae7eb4253e52a3310b90af5daef78a8c4929a9bb99d4";
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && isReownConfigured) {
 	createAppKit({
 		adapters: [wagmiAdapter],
 		networks,
