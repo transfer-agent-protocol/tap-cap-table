@@ -11,7 +11,7 @@ We use [Open Cap Table Format](/protocol/tap-ocf) and convert it into smart cont
 The protocol is live on [Plume Mainnet](https://docs.plume.org/plume/developer-resources/network-parameters).
 
 <Callout type="info">
-Contract addresses are unique to each deployment. When you deploy the factory, you'll get your own addresses. See the [Development Guide](/development) to get started.
+**Who deploys what:** the protocol builder ships contracts and may run a shared **demo** factory; a licensed **transfer agent** deploys **their own** `CapTableFactory` (book of business); **issuers** mint cap tables through a factory and become ADMIN of that table. Factory addresses are unique per deploy — see [Deploy factory](/development/factory-deploy) and the [Development Guide](/development).
 </Callout>
 
 ## Protocol Specification

@@ -4,39 +4,42 @@ import { Callout, FileTree } from 'nextra/components'
 
 You'll need these installed to start building:
 
-- [Docker](https://docs.docker.com/get-docker/) — runs MongoDB, the server, and the frontend app locally
-
+- [Docker](https://docs.docker.com/get-docker/) — runs MongoDB and the API server locally
 - [Foundry](https://getfoundry.sh/) — compiles and deploys the Solidity contracts
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — GUI for registering the factory and inspecting the database during development
-
 - [Node.js](https://nodejs.org/en/download/) — required to run the server and app
-
-- [Postman](https://www.postman.com/downloads/) — for sending API requests during the walkthrough (curl works too)
-
 - [pnpm](https://pnpm.io/installation) — the package manager used throughout this project
+- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — optional GUI for inspecting the database during development
 
 ## Pull the repo
 
 ```bash
 git clone --recurse-submodules https://github.com/transfer-agent-protocol/tap-cap-table.git
-```
-
-Then install workspace dependencies:
-
-```bash
 cd tap-cap-table
-git switch -c <your-branch-name>
 pnpm install
 ```
 
+<Callout type="info">
+Missing submodules: `git submodule update --init --recursive`.
+</Callout>
+
+## Who deploys what?
+
+| Actor | Onchain surface |
+| --- | --- |
+| **Protocol builder** | Ships contracts (BUSL). Owns the shared **demo** factory on Plume if you reuse it. |
+| **Transfer agent** | Deploys **their own** `CapTableFactory` — their book of business (many issuer tables). |
+| **Issuer / admin wallet** | Calls `createCapTable` on a factory; becomes ADMIN of that issuer’s cap table. |
+
+Mongo’s `factories` collection is only a **local mirror** of which factory address this stack talks to. Registering a factory in Mongo does not grant onchain ownership.
+
 ## Learn the structure
 
-Everything you need to develop your onchain smart contracts lives under the `chain` folder in the repo.
+Everything you need for the onchain contracts lives under `chain/`.
 
 <FileTree>
   <FileTree.Folder name="chain" defaultOpen>
@@ -56,9 +59,5 @@ Everything you need to develop your onchain smart contracts lives under the `cha
 		</FileTree.Folder>
 	</FileTree.Folder>
 </FileTree>
-
-<Callout type="info">
-Missing submodules: `git submodule update --init --recursive`.
-</Callout>
 
 Next: [Initial setup](/development/setup).

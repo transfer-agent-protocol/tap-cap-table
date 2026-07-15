@@ -14,12 +14,8 @@ This is a **pnpm monorepo** with the following workspaces:
 
 ### Licensing
 
-This project uses a dual-license structure:
+The monorepo (chain, server, app, docs, packages) is **BUSL-1.1** (PALMER.EARTH CORP). Change Date January 1, 2028 → AGPL-3.0+. See root `LICENSE`. Submodules and third-party deps keep their own licenses.
 
-- **Core Protocol (`chain/`)**: BUSL-1.1 (converts to AGPLv3 on January 1, 2028)
-- **Offchain Server (`server/`)**: AGPL-3.0
-- **Frontend (`app/`)**: UNLICENSED (proprietary)
-- **Documentation (`docs/`)**: MIT
 
 ## Architecture
 
@@ -38,7 +34,7 @@ The protocol uses a three-tier access model:
 
 - **ADMIN_ROLE** (asset manager's wallet): Grants/revokes roles, manages cap table governance. When created via the factory, `msg.sender` receives ADMIN. Admins are implicitly operators (`_checkOperatorRole` checks both roles).
 - **OPERATOR_ROLE** (Transfer Agent Protocol server): Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Granted during cap table creation if an operator address is provided.
-- **Factory owner** (protocol deployer): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies via `updateCapTableImplementation()`. Has no access to individual cap tables.
+- **Factory owner** (wallet that deployed that factory): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies of **that** factory via `updateCapTableImplementation()`. Has no access to individual cap tables as admin. On the shared Plume demo factory this is the protocol builder (TAP Admin); a licensed transfer agent should deploy their own factory so they own upgrades.
 
 **Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally designate an OPERATOR address (typically the TAP server) at creation time.
 
@@ -130,23 +126,34 @@ When a manifest is created, the system:
 
 ### Setup
 
-**Fast path (Plume):** `pnpm bootstrap` does the whole setup idempotently — builds contracts if needed, creates the external `offchain-db` volume, `docker compose up -d --build`, and waits for API health. It does **not** hardcode a factory: if none is registered it points you to `pnpm deploy-factory` (which deploys and auto-registers your own). Safe to re-run whenever you come back to the project. For the wallet product UI (`/app/*`), also run `pnpm app:dev` (it reads `app/.env.local`).
-
-Manual steps:
+**Golden path (Plume, agents and humans):**
 
 ```bash
-# Install dependencies
 pnpm install
+REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ app image), demo factory in Mongo
+# Fill secrets in .env AND app/.env.local: REOWN, OPERATOR, PRIVATE_KEY as needed
+pnpm app:dev                         # product UI — do not rely on Docker app alone
+```
 
-# Setup Foundry and build contracts
+`pnpm bootstrap` (`scripts/bootstrap-plume.sh`) is idempotent: ensures `.env` + `app/.env.local`, installs deps if needed, builds contracts and **asserts** non-empty `chain/out`, creates `offchain-db`, `docker compose up -d --build`, waits for API health, optionally registers the shared demo factory when `REUSE_TAP_FACTORY=1`. Use `SKIP_APP=1` to start only mongodb+server.
+
+**Factory model (required reading):**
+- **Protocol builder** — owns shared demo factory on Plume (`0xcd6…`, owner TAP Admin `0x366a…`).
+- **Transfer agent** — deploys **own** factory via `pnpm deploy-factory` (auto Mongo register); beacon upgrades are theirs.
+- **Issuer ADMIN** — `createCapTable` (permissionless) on a factory; wallet manage UI. Using shared factory ≠ owning it.
+- **Mongo `factories`** — local mirror only.
+
+**Failure matrix:** `@tap/units` missing on `:3000` → Docker app without `packages/` (fixed in `Dockerfile.app`) or stop Docker app and use `pnpm app:dev`. Reown **403** → real `NEXT_PUBLIC_REOWN_PROJECT_ID`. `COPY chain/out` fail → run `pnpm setup`. Fresh Mongo has no historical issuers until mint/register/load-from-wallet.
+
+Manual steps (if not using bootstrap):
+
+```bash
+pnpm install
 pnpm setup
-
-# Start all services via Docker (MongoDB, server, app)
-pnpm docker:up
-
-# Configure environment
 cp .env.example .env
-# Edit .env with your DATABASE_URL, RPC_URL, PRIVATE_KEY, CHAIN_ID, and NEXT_PUBLIC_* vars
+# also create app/.env.local with the same NEXT_PUBLIC_* values
+pnpm docker:up   # or: docker compose up -d mongodb server
+pnpm app:dev
 ```
 
 ### Running the Application
@@ -286,7 +293,7 @@ When editing pages under `docs/src/pages/`, follow these conventions established
 - **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
 - **OCF import routes**: Any `multipart/form-data` route should include a concrete `curl -F` example, not just prose.
-- **Factory deploy page**: Keep changes to this page minimal — the MongoDB Compass GUI flow is intentional and should not be replaced with a CLI alternative.
+- **Factory deploy page**: Prefer `pnpm deploy-factory` (auto-register) and `pnpm factory:register` over hand-editing Mongo. Compass remains optional for inspection. Document TA-owned factory vs shared demo clearly; never hardcode a stale implementation address.
 - **Diagrams**: Prefer Mermaid fenced blocks (```` ```mermaid ````) over JPG/PNG diagrams for new content. Mermaid renders inline in Nextra, respects light/dark theme, and stays editable in MDX. Existing screenshots stay — do not delete them.
 
 ### Frontend App
@@ -538,7 +545,8 @@ Libraries:
 9. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
 10. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
 11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The root `.env` `NEXT_PUBLIC_*` only feed `docker-compose` interpolation into the **server**, not the Docker `app`. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it — often the operator's **user** wallet, not the server key) controls beacon upgrades for all its cap tables. Implementation is the upgradeable beacon target (read live; docs may show stale impl addresses). Only reuse a factory whose owner wallet you control. Keep Mongo `factories` and `app/.env.local` on the same factory address.
-12. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
+12. **Docker Next rewrites vs browser**: `NEXT_PUBLIC_API_URL` drives Next **server-side** `/api/*` rewrites. In the Docker app container use `http://server:8293`. Host `pnpm app:dev` uses `http://localhost:8293` in `app/.env.local`. Wrong value → mint onchain succeeds but register shows Internal Server Error.
+13. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
 13. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
 14. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
 15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.

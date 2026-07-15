@@ -180,13 +180,15 @@ The frontend contains no Solidity. For contract conventions and toolchain, see t
 
 Frontend config lives in `app/.env.local` (git-ignored). All are build-time public (`NEXT_PUBLIC_*`):
 
-- `NEXT_PUBLIC_REOWN_PROJECT_ID` — Reown/WalletConnect project id (https://cloud.reown.com)
-- `NEXT_PUBLIC_FACTORY_ADDRESS` — deployed `CapTableFactory` address
+- `NEXT_PUBLIC_REOWN_PROJECT_ID` — Reown/WalletConnect project id (https://cloud.reown.com). Placeholder/`UPDATE_ME` → AppKit **403**.
+- `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
-- `NEXT_PUBLIC_API_URL` — API server URL the `/api/*` rewrite proxies to (default `http://localhost:8293`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS` — server wallet to receive OPERATOR_ROLE on new cap tables
+- `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` — address passed as operator on `createCapTable` (usually your server wallet)
 
 See the root `.env.example` for the canonical list. Keep Mongo `factories` and this factory address aligned.
+
+**Host vs Docker:** Prefer `pnpm app:dev` for product work. If `:3000` is Docker and you see `Can't resolve '@tap/units'`, either rebuild the app image (Dockerfile copies `packages/`) or `docker compose stop app` and use the host dev server.
 
 ## Git Workflow
 
