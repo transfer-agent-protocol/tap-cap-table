@@ -107,5 +107,3 @@ This repository is licensed under the **Business Source License 1.1** ([LICENSE]
 
 Third-party dependencies and the `ocf/` git submodule retain their own licenses. For alternative licensing, contact alex@palmer.earth.
 
-
-For enterprise licensing inquiries, please contact the owner of this repo.
