@@ -14,7 +14,13 @@ Use this page when the issuer already exists outside the main `POST /issuer/crea
 
 ## Before you use these routes
 
-If the factory deployment is not in TAP yet, send `POST /factory/register` once for that factory:
+If the factory is not yet registered in your local stack, use the CLI (preferred — reads implementation onchain automatically):
+
+```bash
+pnpm factory:register --factory 0xYourFactoryAddress
+```
+
+Or send `POST /factory/register` directly (requires you to supply both addresses):
 
 ```json
 {
@@ -23,7 +29,7 @@ If the factory deployment is not in TAP yet, send `POST /factory/register` once 
 }
 ```
 
-The response returns `{ "factory": ... }`.
+The response returns `{ "factory": ... }`. Prefer the CLI — it reads the live implementation from the factory onchain and never hardcodes a stale address.
 
 ## Register an issuer that was already deployed
 

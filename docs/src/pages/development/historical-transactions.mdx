@@ -33,7 +33,7 @@ The response is an array of historical transactions, each containing:
 </Steps>
 
 <Callout type="warning">
-**Price scaling:** `share_price.amount` is stored as a scaled integer. Divide by `10000` for the human value — `42000` means `$4.20`. The same rule applies to every monetary field.
+**Price scaling:** Contract values are scaled by 1e10 (10,000,000,000) on write. The poller unscales by 1e10 before writing to MongoDB, so **API responses show human-readable values** (e.g. `"4.20"` not `42000000000`). If you ever read values directly from the contract, divide by 1e10.
 </Callout>
 
 ## Transaction types
@@ -63,7 +63,7 @@ The response is an array of historical transactions, each containing:
             "date": "2026-01-01",
             "security_id": "56d14df5-6b04-7d93-1976-5e3f0d1703de",
             "quantity": "100000",
-            "share_price": { "amount": "42000", "currency": "USD" },
+            "share_price": { "amount": "4.20", "currency": "USD" },
             "is_onchain_synced": true
         }
     }

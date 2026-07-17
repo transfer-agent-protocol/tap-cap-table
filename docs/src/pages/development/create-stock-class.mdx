@@ -75,7 +75,7 @@ The `is_onchain_synced` field starts as `false`. The event poller will update it
 | `default_id_prefix` | Short prefix used to label issuances of this class (`CS-A`, `PA`). |
 | `initial_shares_authorized` | Authorized shares for this class — must be ≤ the issuer's `initial_shares_authorized`. |
 | `votes_per_share` | Voting weight per share. `"1"` is one-vote-per-share; `"0"` for non-voting. |
-| `price_per_share.amount` | Human price per share. The contract stores it scaled by 10000 — see the [scaling note](/api-reference#stock-transactions). |
+| `price_per_share.amount` | Human price per share. The contract stores it scaled by 1e10 (10,000,000,000) — see the [scaling note](/api-reference#stock-transactions). |
 | `seniority` | Liquidation rank as a string integer. Lower numbers liquidate first; common stock typically uses `"1"`. |
 
 ## Stock class types

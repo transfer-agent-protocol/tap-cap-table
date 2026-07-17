@@ -1,8 +1,9 @@
 /**
- * Docs skin — aligned with app "Ledger Signal" without merging the apps.
- * Nextra still owns layout; we only override canvas + type + accents.
+ * Docs skin — aligned with app "Ledger Signal" design.
+ * Nextra 3 owns layout and Tailwind; we override canvas + type + accents.
  */
 
+/* ─── Custom properties ─────────────────────────────────────────────── */
 :root {
 	--tap-bg: #09090b;
 	--tap-surface: #111113;
@@ -15,79 +16,138 @@
 	--tap-inverse: #09090b;
 }
 
+/* ─── Global canvas ─────────────────────────────────────────────────── */
 html,
 body {
-	background: var(--tap-bg) !important;
+	background-color: var(--tap-bg) !important;
 	color: var(--tap-text);
 	font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 	-webkit-font-smoothing: antialiased;
 }
 
-/* Nextra shell surfaces */
+#__next,
+#__next > div,
+#__next > div > div {
+	background-color: var(--tap-bg);
+}
+
+/* ─── Nextra layout elements (v2 + v3 selectors) ───────────────────── */
+header,
+header nav,
 .nextra-nav-container,
 .nextra-nav-container-blur,
+[class*="nextra-nav"] {
+	background-color: var(--tap-surface) !important;
+	border-bottom: 1px solid var(--tap-border) !important;
+	backdrop-filter: none !important;
+}
+
+aside,
+aside nav,
 .nextra-sidebar-container,
 aside.nextra-sidebar,
-nav.nextra-toc {
+[class*="nextra-sidebar"] {
 	background-color: var(--tap-surface) !important;
 	border-color: var(--tap-border) !important;
 }
 
-.nextra-nav-container {
-	border-bottom: 1px solid var(--tap-border) !important;
+nav.nextra-toc,
+[class*="nextra-toc"] {
+	background-color: var(--tap-bg) !important;
 }
 
-/* Content */
 article,
-main {
+main,
+.nextra-content,
+[class*="nextra-content"] {
+	background-color: var(--tap-bg) !important;
 	color: var(--tap-text);
 }
 
+/* ─── Callouts — uniform elevated surface, typed left border ────────── */
+aside[data-type],
+.nextra-callout,
+[class*="callout"],
+blockquote {
+	background-color: var(--tap-elevated) !important;
+	border: 1px solid var(--tap-border) !important;
+	border-radius: 0.375rem;
+	color: var(--tap-text) !important;
+}
+
+aside[data-type="info"] { border-left: 3px solid #60a5fa !important; }
+aside[data-type="warning"] { border-left: 3px solid #fbbf24 !important; }
+aside[data-type="error"],
+aside[data-type="danger"] { border-left: 3px solid #f87171 !important; }
+aside[data-type="default"],
+aside:not([data-type]) { border-left: 3px solid var(--tap-border) !important; }
+
+/* ─── Links ─────────────────────────────────────────────────────────── */
 article a,
 main a,
 .nextra-content a {
 	color: var(--tap-signal) !important;
 	text-decoration: none;
 }
-
 article a:hover,
 main a:hover,
 .nextra-content a:hover {
-	color: var(--tap-signal) !important;
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
-	opacity: 0.92;
+	opacity: 0.9;
 }
 
-/* Code blocks */
+/* ─── Code ───────────────────────────────────────────────────────────── */
 pre,
 code {
 	font-family: "IBM Plex Mono", ui-monospace, monospace !important;
 }
-
 pre {
-	background: var(--tap-elevated) !important;
+	background-color: var(--tap-elevated) !important;
 	border: 1px solid var(--tap-border);
-	border-radius: 0.5rem;
+	border-radius: 0.375rem;
+}
+:not(pre) > code {
+	background-color: var(--tap-elevated) !important;
+	border: 1px solid var(--tap-border);
+	border-radius: 0.25rem;
+	padding: 0.1em 0.35em;
+	color: var(--tap-text);
 }
 
-/* Sidebar active */
+/* ─── Sidebar active ─────────────────────────────────────────────────── */
 .nextra-sidebar a[aria-current="page"],
 .nextra-menu-desktop a.active,
-.nextra-menu-mobile a.active {
-	background: rgba(200, 245, 66, 0.12) !important;
+.nextra-menu-mobile a.active,
+aside a[aria-current="page"] {
+	background-color: rgba(200, 245, 66, 0.1) !important;
 	color: var(--tap-signal) !important;
 }
 
-/* Footer */
+/* ─── Tables ─────────────────────────────────────────────────────────── */
+table { border-color: var(--tap-border); }
+th, td { border-color: var(--tap-border) !important; }
+thead, thead tr { background-color: var(--tap-elevated) !important; }
+
+/* ─── Footer ─────────────────────────────────────────────────────────── */
 footer,
 .nextra-footer {
-	background: var(--tap-bg) !important;
+	background-color: var(--tap-bg) !important;
 	border-top: 1px solid var(--tap-border) !important;
 	color: var(--tap-subtle) !important;
 }
 
+/* ─── Mermaid ────────────────────────────────────────────────────────── */
+.mermaid,
+[class*="mermaid"] {
+	background-color: var(--tap-elevated) !important;
+	border: 1px solid var(--tap-border);
+	border-radius: 0.375rem;
+	padding: 1rem;
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────── */
 ::selection {
-	background: var(--tap-signal);
+	background-color: var(--tap-signal);
 	color: var(--tap-inverse);
 }
