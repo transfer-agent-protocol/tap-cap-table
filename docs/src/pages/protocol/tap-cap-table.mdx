@@ -36,6 +36,8 @@ Contracts store issuer, stock class, stakeholder, position, and transaction stat
 
 **Business reading:** protocol builder owns IP and any **demo** factory; a licensed transfer agent should own **their** factory; issuers own ADMIN on each issuer table. Mongo factory registration is offchain config only.
 
+How these roles map to local env vars (`PRIVATE_KEY`, `NEXT_PUBLIC_OPERATOR_ADDRESS`, browser wallet) is documented under [Three wallets / keys](/development/setup#three-wallets--keys).
+
 <Callout type="info">
 `createCapTable` is permissionless. It makes `msg.sender` admin and can grant an operator in the same transaction. It does **not** make the caller the factory owner.
 </Callout>

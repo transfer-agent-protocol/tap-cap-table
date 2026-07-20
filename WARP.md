@@ -36,6 +36,8 @@ The protocol uses a three-tier access model:
 - **OPERATOR_ROLE** (Transfer Agent Protocol server): Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Granted during cap table creation if an operator address is provided.
 - **Factory owner** (wallet that deployed that factory): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies of **that** factory via `updateCapTableImplementation()`. Has no access to individual cap tables as admin. On the shared Plume demo factory this is the protocol builder (TAP Admin); a licensed transfer agent should deploy their own factory so they own upgrades.
 
+**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API / `deploy-factory`; `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Canonical write-up: `docs/src/pages/development/setup.mdx` → “Three wallets / keys”.
+
 **Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally designate an OPERATOR address (typically the TAP server) at creation time.
 
 **Access control split:**
@@ -131,7 +133,7 @@ When a manifest is created, the system:
 ```bash
 pnpm install
 REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ app image), demo factory in Mongo
-# Fill secrets in .env AND app/.env.local: OPERATOR, PRIVATE_KEY as needed
+# app/.env.local: NEXT_PUBLIC_* (factory, chain, operator address). PRIVATE_KEY optional for wallet UI
 pnpm app:dev                         # product UI — do not rely on Docker app alone
 ```
 
@@ -430,13 +432,13 @@ The system supports multiple environments via `.env` files:
 - `DATABASE_REPLSET`: Set to "1" for replica set (enables transactions)
 - `RPC_URL`: Ethereum RPC endpoint
 - `CHAIN_ID`: Network chain ID (31337 for Anvil, 98866 for Plume Mainnet, 98867 for Plume Testnet)
-- `PRIVATE_KEY`: Deployer private key
+- `PRIVATE_KEY`: **Dev/demo only**, optional for wallet-first UI. Server-signed API + CLI `deploy-factory` when set; placeholder → poller read-only. Never factory-owner or prod keys in long-running env (see Three keys above)
 - `PORT`: API server port (default 8293)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`: optional WalletConnect Cloud project ID for mobile QR (https://cloud.walletconnect.com)
 - `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Server wallet address to receive OPERATOR_ROLE on new cap tables
+- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables
 - `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (default 5, raised to 8 in `docker-compose.yml`). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
 
 ## Working with OCF

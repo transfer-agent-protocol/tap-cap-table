@@ -31,7 +31,7 @@ tap-cap-table/
 ```bash
 pnpm install
 REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ optional Docker app), demo factory in Mongo
-# Set OPERATOR / PRIVATE_KEY as needed (wallet UI needs a browser extension only)
+# Wallet UI: browser extension + NEXT_PUBLIC_* in app/.env.local. Server PRIVATE_KEY optional
 pnpm app:dev                         # Product UI — http://localhost:3000/app
 ```
 
@@ -57,11 +57,11 @@ Optional mobile QR: set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (WalletConnect Cl
 
 Legacy `/mint` and `/manage*` redirect into `/app`.
 
-**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only.
+**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only. Factory owner ≠ issuer ADMIN ≠ server `PRIVATE_KEY` — see [Three wallets / keys](https://docs.transferagentprotocol.xyz/development/setup#three-wallets--keys).
 
-Then go read official [docs](https://docs.transferagentprotocol.xyz/)
+Then go read official [docs](https://docs.transferagentprotocol.xyz)
 
-> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Also set `NEXT_PUBLIC_OPERATOR_ADDRESS`, and `PRIVATE_KEY` for server-signed paths / factory deploy. Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
+> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Set `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only). `PRIVATE_KEY` is **dev/demo only** and optional for the wallet UI (needed for server-signed API / CLI factory deploy). Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
 
 ### Scripts
 

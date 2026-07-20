@@ -158,10 +158,11 @@ for f in .env app/.env.local; do
     fi
 done
 if [ "$SECRETS_OK" -eq 0 ]; then
-    echo "⚠️  Secrets still set to UPDATE_ME — set before server-signed / mint-operator work:"
-    echo "      NEXT_PUBLIC_OPERATOR_ADDRESS   (server wallet / operator for new cap tables)"
-    echo "      PRIVATE_KEY                   (funded Plume key for server-signed paths / deploy-factory)"
-    echo "      (Wallet connect needs a browser extension; optional NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR)"
+    echo "⚠️  UPDATE_ME placeholders still present (often fine for wallet-first /app):"
+    echo "      NEXT_PUBLIC_OPERATOR_ADDRESS — address granted OPERATOR on new mints (not a private key)"
+    echo "      PRIVATE_KEY                 — optional dev/demo only; needed for server-signed API / deploy-factory"
+    echo "      Wallet UI needs a browser extension; optional NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR"
+    echo "      Three keys: factory owner ≠ issuer ADMIN ≠ server key — docs development/setup"
 else
     echo "✅ No UPDATE_ME placeholders detected in .env / app/.env.local"
 fi

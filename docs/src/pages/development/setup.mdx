@@ -10,6 +10,27 @@ Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker
 
 ## Secrets and env files
 
+### Three wallets / keys
+
+These are easy to conflate. They are **not** the same wallet.
+
+| # | Role | What it controls | Where it lives | Needed for golden path? |
+| --- | --- | --- | --- | --- |
+| 1 | **Factory owner** | Beacon upgrades for **that** factory’s cap tables (`updateCapTableImplementation`) | Cold / hardware / vault. Used only for rare deploy or upgrade CLI runs | **No** for day-to-day product work |
+| 2 | **Issuer ADMIN** | The wallet that called `createCapTable` — governance + day-to-day writes (admins count as operators onchain) | Browser wallet in `/app` | **Yes** — connect an extension wallet |
+| 3 | **Server / operator** | API process signing server-side txs (`/*/create`, API transfer, etc.). Often the address passed as operator at mint | Root `.env` → `PRIVATE_KEY` (key) and `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only) | **No** if you only use the wallet UI + poller |
+
+**Mapping to product paths**
+
+- **Wallet-first `/app` UI** — ADMIN signs in the browser. Poller needs RPC only. Leave `PRIVATE_KEY=UPDATE_ME` (or unset). Server runs read-only for chain writes; that is expected.
+- **`NEXT_PUBLIC_OPERATOR_ADDRESS`** — an **address** granted `OPERATOR_ROLE` on **new** mints. Setting it does **not** require that key in the server unless the server itself is that operator and will sign txs.
+- **Factory owner key** — never put this in the long-running Docker/API env. Compromise would let an attacker upgrade every cap table on that factory. Inject only for a one-shot `pnpm deploy-factory` or upgrade script (separate env file / CI secret), then remove.
+- **Shared Plume demo factory** (`0xcd6…`) — owner is TAP Admin (`0x366a…`), not your issuer wallet. Reusing it does not make you factory owner.
+
+<Callout type="warning">
+`PRIVATE_KEY` in local `.env` is **dev/demo only**. It is optional for the wallet-first path, will be rotated or replaced by real deployment secret management, and must never hold production or factory-owner keys. Do not commit real keys.
+</Callout>
+
 <Steps>
 
 ### 1. Root `.env`
@@ -18,12 +39,12 @@ Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker
 cp .env.example .env
 ```
 
-`.env.example` defaults to Plume (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Set:
+`.env.example` defaults to Plume (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Typical local values:
 
 | Variable | Purpose |
 | --- | --- |
-| `PRIVATE_KEY` | Funded Plume key for server-signed API / `deploy-factory` |
-| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Granted `OPERATOR_ROLE` on new cap tables (usually the server wallet) |
+| `PRIVATE_KEY` | **Optional** for wallet UI. Funded **dev** key only if you need server-signed API routes or CLI `deploy-factory` from this machine. Demo placeholder is fine otherwise. |
+| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Address granted `OPERATOR_ROLE` on new cap tables (often a server/ops address; not a private key) |
 | `NEXT_PUBLIC_FACTORY_ADDRESS` | Factory the app mints against |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional — mobile QR only (https://cloud.walletconnect.com). Extension wallets need no cloud key. |
 
