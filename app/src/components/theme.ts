@@ -39,9 +39,11 @@ const theme: DefaultTheme = {
 		overlay: "rgba(0, 0, 0, 0.7)",
 		inverse: "#0a0a0a",
 	},
+	// var() includes a fallback so a missing --font-* never invalidates the whole
+	// stack (browser would otherwise fall through to Times / serif). Modern only.
 	fonts: {
-		sans: "var(--font-sans), system-ui, -apple-system, 'Segoe UI', sans-serif",
-		mono: "var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace",
+		sans: "var(--font-sans, system-ui), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+		mono: "var(--font-mono, ui-monospace), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
 	},
 	fontSizes: {
 		H1: "clamp(1.75rem, 3.5vw, 2.5rem)",

@@ -23,16 +23,16 @@ cp .env.example .env
 | Variable | Purpose |
 | --- | --- |
 | `PRIVATE_KEY` | Funded Plume key for server-signed API / `deploy-factory` |
-| `NEXT_PUBLIC_REOWN_PROJECT_ID` | WalletConnect / Reown — https://cloud.reown.com |
 | `NEXT_PUBLIC_OPERATOR_ADDRESS` | Granted `OPERATOR_ROLE` on new cap tables (usually the server wallet) |
 | `NEXT_PUBLIC_FACTORY_ADDRESS` | Factory the app mints against |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional — mobile QR only (https://cloud.walletconnect.com). Extension wallets need no cloud key. |
 
 ### 2. Frontend `app/.env.local`
 
 Host `pnpm app:dev` reads **`app/.env.local`**, not only root `.env`. Copy the same `NEXT_PUBLIC_*` values there. Bootstrap creates a starter file if missing.
 
-<Callout type="warning">
-Missing or placeholder Reown project id shows up as browser **HTTP 403** from AppKit — not a Next.js bug.
+<Callout type="info">
+Wallet connect is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.). Optional WalletConnect project id is only for mobile QR.
 </Callout>
 
 </Steps>

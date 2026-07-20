@@ -76,8 +76,7 @@
             "path-to-regexp": "0.1.13",
             "socket.io-parser": "4.2.6",
             "tinyglobby>picomatch": "4.0.4",
-            "use-sync-external-store": "1.6.0",
-            "@walletconnect/ethereum-provider": "2.23.10"
+            "use-sync-external-store": "1.6.0"
         }
     },
     "devDependencies": {

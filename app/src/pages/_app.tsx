@@ -29,7 +29,7 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 	const m = msg || "";
 	const s = `${source || ""} ${stack || ""}`;
 	// Bare "Failed to fetch" with no real app stack is almost always wallet extension /
-	// Reown-WalletConnect analytics / adblock (ERR_BLOCKED_BY_CLIENT) — not TAP API.
+	// optional WalletConnect relay / adblock (ERR_BLOCKED_BY_CLIENT) — not TAP API.
 	const bareFailedFetch =
 		m === "Failed to fetch" ||
 		m === "TypeError: Failed to fetch" ||
@@ -44,9 +44,6 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 		s.includes("extension") ||
 		s.includes("wallet") ||
 		s.includes("coinbase") ||
-		s.includes("web3modal") ||
-		s.includes("appkit") ||
-		s.includes("reown") ||
 		s.includes("walletconnect");
 	return (
 		s.includes("chrome-extension://") ||
@@ -57,15 +54,22 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 		m.includes("AnalyticsSDK") ||
 		m.includes("pulse.walletconnect") ||
 		m.includes("cca-lite.coinbase.com") ||
-		// Placeholder / missing Reown project id → api.web3modal.org 403
-		(m.includes("HTTP status code: 403") &&
-			(s.includes("web3modal") || s.includes("appkit") || s.includes("reown"))) ||
-		m.includes("api.web3modal.org") ||
 		(bareFailedFetch && nonAppStack)
 	);
 }
 
+const fontVariableClasses = `${inter.variable} ${plex.variable}`;
+
 export default function App({ Component, pageProps }: AppProps & { Component: NextPage<any> }) {
+	// Put next/font CSS variables on <html> so portaled UI (modals on document.body)
+	// resolves --font-sans / --font-mono the same as the app shell.
+	useEffect(() => {
+		const root = document.documentElement;
+		const classes = fontVariableClasses.split(/\s+/).filter(Boolean);
+		root.classList.add(...classes);
+		return () => root.classList.remove(...classes);
+	}, []);
+
 	// Wallet / adblock extensions throw "Failed to fetch" into the page; Next's
 	// dev overlay treats them as app errors. Swallow that noise only.
 	useEffect(() => {
@@ -99,7 +103,7 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 			<ThemeProvider theme={theme}>
 				<GlobalStyle />
 				<AppShellProvider>
-					<AppShell className={`${inter.variable} ${plex.variable}`}>
+					<AppShell className={fontVariableClasses}>
 						<Head>
 							<meta charSet="utf-8" />
 							<meta httpEquiv="X-UA-Compatible" content="IE=edge" />

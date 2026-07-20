@@ -31,7 +31,7 @@ tap-cap-table/
 ```bash
 pnpm install
 REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ optional Docker app), demo factory in Mongo
-# Required: set NEXT_PUBLIC_REOWN_PROJECT_ID (see below) + OPERATOR / PRIVATE_KEY as needed
+# Set OPERATOR / PRIVATE_KEY as needed (wallet UI needs a browser extension only)
 pnpm app:dev                         # Product UI — http://localhost:3000/app
 ```
 
@@ -43,17 +43,11 @@ pnpm app:dev                         # Product UI — http://localhost:3000/app
 
 `pnpm bootstrap` is idempotent. Prefer host `pnpm app:dev` for the product UI; Docker app is optional.
 
-### Reown project ID (required for wallet UI)
+### Wallet connection (native)
 
-The product UI uses **Reown AppKit** for connect-wallet. Without a real project id the app will not connect wallets (and used to hard-crash with HTTP **403** from `api.web3modal.org`).
+The product UI uses a **first-party connect modal** (TAP design system) on top of **wagmi + EIP-6963** browser wallets (Rabby, MetaMask, etc.). No third-party connect-cloud account is required for extension wallets.
 
-1. Create a project at [cloud.reown.com](https://cloud.reown.com)
-2. Set the same value in **both** files:
-   - `app/.env.local` → `NEXT_PUBLIC_REOWN_PROJECT_ID=...` (required for `pnpm app:dev`)
-   - root `.env` → same key (used if you run the Docker app)
-3. Restart the frontend after changing it (`pnpm app:dev`, or rebuild Docker app)
-
-Do **not** leave `UPDATE_ME` or an empty value. A custom wallet-connect stack (no Reown account) is planned separately — for now Reown is required.
+Optional mobile QR: set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (WalletConnect Cloud) in `app/.env.local` and root `.env` if you use the Docker app.
 
 **Product UI**
 
@@ -67,7 +61,7 @@ Legacy `/mint` and `/manage*` redirect into `/app`.
 
 Then go read official [docs](https://docs.transferagentprotocol.xyz/)
 
-> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. **Required for wallets:** `NEXT_PUBLIC_REOWN_PROJECT_ID` from [cloud.reown.com](https://cloud.reown.com). Also set `NEXT_PUBLIC_OPERATOR_ADDRESS`, and `PRIVATE_KEY` for server-signed paths / factory deploy. Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
+> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Also set `NEXT_PUBLIC_OPERATOR_ADDRESS`, and `PRIVATE_KEY` for server-signed paths / factory deploy. Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
 
 ### Scripts
 

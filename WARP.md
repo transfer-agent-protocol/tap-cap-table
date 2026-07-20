@@ -131,7 +131,7 @@ When a manifest is created, the system:
 ```bash
 pnpm install
 REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ app image), demo factory in Mongo
-# Fill secrets in .env AND app/.env.local: REOWN, OPERATOR, PRIVATE_KEY as needed
+# Fill secrets in .env AND app/.env.local: OPERATOR, PRIVATE_KEY as needed
 pnpm app:dev                         # product UI — do not rely on Docker app alone
 ```
 
@@ -143,7 +143,7 @@ pnpm app:dev                         # product UI — do not rely on Docker app 
 - **Issuer ADMIN** — `createCapTable` (permissionless) on a factory; wallet manage UI. Using shared factory ≠ owning it.
 - **Mongo `factories`** — local mirror only.
 
-**Failure matrix:** `@tap/units` missing on `:3000` → Docker app without `packages/` (fixed in `Dockerfile.app`) or stop Docker app and use `pnpm app:dev`. Reown **403** → real `NEXT_PUBLIC_REOWN_PROJECT_ID`. `COPY chain/out` fail → run `pnpm setup`. Fresh Mongo has no historical issuers until mint/register/load-from-wallet. Mint OK but register **500** → Docker app `NEXT_PUBLIC_API_URL` must be `http://server:8293`. Poller `invalid BytesLike 0xUPDATE_ME` → placeholder `PRIVATE_KEY`; poller now falls back to read-only when key is missing.
+**Failure matrix:** `@tap/units` missing on `:3000` → Docker app without `packages/` (fixed in `Dockerfile.app`) or stop Docker app and use `pnpm app:dev`. Empty connect modal → install a browser wallet (optional `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` for mobile QR). `COPY chain/out` fail → run `pnpm setup`. Fresh Mongo has no historical issuers until mint/register/load-from-wallet. Mint OK but register **500** → Docker app `NEXT_PUBLIC_API_URL` must be `http://server:8293`. Poller `invalid BytesLike 0xUPDATE_ME` → placeholder `PRIVATE_KEY`; poller now falls back to read-only when key is missing.
 
 Manual steps (if not using bootstrap):
 
@@ -312,7 +312,7 @@ pnpm app:start
 pnpm app:test:e2e
 ```
 
-The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, Reown AppKit, and TanStack Query. It serves the marketing landing page (`/`) and the product workspace under `/app/*` (companies, mint, company cap table). Legacy `/mint` and `/manage*` redirect to `/app`. The UI follows a strict design system (monochrome + rust accent, 4px grid, sans UI copy + mono data) defined in `app/src/components/theme.ts`; the side nav is the working navigation and the top bar is system-only. Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
+The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, a first-party connect modal, and TanStack Query. It serves the marketing landing page (`/`) and the product workspace under `/app/*` (companies, mint, company cap table). Legacy `/mint` and `/manage*` redirect to `/app`. The UI follows a strict design system (monochrome + rust accent, 4px grid, sans UI copy + mono data) defined in `app/src/components/theme.ts`; the side nav is the working navigation and the top bar is system-only. Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
 
 ### Deployment
 
@@ -432,7 +432,7 @@ The system supports multiple environments via `.env` files:
 - `CHAIN_ID`: Network chain ID (31337 for Anvil, 98866 for Plume Mainnet, 98867 for Plume Testnet)
 - `PRIVATE_KEY`: Deployer private key
 - `PORT`: API server port (default 8293)
-- `NEXT_PUBLIC_REOWN_PROJECT_ID`: WalletConnect project ID from https://cloud.reown.com
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`: optional WalletConnect Cloud project ID for mobile QR (https://cloud.walletconnect.com)
 - `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)

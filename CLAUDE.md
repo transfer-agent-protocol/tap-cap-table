@@ -16,14 +16,15 @@ The canonical, always-up-to-date guidance for this repo lives in the `WARP.md` f
 pnpm install
 REUSE_TAP_FACTORY=1 pnpm bootstrap   # Plume stack + register shared demo factory in Mongo
 # Fill secrets once in .env AND app/.env.local:
-#   NEXT_PUBLIC_REOWN_PROJECT_ID, NEXT_PUBLIC_OPERATOR_ADDRESS, PRIVATE_KEY (if server-signed / deploy)
+#   NEXT_PUBLIC_OPERATOR_ADDRESS, PRIVATE_KEY (if server-signed / deploy)
+# Wallet UI needs a browser extension (optional NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR)
 pnpm app:dev                         # http://localhost:3000/app  (reads app/.env.local)
 ```
 
 | Piece | Process |
 | --- | --- |
 | Mongo + API + poller | Docker via `pnpm bootstrap` / `docker compose up` |
-| Product UI / wallet | Host `pnpm app:dev` + `app/.env.local` |
+| Product UI / wallet | Host `pnpm app:dev` + `app/.env.local` + browser extension wallet |
 | Contract artifacts | `pnpm setup` → `chain/out` (required before server image build) |
 | Factory in Mongo | `REUSE_TAP_FACTORY=1` (demo) or `pnpm deploy-factory` (you own it) |
 
@@ -39,7 +40,7 @@ pnpm app:dev                         # http://localhost:3000/app  (reads app/.en
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Turbopack `Can't resolve '@tap/units'` on `:3000` | Docker app image missing `packages/` **or** Docker owns port while host expects `app:dev` | Fixed in `docker/Dockerfile.app` (`COPY packages/`); or `docker compose stop app` + `pnpm app:dev` |
-| Reown / AppKit **403** | `NEXT_PUBLIC_REOWN_PROJECT_ID=UPDATE_ME` | Real id from https://cloud.reown.com in `app/.env.local` |
+| No wallets in connect modal | No browser extension / EIP-6963 | Install Rabby/MetaMask; optional `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` for mobile QR |
 | `COPY chain/out` docker build fail | Artifacts missing | `pnpm setup` / `forge build --via-ir`; bootstrap now asserts non-empty `chain/out` |
 | Fresh Mongo empty of companies | Poller only tracks registered issuers | Mint new company, or Load from wallet / register existing; not auto-import of all chain history |
 | Stale factory impl in docs | Hardcoded old address | Always read impl onchain (`factory:register` does); live beacon ≠ landing screenshot |

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
 import { useAccount } from "wagmi";
-import { useAppKitAccount } from "@reown/appkit/react";
 import { H3, MutedText, P } from "../../../components/typography";
 import { Page, Section, SectionHeader } from "../../../components/layout";
 import { Button, StatusMessage } from "../../../components/elements";
@@ -130,8 +129,7 @@ export default function ManageHub() {
 	const [syncMessage, setSyncMessage] = useState<string | null>(null);
 	const [summaries, setSummaries] = useState<Record<string, IssuerSummary>>({});
 	const { address: wagmiAddress } = useAccount();
-	const { address: appKitAddress } = useAppKitAccount();
-	const adminAddress = wagmiAddress || appKitAddress || null;
+	const adminAddress = wagmiAddress || null;
 	const [isSyncingIssuers, setIsSyncingIssuers] = useState(false);
 
 	useEffect(() => {

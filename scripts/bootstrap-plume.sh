@@ -53,8 +53,7 @@ if [ ! -f app/.env.local ]; then
     mkdir -p app
     cat > app/.env.local << 'APPEOF'
 # Frontend (app/) — used by `pnpm app:dev`. Keep factory aligned with Mongo factories.
-# Get a Reown project id at https://cloud.reown.com
-NEXT_PUBLIC_REOWN_PROJECT_ID=UPDATE_ME
+# Wallet UI is native (EIP-6963). Optional: NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR.
 # Shared demo CapTableFactory on Plume (or your own after pnpm deploy-factory)
 NEXT_PUBLIC_FACTORY_ADDRESS=0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
 NEXT_PUBLIC_CHAIN_ID=98866
@@ -62,7 +61,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8293
 # Address granted OPERATOR_ROLE on new cap tables (usually the server wallet from PRIVATE_KEY)
 NEXT_PUBLIC_OPERATOR_ADDRESS=UPDATE_ME
 APPEOF
-    echo "📝 Created app/.env.local with Plume defaults — set REOWN + OPERATOR (and align factory if you deploy your own)."
+    echo "📝 Created app/.env.local with Plume defaults — set OPERATOR (and align factory if you deploy your own)."
 else
     echo "✅ app/.env.local present"
 fi
@@ -159,10 +158,10 @@ for f in .env app/.env.local; do
     fi
 done
 if [ "$SECRETS_OK" -eq 0 ]; then
-    echo "⚠️  Secrets still set to UPDATE_ME — product wallet UI will fail (Reown 403) until you set:"
-    echo "      NEXT_PUBLIC_REOWN_PROJECT_ID   (https://cloud.reown.com) in app/.env.local and .env"
+    echo "⚠️  Secrets still set to UPDATE_ME — set before server-signed / mint-operator work:"
     echo "      NEXT_PUBLIC_OPERATOR_ADDRESS   (server wallet / operator for new cap tables)"
     echo "      PRIVATE_KEY                   (funded Plume key for server-signed paths / deploy-factory)"
+    echo "      (Wallet connect needs a browser extension; optional NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR)"
 else
     echo "✅ No UPDATE_ME placeholders detected in .env / app/.env.local"
 fi

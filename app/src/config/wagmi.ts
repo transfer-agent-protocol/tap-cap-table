@@ -1,9 +1,10 @@
-import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { createAppKit } from "@reown/appkit/react";
-import { type AppKitNetwork } from "@reown/appkit/networks";
+import { createConfig, http, injected, mock, type Config, type CreateConnectorFn } from "wagmi";
+import { walletConnect } from "wagmi/connectors";
+import type { Chain } from "viem";
+import * as viemChains from "viem/chains";
 
 // Plume Mainnet (98866)
-const plumeMainnet = {
+export const plumeMainnet = {
 	id: 98866,
 	name: "Plume",
 	nativeCurrency: { name: "Plume", symbol: "PLUME", decimals: 18 },
@@ -13,10 +14,10 @@ const plumeMainnet = {
 	blockExplorers: {
 		default: { name: "Plume Explorer", url: "https://explorer.plume.org" },
 	},
-} as const satisfies AppKitNetwork;
+} as const satisfies Chain;
 
 // Plume Testnet (98867)
-const plumeTestnet = {
+export const plumeTestnet = {
 	id: 98867,
 	name: "Plume Testnet",
 	nativeCurrency: { name: "Plume", symbol: "PLUME", decimals: 18 },
@@ -27,10 +28,10 @@ const plumeTestnet = {
 		default: { name: "Plume Testnet Explorer", url: "https://testnet-explorer.plume.org" },
 	},
 	testnet: true,
-} as const satisfies AppKitNetwork;
+} as const satisfies Chain;
 
 // Anvil local (31337)
-const anvil = {
+export const anvil = {
 	id: 31337,
 	name: "Anvil",
 	nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
@@ -38,59 +39,109 @@ const anvil = {
 		default: { http: ["http://127.0.0.1:8545"] },
 	},
 	testnet: true,
-} as const satisfies AppKitNetwork;
+} as const satisfies Chain;
 
-const rawProjectId = (process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || "").trim();
+/** Chains the app can use for writes / switch-network (wagmi config). */
+export const chains = [plumeMainnet, plumeTestnet, anvil] as const;
 
-/** False when unset or still the .env.example placeholder — Reown returns 403 for these. */
-export const isReownConfigured =
-	rawProjectId.length > 0 &&
-	rawProjectId !== "UPDATE_ME" &&
-	!rawProjectId.toLowerCase().includes("your_project");
+/** Product chain for wrong-network UX (default Plume mainnet). */
+export const productChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 98866);
 
-// AppKit requires a non-empty string; use a dummy only when unconfigured so
-// WagmiAdapter still constructs. createAppKit is skipped until a real id is set.
-const projectId = isReownConfigured ? rawProjectId : "unconfigured";
-
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [plumeMainnet, plumeTestnet, anvil];
-
-export const wagmiAdapter = new WagmiAdapter({
-	networks,
-	projectId,
-	ssr: true,
-});
-
-// Wallet IDs (Reown explorer)
-const RABBY = "18388be9ac2d02726dbac9777c96efaac06d744b2f6d580fccdd4127a6d01fd1";
-const ZERION = "ecc4036f814562b41a5268adc86270fba1365471402006302e70169465b7ac18";
-const BINANCE = "8a0ee50d1f22f6651afcae7eb4253e52a3310b90af5daef78a8c4929a9bb99d4";
-
-if (typeof window !== "undefined" && isReownConfigured) {
-	createAppKit({
-		adapters: [wagmiAdapter],
-		networks,
-		projectId,
-		metadata: {
-			name: "Transfer Agent Protocol",
-			description: "Mint equity cap tables onchain",
-			url: "https://transferagentprotocol.xyz",
-			icons: ["/tap-logo.svg"],
-		},
-		featuredWalletIds: [RABBY, ZERION],
-		excludeWalletIds: [BINANCE],
-		allWallets: "HIDE",
-		themeMode: "dark" as const,
-		themeVariables: {
-			"--w3m-accent": "#c8f542",
-			"--w3m-color-mix": "#09090b",
-			"--w3m-color-mix-strength": 20,
-			"--w3m-border-radius-master": "2px",
-			"--w3m-font-family": "IBM Plex Mono, monospace",
-		},
-		features: {
-			analytics: false,
-			email: false,
-			socials: false,
-		},
-	});
+/** Display/lookup only — viem ships ~700 named chains (Ethereum, Arbitrum, …). */
+const namedChainsById = new Map<number, Chain>();
+for (const value of Object.values(viemChains)) {
+	if (value && typeof value === "object" && "id" in value && "name" in value && "nativeCurrency" in value) {
+		namedChainsById.set((value as Chain).id, value as Chain);
+	}
 }
+// Prefer our product definitions when they overlap (same id).
+for (const chain of chains) {
+	namedChainsById.set(chain.id, chain);
+}
+
+/** Product / configured chain only (for transports & switch targets). */
+export function getChainById(chainId: number): Chain | undefined {
+	return chains.find((c) => c.id === chainId);
+}
+
+/**
+ * Human network name for any wallet chainId.
+ * Source order: product chains → viem/chains catalog → generic label (never "Chain N").
+ */
+export function getChainName(chainId: number): string {
+	return namedChainsById.get(chainId)?.name ?? `Unknown network (${chainId})`;
+}
+
+/** Explorer URL when the chain is known (product or viem catalog). */
+export function getExplorerUrl(chainId: number | undefined, address: string): string | null {
+	if (!chainId) return null;
+	const chain = namedChainsById.get(chainId) ?? getChainById(chainId);
+	const base = chain?.blockExplorers?.default?.url;
+	if (!base) return null;
+	return `${base.replace(/\/$/, "")}/address/${address}`;
+}
+
+const rawWcProjectId = (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "").trim();
+
+/** Optional WalletConnect (mobile QR). Unset → injected wallets only; no cloud account required. */
+export const isWalletConnectConfigured =
+	rawWcProjectId.length > 0 &&
+	rawWcProjectId !== "UPDATE_ME" &&
+	!rawWcProjectId.toLowerCase().includes("your_project");
+
+/** Playwright / local e2e only — never enable in production builds. */
+export const isWalletMockEnabled =
+	process.env.NEXT_PUBLIC_WALLET_MOCK === "1" && process.env.NODE_ENV !== "production";
+
+const metadata = {
+	name: "Transfer Agent Protocol",
+	description: "Mint equity cap tables onchain",
+	url: "https://transferagentprotocol.xyz",
+	icons: ["https://transferagentprotocol.xyz/tap-logo.svg"],
+};
+
+function buildConnectors(): CreateConnectorFn[] {
+	const list: CreateConnectorFn[] = [];
+
+	if (isWalletMockEnabled) {
+		list.push(
+			mock({
+				accounts: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+				features: {
+					reconnect: true,
+				},
+			}),
+		);
+	}
+
+	// EIP-6963 multi-injected discovery is on by default via createConfig.
+	list.push(
+		injected({
+			shimDisconnect: true,
+		}),
+	);
+
+	if (isWalletConnectConfigured) {
+		list.push(
+			walletConnect({
+				projectId: rawWcProjectId,
+				metadata,
+				showQrModal: true,
+			}),
+		);
+	}
+
+	return list;
+}
+
+export const config: Config = createConfig({
+	chains,
+	connectors: buildConnectors(),
+	transports: {
+		[plumeMainnet.id]: http(plumeMainnet.rpcUrls.default.http[0]),
+		[plumeTestnet.id]: http(plumeTestnet.rpcUrls.default.http[0]),
+		[anvil.id]: http(anvil.rpcUrls.default.http[0]),
+	},
+	ssr: true,
+	multiInjectedProviderDiscovery: true,
+});

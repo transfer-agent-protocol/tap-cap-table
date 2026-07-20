@@ -17,7 +17,7 @@ const Button = styled.button<{ $variant?: ButtonVariant; $size?: ButtonSize; $bl
 	width: ${({ $block }) => ($block ? "100%" : "auto")};
 	height: ${({ $size = "md" }) => ($size === "lg" ? "2.75rem" : "2.25rem")};
 	padding: 0 ${({ theme, $size = "md" }) => ($size === "lg" ? theme.spacing.xl : theme.spacing.md)};
-	font-family: inherit;
+	font-family: ${({ theme }) => theme.fonts.sans};
 	font-size: ${({ theme, $size = "md" }) =>
 		$size === "lg" ? theme.fontSizes.baseline : theme.fontSizes.small};
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};

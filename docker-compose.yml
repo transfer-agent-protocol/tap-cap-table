@@ -49,7 +49,7 @@ services:
             # Next server-side /api rewrites run inside this container → compose DNS.
             # Host pnpm app:dev keeps app/.env.local on http://localhost:8293.
             NEXT_PUBLIC_API_URL: http://server:8293
-            NEXT_PUBLIC_REOWN_PROJECT_ID: ${NEXT_PUBLIC_REOWN_PROJECT_ID:-}
+            NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID:-}
             NEXT_PUBLIC_FACTORY_ADDRESS: ${NEXT_PUBLIC_FACTORY_ADDRESS:-}
             NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-${CHAIN_ID:-98866}}
             NEXT_PUBLIC_OPERATOR_ADDRESS: ${NEXT_PUBLIC_OPERATOR_ADDRESS:-}
