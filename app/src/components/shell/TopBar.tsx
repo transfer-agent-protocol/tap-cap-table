@@ -104,7 +104,11 @@ const ExternalLink = styled.a`
 
 const WalletButton = dynamic(() => import("./WalletButtonClient"), {
 	ssr: false,
-	loading: () => <Button $variant="primary">Connect</Button>,
+	loading: () => (
+		<Button $variant="primary" type="button" disabled>
+			Connect Wallet
+		</Button>
+	),
 });
 
 /**

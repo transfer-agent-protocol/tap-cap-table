@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
-import { useAppKitAccount } from "@reown/appkit/react";
 import { parseEventLogs } from "viem";
 import { generateBytes16Id } from "../utils/uuid";
 import { scaleShares } from "@tap/units";
@@ -60,21 +59,17 @@ export interface UseMintIssuerReturn {
 }
 
 export function useMintIssuer(): UseMintIssuerReturn {
-	// --- Connection ---
-	// Reown AppKit owns the connect UI; wagmi owns writes. Both must be consulted —
-	// AppKit can show "connected" while useAccount is still empty (and vice versa).
+	// --- Connection (native wallet modal + wagmi) ---
 	const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
-	const { address: appKitAddress, isConnected: appKitConnected } = useAppKitAccount();
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => {
 		setMounted(true);
 	}, []);
 	const address = useMemo((): `0x${string}` | undefined => {
-		const raw = wagmiAddress || appKitAddress;
-		if (!raw) return undefined;
-		return raw as `0x${string}`;
-	}, [wagmiAddress, appKitAddress]);
-	const isConnected = mounted && Boolean((wagmiConnected || appKitConnected) && address);
+		if (!wagmiAddress) return undefined;
+		return wagmiAddress as `0x${string}`;
+	}, [wagmiAddress]);
+	const isConnected = mounted && Boolean(wagmiConnected && address);
 
 	// --- Form fields ---
 	const [fields, setFields] = useState<IssuerFormFields>({

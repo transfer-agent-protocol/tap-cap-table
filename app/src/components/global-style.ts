@@ -13,6 +13,7 @@ const GlobalStyle = createGlobalStyle`
 
 	html {
 		height: 100%;
+		font-family: ${({ theme }) => theme.fonts.sans};
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		text-rendering: optimizeLegibility;
@@ -61,7 +62,10 @@ const GlobalStyle = createGlobalStyle`
 		}
 	}
 
-	button {
+	button,
+	input,
+	select,
+	textarea {
 		font-family: inherit;
 	}
 

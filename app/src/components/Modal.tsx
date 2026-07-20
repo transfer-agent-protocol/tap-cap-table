@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { Button } from "./elements";
 
@@ -38,8 +39,15 @@ const Dialog = styled.div<{ $maxWidth: string }>`
 	border: 1px solid ${({ theme }) => theme.colors.borderStrong};
 	width: 100%;
 	max-width: ${({ $maxWidth }) => $maxWidth};
+	max-height: min(90vh, 40rem);
+	overflow: auto;
 	box-shadow: ${({ theme }) => theme.shadows.overlay};
-	overflow: hidden;
+	/* Explicit theme font — portals mount on body, outside AppShell */
+	font-family: ${({ theme }) => theme.fonts.sans};
+	font-size: ${({ theme }) => theme.fontSizes.baseline};
+	font-weight: ${({ theme }) => theme.fontWeights.normal};
+	line-height: ${({ theme }) => theme.lineHeights.P};
+	color: ${({ theme }) => theme.colors.text};
 	animation: rise 200ms cubic-bezier(0.22, 1, 0.36, 1);
 
 	@keyframes rise {
@@ -64,6 +72,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.span`
+	font-family: ${({ theme }) => theme.fonts.sans};
 	font-weight: ${({ theme }) => theme.fontWeights.semibold};
 	font-size: ${({ theme }) => theme.fontSizes.baseline};
 	letter-spacing: -0.02em;
@@ -75,6 +84,7 @@ const CloseBtn = styled.button`
 	border: 1px solid ${({ theme }) => theme.colors.border};
 	width: 2rem;
 	height: 2rem;
+	font-family: ${({ theme }) => theme.fonts.sans};
 	font-size: 1.1rem;
 	line-height: 1;
 	cursor: pointer;
@@ -106,20 +116,30 @@ const Footer = styled.div`
 	justify-content: flex-end;
 `;
 
+/**
+ * Full-viewport modal. Portaled to document.body so ancestors with
+ * position:sticky / backdrop-filter (e.g. TopBar) cannot trap fixed layout.
+ */
 export function Modal({ isOpen, onClose, title, children, maxWidth = "440px" }: ModalProps) {
 	useEffect(() => {
 		if (!isOpen) return;
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
 		};
+		const prevOverflow = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
 		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
+		return () => {
+			document.body.style.overflow = prevOverflow;
+			window.removeEventListener("keydown", handleKeyDown);
+		};
 	}, [isOpen, onClose]);
 
 	if (!isOpen) return null;
+	if (typeof document === "undefined") return null;
 
-	return (
-		<Backdrop onClick={onClose} role="presentation">
+	return createPortal(
+		<Backdrop onClick={onClose} role="presentation" data-testid="modal-backdrop">
 			<Dialog
 				$maxWidth={maxWidth}
 				onClick={(e) => e.stopPropagation()}
@@ -144,6 +164,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "440px" }: 
 					</Footer>
 				)}
 			</Dialog>
-		</Backdrop>
+		</Backdrop>,
+		document.body,
 	);
 }

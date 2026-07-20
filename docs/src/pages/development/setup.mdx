@@ -2,120 +2,82 @@ import { Steps, Callout } from 'nextra/components';
 
 # Initial setup
 
-This guide walks you through setting up your local development environment. You'll need three things running:
-1. **Docker** - for MongoDB, server, and app
-2. **Anvil** - local blockchain
-3. **Server** - the Node.js API (covered in the next section)
+Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker) and the product UI on the host.
 
 <Callout type="info">
-**Quick start:** Run `pnpm install && pnpm setup && pnpm docker:up && pnpm dev` to get everything running.
+**Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 pnpm bootstrap`, fill secrets in `.env` and `app/.env.local`, then `pnpm app:dev`.
 </Callout>
 
-## Configure environment variables
+## Secrets and env files
 
 <Steps>
 
-### 1. Copy the example env file
+### 1. Root `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-### 2. Update the values
+`.env.example` defaults to Plume (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Set:
 
-The defaults work for local development. You'll get your `PRIVATE_KEY` from Anvil in the next section.
+| Variable | Purpose |
+| --- | --- |
+| `PRIVATE_KEY` | Funded Plume key for server-signed API / `deploy-factory` |
+| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Granted `OPERATOR_ROLE` on new cap tables (usually the server wallet) |
+| `NEXT_PUBLIC_FACTORY_ADDRESS` | Factory the app mints against |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional — mobile QR only (https://cloud.walletconnect.com). Extension wallets need no cloud key. |
 
-````md filename=".env"
-# MongoDB connection
-DATABASE_URL="mongodb://tap:tap@localhost:27017/mongo?authSource=admin&retryWrites=true&w=majority"
-DATABASE_REPLSET="0"  # set to "1" if using replica set
+### 2. Frontend `app/.env.local`
 
-# Blockchain connection (Anvil local)
-RPC_URL=http://localhost:8545
-CHAIN_ID=31337
-
-# Deployer private key (get from Anvil output)
-PRIVATE_KEY=UPDATE_ME
-
-# Server port
-PORT=8293
-````
-
-</Steps>
-
-## Start services with Docker
-
-<Steps>
-
-### 1. Start all containers
-
-```bash
-pnpm docker:up
-```
-
-This starts MongoDB, the server, and the frontend app.
-
-### 2. Verify services are running
-
-```bash
-docker ps
-```
-
-You should see three containers running: `mongodb`, `server`, and `app`.
-
-</Steps>
+Host `pnpm app:dev` reads **`app/.env.local`**, not only root `.env`. Copy the same `NEXT_PUBLIC_*` values there. Bootstrap creates a starter file if missing.
 
 <Callout type="info">
-**Other Docker commands:** `pnpm docker:down` (stop), `pnpm docker:logs` (view logs), `pnpm docker:build` (rebuild).
-</Callout>
-
-## Start Anvil (local blockchain)
-
-Anvil is a local Ethereum node from Foundry. You'll run it in a separate terminal window.
-
-<Steps>
-
-### 1. Install dependencies and build contracts
-
-```bash
-pnpm install && pnpm run setup
-```
-
-### 2. Start Anvil
-
-```bash
-anvil
-```
-
-### 3. Copy a private key
-
-Anvil outputs test accounts with private keys. Copy one and add it to your `.env` file:
-
-```
-PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-```
-
-<Callout type="warning">
-These are test keys only. Never use them on mainnet.
+Wallet connect is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.). Optional WalletConnect project id is only for mobile QR.
 </Callout>
 
 </Steps>
 
-## Targeting Plume Mainnet
+## Bootstrap the stack
 
-To point the stack at Plume Mainnet instead of Anvil, override these values in `.env`:
+```bash
+# Demo / issuer-dev: register TAP’s shared Plume factory in Mongo (owner is TAP Admin, not you)
+REUSE_TAP_FACTORY=1 pnpm bootstrap
 
-```md filename=".env"
-RPC_URL=https://rpc.plume.org
-CHAIN_ID=98866
-PRIVATE_KEY=<PLUME_FUNDED_SERVER_PRIVATE_KEY>
-NEXT_PUBLIC_FACTORY_ADDRESS=0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
-NEXT_PUBLIC_CHAIN_ID=98866
-NEXT_PUBLIC_OPERATOR_ADDRESS=<SERVER_WALLET_ADDRESS>
+# Transfer-agent path: after bootstrap with no factory, deploy your own instead
+# pnpm deploy-factory
 ```
 
-<Callout type="warning">
-Use a Plume-funded server wallet. The API signs onchain transactions with `PRIVATE_KEY`.
-</Callout>
+Bootstrap is idempotent: deps, contract build (`chain/out`), Docker volume, compose up, API health, optional factory register.
 
-With Docker and Anvil running, you're ready to [deploy the factory contract](/development/factory-deploy).
+| Service | URL |
+| --- | --- |
+| API | http://localhost:8293 |
+| Product UI | `pnpm app:dev` → http://localhost:3000/app |
+| MongoDB | localhost:27017 |
+
+Prefer **host** `pnpm app:dev` for wallet work. Docker app is optional.
+
+## Demo reuse vs your own factory
+
+| Path | Command | You own beacon upgrades? |
+| --- | --- | --- |
+| Shared demo factory | `REUSE_TAP_FACTORY=1 pnpm bootstrap` | **No** (protocol builder / TAP Admin) |
+| Your TA factory | `pnpm deploy-factory` | **Yes** |
+
+Issuers can mint cap tables on either factory (`createCapTable` is permissionless). Using the demo factory is normal for local product work; production transfer agents should deploy their own.
+
+## Anvil (local chain) alternate
+
+For pure contract tests without Plume:
+
+```bash
+# .env: RPC_URL=http://127.0.0.1:8545 CHAIN_ID=31337 + Anvil PRIVATE_KEY
+anvil
+pnpm setup
+pnpm deploy-factory
+pnpm docker:up   # or bootstrap without REUSE_TAP_FACTORY
+```
+
+Anvil keys are test-only — never use them on mainnet.
+
+Next: [Run server / app](/development/run-server) and [Deploy factory](/development/factory-deploy).

@@ -28,6 +28,23 @@ const plex = IBM_Plex_Mono({
 function isExtensionNoise(msg: string, source?: string, stack?: string): boolean {
 	const m = msg || "";
 	const s = `${source || ""} ${stack || ""}`;
+	// Bare "Failed to fetch" with no real app stack is almost always wallet extension /
+	// optional WalletConnect relay / adblock (ERR_BLOCKED_BY_CLIENT) — not TAP API.
+	const bareFailedFetch =
+		m === "Failed to fetch" ||
+		m === "TypeError: Failed to fetch" ||
+		m.includes("TypeError: Failed to fetch");
+	const nonAppStack =
+		!s.trim() ||
+		s.includes("<anonymous>") ||
+		s.includes("chrome-extension://") ||
+		s.includes("moz-extension://") ||
+		s.includes("safari-extension://") ||
+		s.includes("injected.js") ||
+		s.includes("extension") ||
+		s.includes("wallet") ||
+		s.includes("coinbase") ||
+		s.includes("walletconnect");
 	return (
 		s.includes("chrome-extension://") ||
 		s.includes("moz-extension://") ||
@@ -36,13 +53,23 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 		m.includes("ERR_BLOCKED_BY_CLIENT") ||
 		m.includes("AnalyticsSDK") ||
 		m.includes("pulse.walletconnect") ||
-		// Wallet extensions often surface bare TypeError: Failed to fetch
-		(m.includes("Failed to fetch") &&
-			(s.includes("extension") || s.includes("injected") || s.includes("wallet") || !s.trim()))
+		m.includes("cca-lite.coinbase.com") ||
+		(bareFailedFetch && nonAppStack)
 	);
 }
 
+const fontVariableClasses = `${inter.variable} ${plex.variable}`;
+
 export default function App({ Component, pageProps }: AppProps & { Component: NextPage<any> }) {
+	// Put next/font CSS variables on <html> so portaled UI (modals on document.body)
+	// resolves --font-sans / --font-mono the same as the app shell.
+	useEffect(() => {
+		const root = document.documentElement;
+		const classes = fontVariableClasses.split(/\s+/).filter(Boolean);
+		root.classList.add(...classes);
+		return () => root.classList.remove(...classes);
+	}, []);
+
 	// Wallet / adblock extensions throw "Failed to fetch" into the page; Next's
 	// dev overlay treats them as app errors. Swallow that noise only.
 	useEffect(() => {
@@ -76,7 +103,7 @@ export default function App({ Component, pageProps }: AppProps & { Component: Ne
 			<ThemeProvider theme={theme}>
 				<GlobalStyle />
 				<AppShellProvider>
-					<AppShell className={`${inter.variable} ${plex.variable}`}>
+					<AppShell className={fontVariableClasses}>
 						<Head>
 							<meta charSet="utf-8" />
 							<meta httpEquiv="X-UA-Compatible" content="IE=edge" />

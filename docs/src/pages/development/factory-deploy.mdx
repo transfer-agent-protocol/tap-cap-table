@@ -1,68 +1,68 @@
 import { Steps, Callout } from 'nextra/components';
-import Image from 'next/image';
 
-# Deploy the Factory Contract
+# Deploy your transfer-agent factory
 
-The factory contract deploys new cap tables and manages their addresses. It uses a beacon proxy pattern so all cap tables can be upgraded together.
+A **CapTableFactory** is the onchain house for a transfer-agent business: it deploys many issuer cap tables (beacon proxies) and its **owner** controls upgrades for those tables.
+
+| Role | Meaning |
+| --- | --- |
+| Factory owner | Wallet that deployed the factory (beacon upgrades). For the shared Plume demo this is TAP Admin — not every issuer wallet. |
+| Issuer ADMIN | Wallet that called `createCapTable` on a factory. |
+| Mongo register | Local DB row so *this* API knows which factory address to use — not ownership. |
+
+<Callout type="info">
+Product direction: wallet-first “deploy your factory” in the app. Today the supported path is `pnpm deploy-factory` (CLI) with auto Mongo registration.
+</Callout>
+
+## Default: deploy your own factory
 
 <Steps>
 
+### Configure env
+
+Root `.env` needs funded `PRIVATE_KEY`, `RPC_URL`, and `CHAIN_ID` (Plume: `98866` / `https://rpc.plume.org`).
+
 ### Run the deployment script
 
-With Anvil running in another terminal:
-
 ```bash
-pnpm run deploy-factory
+pnpm deploy-factory
 ```
 
-### Note the contract addresses
+The script deploys libraries + CapTable implementation + CapTableFactory, then **auto-registers** factory + live implementation in Mongo (unless `--no-register`).
 
-The script outputs two addresses you'll need:
+### Point the frontend at your factory
 
-```bash
-========================================
-🎉 Deployment Complete!
-========================================
-CapTable (implementation): <YOUR_IMPLEMENTATION_ADDRESS>
-CapTableFactory:           <YOUR_FACTORY_ADDRESS>
-========================================
-```
-
-<Callout type="warning">
-These addresses are unique to your deployment. They're derived from your wallet address and transaction nonce, so every developer and issuer will see different values.
-</Callout>
-
-### Add factory to MongoDB
-
-Open MongoDB Compass and connect using:
-```
-mongodb://tap:tap@localhost:27017
-```
-
-Navigate to the `mongo` database, find (or create) the `factories` collection, and insert a new document using **your** addresses from the deployment output:
-
-```json
-{
-  "implementation_address": "<YOUR_IMPLEMENTATION_ADDRESS>",
-  "factory_address": "<YOUR_FACTORY_ADDRESS>"
-}
-```
-
-![Factories](../../../public/images/mongo-factories.png)
+Set `NEXT_PUBLIC_FACTORY_ADDRESS` in `app/.env.local` (and root `.env` if using Docker app) to the printed CapTableFactory address.
 
 </Steps>
 
-## Reusing the TAP Plume Mainnet factory
+<Callout type="warning">
+Factory addresses are unique to the deployer wallet and nonce. Do not hardcode someone else’s factory as “yours,” and do not paste a stale implementation address — read it from the factory onchain.
+</Callout>
 
-If you're developing against Plume Mainnet, you can skip the deploy script and register TAP's existing factory directly. Insert this document into the `factories` collection:
+## Register an existing factory you control
 
-```json
-{
-  "implementation_address": "0xef269Cf3696FF8829eD2b003b39889Fd8e6a81Ce",
-  "factory_address": "0xcd6Df14406b0569ceEABa884A18717774EdeaCA1"
-}
+```bash
+pnpm factory:register --factory 0xYourFactory
+# implementation is read onchain when omitted
 ```
 
-Then update `NEXT_PUBLIC_FACTORY_ADDRESS` in `.env` to match.
+MongoDB Compass is optional for inspection (`mongodb://tap:tap@localhost:27017`, database `mongo`, collection `factories`). Prefer the CLI so the implementation stays live.
 
-Next, [start the server](/development/run-server) to begin using the API.
+## Demo / issuer-dev: shared Plume factory
+
+For local product work without deploying a factory:
+
+```bash
+REUSE_TAP_FACTORY=1 pnpm bootstrap
+# or: pnpm factory:register --factory 0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
+```
+
+| Address | Role |
+| --- | --- |
+| `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` | Shared demo CapTableFactory |
+| Owner (TAP Admin) | `0x366aA809015061C101983900d0c2ebf7d71B96AF` — beacon upgrades |
+
+You can mint issuer cap tables through this factory (`createCapTable` is permissionless). **You do not own upgrades.** Production transfer agents should deploy their own factory.
+
+Next: [Create an issuer](/development/cap-table-deploy).

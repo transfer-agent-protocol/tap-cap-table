@@ -85,14 +85,14 @@ These are DB-only and do not create history rows.
 
 ## Controllers
 
-Routes hand off to controllers, which convert OCF data into onchain parameters (UUID → `bytes16`, prices and quantities scaled by 10000) before calling `CapTable.sol`. See the [Controllers Reference](/api-reference/controllers) for per-function detail.
+Routes hand off to controllers, which convert OCF data into onchain parameters (UUID → `bytes16`, prices and quantities scaled by 1e10) before calling `CapTable.sol`. See the [Controllers Reference](/api-reference/controllers) for per-function detail.
 
 ## Stock transactions
 
 All require `issuerId`.
 
 <Callout type="warning">
-API examples use human `share_price.amount` or `sharePrice` values. Raw contract values are scaled by 10000; divide before comparing.
+API examples use human `share_price.amount` or `sharePrice` values. Raw contract values are scaled by 1e10 (10,000,000,000); divide by 1e10 before comparing. The server and poller handle this automatically — you only need to divide if reading raw contract bytes directly.
 </Callout>
 
 | Route | Behavior | History | Request | Returns |

@@ -30,12 +30,14 @@ Contracts store issuer, stock class, stakeholder, position, and transaction stat
 
 | Role | Holder | Power |
 | --- | --- | --- |
-| `ADMIN_ROLE` | Issuer or asset manager. | Manage roles; adjust authorized shares. Admins count as operators. |
-| `OPERATOR_ROLE` | Server wallet or delegate. | Create records, move stock, link wallets, seed imports. |
-| Factory owner | Factory deployer. | Upgrade the beacon implementation. |
+| `ADMIN_ROLE` | Issuer or asset manager (wallet that called `createCapTable`). | Manage roles; adjust authorized shares. Admins count as operators. |
+| `OPERATOR_ROLE` | Transfer-agent server wallet or delegate. | Day-to-day writes: classes, stakeholders, issue/transfer stock, etc. |
+| Factory owner | Wallet that **deployed that** `CapTableFactory`. | Upgrade the beacon implementation for all of **that factory’s** cap tables. |
+
+**Business reading:** protocol builder owns IP and any **demo** factory; a licensed transfer agent should own **their** factory; issuers own ADMIN on each issuer table. Mongo factory registration is offchain config only.
 
 <Callout type="info">
-`createCapTable` makes `msg.sender` admin and can grant an operator in the same transaction.
+`createCapTable` is permissionless. It makes `msg.sender` admin and can grant an operator in the same transaction. It does **not** make the caller the factory owner.
 </Callout>
 
 ## Upgrade model

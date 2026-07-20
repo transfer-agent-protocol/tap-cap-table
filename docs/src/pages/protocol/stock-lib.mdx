@@ -48,5 +48,5 @@ import { Callout } from 'nextra/components';
 | Retraction/reissuance | Original position is removed. |
 
 <Callout type="info">
-Server-side controllers convert UUIDs to `bytes16` (`convertUUIDToBytes16`) and scale quantities/prices (`toScaledBigNumber`) before calling these functions. Raw onchain values are scaled by 10000.
+Server-side controllers convert UUIDs to `bytes16` (`convertUUIDToBytes16`) and scale quantities/prices (`toScaledBigNumber`) before calling these functions. Raw onchain values are scaled by 1e10 (10,000,000,000) — divide by 1e10 to get human values. The poller unscales automatically before writing to MongoDB.
 </Callout>

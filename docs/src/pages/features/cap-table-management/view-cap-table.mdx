@@ -53,7 +53,7 @@ curl "http://localhost:8293/cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>"
 | `holdings[].stockClass._id` | string | Use this to join against the `stockClasses` array. |
 | `holdings[].stakeholder._id` | string | Stakeholder currently holding the position. |
 | `holdings[].quantity` | number | Active share count. |
-| `holdings[].sharePrice` | number | Already de-scaled. The raw onchain value is `sharePrice * 10000`; see the [scaling note](/api-reference#stock-transactions). |
+| `holdings[].sharePrice` | number | Human-readable — the poller already unscaled by 1e10. The raw onchain value is `sharePrice * 1e10`; see the [scaling note](/api-reference#stock-transactions). |
 | `holdings[].timestamp` | number | Unix seconds at the issuing block. |
 | `stockClasses[]` | array | Every stock class on the issuer, even if it has no active holdings. |
 | `issuer._id` | string | Use this to confirm you queried the right cap table. |

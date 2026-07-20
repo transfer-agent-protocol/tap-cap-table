@@ -26,22 +26,30 @@ tap-cap-table/
 
 ## Quick Start
 
+**Plume-first (recommended):**
+
 ```bash
 pnpm install
-pnpm setup
-cp .env.example .env        # Edit with your keys (see below)
-pnpm docker:up              # Start MongoDB, server, and app
+REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ optional Docker app), demo factory in Mongo
+# Set OPERATOR / PRIVATE_KEY as needed (wallet UI needs a browser extension only)
+pnpm app:dev                         # Product UI — http://localhost:3000/app
 ```
-
-This spins up three services via Docker:
 
 | Service | URL |
 |---------|-----|
 | **Server** | http://localhost:8293 |
-| **App** | http://localhost:3000 — marketing `/` + product `/app/*` |
+| **App (host)** | http://localhost:3000 — use `pnpm app:dev` for wallet work (`app/.env.local`) |
 | **MongoDB** | localhost:27017 |
 
-**Product UI** (`pnpm app:dev` for hot reload):
+`pnpm bootstrap` is idempotent. Prefer host `pnpm app:dev` for the product UI; Docker app is optional.
+
+### Wallet connection (native)
+
+The product UI uses a **first-party connect modal** (TAP design system) on top of **wagmi + EIP-6963** browser wallets (Rabby, MetaMask, etc.). No third-party connect-cloud account is required for extension wallets.
+
+Optional mobile QR: set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (WalletConnect Cloud) in `app/.env.local` and root `.env` if you use the Docker app.
+
+**Product UI**
 
 - `/app/companies` — companies you’ve minted / loaded from wallet
 - `/app/mint` — create a company (cap table) from the connected admin wallet
@@ -49,9 +57,11 @@ This spins up three services via Docker:
 
 Legacy `/mint` and `/manage*` redirect into `/app`.
 
+**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only.
+
 Then go read official [docs](https://docs.transferagentprotocol.xyz/)
 
-> **Environment**: Copy `.env.example` to `.env` and fill in `PRIVATE_KEY`, `RPC_URL`, `CHAIN_ID`, and the `NEXT_PUBLIC_*` variables for the frontend (including `NEXT_PUBLIC_REOWN_PROJECT_ID` from [cloud.reown.com](https://cloud.reown.com) for wallet connection). Align `NEXT_PUBLIC_FACTORY_ADDRESS` in `app/.env.local` with the Mongo `factories` collection. For Plume Mainnet, set `CHAIN_ID=98866` and `RPC_URL=https://rpc.plume.org`.
+> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Also set `NEXT_PUBLIC_OPERATOR_ADDRESS`, and `PRIVATE_KEY` for server-signed paths / factory deploy. Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
 
 ### Scripts
 
@@ -84,11 +94,10 @@ We welcome all contributions. Please give a quick read to our [CONTRIBUTING](./C
 
 ## License
 
-This project uses a multi-license structure:
+This repository is licensed under the **Business Source License 1.1** ([LICENSE](LICENSE)) — PALMER.EARTH CORP.
 
-- **Core Protocol** (`chain/`): [BUSL-1.1](LICENSE) (converts to AGPLv3 on January 1, 2028)
-- **API Server** (`server/`): [AGPL-3.0](server/LICENSE)
-- **Frontend** (`app/`): Proprietary
-- **Documentation** (`docs/`): MIT
+- Change Date: January 1, 2028
+- Change License: AGPL-3.0 or later
 
-For enterprise licensing inquiries, please contact the owner of this repo.
+Third-party dependencies and the `ocf/` git submodule retain their own licenses. For alternative licensing, contact alex@palmer.earth.
+

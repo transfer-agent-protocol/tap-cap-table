@@ -38,7 +38,7 @@ All routes here are `/transactions` routes and require `issuerId` in the body. E
 Returns: `"success"`.
 
 <Callout type="warning">
-`sharePrice` is the human price per share. Raw contract values are scaled; divide raw chain values by 10000 before comparing them to docs examples.
+`sharePrice` is the human price per share. Contract values are scaled by 1e10 (10,000,000,000). Divide raw onchain values by 1e10 before comparing. The server handles scaling automatically for API consumers.
 </Callout>
 
 - `isBuyerVerified` must be `true` or the contract rejects the transfer with `UnverifiedBuyer`. Set it once the buyer has cleared whatever KYC/eligibility check your application requires.

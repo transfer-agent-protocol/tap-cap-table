@@ -2,7 +2,7 @@
     "name": "tap-app",
     "version": "4.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "BUSL-1.1",
     "description": "TAP's frontend",
     "scripts": {
         "dev": "next dev",
@@ -14,14 +14,12 @@
         "start:ci": "INSECURE_AUTH=true pnpm run start",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "eslint src/",
-        "test:nav": "node --import tsx --test src/components/shell/navConfig.test.ts src/components/cap-table/ownershipModel.test.ts src/utils/myIssuers.test.ts src/utils/holdingStatus.test.ts src/utils/activityLog.test.ts",
+        "test:nav": "node --import tsx --test src/components/shell/navConfig.test.ts src/components/cap-table/ownershipModel.test.ts src/utils/myIssuers.test.ts src/utils/holdingStatus.test.ts src/utils/activityLog.test.ts src/components/wallet/orderConnectors.test.ts src/components/wallet/recentConnector.test.ts",
         "test:e2e": "playwright test",
         "test:e2e:ui": "playwright test --ui",
         "generate:wagmi": "wagmi generate"
     },
     "dependencies": {
-        "@reown/appkit": "^1.8.17",
-        "@reown/appkit-adapter-wagmi": "^1.8.17",
         "@tanstack/react-query": "^5.90.20",
         "@tap/units": "workspace:*",
         "@wagmi/core": "^3.3.2",

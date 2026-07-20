@@ -2,27 +2,21 @@ import { Steps, Callout } from 'nextra/components';
 
 # Run Server, App, and Docs
 
-Docker is the default runtime. It starts MongoDB, the API server, the app, and the event poller.
+Healthy local product stack: **Docker for Mongo + API + poller**, **host Next for the wallet UI**.
 
-## Docker stack
+## Docker (Mongo + API)
 
 <Steps>
 
 ### Start services
 
 ```bash
-pnpm docker:up
+pnpm bootstrap
+# or: pnpm docker:up
+# or mongo+server only: SKIP_APP=1 pnpm bootstrap
 ```
 
-Use `pnpm docker:build` after dependency, contract artifact, or Dockerfile changes.
-
-### Check containers
-
-```bash
-docker ps
-```
-
-You should see MongoDB, server, and app containers.
+Rebuild after dependency, contract artifact, or Dockerfile changes: `pnpm docker:build`.
 
 ### Check the API
 
@@ -38,18 +32,15 @@ The Docker server runs with the event poller enabled.
 
 | Goal | Command | URL |
 | --- | --- | --- |
-| App in Docker | `pnpm docker:up` | `http://localhost:3000` |
-| Local app dev | `pnpm app:dev` | `http://localhost:3000` |
-| Docs | `pnpm docs:dev` | `http://localhost:3001` |
-| Docs build | `pnpm docs:build` | None |
+| Product UI (preferred) | `pnpm app:dev` | http://localhost:3000/app |
+| App in Docker (optional) | `pnpm docker:up` | http://localhost:3000 |
+| Docs | `pnpm docs:dev` | http://localhost:3001 |
 
 <Callout type="info">
-Use local app dev for wallet mint work that depends on `NEXT_PUBLIC_*` env vars. The API-first guide works with the Docker app/server path.
+Wallet mint/manage needs `app/.env.local` (`NEXT_PUBLIC_*`). Docker app reads root `.env` interpolation from compose — keep both aligned if you use Docker app.
 </Callout>
 
-## Local server dev
-
-Use this only when editing server code:
+## Local server hot-reload
 
 ```bash
 pnpm docker:down
@@ -57,45 +48,29 @@ docker compose up -d mongodb
 pnpm dev
 ```
 
-`pnpm dev` starts the API with hot reload and the poller. Run `pnpm app:dev` in another terminal if you also need the app outside Docker.
+`pnpm dev` starts the API with hot reload and the poller.
 
-## What is the event poller?
+## Event poller
 
-The event poller watches the blockchain for contract events (issuances, transfers, cancellations, and so on) and writes them into MongoDB. It is what keeps the off-chain database in sync with onchain state — if it isn't running, your history endpoint will go stale.
+The poller watches contract events and writes them into MongoDB. Without it, history and mirrored positions go stale.
 
-Three commands wrap it differently:
+| Command | Behavior |
+| --- | --- |
+| `pnpm dev` | API + poller, hot reload |
+| `pnpm prod` | API only |
+| `pnpm prod-poller` | Standalone finalized-only poller |
 
-- `pnpm dev` — server with the event poller, hot reload on. Use this for local development.
-- `pnpm prod` — server only, no poller. Use this when you run the poller as a separate process.
-- `pnpm prod-poller` — standalone poller against finalized blocks. Pair this with `pnpm prod` in production so the poller can restart without taking the API with it.
+A fresh Mongo **does not** auto-import every historical issuer on Plume. Use mint, Load from wallet, or issuer register/reindex for companies you care about.
 
-<Callout type="info">
-For local development, `pnpm dev` already includes the poller. In production, run the server and the poller as two separate processes.
-</Callout>
-
-A healthy boot logs roughly:
-
-```text
-✅ Mongo connected
-✅ Express listening on :8293
-⏳ Poller starting (finalized-only=false)
-```
-
-## Fixes
-
-<Callout type="info">
-If you don't see changes that you pushed in your code on the app or in the server, rebuild docker containers (since they don't have hot reloading).
-
-```bash
-docker compose up -d --build app server
-```
-</Callout>
+## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| `EADDRINUSE` | Another process uses `PORT=8293`. |
-| History does not update | Docker server is running, or run `pnpm prod-poller`. |
-| Contract reads fail | Issuer has `deployed_to`; `.env` points at Plume Mainnet. |
-| Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293`. |
+| `Can't resolve '@tap/units'` on `:3000` | Docker app image must `COPY packages/`; or stop Docker app and run `pnpm app:dev` |
+| Empty connect modal / no wallets | Install a browser extension wallet; optional `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` for mobile QR |
+| `EADDRINUSE` | Port 8293 or 3000 already in use (`lsof -i :3000`) |
+| History does not update | Poller running; issuer registered with `deployed_to` |
+| Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293` (host-reachable) |
+| Factory misaligned | Mongo `factories` vs `NEXT_PUBLIC_FACTORY_ADDRESS` |
 
-Next: [Register the factory](/development/factory-deploy), then [create an issuer](/development/cap-table-deploy).
+Next: [Deploy your transfer-agent factory](/development/factory-deploy), then [create an issuer](/development/cap-table-deploy).

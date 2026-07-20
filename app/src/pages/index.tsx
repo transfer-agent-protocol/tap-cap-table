@@ -62,7 +62,7 @@ export default function Home() {
 					</thead>
 					<tbody>
 						<tr>
-							<td>TAP Admin (Dev)</td>
+							<td>TAP Admin / factory owner (demo)</td>
 							<td>
 								<a href="https://explorer.plume.org/address/0x366aA809015061C101983900d0c2ebf7d71B96AF">
 									0x366aA809015061C101983900d0c2ebf7d71B96AF
@@ -82,14 +82,14 @@ export default function Home() {
 							</td>
 						</tr>
 						<tr>
-							<td>CapTable</td>
+							<td>CapTable (beacon impl)</td>
 							<td>
 								<a
-									href="https://explorer.plume.org/address/0xef269Cf3696FF8829eD2b003b39889Fd8e6a81Ce?tab=contract"
+									href="https://explorer.plume.org/address/0xB63C08eF002E5Da7C894168a01790836049C8ff3?tab=contract"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									0xef269Cf3696FF8829eD2b003b39889Fd8e6a81Ce
+									0xB63C08eF002E5Da7C894168a01790836049C8ff3
 								</a>
 							</td>
 						</tr>

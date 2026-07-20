@@ -29,7 +29,7 @@ pnpm start            # Serve production build      (root: pnpm app:start)
 pnpm typecheck        # tsc --noEmit
 pnpm lint             # eslint src/
 pnpm eslint <paths>   # eslint --fix
-pnpm test:nav         # nav + ownership + activity unit tests (node:test)
+pnpm test:nav         # nav + ownership + activity + wallet helper unit tests (node:test)
 pnpm test:e2e         # Playwright e2e (root: pnpm app:test:e2e)
 pnpm test:e2e:ui      # Playwright UI mode
 pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
@@ -42,7 +42,7 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 ### Tech Stack
 - **Framework**: Next.js 16 (Pages Router), React 19
 - **Styling**: styled-components v6 with `ThemeProvider`
-- **Wallet / web3**: wagmi v3 + viem v2, with Reown AppKit (`@reown/appkit`, `@reown/appkit-adapter-wagmi`) for the connect modal
+- **Wallet / web3**: wagmi v3 + viem v2; first-party connect modal (`components/wallet/`) with EIP-6963 injected wallets (+ optional WalletConnect)
 - **Data fetching**: TanStack Query (`@tanstack/react-query`)
 - **Fonts**: Inter (UI copy) + IBM Plex Mono (data — numbers, addresses, tables), loaded via `next/font` as CSS variables (`--font-sans` / `--font-mono`)
 - **E2E**: Playwright (`e2e/`, mocked `/api/*`, desktop + iPad + iPhone projects)
@@ -52,7 +52,8 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 - `src/pages/` — `_app.tsx` providers + fonts; `_document.tsx`; `index.tsx` (landing); `app/companies/`, `app/mint.tsx`; legacy `mint.tsx` / `manage/*` redirects.
 - `src/components/` — design system (lowercase styled files), shell, shared components, and **`cap-table/`** feature module:
   - Design system: `theme.ts`, `global-style.ts`, `typography.tsx`, `elements.tsx`, `forms.tsx`, `layout.tsx` (+ `PageHeader.tsx`)
-  - `shell/` — `AppShell` (shell root), `TopBar` (system bar), `SideNav` (working nav), `AppShellContext`, `navConfig`, `WalletButtonClient`
+  - `shell/` — `AppShell` (shell root), `TopBar` (system bar), `SideNav` (working nav), `AppShellContext`, `navConfig`, `WalletButtonClient` (re-export)
+  - `wallet/` — native connect modal + account menu (`WalletButton`, `WalletModal`, `AccountMenu`, connector ordering helpers)
   - `cap-table/` — `CapTableDashboard.tsx` orchestrator (wallet writes, refresh, activity); `views/*` (Holdings, Shareholders, StockClasses, IssueStock, TransferStock, Transactions); `forms/*` (domain forms: Issuer, Stakeholder, StockClass, IssueStock, TransferStock, MintActions, IssuerHeader, HoldingsTable); `OwnershipBar`, `SetupChecklist`, `ownershipModel`, `types`
   - Shared list UI: `DataTable` + `Table` / `TableFrame` (full-width framed tables); `Modal`, `TxSuccessModal`
 - `e2e/` — Playwright specs + `mocks.ts` fixtures (`playwright.config.ts` at app root)
@@ -71,7 +72,7 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 - Shell only appears on **workspace** routes (`isWorkspaceRoute` → `/app/*`). Landing has no side nav and no wallet.
 - Cap-table sections are side-nav destinations via `?view=` on `/app/companies/[issuerId]`. Section order: Holdings → Stock classes → Shareholders → Issue stock → Transfer → Transactions.
 - **Issuer id in links**: build hrefs with `capTableHref(issuerId, view)` using the real id from `router.query.issuerId` (or path). Never embed `router.pathname` when it still contains `[issuerId]`.
-- `src/config/wagmi.ts` — Reown AppKit + WagmiAdapter. Networks: **Plume Mainnet (98866)**, **Plume Testnet (98867)**, **Anvil (31337)**. Requires `NEXT_PUBLIC_REOWN_PROJECT_ID`.
+- `src/config/wagmi.ts` — pure `createConfig`. Networks: **Plume Mainnet (98866)**, **Plume Testnet (98867)**, **Anvil (31337)**. EIP-6963 injected + optional WalletConnect.
 
 ### Contract Bindings (wagmi codegen)
 - `src/generated.ts` is produced by `wagmi.config.ts` (`@wagmi/cli` foundry + react plugins). **Do not hand-edit it.**
@@ -180,13 +181,16 @@ The frontend contains no Solidity. For contract conventions and toolchain, see t
 
 Frontend config lives in `app/.env.local` (git-ignored). All are build-time public (`NEXT_PUBLIC_*`):
 
-- `NEXT_PUBLIC_REOWN_PROJECT_ID` — Reown/WalletConnect project id (https://cloud.reown.com)
-- `NEXT_PUBLIC_FACTORY_ADDRESS` — deployed `CapTableFactory` address
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — optional WalletConnect Cloud id for mobile QR (https://cloud.walletconnect.com). Unset → extension wallets only.
+- `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
-- `NEXT_PUBLIC_API_URL` — API server URL the `/api/*` rewrite proxies to (default `http://localhost:8293`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS` — server wallet to receive OPERATOR_ROLE on new cap tables
+- `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` — address passed as operator on `createCapTable` (usually your server wallet)
+- `NEXT_PUBLIC_WALLET_MOCK` — set to `1` only for Playwright/local mock connector (never production)
 
 See the root `.env.example` for the canonical list. Keep Mongo `factories` and this factory address aligned.
+
+**Host vs Docker:** Prefer `pnpm app:dev` for product work. If `:3000` is Docker and you see `Can't resolve '@tap/units'`, either rebuild the app image (Dockerfile copies `packages/`) or `docker compose stop app` and use the host dev server.
 
 ## Git Workflow
 
@@ -194,4 +198,4 @@ PR titles follow [Conventional Commits](https://www.conventionalcommits.org/en/v
 
 ## Dev noise (not app bugs)
 
-Next.js dev overlay may show `Runtime TypeError: Failed to fetch` whose stack is `chrome-extension://…` (wallet / Reown analytics blocked by an ad-blocker). That is **not** the TAP API. AppKit analytics is disabled in `src/config/wagmi.ts`; `_app.tsx` filters extension fetch noise. If holdings fail, check the Network tab for `/api/*` — real API errors show HTTP status there.
+Next.js dev overlay may show `Runtime TypeError: Failed to fetch` whose stack is `chrome-extension://…` (wallet extension / ad-blocker). That is **not** the TAP API. `_app.tsx` filters extension fetch noise. If holdings fail, check the Network tab for `/api/*` — real API errors show HTTP status there.

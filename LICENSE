@@ -4,9 +4,10 @@ License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
 Parameters
 
 Licensor:             PALMER.EARTH CORP
-Licensed Work:        Transfer Agent Protocol (TAP) Core Protocol
-                      This includes all Solidity smart contracts and related code
-                      located in the chain/ directory.
+Licensed Work:        Transfer Agent Protocol (TAP) Cap Table monorepo
+                      (chain/, server/, app/, docs/, packages/, scripts, and
+                      related configuration; excludes third-party deps and
+                      submodules that ship their own licenses)
 Additional Use Grant: None
 Change Date:          January 1, 2028
 Change License:       GNU Affero General Public License version 3.0 or later

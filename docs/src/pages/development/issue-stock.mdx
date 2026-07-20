@@ -40,7 +40,7 @@ Replace the IDs with the `_id` values from your previous creation responses.
 The response includes your stock issuance with a generated `id` and `security_id`:
 
 <Callout type="warning">
-API examples use human `share_price.amount` values. Raw contract values are scaled; divide raw chain values by 10000 before comparing them to the docs.
+API examples use human `share_price.amount` values. The contract stores them scaled by 1e10 (10,000,000,000). Divide raw onchain values by 1e10 before comparing. The server and poller handle this automatically for API consumers.
 </Callout>
 
 ```json
@@ -86,7 +86,7 @@ API examples use human `share_price.amount` values. Raw contract values are scal
 | `stakeholder_id` | The stakeholder receiving the shares. |
 | `stock_class_id` | The class of stock being issued. |
 | `quantity` | Number of shares to issue, as a string integer. |
-| `share_price` | Object with human `amount` and `currency`. The contract stores `amount * 10000`. |
+| `share_price` | Object with human `amount` and `currency`. The contract stores `amount * 1e10` (10,000,000,000). The server scales on write; the poller unscales on read. |
 | `stock_legend_ids` | Legend IDs from `POST /stock-legend/create`. Pass `[]` if you don't need any. |
 | `custom_id` | Issuance label (e.g. `CS-A-001`). Free-form, but unique custom IDs make support workflows easier. |
 | `security_law_exemptions` | Reg D / Reg S exemptions cited by the issuance. Pass `[]` if none apply. |
