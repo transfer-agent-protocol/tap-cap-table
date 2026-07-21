@@ -1,4 +1,5 @@
 import { Callout } from 'nextra/components';
+import { Detail } from '../../../components/ContentPatterns';
 
 # Transfer, Cancel, and Reissue Stock
 
@@ -21,6 +22,8 @@ All routes here are `/transactions` routes and require `issuerId` in the body. E
 
 `POST /transactions/transfer/stock`
 
+<Detail summary="Show transfer request">
+
 ```json
 {
     "issuerId": "<YOUR_ISSUER_ID>",
@@ -34,6 +37,8 @@ All routes here are `/transactions` routes and require `issuerId` in the body. E
     }
 }
 ```
+
+</Detail>
 
 Returns: `"success"`.
 
@@ -63,6 +68,8 @@ Use these to raise or lower how many shares the issuer (or a single stock class)
 
 `POST /transactions/adjust/issuer/authorized-shares`
 
+<Detail summary="Show issuer authorized-shares request">
+
 ```json
 {
     "issuerId": "<YOUR_ISSUER_ID>",
@@ -75,11 +82,15 @@ Use these to raise or lower how many shares the issuer (or a single stock class)
 }
 ```
 
+</Detail>
+
 Returns: `{ "issuerAuthorizedSharesAdj": ... }`.
 
 ### Stock-class-level
 
 `POST /transactions/adjust/stock-class/authorized-shares`
+
+<Detail summary="Show stock-class authorized-shares request">
 
 ```json
 {
@@ -93,6 +104,8 @@ Returns: `{ "issuerAuthorizedSharesAdj": ... }`.
     }
 }
 ```
+
+</Detail>
 
 Returns: `{ "stockClassAdjustment": ... }`. The class authorized cap can never exceed the issuer authorized cap.
 

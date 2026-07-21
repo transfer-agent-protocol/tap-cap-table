@@ -30,6 +30,13 @@ Note that "stakeholder" in OCF context is more specific than the general busines
 
 OCF defines the JSON shapes TAP uses for offchain records. The API routes on this site use those shapes for issuers, stakeholders, stock classes, transactions, and supporting records.
 
+| Concern | Onchain | OCF / MongoDB |
+| --- | --- | --- |
+| Authority | Canonical contract state and emitted events | Searchable mirror and metadata |
+| IDs | Compact `bytes16` values | UUID strings and Mongo document IDs |
+| Writes | Connected ADMIN wallet or server operator | Registration routes and event poller |
+| Recovery | Re-read contracts and event history | Reconcile or repopulate the mirror |
+
 Use the [Cap Table API](/features) guides for the routes you can call today. If you want the raw field-by-field reference, the generated schema docs live under `ocf/docs/schema_markdown`.
 
 ## Our Database

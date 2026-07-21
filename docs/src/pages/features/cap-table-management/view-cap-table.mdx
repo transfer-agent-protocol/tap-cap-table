@@ -1,4 +1,5 @@
 import { Steps, Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
 
 # View Cap Table
 
@@ -65,4 +66,7 @@ curl "http://localhost:8293/cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>"
 
 ## What's next?
 
-Use this page for the current state. Use [View History](/features/issuer-management/read-history) when you want to see how the cap table got there.
+<NextActions items={[
+  { title: 'View history', href: '/features/issuer-management/read-history', description: 'See the transactions that produced the current state.' },
+  { title: 'Add new history', href: '/features/issuer-management/append-history', description: 'Choose an onchain action that the poller will append.' }
+]} />

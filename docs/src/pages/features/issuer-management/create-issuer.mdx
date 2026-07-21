@@ -1,4 +1,5 @@
 import { Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
 
 # Register or Import Issuer
 
@@ -85,4 +86,7 @@ For most workflows, the response from `POST /issuer/create` or `POST /issuer/reg
 
 ## What's next?
 
-Use [View History](/features/issuer-management/read-history) to confirm what was recorded for the issuer.
+<NextActions items={[
+  { title: 'View history', href: '/features/issuer-management/read-history', description: 'Confirm seeded or poller-backed transactions.' },
+  { title: 'Create support records', href: '/features/cap-table-management/create-stock-class-and-shareholders', description: 'Add legends, plans, and wallets needed by later transactions.' }
+]} />

@@ -1,4 +1,5 @@
 import { Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
 
 # Add New History
 
@@ -16,30 +17,30 @@ History entries are produced by the event poller after a contract transaction is
 
 These routes submit an onchain transaction. After the poller processes the event (~20 s on Plume Mainnet), the entry appears in [View History](/features/issuer-management/read-history).
 
-- Stock actions:
-  - `POST /transactions/issuance/stock`
-  - `POST /transactions/transfer/stock`
-  - `POST /transactions/cancel/stock`
-  - `POST /transactions/retract/stock`
-  - `POST /transactions/reissue/stock`
-  - `POST /transactions/repurchase/stock`
-  - `POST /transactions/accept/stock`
-- Authorized share adjustments:
-  - `POST /transactions/adjust/issuer/authorized-shares`
-  - `POST /transactions/adjust/stock-class/authorized-shares`
+| Route | Resulting history |
+| --- | --- |
+| `POST /transactions/issuance/stock` | New stock position |
+| `POST /transactions/transfer/stock` | Transfer and any balance position |
+| `POST /transactions/cancel/stock` | Cancellation |
+| `POST /transactions/retract/stock` | Retraction |
+| `POST /transactions/reissue/stock` | Reissuance |
+| `POST /transactions/repurchase/stock` | Repurchase |
+| `POST /transactions/accept/stock` | Acceptance |
+| `POST /transactions/adjust/issuer/authorized-shares` | Issuer authorized-share adjustment |
+| `POST /transactions/adjust/stock-class/authorized-shares` | Stock-class authorized-share adjustment |
 
 ## Routes that only save data
 
 These routes write a MongoDB record only. They never appear in history on their own.
 
-- Equity compensation and convertibles:
-  - `POST /transactions/issuance/equity-compensation`
-  - `POST /transactions/issuance/convertible`
-- Supporting records:
-  - `POST /stock-legend/create`
-  - `POST /stock-plan/create`
-  - `POST /valuation/create`
-  - `POST /vesting-terms/create`
+| Route | Storage |
+| --- | --- |
+| `POST /transactions/issuance/equity-compensation` | MongoDB equity-compensation record |
+| `POST /transactions/issuance/convertible` | MongoDB convertible record |
+| `POST /stock-legend/create` | MongoDB supporting record |
+| `POST /stock-plan/create` | MongoDB supporting record |
+| `POST /valuation/create` | MongoDB supporting record |
+| `POST /vesting-terms/create` | MongoDB supporting record |
 
 ## Verify a new history entry
 
@@ -49,4 +50,7 @@ These routes write a MongoDB record only. They never appear in history on their 
 
 ## What's next?
 
-Use [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock) for routes that add new history. Use [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions) for routes that save data without adding history.
+<NextActions items={[
+  { title: 'Onchain security actions', href: '/features/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Use routes that create poller-backed history.' },
+  { title: 'Offchain instruments', href: '/features/corporate-actions/save-offchain-corporate-actions', description: 'Save compensation and convertibles without chain history.' }
+]} />

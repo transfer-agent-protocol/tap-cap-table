@@ -1,4 +1,5 @@
 import { Callout } from 'nextra/components';
+import { Detail } from '../../../components/ContentPatterns';
 
 # Save Equity Compensation and Convertibles
 
@@ -21,6 +22,8 @@ These `/transactions` routes require `issuerId`, but they only save MongoDB reco
 ## Equity compensation
 
 `POST /transactions/issuance/equity-compensation`
+
+<Detail summary="Show equity-compensation request">
 
 ```json
 {
@@ -50,6 +53,8 @@ These `/transactions` routes require `issuerId`, but they only save MongoDB reco
 }
 ```
 
+</Detail>
+
 Returns: `{ "equityCompensationIssuance": ... }`.
 
 ### `compensation_type` values
@@ -64,6 +69,8 @@ Returns: `{ "equityCompensationIssuance": ... }`.
 ## Convertible
 
 `POST /transactions/issuance/convertible`
+
+<Detail summary="Show convertible request">
 
 ```json
 {
@@ -101,6 +108,8 @@ Returns: `{ "equityCompensationIssuance": ... }`.
     }
 }
 ```
+
+</Detail>
 
 Returns: `{ "convertibleIssuance": ... }`.
 
