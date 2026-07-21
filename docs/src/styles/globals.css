@@ -107,6 +107,29 @@ article th {
 	word-break: normal;
 }
 
+article {
+	font-size: 15px;
+	line-height: 1.72;
+}
+
+article h1 {
+	letter-spacing: -0.035em;
+}
+
+article h2 {
+	margin-top: 2.4rem;
+}
+
+article h3 {
+	margin-top: 1.8rem;
+}
+
+article p,
+article ul,
+article ol {
+	max-width: 78ch;
+}
+
 article a {
 	color: var(--tap-signal) !important;
 	text-decoration: none;
@@ -261,9 +284,122 @@ article table[data-tap-columns^="Actor / deployment|Address|"] th:nth-child(1) {
 article table[data-tap-columns^="Actor / deployment|Address|"] th:nth-child(2) { width: 42%; }
 article table[data-tap-columns^="Actor / deployment|Address|"] th:nth-child(3) { width: 30%; }
 
+article table[data-tap-columns^="Field|Description|"] th:first-child,
+article table[data-tap-columns^="Field|Type|"] th:first-child,
+article table[data-tap-columns^="Function|Purpose|"] th:first-child,
+article table[data-tap-columns^="Route|Storage|"] th:first-child {
+	width: 30%;
+}
+
 .tap-table-frame--compact table,
 article table:has(th:nth-child(2):last-child) {
 	table-layout: auto;
+}
+
+.tap-next-actions {
+	margin-block: 1rem 2rem;
+}
+
+.tap-next-actions__intro {
+	color: var(--tap-muted);
+	margin-bottom: 0.75rem;
+}
+
+.tap-next-actions__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: 0.75rem;
+}
+
+.tap-next-action {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: 0.35rem;
+	padding: 0.9rem 1rem;
+	background: var(--tap-surface);
+	border: 1px solid var(--tap-border);
+	border-radius: 0.375rem;
+	color: var(--tap-text) !important;
+}
+
+.tap-next-action:hover {
+	border-color: rgba(200, 245, 66, 0.45);
+	text-decoration: none;
+}
+
+.tap-next-action__title {
+	color: var(--tap-signal);
+	font-weight: 700;
+}
+
+.tap-next-action__description {
+	color: var(--tap-muted);
+	font-size: 0.875rem;
+	line-height: 1.5;
+}
+
+.tap-next-action__meta {
+	align-self: flex-start;
+	margin-top: 0.2rem;
+	font-size: 0.72rem !important;
+}
+
+.tap-detail {
+	margin-block: 0.8rem;
+	background: var(--tap-surface);
+	border: 1px solid var(--tap-border);
+	border-radius: 0.375rem;
+}
+
+.tap-detail > summary {
+	cursor: pointer;
+	padding: 0.75rem 1rem;
+	color: var(--tap-text);
+	font-weight: 700;
+}
+
+.tap-detail > summary::marker {
+	color: var(--tap-signal);
+}
+
+.tap-detail[open] > summary {
+	border-bottom: 1px solid var(--tap-border);
+}
+
+.tap-detail__body {
+	min-width: 0;
+	padding: 0.2rem 1rem 1rem;
+}
+
+.tap-route {
+	display: inline-flex;
+	max-width: 100%;
+	align-items: baseline;
+	gap: 0.45rem;
+}
+
+.tap-method {
+	flex: 0 0 auto;
+	border: 1px solid var(--tap-border);
+	border-radius: 999px;
+	padding: 0.08rem 0.4rem;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+}
+
+.tap-method--get { color: #7dd3fc; }
+.tap-method--post { color: var(--tap-signal); }
+.tap-method--put,
+.tap-method--patch { color: #fbbf24; }
+.tap-method--delete { color: #f87171; }
+
+/* Nextra cards should wrap descriptive labels rather than truncate the task. */
+article a[class*="nextra-card"] span,
+article a[class*="nextra-card"] {
+	white-space: normal !important;
+	overflow-wrap: break-word;
 }
 
 .mermaid,
