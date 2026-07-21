@@ -1,12 +1,10 @@
-import { Steps, Callout } from 'nextra/components';
+import { Steps } from 'nextra/components';
 
 # Create a Stakeholder
 
-<Callout type="info">
-**What is a Stakeholder?** In TAP and OCF terminology, a stakeholder is an **equity holder**—someone who owns shares on the issuer's cap table. This includes founders, employees with equity, investors, and any individual or institution holding shares.
-</Callout>
-
 Stakeholders are the equity holders on your cap table — founders, employees, investors, or any entity that holds shares.
+
+The primary `/app` flow calls `createStakeholder` from the connected ADMIN wallet, then saves the OCF metadata with `POST /stakeholder/register-onchain` after confirmation. The server-signed `/stakeholder/create` tutorial below is the API/automation alternative.
 
 ## Minimal request
 
@@ -81,9 +79,7 @@ Using Postman or curl, send a POST request to `http://localhost:8293/stakeholder
 }
 ```
 
-<Callout type="info">
 Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
-</Callout>
 
 ### Check the response
 
@@ -144,9 +140,7 @@ The response includes your new stakeholder:
 
 ![Stakeholder Response](../../../public/images/stakeholder-issuer.png)
 
-<Callout type="info">
 The `is_onchain_synced` field starts as `false`. The event poller will update it to `true` once the blockchain confirms the transaction.
-</Callout>
 
 </Steps>
 

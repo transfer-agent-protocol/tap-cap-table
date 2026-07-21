@@ -2,7 +2,7 @@ import { Callout } from 'nextra/components';
 
 # Transfer, Cancel, and Reissue Stock
 
-Use after stock issuance. Keep the issuance `security_id` from the original `POST /transactions/issuance/stock` response — every route on this page reuses it.
+Use after stock issuance. Read the current canonical `security_id` from poller-backed history or active positions. Lifecycle operations can consume an existing security and create new balance/resulting security IDs, so do not assume the original issuance ID remains active forever.
 
 <Callout type="info">
 All routes here are `/transactions` routes and require `issuerId` in the body. Each one emits a contract event, so the row appears in [View History](/features/issuer-management/read-history) once the poller catches up (~20 s on Plume Mainnet).

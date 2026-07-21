@@ -5,7 +5,11 @@ import { Callout } from 'nextra/components';
 Base URL: `http://localhost:8293`.
 
 <Callout type="info">
-`/stakeholder`, `/stock-class`, and `/transactions` pass through contract middleware. Include `issuerId` in the JSON body, even on `GET` requests.
+This reference covers the server-signed API and automation surface. The product UI under `/app` is wallet-first: the connected issuer ADMIN writes directly onchain, then registers class, stakeholder, and issuance metadata with the corresponding `register-onchain` route. Transfers are mirrored by the poller and have no registration route.
+</Callout>
+
+<Callout type="warning">
+`/stakeholder`, `/stock-class`, and `/transactions` pass through contract middleware. Server-signed write requests include `issuerId` in the JSON body. Onchain GET routes currently also resolve the issuer through middleware and therefore require a JSON body; prefer the product read endpoints where available.
 </Callout>
 
 ## Behavior
@@ -31,6 +35,11 @@ Each router mounts a `GET` that returns text so you can confirm it's up: `GET /`
 | `GET` | `/issuer/total-number` | DB-only | None. | Count. |
 | `POST` | `/issuer/create` | Onchain + DB | OCF issuer fields. | `{ issuer }` |
 | `POST` | `/issuer/register` | DB-only | OCF issuer fields plus `deployed_to`, `tx_hash`, optional bytes16 `id`. | `{ issuer }` |
+| `GET` | `/issuer/full/:id` | DB-only | Path `id`. | Full issuer document. |
+| `GET` | `/issuer/by-deployer/:address` | DB-only | Admin wallet address. | `{ issuers, count }` |
+| `POST` | `/issuer/summaries` | DB-only | `{ ids: string[] }` | Readiness summaries keyed by issuer ID. |
+| `POST` | `/issuer/reconcile` | DB + onchain read | `issuerId`. | Reconciled class/person sync state and transaction hashes. |
+| `POST` | `/issuer/poller-catchup` | Poller control | `issuerId`, mode. | Updated poller cursor state. |
 
 ```json
 {
@@ -49,6 +58,7 @@ Each router mounts a `GET` that returns text so you can confirm it's up: `GET /`
 | `GET` | `/stakeholder/wallet/:address` | Onchain read | `issuerId`, path `address`. | Stakeholder ID. |
 | `GET` | `/stakeholder/total-number` | Onchain read | `issuerId`. | Count. |
 | `POST` | `/stakeholder/create` | Onchain + DB | `issuerId`, `data`. | `{ stakeholder }` |
+| `POST` | `/stakeholder/register-onchain` | DB metadata | Wallet-created UUID `id`, `issuerId`, `data`, optional `tx_hash`. | `{ stakeholder }` |
 | `POST` | `/stakeholder/add-wallet` | Onchain | `issuerId`, `id`, `wallet`. | `"Success"` or `"Wallet already added"`. |
 | `POST` | `/stakeholder/remove-wallet` | Onchain | `issuerId`, `id`, `wallet`. | `"Success"` |
 
@@ -59,12 +69,13 @@ Each router mounts a `GET` that returns text so you can confirm it's up: `GET /`
 | `GET` | `/stock-class/id/:id` | Onchain read | `issuerId`, path `id`. | `stockClassId`, `classType`, `pricePerShare`, `initialSharesAuthorized`. |
 | `GET` | `/stock-class/total-number` | Onchain read | `issuerId`. | Count. |
 | `POST` | `/stock-class/create` | Onchain + DB | `issuerId`, `data`. | `{ stockClass }` |
+| `POST` | `/stock-class/register-onchain` | DB metadata | Wallet-created UUID `id`, `issuerId`, `data`, optional `tx_hash`. | `{ stockClass }` |
 
 ## Cap table
 
 | Method | Route | Behavior | Request | Returns |
 | --- | --- | --- | --- | --- |
-| `GET` | `/cap-table/holdings/stock` | DB + onchain read | Query `issuerId`. | `{ holdings, stockClasses, issuer }` |
+| `GET` | `/cap-table/holdings/stock` | DB + onchain read | Query `issuerId`. | `{ holdings, stockClasses, stakeholders, issuer, meta }` |
 
 ## Supporting records
 
@@ -89,7 +100,7 @@ Routes hand off to controllers, which convert OCF data into onchain parameters (
 
 ## Stock transactions
 
-All require `issuerId`.
+These are the server-signed transaction routes and require `issuerId`. The `/app` UI does not call them: it submits through the connected ADMIN wallet. In particular, UI transfers call `CapTable.transferStock` directly and rely on the poller for Mongo history.
 
 <Callout type="warning">
 API examples use human `share_price.amount` or `sharePrice` values. Raw contract values are scaled by 1e10 (10,000,000,000); divide by 1e10 before comparing. The server and poller handle this automatically — you only need to divide if reading raw contract bytes directly.
@@ -98,6 +109,7 @@ API examples use human `share_price.amount` or `sharePrice` values. Raw contract
 | Route | Behavior | History | Request | Returns |
 | --- | --- | --- | --- | --- |
 | `POST /transactions/issuance/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockIssuance }` |
+| `POST /transactions/issuance/stock/register-onchain` | Validation only | Poller writes it | Wallet-issued `issuerId`, `data`. | Prepared optimistic `{ stockIssuance }`; chain event supplies canonical IDs. |
 | `POST /transactions/transfer/stock` | Onchain | Yes | `issuerId`, `data`. | `"success"` |
 | `POST /transactions/cancel/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockCancellation }` |
 | `POST /transactions/retract/stock` | Onchain | Yes | `issuerId`, `data`. | `{ stockRetraction }` |

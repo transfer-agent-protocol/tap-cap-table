@@ -2,7 +2,7 @@ import { Callout } from 'nextra/components';
 
 # Controllers
 
-Controllers bridge the Express routes and `CapTable.sol`. They convert OCF data into the structs the contract expects and send the transaction; the event poller then syncs the resulting events back into MongoDB.
+Controllers bridge the server-signed Express routes and `CapTable.sol`. They convert OCF data into the structs the contract expects and send the transaction; the event poller then syncs the resulting events back into MongoDB. The wallet-first `/app` path uses `useDirect*` hooks instead of these controllers, but calls the same contract methods and uses the same `@tap/units` conversions.
 
 ```mermaid
 flowchart TD
@@ -66,7 +66,7 @@ flowchart LR
 1. Issuer middleware attaches `req.contract`.
 2. The OCF body is validated.
 3. The matching controller converts and sends the transaction.
-4. The OCF record is saved to MongoDB.
-5. The poller backfills anything emitted by the contract.
+4. The route may save the submitted OCF record; transaction history is written from emitted events.
+5. The poller mirrors the confirmed event into MongoDB.
 
 For walkthroughs see [Create Stakeholder](/development/create-stakeholder), [Create Stock Class](/development/create-stock-class), [Issue Stock](/development/issue-stock), and [Transfer Stock](/development/transfer-stock). For the contract-side reference see [Solidity Reference](/protocol/solidity-reference) and [Stock Library](/protocol/stock-lib).
