@@ -97,11 +97,10 @@ const themeConfig = {
 					href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
 					rel="stylesheet"
 				/>
-				{/* Inline override — must win over Nextra's Tailwind utility classes.
-				    Nextra 3 wraps MDX in <main class="_max-w-6xl ..."> inside a flex
-				    <article class="nextra-content _flex ...">.  Expand main to fill
-				    the full column so wide tables never require horizontal scroll. */}
-				<style>{`
+				{/* dangerouslySetInnerHTML required — React escapes > to &gt; in JSX
+				    children, breaking CSS child combinators. The >-combinator in
+				    article.nextra-content > main must survive unescaped. */}
+				<style dangerouslySetInnerHTML={{ __html: `
 					article.nextra-content > main {
 						max-width: none !important;
 						flex: 1 1 0% !important;
@@ -110,7 +109,7 @@ const themeConfig = {
 						width: 100%;
 						min-width: 0;
 					}
-				`}</style>
+				` }} />
 			</>
 		);
 	},
