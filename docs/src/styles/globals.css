@@ -200,10 +200,39 @@ aside a:hover {
 	background-image: none !important;
 }
 
+/* ─── Full-width content (no horizontal scroll on wide tables) ──────── */
+/* Nextra 3 caps the article to ~90ch for readability. For a protocol
+   reference packed with wide tables that forces horizontal scrolling.
+   Expand to fill the full column between the two sidebars instead. */
+article,
+.nextra-content,
+[class*="nextra-content"],
+main > div > article,
+main > article {
+	max-width: none !important;
+	width: 100%;
+}
+
+/* Prose wrapper (Tailwind Typography) inside the article also constrains
+   width. Override without touching sidebar or nav prose usages. */
+article .prose,
+article [class*="prose"] {
+	max-width: none !important;
+}
+
 /* ─── Tables ─────────────────────────────────────────────────────────── */
-table { border-color: var(--tap-border); }
+table { border-color: var(--tap-border); width: 100%; }
 th, td { border-color: var(--tap-border) !important; }
 thead, thead tr { background-color: var(--tap-elevated) !important; }
+
+/* Table wrapper Nextra creates — allow full width, horizontal scroll only
+   as last resort when viewport is genuinely narrower than table. */
+[class*="nextra-scrollbar"],
+.overflow-x-auto,
+[class*="overflow-x"] {
+	overflow-x: auto;
+	max-width: 100%;
+}
 
 /* ─── Footer ─────────────────────────────────────────────────────────── */
 footer,
