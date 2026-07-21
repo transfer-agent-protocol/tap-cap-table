@@ -1,5 +1,16 @@
 # Testing Overview
 
+Start with **Before a PR** when choosing checks for a change. The matrices below document the broader Solidity coverage and invariants.
+
+## Before a PR
+
+| Change | Minimum check |
+| --- | --- |
+| Docs | `pnpm docs:build` |
+| Solidity logic | `make test` |
+| Share accounting or lifecycle | `make test && make test-invariant` |
+| Frontend | `pnpm app:build` |
+
 ## Commands
 
 | Goal | Command |
@@ -31,12 +42,3 @@
 | Class `shares_issued <= shares_authorized` | Prevent class over-issuance. |
 | Stakeholder and stock class counts stay consistent. | Catch index drift. |
 | Active position tracking stays consistent. | Catch stale securities and missing deletes. |
-
-## Before a PR
-
-| Change | Minimum check |
-| --- | --- |
-| Docs | `pnpm docs:build` |
-| Solidity logic | `make test` |
-| Share accounting or lifecycle | `make test && make test-invariant` |
-| Frontend | `pnpm app:build` |

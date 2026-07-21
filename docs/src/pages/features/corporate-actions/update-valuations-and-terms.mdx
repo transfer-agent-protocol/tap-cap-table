@@ -1,4 +1,5 @@
 import { Callout } from 'nextra/components';
+import { Detail } from '../../../components/ContentPatterns';
 
 # Save Valuations and Terms
 
@@ -20,6 +21,8 @@ Records are immutable in TAP. When terms change, create a new record and referen
 
 `POST /valuation/create`
 
+<Detail summary="Show valuation request">
+
 ```json
 {
     "issuerId": "<YOUR_ISSUER_ID>",
@@ -39,6 +42,8 @@ Records are immutable in TAP. When terms change, create a new record and referen
 }
 ```
 
+</Detail>
+
 Returns: `{ "valuation": ... }`.
 
 ### `valuation_type` values
@@ -52,6 +57,8 @@ Returns: `{ "valuation": ... }`.
 ## Vesting terms
 
 `POST /vesting-terms/create`
+
+<Detail summary="Show vesting-terms request">
 
 ```json
 {
@@ -75,6 +82,8 @@ Returns: `{ "valuation": ... }`.
 }
 ```
 
+</Detail>
+
 Returns: `{ "vestingTerms": ... }`.
 
 ### `vesting_conditions[]` fields
@@ -96,6 +105,8 @@ Returns: `{ "vestingTerms": ... }`.
 
 Stock plan body:
 
+<Detail summary="Show stock-plan request">
+
 ```json
 {
     "issuerId": "<YOUR_ISSUER_ID>",
@@ -110,6 +121,8 @@ Stock plan body:
     }
 }
 ```
+
+</Detail>
 
 ## Stock class
 

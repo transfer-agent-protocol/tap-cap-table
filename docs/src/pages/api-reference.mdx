@@ -4,6 +4,8 @@ import { Callout } from 'nextra/components';
 
 Base URL: `http://localhost:8293`.
 
+Use the page outline to jump directly to a route family. Start with **Behavior** if you are deciding whether a route writes onchain, writes only to MongoDB, or appears in poller-backed history.
+
 <Callout type="info">
 This reference covers the server-signed API and automation surface. The product UI under `/app` is wallet-first: the connected issuer ADMIN writes directly onchain, then registers class, stakeholder, and issuance metadata with the corresponding `register-onchain` route. Transfers are mirrored by the poller and have no registration route.
 </Callout>

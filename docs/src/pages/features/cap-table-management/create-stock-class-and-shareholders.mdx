@@ -1,4 +1,5 @@
 import { Callout } from 'nextra/components';
+import { Detail } from '../../../components/ContentPatterns';
 
 # Add Supporting Records
 
@@ -22,6 +23,8 @@ Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholde
 
 `POST /stock-legend/create` saves transfer-restriction text that you can attach to issuances later via `stock_legend_ids`.
 
+<Detail summary="Show stock-legend request">
+
 ```json
 {
     "issuerId": "<YOUR_ISSUER_ID>",
@@ -32,6 +35,8 @@ Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholde
     }
 }
 ```
+
+</Detail>
 
 | Field | Required | Description |
 | --- | --- | --- |
@@ -44,6 +49,8 @@ Returns: `{ "stockLegend": ... }`.
 ## Stock plans
 
 `POST /stock-plan/create` saves plan terms that future equity-compensation issuances reference via `stock_plan_id`.
+
+<Detail summary="Show stock-plan request">
 
 ```json
 {
@@ -60,11 +67,15 @@ Returns: `{ "stockLegend": ... }`.
 }
 ```
 
+</Detail>
+
 Returns: `{ "stockPlan": ... }`.
 
 ## Wallets
 
 `POST /stakeholder/add-wallet` and `POST /stakeholder/remove-wallet`:
+
+<Detail summary="Show wallet request">
 
 ```json
 {
@@ -73,6 +84,8 @@ Returns: `{ "stockPlan": ... }`.
     "wallet": "<YOUR_WALLET_ADDRESS>"
 }
 ```
+
+</Detail>
 
 Returns: `"Success"`. Add can also return `"Wallet already added"`.
 

@@ -1,4 +1,5 @@
 import { Steps } from 'nextra/components';
+import { NextActions } from '../../components/ContentPatterns';
 
 # Create a Stock Class
 
@@ -58,8 +59,6 @@ The response includes your new stock class:
     }
 }
 ```
-![Stock Class Response](../../../public/images/stock-class-issuer.png)
-
 On the server-signed `/create` path, `is_onchain_synced` starts as `false` and the event poller updates it after processing the confirmed event. The wallet-first `/register-onchain` path records the already-confirmed write as synced immediately.
 
 </Steps>
@@ -84,4 +83,7 @@ The `class_type` field accepts these values per the OCF standard:
 
 ## What's next?
 
-With a stock class created, you can now [create stakeholders](/development/create-stakeholder) who will hold equity in your company.
+<NextActions items={[
+  { title: 'Create a stakeholder', href: '/development/create-stakeholder', description: 'Add a person or institution that can receive equity.' },
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Already have a stakeholder? Create their first position.' }
+]} />

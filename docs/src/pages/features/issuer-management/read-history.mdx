@@ -1,4 +1,5 @@
 import { Steps, Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
 
 # View History
 
@@ -56,4 +57,7 @@ Some routes save data but never appear here on their own — typically equity co
 
 ## What's next?
 
-Read [Add New History](/features/issuer-management/append-history) to see which routes add new history entries.
+<NextActions items={[
+  { title: 'Add new history', href: '/features/issuer-management/append-history', description: 'See which writes emit events and appear here.' },
+  { title: 'View current holdings', href: '/features/cap-table-management/view-cap-table', description: 'Read the latest cap-table state instead of the event trail.' }
+]} />

@@ -2,6 +2,8 @@ import { Callout } from 'nextra/components';
 
 # Stock Functions
 
+Every lifecycle write follows the same shape: validate an active security, mutate active positions, encode the transaction, and emit an event for the poller. Partial operations may also create a new balance security.
+
 `StockLib` is `chain/src/lib/Stock.sol`. `CapTable` calls it for stock lifecycle writes.
 
 ## Library functions

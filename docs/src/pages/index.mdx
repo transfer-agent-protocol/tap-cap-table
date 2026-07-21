@@ -1,4 +1,5 @@
 import { Cards } from 'nextra/components';
+import { NextActions } from '../components/ContentPatterns';
 
 # Transfer Agent Protocol
 
@@ -26,3 +27,11 @@ The protocol has three major components.
 	<Cards.Card title="Open Cap Table Format" href="/protocol/tap-ocf"/>
 	<Cards.Card title="Onchain Cap Table" href="/protocol/tap-cap-table" />
 </Cards>
+
+## Start by role
+
+<NextActions items={[
+  { title: 'Issuer administrator', href: '/development', description: 'Run the stack and manage a cap table from a connected wallet.' },
+  { title: 'API integrator', href: '/api-reference', description: 'Automate server-signed workflows and read TAP records.' },
+  { title: 'Protocol engineer', href: '/protocol', description: 'Understand contracts, OCF records, libraries, and polling.' }
+]} />

@@ -1,4 +1,5 @@
 import { Steps, Callout } from 'nextra/components';
+import { NextActions } from '../../components/ContentPatterns';
 
 # Historical Transactions
 
@@ -25,8 +26,6 @@ The response is an array of historical transactions, each containing:
 - `transaction`: the full transaction object (populated from the referenced document)
 - `transactionType`: the type of transaction (e.g., `StockIssuance`, `StockTransfer`)
 - `issuer`: the issuer ID this transaction belongs to
-
-![Historical Transactions](../../../public/images/fetch-historical-transactions.png)
 
 </Steps>
 
@@ -74,5 +73,8 @@ The response is a flat array in MongoDB insertion order. No pagination is built 
 
 ## What's next?
 
-- Use `security_id` from a `StockIssuance` row to [transfer stock](/development/transfer-stock) or [change an existing security](/features/corporate-actions/transfer-cancel-and-reissue-stock).
-- See [View Cap Table](/features/cap-table-management/view-cap-table) to read current holdings rather than full history.
+<NextActions items={[
+  { title: 'Transfer stock', href: '/development/transfer-stock', description: 'Use the active canonical security ID from history.' },
+  { title: 'View current cap table', href: '/features/cap-table-management/view-cap-table', description: 'Read current holdings instead of the complete event trail.' },
+  { title: 'Change a security', href: '/features/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Cancel, retract, reissue, repurchase, or accept a position.' }
+]} />

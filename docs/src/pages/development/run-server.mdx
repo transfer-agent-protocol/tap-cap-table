@@ -4,6 +4,13 @@ import { Steps, Callout } from 'nextra/components';
 
 Healthy local product stack: **Docker for Mongo + API + poller**, **host Next for the wallet UI**.
 
+| Start order | Process | Why it runs |
+| --- | --- | --- |
+| 1 | MongoDB | Persists the local OCF mirror. |
+| 2 | API + poller | Serves reads/automation and mirrors confirmed events. |
+| 3 | Product UI | Connects the issuer ADMIN wallet for direct writes. |
+| 4 | Docs, optional | Serves this reference locally. |
+
 ## Docker (Mongo + API)
 
 <Steps>

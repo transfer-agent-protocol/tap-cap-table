@@ -1,4 +1,5 @@
 import { Steps, Callout } from 'nextra/components';
+import { NextActions } from '../../components/ContentPatterns';
 
 # Transfer Stock
 
@@ -8,65 +9,9 @@ Transfer shares from one stakeholder to another. The recipient (transferee) must
 
 <Steps>
 
-### Create the transferee stakeholder
+### Confirm the transferee exists
 
-Before transferring, ensure the recipient exists. Send a POST request to `http://localhost:8293/stakeholder/create`
-
-```json
-{
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": {
-            "legal_name": "Zach McKinnon",
-            "first_name": "Zach",
-            "last_name": "McKinnon"
-        },
-        "issuer_assigned_id": "",
-        "stakeholder_type": "INDIVIDUAL",
-        "current_relationship": "INVESTOR",
-        "primary_contact": {
-            "name": {
-                "legal_name": "Zach McKinnon",
-                "first_name": "Zach",
-                "last_name": "McKinnon"
-            },
-            "emails": [
-                {
-                    "email_type": "BUSINESS",
-                    "email_address": "zachary@plume.org"
-                }
-            ],
-            "phone_numbers": [
-                {
-                    "phone_type": "MOBILE",
-                    "phone_number": "+1 555-555-555"
-                }
-            ]
-        },
-        "contact_info": {
-            "emails": [
-                {
-                    "email_type": "BUSINESS",
-                    "email_address": "zachary@plume.org"
-                }
-            ],
-            "phone_numbers": [
-                {
-                    "phone_type": "MOBILE",
-                    "phone_number": "+1 555-555-555"
-                }
-            ]
-        },
-        "comments": []
-    }
-}
-```
-
-![Create Transferee Stakeholder](../../../public/images/stakeholder-transferee.png)
-
-<Callout type="info">
-See [Create a Stakeholder](/development/create-stakeholder) for more details on stakeholder fields.
-</Callout>
+The recipient must already be a stakeholder on this issuer. If needed, complete [Create a Stakeholder](/development/create-stakeholder), then return with the recipient's stakeholder ID.
 
 ### Transfer the stock
 
@@ -92,8 +37,6 @@ The response returns `"success"` when the transfer is recorded onchain.
 `sharePrice` is the human price per share. The contract stores it scaled by 1e10 (10,000,000,000). Divide raw onchain values by 1e10 before comparing. The server handles scaling automatically.
 </Callout>
 
-![Stock Transfer Response](../../../public/images/transfer-stock.png)
-
 ### Verify the transfer
 
 Check historical transactions to confirm:
@@ -101,8 +44,6 @@ Check historical transactions to confirm:
 ```
 GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>
 ```
-
-![Historical Transactions](../../../public/images/transfer-stock-history.png)
 
 </Steps>
 
@@ -123,9 +64,8 @@ If `quantity` is less than the current position on `security_id`, the contract a
 
 ## What's next?
 
-After transferring stock, you can:
-- View all transactions via `GET /historical-transactions/issuer-id/:issuerId`
-- Cancel stock via `POST /transactions/cancel/stock`
-- Issue more stock via `POST /transactions/issuance/stock`
-
-See the [Cap Table API](/features) guides for the grouped API reference, especially [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock).
+<NextActions items={[
+  { title: 'View history', href: '/development/historical-transactions', description: 'Confirm the transfer and find any new balance security ID.', meta: 'GET /historical-transactions/issuer-id/:issuerId' },
+  { title: 'Change a security', href: '/features/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Cancel, retract, reissue, repurchase, or accept an active position.', meta: 'POST /transactions/…' },
+  { title: 'Issue more stock', href: '/development/issue-stock', description: 'Create another position for an existing stakeholder.', meta: 'POST /transactions/issuance/stock' }
+]} />

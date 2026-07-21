@@ -1,4 +1,5 @@
 import { Steps } from 'nextra/components';
+import { Detail, NextActions } from '../../components/ContentPatterns';
 
 # Create a Stakeholder
 
@@ -21,13 +22,15 @@ The smallest valid body identifies the issuer and the stakeholder's name, type, 
 }
 ```
 
-Use the full body below when you also want to capture contact details.
+Use the full request when you also want to capture contact details.
 
 <Steps>
 
 ### Send a POST request
 
 Using Postman or curl, send a POST request to `http://localhost:8293/stakeholder/create`
+
+<Detail summary="Show full request with contact details">
 
 ```json
 {
@@ -79,11 +82,15 @@ Using Postman or curl, send a POST request to `http://localhost:8293/stakeholder
 }
 ```
 
+</Detail>
+
 Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
 
 ### Check the response
 
-The response includes your new stakeholder:
+The response includes your new stakeholder. Keep `_id`; later issuances and transfers use it.
+
+<Detail summary="Show complete response">
 
 ```json
 {
@@ -138,7 +145,7 @@ The response includes your new stakeholder:
 }
 ```
 
-![Stakeholder Response](../../../public/images/stakeholder-issuer.png)
+</Detail>
 
 The `is_onchain_synced` field starts as `false`. The event poller will update it to `true` once the blockchain confirms the transaction.
 
@@ -172,4 +179,7 @@ The `current_relationship` field accepts values like:
 
 ## What's next?
 
-With stakeholders and stock classes created, you can now [issue stock](/development/issue-stock) to your stakeholders.
+<NextActions items={[
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Create the stakeholder’s first active position.' },
+  { title: 'Create another stakeholder', href: '/development/create-stakeholder', description: 'Add another holder before allocating shares.' }
+]} />
