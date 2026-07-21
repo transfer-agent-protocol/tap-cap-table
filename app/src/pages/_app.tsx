@@ -29,7 +29,7 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 	const m = msg || "";
 	const s = `${source || ""} ${stack || ""}`;
 	// Bare "Failed to fetch" with no real app stack is almost always wallet extension /
-	// optional WalletConnect relay / adblock (ERR_BLOCKED_BY_CLIENT) — not TAP API.
+	// adblock (ERR_BLOCKED_BY_CLIENT) — not TAP API.
 	const bareFailedFetch =
 		m === "Failed to fetch" ||
 		m === "TypeError: Failed to fetch" ||
@@ -44,7 +44,7 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 		s.includes("extension") ||
 		s.includes("wallet") ||
 		s.includes("coinbase") ||
-		s.includes("walletconnect");
+		s.includes("web3modal");
 	return (
 		s.includes("chrome-extension://") ||
 		s.includes("moz-extension://") ||
@@ -52,7 +52,6 @@ function isExtensionNoise(msg: string, source?: string, stack?: string): boolean
 		s.includes("injected.js") ||
 		m.includes("ERR_BLOCKED_BY_CLIENT") ||
 		m.includes("AnalyticsSDK") ||
-		m.includes("pulse.walletconnect") ||
 		m.includes("cca-lite.coinbase.com") ||
 		(bareFailedFetch && nonAppStack)
 	);

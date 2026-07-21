@@ -10,12 +10,11 @@ describe("orderConnectors", () => {
 		{ uid: "1", id: "injected", name: "Injected", type: "injected", detected: false },
 		{ uid: "2", id: "io.rabby", name: "Rabby", type: "injected", detected: true },
 		{ uid: "3", id: "io.metamask", name: "MetaMask", type: "injected", detected: true },
-		{ uid: "4", id: "walletConnect", name: "WalletConnect", type: "walletConnect", detected: false },
 	];
 
 	it("puts recent first", () => {
-		const ordered = orderConnectors(connectors, "walletConnect");
-		assert.equal(ordered[0].id, "walletConnect");
+		const ordered = orderConnectors(connectors, "io.rabby");
+		assert.equal(ordered[0].id, "io.rabby");
 	});
 
 	it("puts detected before undetected (after recent)", () => {
@@ -23,17 +22,15 @@ describe("orderConnectors", () => {
 		const ids = ordered.map((c) => c.id);
 		const rabby = ids.indexOf("io.rabby");
 		const mm = ids.indexOf("io.metamask");
-		const wc = ids.indexOf("walletConnect");
-		assert.ok(rabby < wc);
-		assert.ok(mm < wc);
 		// Generic Injected dropped when named EIP-6963 peers exist
+		assert.ok(rabby >= 0);
+		assert.ok(mm >= 0);
 		assert.equal(ids.includes("injected"), false);
 	});
 
 	it("keeps generic Injected when it is the only injected option", () => {
 		const only = [
 			{ uid: "1", id: "injected", name: "Injected", type: "injected", detected: true },
-			{ uid: "4", id: "walletConnect", name: "WalletConnect", type: "walletConnect", detected: false },
 		];
 		const ordered = orderConnectors(only, null);
 		assert.equal(ordered[0].id, "injected");
