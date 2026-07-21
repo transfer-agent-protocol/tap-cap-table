@@ -57,7 +57,7 @@ Optional mobile QR: set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (WalletConnect Cl
 
 Legacy `/mint` and `/manage*` redirect into `/app`.
 
-**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only. Factory owner ≠ issuer ADMIN ≠ server `PRIVATE_KEY` — see [Three wallets / keys](https://docs.transferagentprotocol.xyz/development/setup#three-wallets--keys).
+**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only. Factory owner ≠ issuer ADMIN ≠ server `PRIVATE_KEY` — see [Three wallets / keys](https://docs.transferagentprotocol.xyz/development/setup#three-wallets-keys).
 
 Then go read official [docs](https://docs.transferagentprotocol.xyz)
 

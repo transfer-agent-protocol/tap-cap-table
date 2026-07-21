@@ -10,7 +10,7 @@ A **CapTableFactory** is the onchain house for a transfer-agent business: it dep
 | Issuer ADMIN | Wallet that called `createCapTable` on a factory. |
 | Mongo register | Local DB row so *this* API knows which factory address to use — not ownership. |
 
-Factory owner is **not** the same as the server `PRIVATE_KEY` used for API-signed txs. See [Three wallets / keys](/development/setup#three-wallets--keys) on Setup. Do not leave the factory-owner key in the always-on API env.
+Factory owner is **not** the same as the server `PRIVATE_KEY` used for API-signed txs. See [Three wallets / keys](/development/setup#three-wallets-keys) on Setup. Do not leave the factory-owner key in the always-on API env.
 
 <Callout type="info">
 Product direction: wallet-first “deploy your factory” in the app. Today the supported path is `pnpm deploy-factory` (CLI) with auto Mongo registration.
@@ -22,7 +22,7 @@ Product direction: wallet-first “deploy your factory” in the app. Today the 
 
 ### Configure env
 
-Root `.env` needs funded **dev** `PRIVATE_KEY` (the deployer for this run — becomes factory owner), `RPC_URL`, and `CHAIN_ID` (Plume: `98866` / `https://rpc.plume.org`). Prefer a dedicated env file for the deploy command; do not keep the owner key in Docker after deploy.
+Root `.env` (or a dedicated deploy env file) needs a funded deployer key for this command — that wallet becomes factory owner — plus `RPC_URL` and `CHAIN_ID` (Plume: `98866` / `https://rpc.plume.org`). Do not leave the owner key in the always-on Docker/API env after deploy.
 
 ### Run the deployment script
 
