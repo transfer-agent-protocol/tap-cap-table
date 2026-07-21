@@ -1,4 +1,5 @@
 import { Steps, Callout } from 'nextra/components';
+import { NextActions } from '../../components/ContentPatterns';
 
 # Issue Stock
 
@@ -67,8 +68,6 @@ API examples use human `share_price.amount` values. The contract stores them sca
 }
 ```
 
-![Stock Issuance Response](../../../public/images/issue-stock.png)
-
 </Steps>
 
 ## Outputs
@@ -103,9 +102,8 @@ This returns all stock issuances, transfers, cancellations, and other equity eve
 
 ## What's next?
 
-With stock issued, you can:
-- Transfer stock between stakeholders via `POST /transactions/transfer/stock`
-- Cancel stock via `POST /transactions/cancel/stock`
-- View transaction history via `GET /historical-transactions/issuer-id/:issuerId`
-
-See the [Cap Table API](/features) guides for the grouped API reference, especially [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock).
+<NextActions items={[
+  { title: 'View history', href: '/development/historical-transactions', description: 'Wait for the poller and copy the canonical security ID.', meta: 'GET /historical-transactions/issuer-id/:issuerId' },
+  { title: 'Transfer stock', href: '/development/transfer-stock', description: 'Move some or all of the active position to another stakeholder.' },
+  { title: 'Other security actions', href: '/features/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Cancel, retract, reissue, repurchase, or accept stock.' }
+]} />

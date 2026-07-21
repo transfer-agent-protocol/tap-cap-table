@@ -1,4 +1,5 @@
 import { Steps, Callout } from 'nextra/components';
+import { NextActions } from '../../components/ContentPatterns';
 
 # Create an Issuer
 
@@ -120,30 +121,15 @@ It will look like this, with your unique `_id`
 }
 ```
 
-![Issuer Response](../../../public/images/cap-table-issuer.png)
-
 <Callout type="warning">
 The `deployed_to` address is unique to your deployment—it's derived from your wallet and transaction nonce.
 </Callout>
 
 </Steps>
 
-## Wallet flow details
-
-Issuers deploy cap tables directly from the frontend at `/app/mint`:
-
-1. Connect a wallet via the navigation bar
-2. Fill in the issuer details (legal name, formation date, shares authorized, etc.)
-3. Click **Mint Cap Table** — the connected wallet calls `createCapTable` on the factory
-4. The issuer's wallet becomes **ADMIN** and the configured operator address, when present, receives **OPERATOR** role
-5. After onchain confirmation, the frontend automatically registers the issuer in the server database via `POST /issuer/register`
-
-In this flow, the issuer pays gas and administers that cap table. A configured operator can also perform day-to-day writes, but it does not own the factory or issuer ADMIN role.
-
-The frontend sends the same bytes16 issuer ID to the factory and to `POST /issuer/register`. Do not change it between the wallet transaction and server registration, or the poller cannot match the issuer event to the database record.
-
 ## What's next?
 
-With your issuer created, continue with:
-1. [Create a Stock Class](/development/create-stock-class) — define equity classes before issuing stock
-2. [Create a Stakeholder](/development/create-stakeholder) — add equity holders to your cap table
+<NextActions items={[
+  { title: 'Create a stock class', href: '/development/create-stock-class', description: 'Define the equity class before issuing positions.' },
+  { title: 'Create a stakeholder', href: '/development/create-stakeholder', description: 'Add the person or institution that will hold equity.' }
+]} />
