@@ -4,9 +4,7 @@ import { Steps, Callout } from 'nextra/components';
 
 Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker) and the product UI on the host.
 
-<Callout type="info">
 **Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 pnpm bootstrap`, set `NEXT_PUBLIC_*` in `.env` and `app/.env.local`, then `pnpm app:dev`. Server `PRIVATE_KEY` is optional for the wallet UI.
-</Callout>
 
 ## Secrets and env files
 
@@ -14,11 +12,11 @@ Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker
 
 These are easy to conflate. They are **not** the same wallet.
 
-| # | Role | What it controls | Where it lives | Needed for golden path? |
-| --- | --- | --- | --- | --- |
-| 1 | **Factory owner** | Beacon upgrades for **that** factory’s cap tables (`updateCapTableImplementation`) | Cold / hardware / vault. Used only for rare deploy or upgrade CLI runs | **No** for day-to-day product work |
-| 2 | **Issuer ADMIN** | The wallet that called `createCapTable` — governance + day-to-day writes (admins count as operators onchain) | Browser wallet in `/app` | **Yes** — connect an extension wallet |
-| 3 | **Server / operator** | API process signing server-side txs (`/*/create`, API transfer, etc.). Often the address passed as operator at mint | Root `.env` → `PRIVATE_KEY` (key) and `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only) | **No** if you only use the wallet UI + poller |
+| Role | What it controls | Where it lives | Needed for golden path? |
+| --- | --- | --- | --- |
+| **Factory owner** | Beacon upgrades for **that** factory’s cap tables (`updateCapTableImplementation`) | Cold / hardware / vault. Used only for rare deploy or upgrade CLI runs | **No** for day-to-day product work |
+| **Issuer ADMIN** | The wallet that called `createCapTable` — governance + day-to-day writes (admins count as operators onchain) | Browser wallet in `/app` | **Yes** — connect an extension wallet |
+| **Server / operator** | API process signing server-side txs (`/*/create`, API transfer, etc.). Often the address passed as operator at mint | Root `.env` → `PRIVATE_KEY` (key) and `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only) | **No** if you only use the wallet UI + poller |
 
 **What to do in practice**
 
@@ -51,9 +49,7 @@ cp .env.example .env
 
 Host `pnpm app:dev` reads **`app/.env.local`**, not only root `.env`. Copy the same `NEXT_PUBLIC_*` values there. Bootstrap creates a starter file if missing.
 
-<Callout type="info">
 Wallet connection is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.) — no third-party cloud account required.
-</Callout>
 
 </Steps>
 
