@@ -16,6 +16,16 @@
 	--tap-inverse: #09090b;
 }
 
+/* Force Nextra internal bg tokens to black so nav/sidebar cannot go grey */
+html {
+	--nextra-bg: 9 9 11; /* #09090b as space-separated RGB for rgb(var(--nextra-bg)) */
+}
+html.dark,
+html[class~="dark"],
+body {
+	--nextra-bg: 9 9 11;
+}
+
 /* ─── Global canvas ─────────────────────────────────────────────────── */
 html,
 body {
@@ -37,7 +47,7 @@ header nav,
 .nextra-nav-container,
 .nextra-nav-container-blur,
 [class*="nextra-nav"] {
-	background-color: var(--tap-surface) !important;
+	background-color: var(--tap-bg) !important;
 	background-image: none !important;
 	border-bottom: 1px solid var(--tap-border) !important;
 	backdrop-filter: none !important;
@@ -50,7 +60,7 @@ aside nav,
 .nextra-sidebar-container,
 aside.nextra-sidebar,
 [class*="nextra-sidebar"] {
-	background-color: var(--tap-surface) !important;
+	background-color: var(--tap-bg) !important;
 	border-color: var(--tap-border) !important;
 }
 
@@ -132,12 +142,15 @@ header nav,
 	background-image: none !important;
 }
 
-/* Solid nav bar (overrides dark:_bg-[linear-gradient(1deg,#383838,#212121)]) */
+/* Solid black nav bar (no grey Nextra surface / gradient) */
 .nextra-nav-container,
 .nextra-nav-container-blur,
 .nextra-nav-container nav,
-header {
-	background-color: var(--tap-surface) !important;
+.nextra-nav-container-blur > div,
+header,
+header > *,
+header nav {
+	background-color: var(--tap-bg) !important;
 	background-image: none !important;
 	box-shadow: none !important;
 }
@@ -213,4 +226,12 @@ footer,
 ::selection {
 	background-color: var(--tap-signal);
 	color: var(--tap-inverse);
+}
+
+/* Sidebar footer (theme toggle row) — black */
+.nextra-sidebar-footer,
+[class*="nextra-sidebar-footer"] {
+	background-color: var(--tap-bg) !important;
+	background-image: none !important;
+	border-color: var(--tap-border) !important;
 }
