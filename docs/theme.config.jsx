@@ -97,19 +97,6 @@ const themeConfig = {
 					href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
 					rel="stylesheet"
 				/>
-				{/* dangerouslySetInnerHTML required — React escapes > to &gt; in JSX
-				    children, breaking CSS child combinators. The >-combinator in
-				    article.nextra-content > main must survive unescaped. */}
-				<style dangerouslySetInnerHTML={{ __html: `
-					article.nextra-content > main {
-						max-width: none !important;
-						flex: 1 1 0% !important;
-					}
-					article.nextra-content > main table {
-						width: 100%;
-						min-width: 0;
-					}
-				` }} />
 			</>
 		);
 	},

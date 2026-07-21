@@ -1,9 +1,3 @@
-/**
- * Docs skin — aligned with app "Ledger Signal" design.
- * Nextra 3 owns layout and Tailwind; we override canvas + type + accents.
- */
-
-/* ─── Custom properties ─────────────────────────────────────────────── */
 :root {
 	--tap-bg: #09090b;
 	--tap-surface: #111113;
@@ -11,260 +5,375 @@
 	--tap-text: #f4f4f5;
 	--tap-muted: #a1a1aa;
 	--tap-subtle: #71717a;
-	--tap-border: rgba(255, 255, 255, 0.08);
+	--tap-border: rgba(255, 255, 255, 0.1);
 	--tap-signal: #c8f542;
 	--tap-inverse: #09090b;
+	--tap-code-bg: rgba(110, 118, 129, 0.22);
+	--tap-code-text: #e6edf3;
+	--nextra-bg: 9 9 11;
 }
 
-/* Force Nextra internal bg tokens to black so nav/sidebar cannot go grey */
-html {
-	--nextra-bg: 9 9 11; /* #09090b as space-separated RGB for rgb(var(--nextra-bg)) */
-}
+html,
 html.dark,
 html[class~="dark"],
 body {
 	--nextra-bg: 9 9 11;
-}
-
-/* ─── Global canvas ─────────────────────────────────────────────────── */
-html,
-body {
-	background-color: var(--tap-bg) !important;
+	background: var(--tap-bg) !important;
 	color: var(--tap-text);
 	font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 	-webkit-font-smoothing: antialiased;
 }
 
+html,
+body,
+#__next {
+	max-width: 100%;
+	overflow-x: clip;
+}
+
 #__next,
 #__next > div,
-#__next > div > div {
+#__next > div > div,
+article,
+main {
 	background-color: var(--tap-bg);
 }
 
-/* ─── Nextra layout elements (v2 + v3 selectors) ───────────────────── */
+/* Nextra chrome: a solid dark canvas without theme gradients or fade masks. */
 header,
 header nav,
 .nextra-nav-container,
-.nextra-nav-container-blur,
-[class*="nextra-nav"] {
-	background-color: var(--tap-bg) !important;
-	background-image: none !important;
+.nextra-nav-container-blur {
+	background: var(--tap-bg) !important;
 	border-bottom: 1px solid var(--tap-border) !important;
 	backdrop-filter: none !important;
-	-webkit-backdrop-filter: none !important;
 	box-shadow: none !important;
 }
 
 aside,
 aside nav,
 .nextra-sidebar-container,
-aside.nextra-sidebar,
-[class*="nextra-sidebar"] {
+.nextra-sidebar,
+.nextra-sidebar-footer,
+nav.nextra-toc {
 	background-color: var(--tap-bg) !important;
+	background-image: none !important;
 	border-color: var(--tap-border) !important;
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
 }
 
-nav.nextra-toc,
-[class*="nextra-toc"] {
-	background-color: var(--tap-bg) !important;
+.nextra-sidebar a[aria-current="page"],
+aside a[aria-current="page"] {
+	background: rgba(200, 245, 66, 0.1) !important;
+	border-radius: 0.25rem;
+	color: var(--tap-signal) !important;
 }
 
-article,
-main,
-.nextra-content,
-[class*="nextra-content"] {
-	background-color: var(--tap-bg) !important;
-	color: var(--tap-text);
+/* Let the article use the space between the fixed sidebar and TOC. */
+article.nextra-content {
+	min-width: 0;
 }
 
-/* ─── Callouts — uniform elevated surface, typed left border ────────── */
-aside[data-type],
-.nextra-callout,
-[class*="callout"],
-blockquote {
-	background-color: var(--tap-elevated) !important;
-	border: 1px solid var(--tap-border) !important;
-	border-radius: 0.375rem;
-	color: var(--tap-text) !important;
+article.nextra-content > main {
+	box-sizing: border-box;
+	flex: 1 1 0% !important;
+	max-width: none !important;
+	min-width: 0;
+	padding-inline: clamp(1rem, 2.25vw, 2rem) !important;
 }
 
-aside[data-type="info"] { border-left: 3px solid #60a5fa !important; }
-aside[data-type="warning"] { border-left: 3px solid #fbbf24 !important; }
-aside[data-type="error"],
-aside[data-type="danger"] { border-left: 3px solid #f87171 !important; }
-aside[data-type="default"],
-aside:not([data-type]) { border-left: 3px solid var(--tap-border) !important; }
+article.nextra-content > main > * {
+	max-width: 100%;
+}
 
-/* ─── Links ─────────────────────────────────────────────────────────── */
+article p,
+article li,
+article dd,
 article a,
-main a,
-.nextra-content a {
+article code,
+article pre,
+article img,
+article svg {
+	min-width: 0;
+}
+
+article p,
+article li,
+article dd,
+article td,
+article th {
+	overflow-wrap: break-word;
+	word-break: normal;
+}
+
+article a {
 	color: var(--tap-signal) !important;
 	text-decoration: none;
 }
-article a:hover,
-main a:hover,
-.nextra-content a:hover {
+
+article a:hover {
+	opacity: 0.9;
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
-	opacity: 0.9;
 }
 
-/* ─── Code ───────────────────────────────────────────────────────────── */
 pre,
 code {
 	font-family: "IBM Plex Mono", ui-monospace, monospace !important;
 }
+
 pre {
-	background-color: var(--tap-elevated) !important;
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow-x: auto;
+	background: var(--tap-elevated) !important;
 	border: 1px solid var(--tap-border);
 	border-radius: 0.375rem;
 }
+
 :not(pre) > code {
-	background-color: var(--tap-elevated) !important;
-	border: 1px solid var(--tap-border);
+	white-space: normal;
+	background: var(--tap-code-bg) !important;
+	border: 0;
 	border-radius: 0.25rem;
-	padding: 0.1em 0.35em;
-	color: var(--tap-text);
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+	color: var(--tap-code-text);
+	font-size: 0.9em;
+	font-weight: 500;
+	padding: 0.12em 0.32em;
 }
 
-/* ─── Kill Nextra ray/gradient chrome ─────────────────────────────────── */
-/* Theme ships dark nav as linear-gradient(1deg,#383838,#212121) and sidebar
-   scroll masks as edge fades — reads as “rays” on the chrome. Solid surfaces only. */
-header,
-header nav,
-.nextra-nav-container,
-.nextra-nav-container-blur,
-.nextra-nav-container > nav,
-.nextra-nav-container-blur > div,
-[class*="nextra-nav"],
-[class*="nextra-nav"] * {
-	background-image: none !important;
+/* Informational notes should not compete with the document. Reserve filled
+   panels for warnings and errors that genuinely interrupt the reading flow. */
+aside[data-type],
+.nextra-callout,
+blockquote {
+	background: transparent !important;
+	border: 0 !important;
+	border-left: 2px solid var(--tap-border) !important;
+	border-radius: 0;
+	color: var(--tap-text) !important;
+	padding-block: 0.35rem !important;
 }
 
-/* Solid black nav bar (no grey Nextra surface / gradient) */
-.nextra-nav-container,
-.nextra-nav-container-blur,
-.nextra-nav-container nav,
-.nextra-nav-container-blur > div,
-header,
-header > *,
-header nav {
-	background-color: var(--tap-bg) !important;
-	background-image: none !important;
-	box-shadow: none !important;
+[data-type="info"].nextra-callout,
+aside[data-type="info"] { border-left-color: #60a5fa !important; }
+[data-type="warning"].nextra-callout,
+[data-type="error"].nextra-callout,
+[data-type="danger"].nextra-callout,
+aside[data-type="warning"],
+aside[data-type="error"],
+aside[data-type="danger"] {
+	background: var(--tap-elevated) !important;
+	border: 1px solid var(--tap-border) !important;
+	border-left-width: 3px !important;
+	border-radius: 0.375rem;
+	padding-block: 0.75rem !important;
 }
+[data-type="warning"].nextra-callout,
+aside[data-type="warning"] { border-left-color: #fbbf24 !important; }
+[data-type="error"].nextra-callout,
+[data-type="danger"].nextra-callout,
+aside[data-type="error"],
+aside[data-type="danger"] { border-left-color: #f87171 !important; }
 
-/* Sidebar / TOC: no fade masks, no gradient fills on items */
-aside,
-.nextra-sidebar-container,
-.nextra-sidebar-container > .nextra-scrollbar,
-.nextra-sidebar,
-nav.nextra-toc,
-.nextra-toc,
-[class*="nextra-sidebar"],
-[class*="nextra-toc"] {
-	-webkit-mask-image: none !important;
-	mask-image: none !important;
-	background-image: none !important;
-}
-
-aside a,
-.nextra-sidebar a,
-.nextra-menu-desktop a,
-.nextra-menu-mobile a,
-.nextra-sidebar li,
-.nextra-menu-desktop li,
-button[data-headlessui-state],
-.nextra-sidebar button {
-	background-image: none !important;
-}
-
-/* ─── Sidebar active ─────────────────────────────────────────────────── */
-.nextra-sidebar a[aria-current="page"],
-.nextra-menu-desktop a.active,
-.nextra-menu-mobile a.active,
-aside a[aria-current="page"],
-a[href][aria-current="page"] {
-	background-color: rgba(200, 245, 66, 0.1) !important;
-	background-image: none !important;
-	color: var(--tap-signal) !important;
-	border-radius: 0.25rem;
-}
-
-/* Folder open / hover: flat, no primary wash gradient */
-.nextra-sidebar a:hover,
-.nextra-menu-desktop a:hover,
-.nextra-menu-mobile a:hover,
-aside a:hover {
-	background-image: none !important;
-}
-
-/* ─── Full-width content (no horizontal scroll on wide tables) ──────── */
-/* Nextra 3 structure (verified from rendered HTML):
-   <article class="... nextra-content _flex ...">
-     <main class="_w-full _min-w-0 _max-w-6xl _px-6 ...">  ← CONSTRAINT
-       MDX content + tables
-     </main>
-     <nav> TOC </nav>
-   </article>
-   Fix: remove max-width from <main>, fill the flex space, reduce padding. */
-
-/* The content <main> — underscore-prefixed Tailwind classes can't be
-   overridden by targeting the class name; override the property directly. */
-article.nextra-content > main,
-.nextra-content > main {
-	max-width: none !important;
-	flex: 1 1 0% !important;  /* fill all space the TOC nav doesn’t take */
-}
-
-/* Also catch any prose max-width inside that main */
-article.nextra-content > main .prose,
-article.nextra-content > main [class*="prose"] {
-	max-width: none !important;
-}
-
-/* ─── Tables ─────────────────────────────────────────────────────────── */
-table { border-color: var(--tap-border); width: 100%; }
-th, td { border-color: var(--tap-border) !important; }
-thead, thead tr { background-color: var(--tap-elevated) !important; }
-
-/* Table wrapper Nextra creates — allow full width, horizontal scroll only
-   as last resort when viewport is genuinely narrower than table. */
-[class*="nextra-scrollbar"],
-.overflow-x-auto,
-[class*="overflow-x"] {
-	overflow-x: auto;
+/* Nextra wraps Markdown tables in an overflow container. Keep the wrapper as
+   a frame, but make the table itself responsive instead of scrollable. */
+.tap-table-frame {
+	box-sizing: border-box;
 	max-width: 100%;
+	overflow: visible !important;
 }
 
-/* ─── Footer ─────────────────────────────────────────────────────────── */
-footer,
-.nextra-footer {
-	background-color: var(--tap-bg) !important;
-	border-top: 1px solid var(--tap-border) !important;
-	color: var(--tap-subtle) !important;
+article table {
+	border-collapse: collapse;
+	border-color: var(--tap-border);
+	font-size: 13px;
+	line-height: 1.45;
+	table-layout: fixed;
+	width: 100%;
 }
 
-/* ─── Mermaid ────────────────────────────────────────────────────────── */
+article thead,
+article thead tr {
+	background: var(--tap-elevated) !important;
+}
+
+article th,
+article td {
+	border-color: var(--tap-border) !important;
+	box-sizing: border-box;
+	min-width: 0 !important;
+	padding: 0.65rem 0.75rem !important;
+	vertical-align: top;
+	white-space: normal !important;
+}
+
+article th {
+	font-size: 12px;
+	letter-spacing: 0.01em;
+}
+
+article td code,
+article th code {
+	display: inline;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+/* Dense references already provide row/column structure. Repeating a filled
+   capsule around every function, route, and type makes them harder to scan. */
+article table :not(pre) > code {
+	background: transparent !important;
+	border-radius: 0;
+	color: #d7dce2;
+	font-size: 0.94em;
+	font-weight: 500;
+	padding: 0;
+}
+
+article h1 code,
+article h2 code,
+article h3 code,
+article h4 code {
+	background: transparent !important;
+	color: inherit;
+	font-size: 0.92em;
+	padding: 0;
+}
+
+/* The setup role matrix benefits from domain-specific proportions: roles stay
+   readable, descriptive copy gets the majority of the row, and code still wraps. */
+article table[data-tap-columns^="Role|What it controls|"] th:nth-child(1) { width: 18%; }
+article table[data-tap-columns^="Role|What it controls|"] th:nth-child(2) { width: 39%; }
+article table[data-tap-columns^="Role|What it controls|"] th:nth-child(3) { width: 27%; }
+article table[data-tap-columns^="Role|What it controls|"] th:nth-child(4) { width: 16%; }
+
+article table[data-tap-columns^="Role|What it controls|"] td:first-child {
+	hyphens: none;
+	overflow-wrap: normal;
+	word-break: keep-all;
+}
+
+article table[data-tap-columns^="Actor / deployment|Address|"] th:nth-child(1) { width: 28%; }
+article table[data-tap-columns^="Actor / deployment|Address|"] th:nth-child(2) { width: 42%; }
+article table[data-tap-columns^="Actor / deployment|Address|"] th:nth-child(3) { width: 30%; }
+
+.tap-table-frame--compact table,
+article table:has(th:nth-child(2):last-child) {
+	table-layout: auto;
+}
+
 .mermaid,
 [class*="mermaid"] {
-	background-color: var(--tap-elevated) !important;
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow: auto;
+	background: var(--tap-elevated) !important;
 	border: 1px solid var(--tap-border);
 	border-radius: 0.375rem;
 	padding: 1rem;
 }
 
-/* ─── Selection ──────────────────────────────────────────────────────── */
+article img,
+article video,
+article iframe {
+	height: auto;
+	max-width: 100%;
+}
+
+footer,
+.nextra-footer {
+	background: var(--tap-bg) !important;
+	border-top: 1px solid var(--tap-border) !important;
+	color: var(--tap-subtle) !important;
+}
+
 ::selection {
-	background-color: var(--tap-signal);
+	background: var(--tap-signal);
 	color: var(--tap-inverse);
 }
 
-/* Sidebar footer (theme toggle row) — black */
-.nextra-sidebar-footer,
-[class*="nextra-sidebar-footer"] {
-	background-color: var(--tap-bg) !important;
-	background-image: none !important;
-	border-color: var(--tap-border) !important;
+@media (max-width: 767px) {
+	article.nextra-content > main {
+		padding-inline: 1rem !important;
+	}
+
+	.tap-table-frame {
+		margin-block: 1rem;
+	}
+
+	article table,
+	article table thead,
+	article table tbody,
+	article table tr,
+	article table th,
+	article table td {
+		display: block;
+		width: 100%;
+	}
+
+	article table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	article table tbody {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	article table tbody tr {
+		background: var(--tap-surface);
+		border: 1px solid var(--tap-border);
+		border-radius: 0.375rem;
+		overflow: hidden;
+	}
+
+	article table tbody td {
+		display: grid;
+		grid-template-columns: minmax(6.5rem, 36%) minmax(0, 1fr);
+		gap: 0.75rem;
+		border: 0 !important;
+		border-bottom: 1px solid var(--tap-border) !important;
+		padding: 0.65rem 0.75rem !important;
+	}
+
+	article table tbody td:last-child {
+		border-bottom: 0 !important;
+	}
+
+	article table tbody td::before {
+		content: attr(data-label);
+		color: var(--tap-muted);
+		font-size: 11px;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		line-height: 1.45;
+		text-transform: uppercase;
+	}
+}
+
+@media (max-width: 420px) {
+	article table tbody td {
+		grid-template-columns: 1fr;
+		gap: 0.25rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+	}
 }
