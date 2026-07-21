@@ -201,22 +201,26 @@ aside a:hover {
 }
 
 /* ─── Full-width content (no horizontal scroll on wide tables) ──────── */
-/* Nextra 3 caps the article to ~90ch for readability. For a protocol
-   reference packed with wide tables that forces horizontal scrolling.
-   Expand to fill the full column between the two sidebars instead. */
-article,
-.nextra-content,
-[class*="nextra-content"],
-main > div > article,
-main > article {
+/* Nextra 3 structure (verified from rendered HTML):
+   <article class="... nextra-content _flex ...">
+     <main class="_w-full _min-w-0 _max-w-6xl _px-6 ...">  ← CONSTRAINT
+       MDX content + tables
+     </main>
+     <nav> TOC </nav>
+   </article>
+   Fix: remove max-width from <main>, fill the flex space, reduce padding. */
+
+/* The content <main> — underscore-prefixed Tailwind classes can't be
+   overridden by targeting the class name; override the property directly. */
+article.nextra-content > main,
+.nextra-content > main {
 	max-width: none !important;
-	width: 100%;
+	flex: 1 1 0% !important;  /* fill all space the TOC nav doesn’t take */
 }
 
-/* Prose wrapper (Tailwind Typography) inside the article also constrains
-   width. Override without touching sidebar or nav prose usages. */
-article .prose,
-article [class*="prose"] {
+/* Also catch any prose max-width inside that main */
+article.nextra-content > main .prose,
+article.nextra-content > main [class*="prose"] {
 	max-width: none !important;
 }
 
