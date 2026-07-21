@@ -38,8 +38,11 @@ header nav,
 .nextra-nav-container-blur,
 [class*="nextra-nav"] {
 	background-color: var(--tap-surface) !important;
+	background-image: none !important;
 	border-bottom: 1px solid var(--tap-border) !important;
 	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+	box-shadow: none !important;
 }
 
 aside,
@@ -115,13 +118,73 @@ pre {
 	color: var(--tap-text);
 }
 
+/* ─── Kill Nextra ray/gradient chrome ─────────────────────────────────── */
+/* Theme ships dark nav as linear-gradient(1deg,#383838,#212121) and sidebar
+   scroll masks as edge fades — reads as “rays” on the chrome. Solid surfaces only. */
+header,
+header nav,
+.nextra-nav-container,
+.nextra-nav-container-blur,
+.nextra-nav-container > nav,
+.nextra-nav-container-blur > div,
+[class*="nextra-nav"],
+[class*="nextra-nav"] * {
+	background-image: none !important;
+}
+
+/* Solid nav bar (overrides dark:_bg-[linear-gradient(1deg,#383838,#212121)]) */
+.nextra-nav-container,
+.nextra-nav-container-blur,
+.nextra-nav-container nav,
+header {
+	background-color: var(--tap-surface) !important;
+	background-image: none !important;
+	box-shadow: none !important;
+}
+
+/* Sidebar / TOC: no fade masks, no gradient fills on items */
+aside,
+.nextra-sidebar-container,
+.nextra-sidebar-container > .nextra-scrollbar,
+.nextra-sidebar,
+nav.nextra-toc,
+.nextra-toc,
+[class*="nextra-sidebar"],
+[class*="nextra-toc"] {
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
+	background-image: none !important;
+}
+
+aside a,
+.nextra-sidebar a,
+.nextra-menu-desktop a,
+.nextra-menu-mobile a,
+.nextra-sidebar li,
+.nextra-menu-desktop li,
+button[data-headlessui-state],
+.nextra-sidebar button {
+	background-image: none !important;
+}
+
 /* ─── Sidebar active ─────────────────────────────────────────────────── */
 .nextra-sidebar a[aria-current="page"],
 .nextra-menu-desktop a.active,
 .nextra-menu-mobile a.active,
-aside a[aria-current="page"] {
+aside a[aria-current="page"],
+a[href][aria-current="page"] {
 	background-color: rgba(200, 245, 66, 0.1) !important;
+	background-image: none !important;
 	color: var(--tap-signal) !important;
+	border-radius: 0.25rem;
+}
+
+/* Folder open / hover: flat, no primary wash gradient */
+.nextra-sidebar a:hover,
+.nextra-menu-desktop a:hover,
+.nextra-menu-mobile a:hover,
+aside a:hover {
+	background-image: none !important;
 }
 
 /* ─── Tables ─────────────────────────────────────────────────────────── */
