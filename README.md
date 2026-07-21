@@ -47,7 +47,6 @@ pnpm app:dev                         # Product UI — http://localhost:3000/app
 
 The product UI uses a **first-party connect modal** (TAP design system) on top of **wagmi + EIP-6963** browser wallets (Rabby, MetaMask, etc.). No third-party connect-cloud account is required for extension wallets.
 
-Optional mobile QR: set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (WalletConnect Cloud) in `app/.env.local` and root `.env` if you use the Docker app.
 
 **Product UI**
 

@@ -34,7 +34,7 @@ pnpm generate:wagmi
 
 - Next.js 16 (Pages Router), React 19
 - styled-components v6
-- wagmi + viem + native wallet modal (EIP-6963 / optional WalletConnect)
+- wagmi + viem + native wallet modal (EIP-6963 injected wallets)
 - TanStack Query (data fetching)
 - IBM Plex Mono font
 - `@tap/units` (1e10 scaling, UUID↔bytes16, share caps)

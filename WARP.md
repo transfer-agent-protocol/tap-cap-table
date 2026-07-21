@@ -145,7 +145,7 @@ pnpm app:dev                         # product UI — do not rely on Docker app 
 - **Issuer ADMIN** — `createCapTable` (permissionless) on a factory; wallet manage UI. Using shared factory ≠ owning it.
 - **Mongo `factories`** — local mirror only.
 
-**Failure matrix:** `@tap/units` missing on `:3000` → Docker app without `packages/` (fixed in `Dockerfile.app`) or stop Docker app and use `pnpm app:dev`. Empty connect modal → install a browser wallet (optional `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` for mobile QR). `COPY chain/out` fail → run `pnpm setup`. Fresh Mongo has no historical issuers until mint/register/load-from-wallet. Mint OK but register **500** → Docker app `NEXT_PUBLIC_API_URL` must be `http://server:8293`. Poller `invalid BytesLike 0xUPDATE_ME` → placeholder `PRIVATE_KEY`; poller now falls back to read-only when key is missing.
+**Failure matrix:** `@tap/units` missing on `:3000` → Docker app without `packages/` (fixed in `Dockerfile.app`) or stop Docker app and use `pnpm app:dev`. Empty connect modal → install a browser extension wallet (Rabby, MetaMask — EIP-6963; no cloud key required). `COPY chain/out` fail → run `pnpm setup`. Fresh Mongo has no historical issuers until mint/register/load-from-wallet. Mint OK but register **500** → Docker app `NEXT_PUBLIC_API_URL` must be `http://server:8293`. Poller `invalid BytesLike 0xUPDATE_ME` → placeholder `PRIVATE_KEY`; poller now falls back to read-only when key is missing.
 
 Manual steps (if not using bootstrap):
 
@@ -434,7 +434,6 @@ The system supports multiple environments via `.env` files:
 - `CHAIN_ID`: Network chain ID (31337 for Anvil, 98866 for Plume Mainnet, 98867 for Plume Testnet)
 - `PRIVATE_KEY`: **Dev/demo only**, optional for wallet-first UI. Server-signed API + CLI `deploy-factory` when set; placeholder → poller read-only. Never factory-owner or prod keys in long-running env (see Three keys above)
 - `PORT`: API server port (default 8293)
-- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`: optional WalletConnect Cloud project ID for mobile QR (https://cloud.walletconnect.com)
 - `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)

@@ -46,14 +46,13 @@ cp .env.example .env
 | `PRIVATE_KEY` | **Optional** for wallet UI. Funded **dev** key only if you need server-signed API routes or CLI `deploy-factory` from this machine. Demo placeholder is fine otherwise. |
 | `NEXT_PUBLIC_OPERATOR_ADDRESS` | Address granted `OPERATOR_ROLE` on new cap tables (often a server/ops address; not a private key) |
 | `NEXT_PUBLIC_FACTORY_ADDRESS` | Factory the app mints against |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional — mobile QR only (https://cloud.walletconnect.com). Extension wallets need no cloud key. |
 
 ### 2. Frontend `app/.env.local`
 
 Host `pnpm app:dev` reads **`app/.env.local`**, not only root `.env`. Copy the same `NEXT_PUBLIC_*` values there. Bootstrap creates a starter file if missing.
 
 <Callout type="info">
-Wallet connect is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.). Optional WalletConnect project id is only for mobile QR.
+Wallet connection is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.) — no third-party cloud account required.
 </Callout>
 
 </Steps>
