@@ -67,7 +67,7 @@ A fresh Mongo **does not** auto-import every historical issuer on Plume. Use min
 | Symptom | Check |
 | --- | --- |
 | `Can't resolve '@tap/units'` on `:3000` | Docker app image must `COPY packages/`; or stop Docker app and run `pnpm app:dev` |
-| Empty connect modal / no wallets | Install a browser extension wallet; optional `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` for mobile QR |
+| Empty connect modal / no wallets | Install a browser extension wallet (Rabby, MetaMask, etc.) — EIP-6963, no cloud key needed |
 | `EADDRINUSE` | Port 8293 or 3000 already in use (`lsof -i :3000`) |
 | History does not update | Poller running; issuer registered with `deployed_to` |
 | Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293` (host-reachable) |

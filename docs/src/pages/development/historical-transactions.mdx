@@ -4,9 +4,7 @@ import { Steps, Callout } from 'nextra/components';
 
 Returns every stock issuance, transfer, cancellation, and other equity event recorded for a cap table.
 
-<Callout type="info">
 History is populated by the event poller, not by the route that submits the contract transaction. Allow ~20 seconds on Plume Mainnet between an onchain transaction and a successful read. `pnpm dev` and `pnpm docker:up` both run a poller; `pnpm prod` does not — pair it with `pnpm prod-poller`.
-</Callout>
 
 <Steps>
 

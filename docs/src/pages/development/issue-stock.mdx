@@ -4,7 +4,7 @@ import { Steps, Callout } from 'nextra/components';
 
 With an issuer, stock class, and stakeholder created, you can now issue stock to stakeholders. This is the first actual transaction on your cap table.
 
-Behind the scenes, the route calls `issuanceController.js`, which converts the OCF data and invokes the `issueStock` method on the cap table contract. See the [Controllers Reference](/api-reference/controllers) for conversion details.
+In the primary `/app` flow, the connected ADMIN wallet calls `issueStock` directly. After confirmation, the app validates optimistic metadata through `POST /transactions/issuance/stock/register-onchain`; the poller writes the canonical issuance and chain-generated IDs. The server-signed alternative below calls `issuanceController.js`.
 
 <Steps>
 
@@ -37,7 +37,7 @@ Replace the IDs with the `_id` values from your previous creation responses.
 
 ### Check the response
 
-The response includes your stock issuance with a generated `id` and `security_id`:
+The server-signed response includes a prepared OCF issuance shape. Its validation IDs are not the authoritative onchain IDs; read the poller-backed history after confirmation for the canonical transaction and security IDs.
 
 <Callout type="warning">
 API examples use human `share_price.amount` values. The contract stores them scaled by 1e10 (10,000,000,000). Divide raw onchain values by 1e10 before comparing. The server and poller handle this automatically for API consumers.
@@ -76,7 +76,7 @@ API examples use human `share_price.amount` values. The contract stores them sca
 | Field | What it identifies |
 | --- | --- |
 | `id` | The issuance transaction's OCF ID. |
-| `security_id` | The unique block of shares created by this issuance. **Save this** — every later transfer, cancellation, retraction, reissuance, repurchase, or acceptance reuses it. |
+| `security_id` | Identifies an active block of shares. Use the canonical value from poller-backed history for later security-specific actions. Transfers and partial lifecycle actions may consume a security and create new balance security IDs. |
 | `date` | Onchain timestamp at the issuance block. |
 
 ## Required fields

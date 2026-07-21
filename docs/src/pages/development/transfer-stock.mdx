@@ -2,7 +2,7 @@ import { Steps, Callout } from 'nextra/components';
 
 # Transfer Stock
 
-Behind the scenes the route uses `transferController.js` to convert IDs and scaled values before calling `transferStock` on the contract. Full details are in the [Controllers Reference](/api-reference/controllers).
+The primary `/app` transfer flow calls `CapTable.transferStock` directly from the connected ADMIN wallet. There is no transfer registration endpoint: the poller mirrors the confirmed `TransferStock` transaction into MongoDB. The server-signed API alternative below uses `transferController.js`.
 
 Transfer shares from one stakeholder to another. The recipient (transferee) must already exist on the cap table before you can transfer stock to them.
 

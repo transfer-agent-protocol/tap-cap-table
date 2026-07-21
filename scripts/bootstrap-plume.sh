@@ -53,7 +53,7 @@ if [ ! -f app/.env.local ]; then
     mkdir -p app
     cat > app/.env.local << 'APPEOF'
 # Frontend (app/) — used by `pnpm app:dev`. Keep factory aligned with Mongo factories.
-# Wallet UI is native (EIP-6963). Optional: NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR.
+# Wallet UI is native (EIP-6963) — install a browser extension wallet (Rabby, MetaMask, etc.).
 # Shared demo CapTableFactory on Plume (or your own after pnpm deploy-factory)
 NEXT_PUBLIC_FACTORY_ADDRESS=0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
 NEXT_PUBLIC_CHAIN_ID=98866
@@ -158,10 +158,11 @@ for f in .env app/.env.local; do
     fi
 done
 if [ "$SECRETS_OK" -eq 0 ]; then
-    echo "⚠️  Secrets still set to UPDATE_ME — set before server-signed / mint-operator work:"
-    echo "      NEXT_PUBLIC_OPERATOR_ADDRESS   (server wallet / operator for new cap tables)"
-    echo "      PRIVATE_KEY                   (funded Plume key for server-signed paths / deploy-factory)"
-    echo "      (Wallet connect needs a browser extension; optional NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID for mobile QR)"
+    echo "⚠️  UPDATE_ME placeholders still present (often fine for wallet-first /app):"
+    echo "      NEXT_PUBLIC_OPERATOR_ADDRESS — address granted OPERATOR on new mints (not a private key)"
+    echo "      PRIVATE_KEY                 — optional dev/demo only; needed for server-signed API / deploy-factory"
+    echo "      Wallet UI needs a browser extension wallet (Rabby, MetaMask, etc.) — EIP-6963, no cloud key required"
+    echo "      Three keys: factory owner ≠ issuer ADMIN ≠ server key — docs development/setup"
 else
     echo "✅ No UPDATE_ME placeholders detected in .env / app/.env.local"
 fi

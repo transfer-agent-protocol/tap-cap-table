@@ -4,11 +4,30 @@ import { Steps, Callout } from 'nextra/components';
 
 Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker) and the product UI on the host.
 
-<Callout type="info">
-**Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 pnpm bootstrap`, fill secrets in `.env` and `app/.env.local`, then `pnpm app:dev`.
-</Callout>
+**Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 pnpm bootstrap`, set `NEXT_PUBLIC_*` in `.env` and `app/.env.local`, then `pnpm app:dev`. Server `PRIVATE_KEY` is optional for the wallet UI.
 
 ## Secrets and env files
+
+### Three wallets / keys [#three-wallets-keys]
+
+These are easy to conflate. They are **not** the same wallet.
+
+| Role | What it controls | Where it lives | Needed for golden path? |
+| --- | --- | --- | --- |
+| **Factory owner** | Beacon upgrades for **that** factory’s cap tables (`updateCapTableImplementation`) | Cold / hardware / vault. Used only for rare deploy or upgrade CLI runs | **No** for day-to-day product work |
+| **Issuer ADMIN** | The wallet that called `createCapTable` — governance + day-to-day writes (admins count as operators onchain) | Browser wallet in `/app` | **Yes** — connect an extension wallet |
+| **Server / operator** | API process signing server-side txs (`/*/create`, API transfer, etc.). Often the address passed as operator at mint | Root `.env` → `PRIVATE_KEY` (key) and `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only) | **No** if you only use the wallet UI + poller |
+
+**What to do in practice**
+
+- **Wallet-first `/app` UI** — ADMIN signs in the browser. Poller needs RPC only. Leave `PRIVATE_KEY=UPDATE_ME` (or unset). Server runs read-only for chain writes; that is expected. ADMIN alone is enough for the manage UI.
+- **`NEXT_PUBLIC_OPERATOR_ADDRESS`** — an **address** granted `OPERATOR_ROLE` on **new** mints (for server/automation later). Setting it does **not** put a key on the server. You only need that private key in `.env` if the API itself will sign as operator.
+- **Factory owner key** — never put this in the long-running Docker/API env. Compromise would let an attacker upgrade every cap table on that factory. Inject only for a one-shot `pnpm deploy-factory` or upgrade script (separate env file / CI secret), then remove.
+- **Shared Plume demo factory** (`0xcd6…`) — owner is TAP Admin (`0x366a…`), not your issuer wallet. Reusing it does not make you factory owner.
+
+<Callout type="warning">
+`PRIVATE_KEY` in local `.env` is **dev/demo only**. Optional for the wallet-first path. Never put production or factory-owner keys here. Do not commit real keys.
+</Callout>
 
 <Steps>
 
@@ -18,22 +37,19 @@ Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker
 cp .env.example .env
 ```
 
-`.env.example` defaults to Plume (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Set:
+`.env.example` defaults to Plume (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Typical local values:
 
 | Variable | Purpose |
 | --- | --- |
-| `PRIVATE_KEY` | Funded Plume key for server-signed API / `deploy-factory` |
-| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Granted `OPERATOR_ROLE` on new cap tables (usually the server wallet) |
+| `PRIVATE_KEY` | **Optional** for wallet UI. Funded **dev** key only if you need server-signed API routes or CLI `deploy-factory` from this machine. Demo placeholder is fine otherwise. |
+| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Address granted `OPERATOR_ROLE` on new cap tables (often a server/ops address; not a private key) |
 | `NEXT_PUBLIC_FACTORY_ADDRESS` | Factory the app mints against |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional — mobile QR only (https://cloud.walletconnect.com). Extension wallets need no cloud key. |
 
 ### 2. Frontend `app/.env.local`
 
 Host `pnpm app:dev` reads **`app/.env.local`**, not only root `.env`. Copy the same `NEXT_PUBLIC_*` values there. Bootstrap creates a starter file if missing.
 
-<Callout type="info">
-Wallet connect is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.). Optional WalletConnect project id is only for mobile QR.
-</Callout>
+Wallet connection is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.) — no third-party cloud account required.
 
 </Steps>
 

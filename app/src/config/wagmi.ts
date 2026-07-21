@@ -1,5 +1,4 @@
 import { createConfig, http, injected, mock, type Config, type CreateConnectorFn } from "wagmi";
-import { walletConnect } from "wagmi/connectors";
 import type { Chain } from "viem";
 import * as viemChains from "viem/chains";
 
@@ -81,24 +80,9 @@ export function getExplorerUrl(chainId: number | undefined, address: string): st
 	return `${base.replace(/\/$/, "")}/address/${address}`;
 }
 
-const rawWcProjectId = (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "").trim();
-
-/** Optional WalletConnect (mobile QR). Unset → injected wallets only; no cloud account required. */
-export const isWalletConnectConfigured =
-	rawWcProjectId.length > 0 &&
-	rawWcProjectId !== "UPDATE_ME" &&
-	!rawWcProjectId.toLowerCase().includes("your_project");
-
 /** Playwright / local e2e only — never enable in production builds. */
 export const isWalletMockEnabled =
 	process.env.NEXT_PUBLIC_WALLET_MOCK === "1" && process.env.NODE_ENV !== "production";
-
-const metadata = {
-	name: "Transfer Agent Protocol",
-	description: "Mint equity cap tables onchain",
-	url: "https://transferagentprotocol.xyz",
-	icons: ["https://transferagentprotocol.xyz/tap-logo.svg"],
-};
 
 function buildConnectors(): CreateConnectorFn[] {
 	const list: CreateConnectorFn[] = [];
@@ -114,22 +98,12 @@ function buildConnectors(): CreateConnectorFn[] {
 		);
 	}
 
-	// EIP-6963 multi-injected discovery is on by default via createConfig.
+	// EIP-6963 multi-injected discovery (Rabby, MetaMask, etc.) — no cloud key required.
 	list.push(
 		injected({
 			shimDisconnect: true,
 		}),
 	);
-
-	if (isWalletConnectConfigured) {
-		list.push(
-			walletConnect({
-				projectId: rawWcProjectId,
-				metadata,
-				showQrModal: true,
-			}),
-		);
-	}
 
 	return list;
 }

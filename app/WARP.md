@@ -42,7 +42,7 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 ### Tech Stack
 - **Framework**: Next.js 16 (Pages Router), React 19
 - **Styling**: styled-components v6 with `ThemeProvider`
-- **Wallet / web3**: wagmi v3 + viem v2; first-party connect modal (`components/wallet/`) with EIP-6963 injected wallets (+ optional WalletConnect)
+- **Wallet / web3**: wagmi v3 + viem v2; first-party connect modal (`components/wallet/`) with EIP-6963 injected wallets
 - **Data fetching**: TanStack Query (`@tanstack/react-query`)
 - **Fonts**: Inter (UI copy) + IBM Plex Mono (data — numbers, addresses, tables), loaded via `next/font` as CSS variables (`--font-sans` / `--font-mono`)
 - **E2E**: Playwright (`e2e/`, mocked `/api/*`, desktop + iPad + iPhone projects)
@@ -72,7 +72,7 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 - Shell only appears on **workspace** routes (`isWorkspaceRoute` → `/app/*`). Landing has no side nav and no wallet.
 - Cap-table sections are side-nav destinations via `?view=` on `/app/companies/[issuerId]`. Section order: Holdings → Stock classes → Shareholders → Issue stock → Transfer → Transactions.
 - **Issuer id in links**: build hrefs with `capTableHref(issuerId, view)` using the real id from `router.query.issuerId` (or path). Never embed `router.pathname` when it still contains `[issuerId]`.
-- `src/config/wagmi.ts` — pure `createConfig`. Networks: **Plume Mainnet (98866)**, **Plume Testnet (98867)**, **Anvil (31337)**. EIP-6963 injected + optional WalletConnect.
+- `src/config/wagmi.ts` — pure `createConfig`. Networks: **Plume Mainnet (98866)**, **Plume Testnet (98867)**, **Anvil (31337)**. EIP-6963 injected wallets.
 
 ### Contract Bindings (wagmi codegen)
 - `src/generated.ts` is produced by `wagmi.config.ts` (`@wagmi/cli` foundry + react plugins). **Do not hand-edit it.**
@@ -181,7 +181,6 @@ The frontend contains no Solidity. For contract conventions and toolchain, see t
 
 Frontend config lives in `app/.env.local` (git-ignored). All are build-time public (`NEXT_PUBLIC_*`):
 
-- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — optional WalletConnect Cloud id for mobile QR (https://cloud.walletconnect.com). Unset → extension wallets only.
 - `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
 - `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)

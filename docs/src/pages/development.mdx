@@ -1,12 +1,10 @@
-import { Cards, Callout } from 'nextra/components'
+import { Cards } from 'nextra/components'
 
 # Start Building
 
-Clone. Run Docker. Register the Plume factory. Create a cap table. Test the branch.
+Clone. Start Mongo and the API. Run the product UI on the host. Register the shared demo factory or deploy your own, then create a cap table from the connected ADMIN wallet.
 
-<Callout type="info">
-Default path: Docker runs MongoDB, the API server, and the app. Plume Mainnet is the chain target. Use Anvil only for local-chain work.
-</Callout>
+Default path: Docker runs MongoDB, the API, and the poller; `pnpm app:dev` runs the wallet UI at `/app`. Plume Mainnet is the chain target. Use Anvil only for local-chain work.
 
 ## Working path
 

@@ -1,18 +1,16 @@
-import { Cards, Callout } from 'nextra/components';
+import { Cards } from 'nextra/components';
 
 # Transfer Agent Protocol
 
 We use [Open Cap Table Format](/protocol/tap-ocf) and convert it into smart contracts. This creates a full cap table onchain and offchain. The onchain cap table is the source of truth and the offchain cap table is its mirror.
 
-<Callout emoji="⏳">This documentation is currently in public preview</Callout>
+_This documentation is currently in public preview._
 
 ## Current Status
 
 The protocol is live on [Plume Mainnet](https://docs.plume.org/plume/developer-resources/network-parameters).
 
-<Callout type="info">
 **Who deploys what:** the protocol builder ships contracts and may run a shared **demo** factory; a licensed **transfer agent** deploys **their own** `CapTableFactory` (book of business); **issuers** mint cap tables through a factory and become ADMIN of that table. Factory addresses are unique per deploy — see [Deploy factory](/development/factory-deploy) and the [Development Guide](/development).
-</Callout>
 
 ## Protocol Specification
 
@@ -22,7 +20,7 @@ The protocol has three major components.
 
 - [Offchain database](/protocol/tap-ocf) stores the cap table data. We're currently using a MongoDB that stores cap table data in the [Open Cap Table Format](/protocol/tap-ocf).
 
-- [Server API](/features) reads and writes cap table records, then syncs them with the smart contracts.
+- [Product UI](/development) submits day-to-day writes directly from the issuer ADMIN wallet. The [server API](/features) supplies reads, metadata registration, and an optional server-signed automation path. The event poller mirrors confirmed contract events into MongoDB.
 
 <Cards>
 	<Cards.Card title="Open Cap Table Format" href="/protocol/tap-ocf"/>

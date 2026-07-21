@@ -2,7 +2,20 @@ import { Steps, Callout } from 'nextra/components';
 
 # Create an Issuer
 
-With the server running, you can create your first issuer via the API. `POST /issuer/create` does two things in one call:
+The primary product flow is the wallet-first page at `/app/mint`. The connected wallet calls `createCapTable`, becomes issuer **ADMIN**, and then registers the confirmed deployment with `POST /issuer/register`.
+
+## Wallet-first product flow
+
+1. Open `http://localhost:3000/app/mint` and connect an EIP-6963 browser-extension wallet.
+2. Enter the issuer details and submit the transaction.
+3. Confirm the transaction in the wallet. The caller becomes ADMIN; the configured `NEXT_PUBLIC_OPERATOR_ADDRESS`, when present, receives OPERATOR.
+4. After confirmation, the app registers the OCF issuer metadata with the API.
+
+The bytes16 ID sent to the factory must remain paired with the UUID registered in Mongo so the poller can join the `IssuerCreated` event correctly.
+
+## Alternative: server-signed API flow
+
+With a funded server/operator development key, `POST /issuer/create` does two things in one call:
 
 1. Calls `createCapTable` on the registered factory, deploying a new beacon-proxy cap table contract whose address shows up as `deployed_to`.
 2. Inserts the OCF issuer record into MongoDB, returning the `_id` you'll reuse for every subsequent transaction.
@@ -115,25 +128,19 @@ The `deployed_to` address is unique to your deployment—it's derived from your 
 
 </Steps>
 
-<Callout type="success">
-Congratulations! You've deployed your first cap table smart contract.
-</Callout>
+## Wallet flow details
 
-## Alternative: Frontend Wallet Flow
-
-Instead of using the API, issuers can deploy cap tables directly from the frontend at `/app/mint`:
+Issuers deploy cap tables directly from the frontend at `/app/mint`:
 
 1. Connect a wallet via the navigation bar
 2. Fill in the issuer details (legal name, formation date, shares authorized, etc.)
 3. Click **Mint Cap Table** — the connected wallet calls `createCapTable` on the factory
-4. The issuer's wallet becomes **ADMIN** and the protocol server wallet receives **OPERATOR** role
+4. The issuer's wallet becomes **ADMIN** and the configured operator address, when present, receives **OPERATOR** role
 5. After onchain confirmation, the frontend automatically registers the issuer in the server database via `POST /issuer/register`
 
-In this flow, the issuer pays gas and owns their cap table. The protocol server can still manage operations (create stakeholders, issue stock, etc.) as an operator.
+In this flow, the issuer pays gas and administers that cap table. A configured operator can also perform day-to-day writes, but it does not own the factory or issuer ADMIN role.
 
-<Callout type="info">
 The frontend sends the same bytes16 issuer ID to the factory and to `POST /issuer/register`. Do not change it between the wallet transaction and server registration, or the poller cannot match the issuer event to the database record.
-</Callout>
 
 ## What's next?
 

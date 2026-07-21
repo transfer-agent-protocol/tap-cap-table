@@ -1,8 +1,10 @@
-import { Steps, Callout } from 'nextra/components';
+import { Steps } from 'nextra/components';
 
 # Create a Stock Class
 
 Stock classes define the types of equity your company can issue (e.g., Common, Preferred Series A). You must create at least one stock class before issuing stock to stakeholders.
+
+The primary `/app` flow submits `createStockClass` from the connected ADMIN wallet and, after confirmation, saves OCF metadata through `POST /stock-class/register-onchain`. The server-signed API alternative below requires a configured operator key.
 
 <Steps>
 
@@ -29,9 +31,7 @@ Using Postman or curl, send a POST request to `http://localhost:8293/stock-class
 }
 ```
 
-<Callout type="info">
 Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
-</Callout>
 
 ### Check the response
 
@@ -60,9 +60,7 @@ The response includes your new stock class:
 ```
 ![Stock Class Response](../../../public/images/stock-class-issuer.png)
 
-<Callout type="info">
-The `is_onchain_synced` field starts as `false`. The event poller will update it to `true` once the blockchain confirms the transaction (usually within 20 seconds).
-</Callout>
+On the server-signed `/create` path, `is_onchain_synced` starts as `false` and the event poller updates it after processing the confirmed event. The wallet-first `/register-onchain` path records the already-confirmed write as synced immediately.
 
 </Steps>
 

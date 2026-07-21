@@ -10,6 +10,8 @@ A **CapTableFactory** is the onchain house for a transfer-agent business: it dep
 | Issuer ADMIN | Wallet that called `createCapTable` on a factory. |
 | Mongo register | Local DB row so *this* API knows which factory address to use — not ownership. |
 
+Factory owner is **not** the same as the server `PRIVATE_KEY` used for API-signed txs. See [Three wallets / keys](/development/setup#three-wallets-keys) on Setup. Do not leave the factory-owner key in the always-on API env.
+
 <Callout type="info">
 Product direction: wallet-first “deploy your factory” in the app. Today the supported path is `pnpm deploy-factory` (CLI) with auto Mongo registration.
 </Callout>
@@ -20,7 +22,7 @@ Product direction: wallet-first “deploy your factory” in the app. Today the 
 
 ### Configure env
 
-Root `.env` needs funded `PRIVATE_KEY`, `RPC_URL`, and `CHAIN_ID` (Plume: `98866` / `https://rpc.plume.org`).
+Root `.env` (or a dedicated deploy env file) needs a funded deployer key for this command — that wallet becomes factory owner — plus `RPC_URL` and `CHAIN_ID` (Plume: `98866` / `https://rpc.plume.org`). Do not leave the owner key in the always-on Docker/API env after deploy.
 
 ### Run the deployment script
 
@@ -58,10 +60,10 @@ REUSE_TAP_FACTORY=1 pnpm bootstrap
 # or: pnpm factory:register --factory 0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
 ```
 
-| Address | Role |
-| --- | --- |
-| `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` | Shared demo CapTableFactory |
-| Owner (TAP Admin) | `0x366aA809015061C101983900d0c2ebf7d71B96AF` — beacon upgrades |
+| Actor / deployment | Address | Capability |
+| --- | --- | --- |
+| Shared demo `CapTableFactory` | `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` | Permissionless issuer cap-table creation |
+| Factory owner (TAP Admin) | `0x366aA809015061C101983900d0c2ebf7d71B96AF` | Beacon upgrades for this factory |
 
 You can mint issuer cap tables through this factory (`createCapTable` is permissionless). **You do not own upgrades.** Production transfer agents should deploy their own factory.
 
