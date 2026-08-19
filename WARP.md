@@ -137,15 +137,7 @@ REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ app image), demo factory i
 pnpm app:dev                         # product UI — do not rely on Docker app alone
 ```
 
-`pnpm bootstrap` (`scripts/bootstrap-plume.sh`) is idempotent: ensures `.env` + `app/.env.local`, installs deps if needed, builds contracts and **asserts** non-empty `chain/out`, creates `offchain-db`, `docker compose up -d --build`, waits for API health, optionally registers the shared demo factory when `REUSE_TAP_FACTORY=1`. Use `SKIP_APP=1` to start only mongodb+server.
-
-**Factory model (required reading):**
-- **Protocol builder** — owns shared demo factory on Plume (`0xcd6…`, owner TAP Admin `0x366a…`).
-- **Transfer agent** — deploys **own** factory via `pnpm deploy-factory` (auto Mongo register); beacon upgrades are theirs.
-- **Issuer ADMIN** — `createCapTable` (permissionless) on a factory; wallet manage UI. Using shared factory ≠ owning it.
-- **Mongo `factories`** — local mirror only.
-
-**Failure matrix:** `@tap/units` missing on `:3000` → Docker app without `packages/` (fixed in `Dockerfile.app`) or stop Docker app and use `pnpm app:dev`. Empty connect modal → install a browser extension wallet (Rabby, MetaMask — EIP-6963; no cloud key required). `COPY chain/out` fail → run `pnpm setup`. Fresh Mongo has no historical issuers until mint/register/load-from-wallet. Mint OK but register **500** → Docker app `NEXT_PUBLIC_API_URL` must be `http://server:8293`. Poller `invalid BytesLike 0xUPDATE_ME` → placeholder `PRIVATE_KEY`; poller now falls back to read-only when key is missing.
+`pnpm bootstrap` is idempotent. Use `SKIP_APP=1` for mongodb+server only, or `pnpm docker:mongo` for Mongo alone (host **27027**, not 27017). Factory model + failure matrix: [`AGENTS.md`](./AGENTS.md).
 
 Manual steps (if not using bootstrap):
 
@@ -154,7 +146,7 @@ pnpm install
 pnpm setup
 cp .env.example .env
 # also create app/.env.local with the same NEXT_PUBLIC_* values
-pnpm docker:up   # or: docker compose up -d mongodb server
+pnpm docker:mongo   # host 27027; or SKIP_APP=1 pnpm bootstrap for API too
 pnpm app:dev
 ```
 
@@ -428,7 +420,8 @@ The system supports multiple environments via `.env` files:
 
 **Key Variables**:
 
-- `DATABASE_URL`: MongoDB connection string
+- `DATABASE_URL`: MongoDB connection string (host TAP Mongo is **27027**; compose-internal stays `mongodb:27017`)
+- `MONGO_PORT`: optional host publish port (default 27027)
 - `DATABASE_REPLSET`: Set to "1" for replica set (enables transactions)
 - `RPC_URL`: Ethereum RPC endpoint
 - `CHAIN_ID`: Network chain ID (31337 for Anvil, 98866 for Plume Mainnet, 98867 for Plume Testnet)
@@ -550,12 +543,13 @@ Libraries:
 13. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
 14. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
 15. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
-15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
+16. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
+17. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `pnpm docker:down` removes the container; `pnpm docker:mongo` starts only Mongo.
 
 ## Debugging
 
 - **Logs**: The server logs extensively. Look for emoji prefixes (✅, ❌, ⏳, 💾)
-- **Database**: Connect to MongoDB on port 27017 (credentials in `.env`)
+- **Database**: Connect to MongoDB on host port **27027** (credentials in `.env`)
 - **Blockchain**: Use RPC_URL to query contract state with ethers.js or cast
 - **Event poller**: Runs in-process by default; check console for event processing logs
 - **Poller block number stalled or far behind head**: fast-forward the per-issuer index with `pnpm poller:fast-forward` (`--issuer <id>`, `--block <n>`, `--dry-run`, `--help`). It sets `last_processed_block` to (near) chain head so the poller stops chasing a backlog and just tracks new blocks — handy on fast chains (Plume) or after the server was offline. Skips events between the old pointer and head, which is fine for a cap table with no real positions yet.

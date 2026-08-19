@@ -24,4 +24,6 @@ EXPOSE 3000
 # NEXT_PUBLIC_* must be provided at runtime via docker-compose (or build args
 # for production images). Browser API rewrite should use a host-reachable URL
 # such as http://localhost:8293 — not the compose DNS name "server".
-CMD ["pnpm", "dev"]
+# Compose overrides this with --hostname 0.0.0.0 and bind-mounts app/ + packages/
+# so source edits hot-reload without an image rebuild.
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]

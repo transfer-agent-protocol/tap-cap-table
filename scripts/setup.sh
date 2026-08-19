@@ -11,7 +11,7 @@ set -e
 #   4. Sets up Foundry and builds contracts
 #
 # After running this script:
-#   - Start MongoDB: docker compose up -d
+#   - Start MongoDB: pnpm docker:mongo   (host port 27027)
 #   - Start Anvil:   anvil (in separate terminal)
 #   - Copy a private key from anvil output to .env
 #   - Run server:    pnpm dev
@@ -60,7 +60,7 @@ echo "===================================="
 echo "🎉 Setup complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Start MongoDB:  docker compose up -d"
+echo "  1. Start MongoDB:  pnpm docker:mongo   # host port 27027"
 echo "  2. Start Anvil:    anvil  (in new terminal)"
 echo "  3. Copy a private key from anvil to .env"
 echo "  4. Run server:     pnpm dev"

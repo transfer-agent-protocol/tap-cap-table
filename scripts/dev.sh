@@ -70,11 +70,11 @@ if [ ! -f .env ]; then
     echo ""
 fi
 
-# Handle --mongo-only (use existing docker-compose.yml)
+# Handle --mongo-only
 if [ "$MONGO_ONLY" = true ]; then
     echo "🍃 Starting MongoDB only..."
-    docker compose up -d
-    echo "✅ MongoDB running on port 27017"
+    docker compose up -d mongodb
+    echo "✅ MongoDB on host port ${MONGO_PORT:-27027} (container 27017)"
     exit 0
 fi
 
@@ -96,7 +96,7 @@ fi
 # Handle --no-server (for local server development with hot-reload)
 if [ "$NO_SERVER" = true ]; then
     echo "🚀 Starting MongoDB and app (run server locally with 'pnpm dev')..."
-    echo "   MongoDB: http://localhost:27017"
+    echo "   MongoDB: localhost:${MONGO_PORT:-27027}"
     echo "   App:     http://localhost:3000"
     echo ""
     echo "💡 Run 'pnpm dev' in another terminal to start the server"
@@ -107,7 +107,7 @@ fi
 
 # Start all services
 echo "🚀 Starting all services (MongoDB, server, app)..."
-echo "   MongoDB: http://localhost:27017"
+echo "   MongoDB: localhost:${MONGO_PORT:-27027}"
 echo "   Server:  http://localhost:8293"
 echo "   App:     http://localhost:3000"
 echo ""
