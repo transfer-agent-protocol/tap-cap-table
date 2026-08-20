@@ -1,9 +1,8 @@
 services:
     mongodb:
-        # Pin major.minor (volume is Mongo 8.2). Do not use mongo:latest.
         # Host 27027 so TAP does not steal the default Mongo port other local apps use.
         # Inside the compose network the process still listens on 27017.
-        image: mongo:8.2
+        image: mongo:latest
         restart: unless-stopped
         environment:
             MONGO_INITDB_ROOT_USERNAME: tap
