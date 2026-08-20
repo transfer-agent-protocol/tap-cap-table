@@ -85,7 +85,7 @@ For AI-assisted / agent development, see:
 
 - [`WARP.md`](./WARP.md) — monorepo architecture, commands, patterns, pitfalls
 - [`app/WARP.md`](./app/WARP.md) — frontend conventions (routes, write path, styled-components)
-- [`AGENTS.md`](./AGENTS.md) / [`CLAUDE.md`](./CLAUDE.md) — short pointers to those files
+- [`AGENTS.md`](./AGENTS.md) — short pointer to those files
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch and PR conventions
 
 ## Contributing
