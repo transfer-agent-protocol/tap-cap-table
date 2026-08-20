@@ -1,12 +1,14 @@
 services:
     mongodb:
+        # Host 27027 so TAP does not steal the default Mongo port other local apps use.
+        # Inside the compose network the process still listens on 27017.
         image: mongo:latest
-        restart: always
+        restart: unless-stopped
         environment:
             MONGO_INITDB_ROOT_USERNAME: tap
             MONGO_INITDB_ROOT_PASSWORD: tap
         ports:
-            - 27017:27017
+            - "${MONGO_PORT:-27027}:27017"
         volumes:
             - offchain-db:/data/db
         healthcheck:
@@ -52,6 +54,17 @@ services:
             NEXT_PUBLIC_FACTORY_ADDRESS: ${NEXT_PUBLIC_FACTORY_ADDRESS:-}
             NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-${CHAIN_ID:-98866}}
             NEXT_PUBLIC_OPERATOR_ADDRESS: ${NEXT_PUBLIC_OPERATOR_ADDRESS:-}
+            # Docker Desktop bind mounts often miss inotify; poll so Next/Turbopack picks up edits.
+            WATCHPACK_POLLING: "true"
+            CHOKIDAR_USEPOLLING: "true"
+            CHOKIDAR_INTERVAL: "1000"
+        command: ["pnpm", "dev", "--hostname", "0.0.0.0"]
+        volumes:
+            # Source mounts: edit app/ or packages/ on the host without rebuilding the image.
+            # Rebuild (`pnpm docker:build`) is still required after package.json / lockfile / Dockerfile changes.
+            - ./app:/app/app
+            - ./packages:/app/packages
+            - /app/app/node_modules
         depends_on:
             mongodb:
                 condition: service_healthy

@@ -189,7 +189,7 @@ Frontend config lives in `app/.env.local` (git-ignored). All are build-time publ
 
 See the root `.env.example` for the canonical list. Keep Mongo `factories` and this factory address aligned.
 
-**Host vs Docker:** Prefer `pnpm app:dev` for product work. If `:3000` is Docker and you see `Can't resolve '@tap/units'`, either rebuild the app image (Dockerfile copies `packages/`) or `docker compose stop app` and use the host dev server.
+**Host vs Docker:** Prefer `pnpm app:dev` for product work (`app/.env.local`). Docker app bind-mounts `app/` + `packages/` so source edits hot-reload; rebuild the image only after `package.json` / lockfile / Dockerfile changes. If `:3000` is Docker and you see `Can't resolve '@tap/units'`, `docker compose stop app` and use the host dev server. TAP Mongo is host **27027**.
 
 ## Git Workflow
 

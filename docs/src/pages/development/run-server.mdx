@@ -23,7 +23,7 @@ pnpm bootstrap
 # or mongo+server only: SKIP_APP=1 pnpm bootstrap
 ```
 
-Rebuild after dependency, contract artifact, or Dockerfile changes: `pnpm docker:build`.
+Rebuild after dependency, lockfile, contract artifact, or Dockerfile changes: `pnpm docker:build`. App **source** edits do not need a rebuild — compose bind-mounts `app/` and `packages/` and polls for changes. Wallet work still prefers host `pnpm app:dev` (`app/.env.local`).
 
 ### Check the API
 
@@ -51,7 +51,7 @@ Wallet mint/manage needs `app/.env.local` (`NEXT_PUBLIC_*`). Docker app reads ro
 
 ```bash
 pnpm docker:down
-docker compose up -d mongodb
+pnpm docker:mongo
 pnpm dev
 ```
 
@@ -76,6 +76,7 @@ A fresh Mongo **does not** auto-import every historical issuer on Plume. Use min
 | `Can't resolve '@tap/units'` on `:3000` | Docker app image must `COPY packages/`; or stop Docker app and run `pnpm app:dev` |
 | Empty connect modal / no wallets | Install a browser extension wallet (Rabby, MetaMask, etc.) — EIP-6963, no cloud key needed |
 | `EADDRINUSE` | Port 8293 or 3000 already in use (`lsof -i :3000`) |
+| Other app wants Mongo 27017 | TAP publishes **27027**. Host `DATABASE_URL` must use 27027. `pnpm docker:down` if an old container is still on 27017. |
 | History does not update | Poller running; issuer registered with `deployed_to` |
 | Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293` (host-reachable) |
 | Factory misaligned | Mongo `factories` vs `NEXT_PUBLIC_FACTORY_ADDRESS` |

@@ -28,6 +28,7 @@
         "app:test:e2e": "pnpm --filter tap-app test:e2e",
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",
+        "docker:mongo": "docker compose up -d mongodb",
         "docker:logs": "docker compose logs -f",
         "docker:build": "docker compose up -d --build",
         "bootstrap": "./scripts/bootstrap-plume.sh",

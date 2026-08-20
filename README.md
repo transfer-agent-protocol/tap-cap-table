@@ -39,7 +39,7 @@ pnpm app:dev                         # Product UI — http://localhost:3000/app
 |---------|-----|
 | **Server** | http://localhost:8293 |
 | **App (host)** | http://localhost:3000 — use `pnpm app:dev` for wallet work (`app/.env.local`) |
-| **MongoDB** | localhost:27017 |
+| **MongoDB** | localhost:27027 (not 27017) |
 
 `pnpm bootstrap` is idempotent. Prefer host `pnpm app:dev` for the product UI; Docker app is optional.
 
@@ -65,9 +65,10 @@ Then go read official [docs](https://docs.transferagentprotocol.xyz)
 ### Scripts
 
 ```bash
-# Docker (runs all services: MongoDB, server, app)
+# Docker (MongoDB, server, app)
 pnpm docker:up              # Start all services
-pnpm docker:down            # Stop all services
+pnpm docker:mongo           # Mongo only (host 27027)
+pnpm docker:down            # Stop and remove containers (frees 27027)
 pnpm docker:logs            # Stream logs
 pnpm docker:build           # Rebuild and start
 
@@ -84,7 +85,7 @@ For AI-assisted / agent development, see:
 
 - [`WARP.md`](./WARP.md) — monorepo architecture, commands, patterns, pitfalls
 - [`app/WARP.md`](./app/WARP.md) — frontend conventions (routes, write path, styled-components)
-- [`AGENTS.md`](./AGENTS.md) / [`CLAUDE.md`](./CLAUDE.md) — short pointers to those files
+- [`AGENTS.md`](./AGENTS.md) — short pointer to those files
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch and PR conventions
 
 ## Contributing
