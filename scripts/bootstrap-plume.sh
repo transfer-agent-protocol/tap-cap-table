@@ -148,7 +148,7 @@ echo "========================"
 echo "🎉 Bootstrap complete."
 echo "  Server API:   $API_URL"
 echo "  Mongo (host): localhost:${MONGO_PORT:-27027}  (not 27017; Compass: mongodb://tap:tap@localhost:${MONGO_PORT:-27027})"
-echo "  App (Docker): http://localhost:3000  (optional; source bind-mounted — no rebuild for app/ edits)"
+echo "  App (Docker): http://localhost:3000  (optional; next start — rebuild after app source changes)"
 echo "  Product UI:   pnpm app:dev  →  http://localhost:3000/app  (reads app/.env.local)"
 echo ""
 

@@ -23,7 +23,7 @@ pnpm bootstrap
 # or mongo+server only: SKIP_APP=1 pnpm bootstrap
 ```
 
-Rebuild after dependency, lockfile, contract artifact, or Dockerfile changes: `pnpm docker:build`. App **source** edits do not need a rebuild — compose bind-mounts `app/` and `packages/` and polls for changes. Wallet work still prefers host `pnpm app:dev` (`app/.env.local`).
+Rebuild after app source, env, or Dockerfile changes: `pnpm docker:build`. The Docker app is `next start` (no file watcher). Wallet work still prefers host `pnpm app:dev` (`app/.env.local`).
 
 ### Check the API
 
