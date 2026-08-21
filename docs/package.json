@@ -8,21 +8,22 @@
         "predev": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
         "dev": "next dev -p 3001",
         "build": "next build",
+        "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
         "start": "next start -p 3001",
-        "lint": "next lint"
+        "lint": "eslint ."
     },
     "dependencies": {
-        "eslint-config-next": "^15.5.14",
-        "next": "^15.5.14",
-        "nextra": "^3.3.1",
-        "nextra-theme-docs": "^3.3.1",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1"
+        "next": "^16.3.2",
+        "nextra": "^4.6.1",
+        "nextra-theme-docs": "^4.6.1",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0"
     },
     "devDependencies": {
-        "@types/node": "20.10.8",
-        "eslint": "^8.56.0",
-        "eslint-plugin-mdx": "^3.7.0",
-        "typescript": "5.3.3"
+        "@types/node": "^24.6.2",
+        "eslint": "^9.37.0",
+        "eslint-config-next": "^16.3.2",
+        "pagefind": "^1.4.0",
+        "typescript": "^5.7.0"
     }
 }

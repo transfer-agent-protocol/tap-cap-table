@@ -4,55 +4,18 @@ on:
     push:
         branches: [main]
         paths:
-            - 'chain/src/**/*.sol'
-            - 'chain/test/**/*.sol'
-            - 'chain/script/**/*.sol'
-            - 'chain/foundry.toml'
-            - 'slither.config.json'
+            - "chain/src/**/*.sol"
+            - "chain/test/**/*.sol"
+            - "chain/script/**/*.sol"
+            - "chain/foundry.toml"
     pull_request:
         paths:
-            - 'chain/src/**/*.sol'
-            - 'chain/test/**/*.sol'
-            - 'chain/script/**/*.sol'
-            - 'chain/foundry.toml'
-            - 'slither.config.json'
+            - "chain/src/**/*.sol"
+            - "chain/test/**/*.sol"
+            - "chain/script/**/*.sol"
+            - "chain/foundry.toml"
 
 jobs:
-    slither:
-        name: Slither Analysis
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            security-events: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v6
-              with:
-                  submodules: recursive
-
-            - name: Run Slither
-              uses: crytic/slither-action@v0.4.2
-              id: slither
-              with:
-                  target: chain/
-                  slither-config: slither.config.json
-                  sarif: slither.sarif
-                  fail-on: high
-              continue-on-error: true
-
-            - name: Upload SARIF to GitHub Security tab
-              if: always()
-              uses: github/codeql-action/upload-sarif@v4
-              with:
-                  sarif_file: slither.sarif
-
-            - name: Upload Slither report
-              if: always()
-              uses: actions/upload-artifact@v7
-              with:
-                  name: slither-report
-                  path: slither.sarif
-
     invariant-tests:
         name: Invariant Tests
         runs-on: ubuntu-latest

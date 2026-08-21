@@ -38,15 +38,15 @@ const retryOnMiss = async (updateFunc, numRetries = 5, waitBase = null) => {
 };
 
 export const updateIssuerById = async (id, updatedData) => {
-    return await findByIdAndUpdate(Issuer, id, updatedData, { new: true });
+    return await findByIdAndUpdate(Issuer, id, updatedData, { returnDocument: "after" });
 };
 
 export const updateStakeholderById = async (id, updatedData) => {
-    return await retryOnMiss(async () => findByIdAndUpdate(Stakeholder, id, updatedData, { new: true }));
+    return await retryOnMiss(async () => findByIdAndUpdate(Stakeholder, id, updatedData, { returnDocument: "after" }));
 };
 
 export const updateStockClassById = async (id, updatedData) => {
-    return await retryOnMiss(async () => findByIdAndUpdate(StockClass, id, updatedData, { new: true }));
+    return await retryOnMiss(async () => findByIdAndUpdate(StockClass, id, updatedData, { returnDocument: "after" }));
 };
 
 /**
@@ -59,7 +59,7 @@ export const upsertStockClassOnchainMetadata = async (id, data) => {
         StockClass,
         id,
         { ...data, _id: id, is_onchain_synced: true },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { returnDocument: "after", upsert: true, setDefaultsOnInsert: true }
     );
 };
 
@@ -68,67 +68,67 @@ export const upsertStakeholderOnchainMetadata = async (id, data) => {
         Stakeholder,
         id,
         { ...data, _id: id, is_onchain_synced: true },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { returnDocument: "after", upsert: true, setDefaultsOnInsert: true }
     );
 };
 
 export const updateStockLegendTemplateById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockLegendTemplate, id, updatedData, { new: true });
+    return await findByIdAndUpdate(StockLegendTemplate, id, updatedData, { returnDocument: "after" });
 };
 
 export const updateStockPlanById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockPlan, id, updatedData, { new: true });
+    return await findByIdAndUpdate(StockPlan, id, updatedData, { returnDocument: "after" });
 };
 
 export const updateValuationById = async (id, updatedData) => {
-    return await findByIdAndUpdate(Valuation, id, updatedData, { new: true });
+    return await findByIdAndUpdate(Valuation, id, updatedData, { returnDocument: "after" });
 };
 
 export const updateVestingTermsById = async (id, updatedData) => {
-    return await findByIdAndUpdate(VestingTerms, id, updatedData, { new: true });
+    return await findByIdAndUpdate(VestingTerms, id, updatedData, { returnDocument: "after" });
 };
 
 export const upsertStockIssuanceById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockIssuance, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockIssuance, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockTransferById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockTransfer, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockTransfer, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockCancellationById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockCancellation, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockCancellation, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockRetractionById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockRetraction, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockRetraction, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockReissuanceById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockReissuance, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockReissuance, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockRepurchaseById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockRepurchase, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockRepurchase, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockAcceptanceById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockAcceptance, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockAcceptance, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertStockClassAuthorizedSharesAdjustment = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockClassAuthorizedSharesAdjustment, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(StockClassAuthorizedSharesAdjustment, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertIssuerAuthorizedSharesAdjustment = async (id, updatedData) => {
-    return await findByIdAndUpdate(IssuerAuthorizedSharesAdjustment, id, updatedData, { new: true, upsert: true });
+    return await findByIdAndUpdate(IssuerAuthorizedSharesAdjustment, id, updatedData, { returnDocument: "after", upsert: true });
 };
 
 export const upsertFactory = async (updatedData) => {
     // For now, we only allow a single record in the database
     const existing = await findOne(Factory);
     if (existing) {
-        return await findByIdAndUpdate(Factory, existing._id, updatedData, { new: true });
+        return await findByIdAndUpdate(Factory, existing._id, updatedData, { returnDocument: "after" });
     }
     return await createFactory(updatedData);
 };

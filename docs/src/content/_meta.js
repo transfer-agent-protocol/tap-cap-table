@@ -9,7 +9,6 @@ const meta = {
     website: {
         title: "Website ↗",
         href: "https://transferagentprotocol.xyz",
-        newWindow: true,
     },
 };
 

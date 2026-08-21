@@ -9,8 +9,9 @@ Transfer Agent Protocol (TAP) Cap Table is an onchain cap table implementation t
 This is a **pnpm monorepo** with the following workspaces:
 - `app/` - Next.js frontend (tap-app)
 - `docs/` - Nextra documentation site (tap-docs)
-- `ocf/` - OCF standard git submodule
 - `packages/units` (`@tap/units`) - shared 1e10 scaling, UUID↔bytes16, share-cap validation (app + server)
+
+`ocf/` is a **git submodule** used for JSON schemas only. It is **not** a pnpm workspace (its unused docs/jest tree must not enter the lockfile).
 
 ### Licensing
 
@@ -220,7 +221,6 @@ make security
 
 # Individual tools:
 make aderyn     # Fast linting (Rust-based, real-time IDE integration)
-make slither    # Deep semantic analysis (Python-based, taint tracking)
 
 # Invariant testing (stateful fuzzing)
 make test-invariant
@@ -240,14 +240,7 @@ make test-invariant
 - L-4 (State Change Without Event): False positives — events emitted via `TxHelper.createTx()`
 - L-5 (Unchecked Return): OpenZeppelin's `_grantRole`/`_revokeRole` are idempotent
 
-#### Slither
-
-[Slither](https://github.com/crytic/slither) (Trail of Bits) provides deeper semantic analysis:
-
-- **Requires**: Python 3.10+ (`pip install slither-analyzer`)
-- **Config**: `slither.config.json`
-- **Output**: `chain/slither-report.md`
-- **CI**: Runs automatically via GitHub Actions on PRs
+Slither was removed (low-signal SARIF). Aderyn plus Foundry invariants are the contract toolchain until a better semantic analyzer is chosen.
 
 #### Invariant Testing
 
@@ -354,10 +347,11 @@ tap-cap-table/
 │   ├── routes/         # Express routes
 │   ├── state-machines/ # XState stock lifecycle
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
-├── docs/               # Developer documentation (Nextra/Next.js, workspace: tap-docs)
-│   ├── src/pages/      # MDX documentation pages
+├── docs/               # Developer documentation (Nextra 4 App Router, workspace: tap-docs)
+│   ├── src/content/    # MDX documentation pages
+│   ├── src/app/        # App Router shell
 │   └── public/         # Static assets
-├── ocf/                # OCF standard (git submodule, workspace)
+├── ocf/                # OCF standard (git submodule; JSON schemas only, not a pnpm workspace)
 ├── packages/units/     # @tap/units — shared scale / UUID / share-caps
 ├── .env.example        # Environment template
 ├── docker-compose.yml  # Docker services (MongoDB, server, app)
@@ -435,7 +429,7 @@ The system supports multiple environments via `.env` files:
 
 ## Working with OCF
 
-The `ocf/` directory is a **git submodule**. When making changes:
+The `ocf/` directory is a **git submodule**, not a pnpm workspace. TAP imports JSON schemas as files. When making changes:
 
 ```bash
 # Update submodule

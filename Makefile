@@ -1,7 +1,7 @@
 # TAP Cap Table - Development Makefile
 # Run `make help` to see available targets
 
-.PHONY: help test test-v test-invariant test-invariant-deep build aderyn slither security clean
+.PHONY: help test test-v test-invariant test-invariant-deep build aderyn security clean
 
 help:
 	@echo "TAP Cap Table - Available targets:"
@@ -14,8 +14,7 @@ help:
 	@echo ""
 	@echo "  Security Analysis:"
 	@echo "    make aderyn            - Run Aderyn static analysis (outputs to report.md)"
-	@echo "    make slither           - Run Slither static analysis (outputs to chain/slither-report.md)"
-	@echo "    make security          - Run both Aderyn and Slither"
+	@echo "    make security          - Run Aderyn"
 	@echo ""
 	@echo "  Other:"
 	@echo "    make build             - Build contracts with Foundry"
@@ -44,19 +43,11 @@ test-invariant-deep:
 aderyn:
 	aderyn .
 
-slither:
-	@echo "Running Slither analysis..."
-	@echo "Note: Requires Python 3.10+ and slither-analyzer installed"
-	@echo "Install with: pip install slither-analyzer"
-	cd chain && slither . --config-file ../slither.config.json 2>&1 | tee slither-report.md
-	@echo ""
-	@echo "Slither report saved to chain/slither-report.md"
-
-security: aderyn slither
+security: aderyn
 	@echo ""
 	@echo "Security analysis complete."
 	@echo "  - Aderyn report: report.md"
-	@echo "  - Slither report: chain/slither-report.md"
+	@echo "  Foundry invariants: make test-invariant"
 
 # =============================================================================
 # Build & Clean

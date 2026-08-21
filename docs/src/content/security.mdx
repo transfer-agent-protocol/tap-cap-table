@@ -11,7 +11,6 @@ The workflow badge above is the live status. The counts below describe the check
 | Tool | High | Medium | Low | Status |
 |------|------|--------|-----|--------|
 | Aderyn | 0 | 0 | 5 | ✅ All acceptable |
-| Slither | 0 | 0 | 3 | ✅ All acceptable |
 | Invariant Tests | - | - | - | ✅ 7 passing |
 | Unit Tests | - | - | - | ✅ All passing |
 
@@ -19,9 +18,6 @@ The workflow badge above is the live status. The counts below describe the check
 
 ### Aderyn
 Real-time static linting. Fast feedback while coding.
-
-### Slither
-Deeper static analysis (taint tracking, control-flow). CI fails on high severity.
 
 ### Foundry Invariant Tests
 Stateful fuzzing for core accounting rules (256 runs / 50 depth).
@@ -45,13 +41,11 @@ Tests covering core flows, edge cases, access control, factory logic, and operat
 | `make test-invariant` | Short invariant fuzz (256 runs, 50 depth) |
 | `make test-invariant-deep` | Deep invariant fuzz (2000 runs, 100 depth) |
 | `make aderyn` | Run Aderyn → `report.md` |
-| `make slither` | Run Slither → `chain/slither-report.md` |
-| `make security` | Run aderyn + slither |
+| `make security` | Run Aderyn |
 
 ## Philosophy
 
 - Catch obvious stuff early (Aderyn)
-- Dig deeper statically (Slither)
 - Stress-test logic over sequences (Invariants)
 - Verify specific behaviors & errors (Unit tests)
 - Pre-audit cleanup → reduces noise for auditors

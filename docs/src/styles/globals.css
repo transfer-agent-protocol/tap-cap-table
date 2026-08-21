@@ -34,6 +34,7 @@ body,
 #__next,
 #__next > div,
 #__next > div > div,
+body,
 article,
 main {
 	background-color: var(--tap-bg);

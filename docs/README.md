@@ -4,7 +4,7 @@ Developer docs for the [Transfer Agent Protocol Cap Table](https://github.com/tr
 
 ## Development
 
-The docs are part of the tap-cap-table monorepo. From the repository root:
+The docs are a Nextra 4 / Next.js App Router site (`tap-docs`) in the monorepo. They use the same Next.js major as `tap-app`. From the repository root:
 
 ```bash
 # Install all dependencies
