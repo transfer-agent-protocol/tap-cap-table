@@ -58,13 +58,15 @@ services:
             WATCHPACK_POLLING: "true"
             CHOKIDAR_USEPOLLING: "true"
             CHOKIDAR_INTERVAL: "1000"
-        command: ["pnpm", "dev", "--hostname", "0.0.0.0"]
+        command: ["pnpm", "dev", "--hostname", "0.0.0.0", "--webpack"]
         volumes:
             # Source mounts: edit app/ or packages/ on the host without rebuilding the image.
             # Rebuild (`pnpm docker:build`) is still required after package.json / lockfile / Dockerfile changes.
             - ./app:/app/app
             - ./packages:/app/packages
+            # Keep image node_modules and a container-local .next (host cache breaks Turbopack).
             - /app/app/node_modules
+            - /app/app/.next
         depends_on:
             mongodb:
                 condition: service_healthy

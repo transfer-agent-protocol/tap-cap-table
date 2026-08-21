@@ -2,7 +2,7 @@
 # Workspace package @tap/units lives in packages/ — must be copied or the
 # pnpm workspace symlink is dangling and Turbopack fails with
 # "Module not found: Can't resolve '@tap/units'".
-FROM node:20-slim
+FROM node:24-slim
 
 WORKDIR /app
 
@@ -26,4 +26,5 @@ EXPOSE 3000
 # such as http://localhost:8293 — not the compose DNS name "server".
 # Compose overrides this with --hostname 0.0.0.0 and bind-mounts app/ + packages/
 # so source edits hot-reload without an image rebuild.
-CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
+# Webpack in Docker: Turbopack 16.2 + pnpm workspace root fails with MODULE_UNPARSABLE on next/document.
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0", "--webpack"]
