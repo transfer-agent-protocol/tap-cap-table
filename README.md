@@ -21,7 +21,7 @@ tap-cap-table/
 ├── chain/           # Solidity smart contracts (Foundry)
 ├── docs/            # Nextra documentation site
 ├── packages/units/  # @tap/units — shared 1e10 scale / UUID / share-caps
-└── ocf/             # OCF standard (git submodule)
+└── ocf/             # OCF standard (git submodule; JSON schemas only)
 ```
 
 ## Quick Start

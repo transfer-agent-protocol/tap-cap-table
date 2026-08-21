@@ -1,5 +1,6 @@
 packages:
     - "app"
     - "docs"
-    - "ocf"
     - "packages/*"
+# ocf/ is a git submodule. Server imports JSON schemas as files; do not add it to
+# the pnpm workspace — its unused docs/jest tree floods Dependabot.
