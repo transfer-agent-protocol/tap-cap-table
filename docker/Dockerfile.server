@@ -1,5 +1,5 @@
 # TAP Cap Table - API Server
-FROM node:20-slim
+FROM node:24-slim
 
 WORKDIR /app
 

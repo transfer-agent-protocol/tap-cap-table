@@ -2,7 +2,7 @@
 # Workspace package @tap/units lives in packages/ — must be copied or the
 # pnpm workspace symlink is dangling and Turbopack fails with
 # "Module not found: Can't resolve '@tap/units'".
-FROM node:20-slim
+FROM node:24-slim
 
 WORKDIR /app
 
@@ -19,11 +19,20 @@ RUN pnpm install --filter tap-app... --frozen-lockfile
 
 WORKDIR /app/app
 
+# Inlined at `next build`. Compose passes docker-network values (API = http://server:8293).
+ARG NEXT_PUBLIC_API_URL=http://localhost:8293
+ARG NEXT_PUBLIC_FACTORY_ADDRESS
+ARG NEXT_PUBLIC_CHAIN_ID=98866
+ARG NEXT_PUBLIC_OPERATOR_ADDRESS
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_FACTORY_ADDRESS=$NEXT_PUBLIC_FACTORY_ADDRESS
+ENV NEXT_PUBLIC_CHAIN_ID=$NEXT_PUBLIC_CHAIN_ID
+ENV NEXT_PUBLIC_OPERATOR_ADDRESS=$NEXT_PUBLIC_OPERATOR_ADDRESS
+
+RUN pnpm build
+
 EXPOSE 3000
 
-# NEXT_PUBLIC_* must be provided at runtime via docker-compose (or build args
-# for production images). Browser API rewrite should use a host-reachable URL
-# such as http://localhost:8293 — not the compose DNS name "server".
-# Compose overrides this with --hostname 0.0.0.0 and bind-mounts app/ + packages/
-# so source edits hot-reload without an image rebuild.
-CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
+# `next start` — no webpack/turbopack file watcher (polling that on a bind mount pegged ~8 cores).
+# Hot reload stays on the host: pnpm app:dev.
+CMD ["pnpm", "start", "--hostname", "0.0.0.0"]

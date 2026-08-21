@@ -43,28 +43,21 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile.app
+            args:
+                # Baked into the client bundle at image build.
+                NEXT_PUBLIC_API_URL: http://server:8293
+                NEXT_PUBLIC_FACTORY_ADDRESS: ${NEXT_PUBLIC_FACTORY_ADDRESS:-}
+                NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-${CHAIN_ID:-98866}}
+                NEXT_PUBLIC_OPERATOR_ADDRESS: ${NEXT_PUBLIC_OPERATOR_ADDRESS:-}
         restart: unless-stopped
         ports:
             - 3000:3000
         environment:
-            NODE_ENV: development
-            # Next server-side /api rewrites run inside this container → compose DNS.
-            # Host pnpm app:dev keeps app/.env.local on http://localhost:8293.
+            NODE_ENV: production
             NEXT_PUBLIC_API_URL: http://server:8293
             NEXT_PUBLIC_FACTORY_ADDRESS: ${NEXT_PUBLIC_FACTORY_ADDRESS:-}
             NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-${CHAIN_ID:-98866}}
             NEXT_PUBLIC_OPERATOR_ADDRESS: ${NEXT_PUBLIC_OPERATOR_ADDRESS:-}
-            # Docker Desktop bind mounts often miss inotify; poll so Next/Turbopack picks up edits.
-            WATCHPACK_POLLING: "true"
-            CHOKIDAR_USEPOLLING: "true"
-            CHOKIDAR_INTERVAL: "1000"
-        command: ["pnpm", "dev", "--hostname", "0.0.0.0"]
-        volumes:
-            # Source mounts: edit app/ or packages/ on the host without rebuilding the image.
-            # Rebuild (`pnpm docker:build`) is still required after package.json / lockfile / Dockerfile changes.
-            - ./app:/app/app
-            - ./packages:/app/packages
-            - /app/app/node_modules
         depends_on:
             mongodb:
                 condition: service_healthy

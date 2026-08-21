@@ -1,2 +1,12 @@
-node_modules
+.git
+**/.DS_Store
+**/node_modules
+**/.next
+**/.turbo
+**/test-results
+**/*.tsbuildinfo
 npm-debug.log
+chain/lib
+chain/cache
+ocf/docs
+ocf/node_modules
