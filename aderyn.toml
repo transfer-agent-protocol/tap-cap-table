@@ -25,8 +25,9 @@ src = "src/"
 # include = ["/interfaces/"]
 
 # Path segments of contract files to exclude in the analysis.
-# Exclude test contracts (not deployed), deployment scripts (utilities), build artifacts, and dependencies.
-exclude = ["/test/", "/script/", "/out/", "/cache/", "/lib/"]
+# Exclude test contracts, scripts, build artifacts, and Foundry deps under chain/lib/.
+# Do not use "/lib/" — that also skips chain/src/lib/ (Stock, TxHelper, Structs).
+exclude = ["/test/", "/script/", "/out/", "/cache/", "lib/openzeppelin", "lib/forge-std"]
 
 # For advanced use cases, leverage the following
 

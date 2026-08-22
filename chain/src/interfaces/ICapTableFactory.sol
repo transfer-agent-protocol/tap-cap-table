@@ -7,6 +7,7 @@ interface ICapTableFactory {
 
     function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized, address operator) external returns (address);
 
+    /// @notice Upgrades every cap table behind the factory beacon.
     function updateCapTableImplementation(address newImplementation) external;
 
     function getCapTableCount() external view returns (uint256);

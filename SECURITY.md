@@ -50,7 +50,7 @@ We use a multi-layered approach to smart contract security:
 
 | Tool | Purpose | Output |
 |------|---------|--------|
-| [Aderyn](https://github.com/Cyfrin/aderyn) | Fast linting, IDE integration | `report.md` |
+| [Aderyn](https://github.com/Cyfrin/aderyn) | Fast linting, IDE integration | `report.md` (re-run after contract changes; must include `chain/src/lib/`) |
 
 Slither was removed. Low-severity reentrancy SARIF on `CapTableFactory` (event after `new BeaconProxy`, state write after `upgradeTo`) was noise; Aderyn plus Foundry invariants are the replacement until a better semantic analyzer is chosen.
 

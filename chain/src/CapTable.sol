@@ -17,7 +17,7 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     /// @inheritdoc ICapTable
     bytes[] public override transactions;
 
-    /// @dev Used to help generate deterministic UUIDs
+    /// @dev Mixed into issuance/security ids so two txs in the same block do not collide.
     uint256 public nonce;
 
     /// @inheritdoc ICapTable
@@ -101,18 +101,49 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         require(
             params.issuerInitialShares.shares_authorized > 0 &&
                 params.issuerInitialShares.shares_issued > 0 &&
-                params.stockClassesInitialShares.length > 0,
+                params.stockClassesInitialShares.length == stockClasses.length,
             "Invalid mint params"
         );
+        require(issuer.shares_issued == 0 && transactions.length == 0 && !_hasActivePositions(), "Shares already seeded");
+        require(
+            params.issuerInitialShares.shares_issued <= params.issuerInitialShares.shares_authorized,
+            "Issuer shares issued exceeds authorized"
+        );
 
-        issuer.shares_authorized = params.issuerInitialShares.shares_authorized;
-        issuer.shares_issued = params.issuerInitialShares.shares_issued;
+        uint256 totalStockClassSharesIssued = 0;
 
         for (uint256 i = 0; i < params.stockClassesInitialShares.length; i++) {
             bytes16 stockClassId = params.stockClassesInitialShares[i].id;
             _checkInvalidStockClass(stockClassId);
 
             uint256 index = stockClassIndex[stockClassId] - 1;
+            require(stockClasses[index].shares_issued == 0, "Shares already seeded");
+            require(
+                params.stockClassesInitialShares[i].shares_issued <= params.stockClassesInitialShares[i].shares_authorized,
+                "Stock class shares issued exceeds authorized"
+            );
+            require(
+                params.stockClassesInitialShares[i].shares_authorized <= params.issuerInitialShares.shares_authorized,
+                "Stock class shares authorized exceeds issuer"
+            );
+
+            for (uint256 j = 0; j < i; j++) {
+                require(params.stockClassesInitialShares[j].id != stockClassId, "Duplicate stock class");
+            }
+
+            totalStockClassSharesIssued += params.stockClassesInitialShares[i].shares_issued;
+        }
+
+        require(
+            totalStockClassSharesIssued == params.issuerInitialShares.shares_issued,
+            "Stock class shares issued do not match issuer"
+        );
+
+        issuer.shares_authorized = params.issuerInitialShares.shares_authorized;
+        issuer.shares_issued = params.issuerInitialShares.shares_issued;
+
+        for (uint256 i = 0; i < params.stockClassesInitialShares.length; i++) {
+            uint256 index = stockClassIndex[params.stockClassesInitialShares[i].id] - 1;
             stockClasses[index].shares_authorized = params.stockClassesInitialShares[i].shares_authorized;
             stockClasses[index].shares_issued = params.stockClassesInitialShares[i].shares_issued;
         }
@@ -137,11 +168,35 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
                 sharePrices.length == timestamps.length,
             "Input arrays must have the same length"
         );
+        require(issuer.shares_issued > 0, "Seed shares must be minted first");
+        require(transactions.length == 0 && !_hasActivePositions(), "Seeded positions already exist");
+        uint256[] memory seededQuantitiesByStockClass = new uint256[](stockClasses.length);
+        uint256 totalSeededQuantity = 0;
 
         for (uint256 i = 0; i < stakeholderIds.length; i++) {
-            // perform requires to ensure valid stakeholders and stock classes
             _checkStakeholderIsStored(stakeholderIds[i]);
             _checkInvalidStockClass(stockClassIds[i]);
+            require(securityIds[i] != bytes16(0) && quantities[i] > 0, "Invalid active position");
+
+            for (uint256 j = 0; j < i; j++) {
+                require(securityIds[j] != securityIds[i], "Duplicate security id");
+            }
+
+            uint256 stockClassIndex_ = stockClassIndex[stockClassIds[i]] - 1;
+            seededQuantitiesByStockClass[stockClassIndex_] += quantities[i];
+            totalSeededQuantity += quantities[i];
+        }
+
+        require(totalSeededQuantity == issuer.shares_issued, "Active positions do not match issuer shares issued");
+
+        for (uint256 i = 0; i < stockClasses.length; i++) {
+            require(
+                seededQuantitiesByStockClass[i] == stockClasses[i].shares_issued,
+                "Active positions do not match stock class shares issued"
+            );
+        }
+
+        for (uint256 i = 0; i < stakeholderIds.length; i++) {
             positions.activePositions[stakeholderIds[i]][securityIds[i]] = ActivePosition({
                 stock_class_id: stockClassIds[i],
                 quantity: quantities[i],
@@ -189,15 +244,13 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    // Basic functionality of Stock Legend Template, unclear how it ties to active positions.
     function createStockLegendTemplate(bytes16 _id) external override onlyOperator {
         stockLegendTemplates.push(StockLegendTemplate({ id: _id }));
         emit StockLegendTemplateCreated(_id);
     }
 
     /// @inheritdoc ICapTable
-    /// @notice Setter for walletsPerStakeholder mapping
-    /// @dev Function is separate from createStakeholder since multiple wallets will be added per stakeholder at different times.
+    /// @dev Separate from createStakeholder because a stakeholder can gain wallets later.
     function addWalletToStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyOperator {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
@@ -208,7 +261,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    /// @notice Removing wallet from walletsPerStakeholder mapping
     function removeWalletFromStakeholder(bytes16 _stakeholder_id, address _wallet) external override onlyOperator {
         _checkInvalidWallet(_wallet);
         _checkStakeholderIsStored(_stakeholder_id);
@@ -355,7 +407,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     }
 
     /// @inheritdoc ICapTable
-    // Stock Acceptance does not impact an active position. It's only recorded.
     function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external override onlyOperator {
         _checkStakeholderIsStored(stakeholderId);
         _checkInvalidStockClass(stockClassId);
@@ -401,7 +452,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     ) external override onlyAdmin {
         StockClass storage stockClass = stockClasses[stockClassIndex[stockClassId] - 1];
         _checkInvalidStockClass(stockClassId);
-        // check that the new stock class authorized is less than the issuer authorized if not revert
         require(
             newAuthorizedShares <= issuer.shares_authorized,
             "InsufficientStockClassSharesAuthorized: stock class authorized shares exceeds issuer shares authorized"
@@ -470,7 +520,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         uint40 timestamp = 0;
         for (uint256 i = 0; i < activeSecurityIDs.length; i++) {
             ActivePosition storage position = positions.activePositions[stakeholderId][activeSecurityIDs[i]];
-            // Alley-oop the web2 caller to find the avg to avoid issues with fractions
             quantityPrice += position.quantity * position.share_price;
             quantity += position.quantity;
             timestamp = position.timestamp > timestamp ? position.timestamp : timestamp;
@@ -489,8 +538,8 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         _;
     }
 
+    /// @dev ADMIN_ROLE also satisfies operator checks.
     function _checkOperatorRole() internal view {
-        /// @notice Admins are also considered Operators
         require(hasRole(OPERATOR_ROLE, _msgSender()) || _isAdmin(), "Does not have operator role");
     }
 
@@ -501,8 +550,6 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
     function _isAdmin() internal view returns (bool) {
         return hasRole(ADMIN_ROLE, _msgSender());
     }
-
-    //  External API for updating roles of addresses
 
     /// @inheritdoc ICapTable
     function addAdmin(address addr) external override onlyAdmin {
@@ -581,5 +628,16 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
         if (activePosition.quantity == 0) {
             revert NoActivePositionFound();
         }
+    }
+
+    function _hasActivePositions() internal view returns (bool) {
+        for (uint256 i = 0; i < stakeholders.length; i++) {
+            for (uint256 j = 0; j < stockClasses.length; j++) {
+                if (activeSecs.activeSecurityIdsByStockClass[stakeholders[i].id][stockClasses[j].id].length > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

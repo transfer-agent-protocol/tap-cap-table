@@ -28,14 +28,11 @@ contract CapTableFactory is ICapTableFactory, Ownable {
         return address(capTableProxy);
     }
 
-    /// @notice Updates the CapTable implementation for all proxies
-    /// @dev Uses checks-effects-interactions pattern to prevent reentrancy
+    /// @inheritdoc ICapTableFactory
     function updateCapTableImplementation(address newImplementation) external onlyOwner {
         require(newImplementation != address(0), "Invalid implementation address");
         address oldImplementation = capTableImplementation;
-        // Effects: Update state before external call (checks-effects-interactions)
         capTableImplementation = newImplementation;
-        // Interactions: External call after state update
         capTableBeacon.upgradeTo(newImplementation);
         emit CapTableImplementationUpdated(oldImplementation, newImplementation);
     }

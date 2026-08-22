@@ -4,24 +4,27 @@ pragma solidity 0.8.30;
 import { InitialShares, StockParams, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
 interface ICapTable {
-    // @dev Transactions will be created on-chain then reflected off-chain.
+    /// @dev Onchain ledger entries; the poller mirrors these offchain. Index is 0-based.
     function transactions(uint256 index) external view returns (bytes memory);
 
+    /// @dev 0 means missing; stored value is array index + 1.
     function stakeholderIndex(bytes16 index) external view returns (uint256);
 
+    /// @dev 0 means missing; stored value is array index + 1.
     function stockClassIndex(bytes16 index) external view returns (uint256);
 
     function walletsPerStakeholder(address wallet) external view returns (bytes16);
 
-    // RBAC
     function ADMIN_ROLE() external returns (bytes32);
 
     function OPERATOR_ROLE() external returns (bytes32);
 
-    /// @notice Initializer for the CapTable, sets access control and initializes issuer struct.
+    /// @notice Sets admin, optional operator, and the issuer's authorized share cap.
     /// @param operator Address to grant OPERATOR_ROLE (pass address(0) to skip)
     function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin, address operator) external;
 
+    /// @notice Imports live certificates after `mintSharesAuthorized`.
+    /// @dev One-shot. Quantities must match the seeded issued counters. Reverts if positions or ledger txs already exist.
     function mintActivePositions(
         bytes16[] calldata stakeholderIds,
         bytes16[] calldata securityIds,
@@ -31,6 +34,8 @@ interface ICapTable {
         uint40[] calldata timestamps
     ) external;
 
+    /// @notice Imports issuer and stock-class authorized/issued counters.
+    /// @dev One-shot. Must include every current stock class. Reverts if already seeded.
     function mintSharesAuthorized(InitialShares calldata params) external;
 
     function createStakeholder(bytes16 _id, string memory _stakeholder_type, string memory _current_relationship) external;
@@ -41,6 +46,7 @@ interface ICapTable {
 
     function getStakeholderIdByWallet(address _wallet) external view returns (bytes16 stakeholderId);
 
+    /// @dev Records acceptance only; does not change holdings.
     function acceptStock(bytes16 stakeholderId, bytes16 stockClassId, bytes16 securityId, string[] memory comments) external;
 
     function adjustIssuerAuthorizedShares(
@@ -74,11 +80,12 @@ interface ICapTable {
 
     function getTotalActiveSecuritiesCount() external view returns (uint256);
 
-    // Function to get the timestamp of an active position
+    /// @dev Quantity 0 means no live lot.
     function getActivePosition(bytes16 stakeholderId, bytes16 securityId) external view returns (bytes16, uint256, uint256, uint40);
 
-    /// @notice Get the avg active position for the stakeholder by dividing the first return value (quantityPrice) by the second (quantity)
-    ///  the timestamp is the time of the latest position
+    /// @notice Weighted totals for a stakeholder in one stock class.
+    /// @dev Returns (sum(quantity * price), sum(quantity), latest timestamp).
+    ///      Caller divides the first by the second. The contract does not divide, to avoid truncating the average.
     function getAveragePosition(bytes16 stakeholderId, bytes16 stockClassId) external view returns (uint256, uint256, uint40);
 
     function issueStock(StockIssuanceParams calldata params) external;
@@ -87,7 +94,7 @@ interface ICapTable {
 
     function retractStockIssuance(StockParams calldata params) external;
 
-    /// Reissuance assumes an issuance transaction has been created and it's tied here under resulting_security_ids
+    /// @dev `resulting_security_ids` must already be live positions for this stakeholder and class. This call only retires `security_id`.
     function reissueStock(StockParams calldata params, bytes16[] memory resulting_security_ids) external;
 
     function cancelStock(StockParams calldata params, uint256 quantity) external;

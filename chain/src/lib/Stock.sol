@@ -58,6 +58,7 @@ library StockLib {
         _checkInsuffientAmount(sum, params.quantity);
 
         uint256 remainingQuantity = params.quantity;
+        uint256 issuanceOrdinal = 0;
 
         for (uint256 index = 0; index < numSecurityIds; index++) {
             bytes16 active_security_id = activeSecurityIDs[index];
@@ -72,7 +73,16 @@ library StockLib {
 
             params.quantity = transferQuantity;
 
-            _transferSingleStock(params, active_security_id, positions, activeSecs, transactions, issuer, stockClass);
+            issuanceOrdinal += _transferSingleStock(
+                params,
+                active_security_id,
+                issuanceOrdinal,
+                positions,
+                activeSecs,
+                transactions,
+                issuer,
+                stockClass
+            );
 
             remainingQuantity -= transferQuantity;
 
@@ -111,7 +121,8 @@ library StockLib {
             });
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
-                transferParams.transferor_stakeholder_id
+                transferParams.transferor_stakeholder_id,
+                0
             );
 
             _updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
@@ -196,7 +207,8 @@ library StockLib {
             });
             StockIssuance memory balanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 transferParams,
-                transferParams.transferor_stakeholder_id
+                transferParams.transferor_stakeholder_id,
+                0
             );
 
             _updateContext(balanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
@@ -204,7 +216,7 @@ library StockLib {
             balance_security_id = balanceIssuance.security_id;
         }
 
-        StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(params, price);
+        StockRepurchase memory repurchase = TxHelper.createStockRepurchaseStruct(params, price, balance_security_id);
 
         TxHelper.createTx(TxType.STOCK_REPURCHASE, abi.encode(repurchase), transactions);
 
@@ -256,7 +268,7 @@ library StockLib {
             stock_class_id: issuance.params.stock_class_id,
             quantity: issuance.params.quantity,
             share_price: issuance.params.share_price,
-            timestamp: _safeNow() // TODO: only using current datetime doesn't allow us to support backfilling transactions.
+            timestamp: _safeNow()
         });
 
         issuer.shares_issued = issuer.shares_issued + issuance.params.quantity;
@@ -274,21 +286,24 @@ library StockLib {
         stockClass.shares_issued = stockClass.shares_issued - quantity;
     }
 
-    // isBuyerVerified is a placeholder for a signature, account or hash that confirms the buyer's identity. TODO: delete if not necessary
     function _transferSingleStock(
         StockTransferParams memory params,
         bytes16 transferorSecurityId,
+        uint256 issuanceOrdinal,
         ActivePositions storage positions,
         SecIdsStockClass storage activeSecs,
         bytes[] storage transactions,
         Issuer storage issuer,
         StockClass storage stockClass
-    ) internal {
+    ) internal returns (uint256) {
         ActivePosition memory transferorActivePosition = positions.activePositions[params.transferor_stakeholder_id][transferorSecurityId];
 
         _checkInsuffientAmount(transferorActivePosition.quantity, params.quantity);
-
-        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(params, params.transferee_stakeholder_id);
+        StockIssuance memory transfereeIssuance = TxHelper.createStockIssuanceStructForTransfer(
+            params,
+            params.transferee_stakeholder_id,
+            issuanceOrdinal
+        );
 
         _updateContext(transfereeIssuance, positions, activeSecs, issuer, stockClass, transactions);
 
@@ -312,7 +327,8 @@ library StockLib {
         if (balanceForTransferor > 0) {
             StockIssuance memory transferorBalanceIssuance = TxHelper.createStockIssuanceStructForTransfer(
                 newParams,
-                newParams.transferor_stakeholder_id
+                newParams.transferor_stakeholder_id,
+                issuanceOrdinal + 1
             );
 
             _updateContext(transferorBalanceIssuance, positions, activeSecs, issuer, stockClass, transactions);
@@ -334,6 +350,8 @@ library StockLib {
 
         DeleteContext.deleteActivePosition(params.transferor_stakeholder_id, transferorSecurityId, positions);
         DeleteContext.deleteActiveSecurityIdsByStockClass(params.transferor_stakeholder_id, params.stock_class_id, transferorSecurityId, activeSecs);
+
+        return balanceForTransferor > 0 ? 2 : 1;
     }
 
     function _checkInvalidQuantityOrPrice(uint256 quantity, uint256 price) internal pure {
