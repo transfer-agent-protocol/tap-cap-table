@@ -55,6 +55,9 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - `CapTable.sol`: Core contract managing stakeholders, stock classes, transactions, and active positions
     - `CapTableFactory.sol`: Deploys new CapTable instances for issuers
     - Supports: stock issuance, transfers, cancellations, repurchases, reissuances, adjustments
+    - **Transfers** that span multiple lots salt issuance/security ids with an in-memory `issuanceOrdinal` (same `nonce`, distinct lots). Do not collapse that back to `generateDeterministicUniqueID` without the ordinal.
+    - **Partial repurchase** `balance_security_id` is the remainder certificate id, or `bytes16(0)` when the lot is fully bought back. Not the stakeholder id.
+    - **Manifest seed** is two operator txs: `mintSharesAuthorized` (counters, every current stock class) then `mintActivePositions` (live lots must match those counters). Both are one-shot. `server/chain-operations/seed.js` runs them back-to-back; do not `issueStock` in between.
 
 2. **Event Poller** (`server/chain-operations/transactionPoller.ts`):
     - Long-running process that polls blockchain for contract events
@@ -247,13 +250,17 @@ Slither was removed (low-signal SARIF). Aderyn plus Foundry invariants are the c
 Foundry's coverage-guided invariant testing validates protocol-wide properties:
 
 - **Tests**: `chain/test/invariants/CapTableInvariants.t.sol`
-- **Handler**: `chain/test/invariants/CapTableHandler.sol`
-- **Config**: `chain/foundry.toml` `[invariant]` section
+- **Handler**: `chain/test/invariants/CapTableHandler.sol` — bounded actions for create, issue, seed, transfer (including self-transfer), repurchase, cancel, retract, reissue, and authorized-share adjusts. It tracks live lots from issuance txs; seed lots are recorded from the ids passed to `mintActivePositions` (seed writes no `transactions` entries).
+- **Config**: `chain/foundry.toml` `[invariant]` section (`fail_on_revert = false`; handler early-returns or `try/catch` so the campaign is not drowned in setup reverts)
 
 Key invariants tested:
 - `shares_issued <= shares_authorized` for issuer and all stock classes
+- Live holdings per class equal that class's `shares_issued`
+- Issuer `shares_issued` equals the sum of every class's `shares_issued`
 - Stakeholder/stock class index mapping consistency
 - Stock class authorized shares never exceed issuer authorized
+
+Do not reintroduce unused `ghost_*` counters on the handler. Assert against onchain state.
 
 ### Documentation
 
@@ -501,16 +508,21 @@ If you encounter "Source file requires different compiler version" errors in VS 
 
 ## Foundry (Solidity)
 
-- **Compiler**: Solidity 0.8.30
+- **Compiler**: Solidity **0.8.30** (`chain/foundry.toml` `solc_version`; exact `pragma solidity 0.8.30` on CapTable / factory / interfaces)
+- **Foundry**: forge/cast/anvil **1.7.1** is the current numbered stable. Do not `foundryup` to nightly for this repo.
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
+- **EVM**: `shanghai` — do not bump to Amsterdam unless Plume supports those opcodes
 - **Tests**: Use `forge test` with optional filters: `--match-test`, `--match-contract`
+- **Comments**: NatSpec lives on interfaces (`@notice` / `@dev` gotchas). Implementations use `@inheritdoc`. Spell **onchain** / **offchain** (no hyphen). No TODO/placeholder/MVP comments in `chain/src`. Explain why, not what.
 
 Libraries:
 
 - OpenZeppelin v5.4.0 (upgradeable contracts)
 - forge-std v1.10.0
 - Access control: `AccessControlDefaultAdminRulesUpgradeable`
+
+**Compiler upgrades (do not mix with feature PRs):** next solc pin is **0.8.36** (Yul optimizer + inheritance-order fixes). A via-ir bump changes bytecode even if TAP source is identical. Sequence: land logic on 0.8.30 → separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Pin Foundry in CI if you upgrade the toolchain so `pnpm setup`'s `foundryup` cannot drift. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
 
 **Recent Migration (Oct 2025)**:
 - Migrated from OpenZeppelin v4.9.2 to v5.4.0
