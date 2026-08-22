@@ -46,16 +46,18 @@ library TxHelper {
         });
     }
 
-    // TODO: do we need to have more information from the previous transferor issuance in this new issuance?
-    // I think we can extend this for all other types of balances
     function createStockIssuanceStructForTransfer(
         StockTransferParams memory transferParams,
-        bytes16 stakeholderId
+        bytes16 stakeholderId,
+        uint256 issuanceOrdinal
     ) internal view returns (StockIssuance memory issuance) {
-        ShareNumbersIssued memory share_numbers_issued; // if not instatiated it defaults to 0 for both values
-
-        bytes16 id = generateDeterministicUniqueID(stakeholderId, transferParams.nonce);
-        bytes16 securityId = generateDeterministicUniqueID(transferParams.stock_class_id, transferParams.nonce);
+        ShareNumbersIssued memory share_numbers_issued;
+        bytes16 id = bytes16(
+            keccak256(abi.encodePacked(stakeholderId, block.timestamp, block.prevrandao, transferParams.nonce, issuanceOrdinal))
+        );
+        bytes16 securityId = bytes16(
+            keccak256(abi.encodePacked(transferParams.stock_class_id, block.timestamp, block.prevrandao, transferParams.nonce, issuanceOrdinal))
+        );
 
         StockIssuanceParams memory params = StockIssuanceParams({
             stock_class_id: transferParams.stock_class_id,
@@ -160,17 +162,20 @@ library TxHelper {
         });
     }
 
-    function createStockRepurchaseStruct(StockParamsQuantity memory params, uint256 price) internal view returns (StockRepurchase memory repurchase) {
+    function createStockRepurchaseStruct(
+        StockParamsQuantity memory params,
+        uint256 price,
+        bytes16 balanceSecurityId
+    ) internal view returns (StockRepurchase memory repurchase) {
         bytes16 id = generateDeterministicUniqueID(params.security_id, params.nonce);
 
-        // Note: using stakeholderId to store balanceSecurityId
         return StockRepurchase({
             id: id,
             object_type: "TX_STOCK_REPURCHASE",
             comments: params.comments,
             security_id: params.security_id,
             consideration_text: params.reason_text,
-            balance_security_id: params.stakeholder_id,
+            balance_security_id: balanceSecurityId,
             quantity: params.quantity,
             price: price
         });
@@ -224,15 +229,13 @@ library TxHelper {
         string memory reasonText
     ) internal view returns (StockReissuance memory reissuance) {
         bytes16 id = generateDeterministicUniqueID(securityId, nonce);
-        bytes16 splitTransactionId = bytes16(0); // Not used in MVP
-
         return StockReissuance({
             id: id,
             object_type: "TX_STOCK_REISSUANCE",
             comments: comments,
             security_id: securityId,
             resulting_security_ids: resultingSecurityIds,
-            split_transaction_id: splitTransactionId,
+            split_transaction_id: bytes16(0),
             reason_text: reasonText
         });
     }

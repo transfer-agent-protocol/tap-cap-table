@@ -47,6 +47,7 @@ contract StockRepurchaseTest is CapTableTest {
 
         // verify that the original issuance and new balance issuance don't collide in security_ids
         assertNotEq(repurchase.security_id, repurchase.balance_security_id);
+        assertEq(repurchase.balance_security_id, remainingIssuance.security_id);
 
         assertEq(repurchase.object_type, "TX_STOCK_REPURCHASE");
         assertEq(repurchase.price, repurchasePrice);
@@ -87,22 +88,16 @@ contract StockRepurchaseTest is CapTableTest {
             repurchasePrice
         );
 
-        uint256 transactionsCount = capTable.getTransactionsCount();
-        uint256 remainingIssuaneTxIndex = transactionsCount - 2;
-        bytes memory remainingIssuanceTx = capTable.transactions(remainingIssuaneTxIndex);
-        StockIssuance memory repurchaseIssuance = abi.decode(remainingIssuanceTx, (StockIssuance));
-
-        assertEq(repurchaseIssuance.params.quantity, fullRepurchaseQuantity);
-
-        uint256 lastTransactionIndex = transactionsCount - 1;
+        uint256 lastTransactionIndex = capTable.getTransactionsCount() - 1;
         bytes memory lastTransaction = capTable.transactions(lastTransactionIndex);
         StockRepurchase memory repurchase = abi.decode(lastTransaction, (StockRepurchase));
 
         assertEq(repurchase.object_type, "TX_STOCK_REPURCHASE");
         assertEq(repurchase.price, repurchasePrice);
+        assertEq(repurchase.balance_security_id, bytes16(0));
 
         // Assert issuer and stock class shares_issued
         (, , uint256 issuerSharesIssued, ) = capTable.issuer();
-        assertEq(issuerSharesIssued, issuance.params.quantity - repurchaseIssuance.params.quantity);
+        assertEq(issuerSharesIssued, 0);
     }
 }

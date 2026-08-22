@@ -36,6 +36,7 @@ contract CapTableInvariants is Test {
         // Exclude capTable and factory from direct fuzzing (only interact through handler)
         excludeContract(address(capTable));
         excludeContract(address(factory));
+        excludeContract(address(handler.issuanceDecoder()));
     }
 
     /// @notice Invariant: Issuer shares_issued must never exceed shares_authorized
@@ -130,6 +131,40 @@ contract CapTableInvariants is Test {
                 "Stock class authorized shares exceeds issuer authorized shares"
             );
         }
+    }
+
+    /// @notice Invariant: all live holdings for a stock class equal its issued counter.
+    function invariant_activePositionsMatchStockClassSharesIssued() public view {
+        uint256 stockClassCount = handler.getStockClassCount();
+        uint256 stakeholderCount = handler.getStakeholderCount();
+
+        for (uint256 i = 0; i < stockClassCount; i++) {
+            bytes16 stockClassId = handler.getStockClassId(i);
+            uint256 totalActiveQuantity = 0;
+
+            for (uint256 j = 0; j < stakeholderCount; j++) {
+                bytes16 stakeholderId = handler.getStakeholderId(j);
+                (, uint256 activeQuantity, ) = capTable.getAveragePosition(stakeholderId, stockClassId);
+                totalActiveQuantity += activeQuantity;
+            }
+
+            (, , , uint256 sharesIssued, ) = capTable.getStockClassById(stockClassId);
+            assertEq(totalActiveQuantity, sharesIssued, "Active positions do not match stock class shares_issued");
+        }
+    }
+
+    /// @notice Issuer issued shares must equal the sum of every stock class's issued shares.
+    function invariant_issuerSharesIssuedEqualsSumOfStockClasses() public view {
+        (, , uint256 issuerIssued, ) = capTable.issuer();
+        uint256 stockClassCount = handler.getStockClassCount();
+        uint256 sumIssued = 0;
+
+        for (uint256 i = 0; i < stockClassCount; i++) {
+            (, , , uint256 classIssued, ) = capTable.getStockClassById(handler.getStockClassId(i));
+            sumIssued += classIssued;
+        }
+
+        assertEq(sumIssued, issuerIssued, "Sum of stock class shares_issued does not match issuer");
     }
 
     /// @notice Called after each invariant run - can be used for logging/metrics

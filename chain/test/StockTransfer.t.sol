@@ -47,17 +47,42 @@ contract StockTransferTest is CapTableTest {
         capTable.transferStock(params);
 
         uint256 transactionsCount = capTable.getTransactionsCount();
+        bytes memory firstTransfereeIssuanceTx = capTable.transactions(transactionsCount - 5);
         bytes memory lastIssuanceTx = capTable.transactions(transactionsCount - 2);
+        bytes memory secondTransfereeIssuanceTx = capTable.transactions(transactionsCount - 3);
         bytes memory firstTransferTx = capTable.transactions(transactionsCount - 4);
         bytes memory secondTransferTx = capTable.transactions(transactionsCount - 1);
+        StockIssuance memory firstTransfereeIssuance = abi.decode(firstTransfereeIssuanceTx, (StockIssuance));
 
         StockTransfer memory firstTransfer = abi.decode(firstTransferTx, (StockTransfer));
         bytes16 remainingIssuanceSecurityId = abi.decode(lastIssuanceTx, (StockIssuance)).security_id;
+        StockIssuance memory secondTransfereeIssuance = abi.decode(secondTransfereeIssuanceTx, (StockIssuance));
         StockTransfer memory secondTransfer = abi.decode(secondTransferTx, (StockTransfer));
 
         assertEq(firstTransfer.quantity, 3000);
         assertEq(secondTransfer.quantity, 500);
         assertEq(secondTransfer.balance_security_id, remainingIssuanceSecurityId);
+        assertNotEq(firstTransfereeIssuance.security_id, secondTransfereeIssuance.security_id);
+        assertNotEq(firstTransfereeIssuance.security_id, remainingIssuanceSecurityId);
+        assertNotEq(secondTransfereeIssuance.security_id, remainingIssuanceSecurityId);
+
+        (, uint256 firstTransfereeQuantity, , ) = capTable.getActivePosition(
+            transfereeStakeholderId,
+            firstTransfereeIssuance.security_id
+        );
+        (, uint256 secondTransfereeQuantity, , ) = capTable.getActivePosition(
+            transfereeStakeholderId,
+            secondTransfereeIssuance.security_id
+        );
+        (, uint256 transferorBalanceQuantity, , ) = capTable.getActivePosition(transferorStakeholderId, remainingIssuanceSecurityId);
+        (, uint256 transfereeTotalQuantity, ) = capTable.getAveragePosition(transfereeStakeholderId, stockClassId);
+        (, uint256 transferorTotalQuantity, ) = capTable.getAveragePosition(transferorStakeholderId, stockClassId);
+
+        assertEq(firstTransfereeQuantity, 3000);
+        assertEq(secondTransfereeQuantity, 500);
+        assertEq(transferorBalanceQuantity, 1500);
+        assertEq(transfereeTotalQuantity, quantityToTransfer);
+        assertEq(transferorTotalQuantity, totalIssued - quantityToTransfer);
 
         (, , uint256 shares_issued, ) = capTable.issuer();
 
