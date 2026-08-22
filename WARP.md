@@ -237,11 +237,15 @@ make test-invariant
 - **Output**: `report.md`
 - **VS Code**: Install the [Aderyn Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time checks
 
-**Current Status**: 0 High, 5 Low severity findings (all acceptable):
+**Current Status** (re-run after Pashov fixes; `aderyn.toml` now scans `chain/src/lib/` as well as CapTable — do not exclude `"/lib/"` or Stock/TxHelper are skipped):
+- **H-1 (Weak Randomness)**: False positive. `keccak256(id, timestamp, prevrandao, nonce[, ordinal])` is for **unique certificate ids**, not a lottery. Operator-only. Do not replace with Chainlink VRF.
 - L-1 (Centralization): Factory owner controls beacon upgrades — intentional design
-- L-2/L-3 (Loop issues): Acceptable for batch initialization
-- L-4 (State Change Without Event): False positives — events emitted via `TxHelper.createTx()`
-- L-5 (Unchecked Return): OpenZeppelin's `_grantRole`/`_revokeRole` are idempotent
+- L-2 / L-5 / L-7 (Loops): Seed and `_hasActivePositions` walk classes/stakeholders; acceptable for one-shot import
+- L-3 (Internal function used once): `DeleteContext.find` / `remove` — keep, FIFO shift order matters
+- L-4 (PUSH0): Target EVM is shanghai; Plume supports PUSH0
+- L-6 (State Change Without Event): False positives — ledger writes emit via `TxHelper.createTx()`
+- L-8 (Unchecked Return): OpenZeppelin's `_grantRole`/`_revokeRole` are idempotent
+- L-9 (Unspecific pragma): `^0.8.30` on libraries; `foundry.toml` pins 0.8.30
 
 Slither was removed (low-signal SARIF). Aderyn plus Foundry invariants are the contract toolchain until a better semantic analyzer is chosen.
 
