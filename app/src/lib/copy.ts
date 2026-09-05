@@ -3,10 +3,6 @@
  * Prefer company-admin language over protocol / poller jargon.
  */
 export const copy = {
-	nav: {
-		mint: "New company",
-		manage: "Companies",
-	},
 	holdings: {
 		title: "Holdings",
 		columns: {
@@ -17,7 +13,6 @@ export const copy = {
 			status: "Status",
 		},
 		empty: "No shares issued yet.",
-		loadError: "Couldn't load holdings. Try Refresh.",
 	},
 	shareholders: {
 		title: "Shareholders",
@@ -39,7 +34,6 @@ export const copy = {
 	},
 	issueStock: {
 		title: "Issue stock",
-		needsSetup: "Create a stock class and add a shareholder first.",
 		needsClass: "Create a stock class and confirm it in your wallet first.",
 		needsPeople: "Add a shareholder first.",
 	},
@@ -48,7 +42,6 @@ export const copy = {
 		needsPeople: "Add at least two shareholders before transferring.",
 		needsHoldings: "Issue stock first — transfers move existing holdings.",
 		confirmedTitle: "Stock transferred",
-		submittedTitle: "Transfer submitted",
 	},
 	transactions: {
 		title: "Transactions",
@@ -66,7 +59,6 @@ export const copy = {
 	status: {
 		onchain: "Confirmed",
 		pending: "Pending",
-		reverted: "Failed",
 	},
 	sync: {
 		idle: "Refresh",
@@ -92,12 +84,6 @@ export const copy = {
 		revertedTitle: "Transaction failed",
 		revertedGeneric: "Nothing changed. You can try again.",
 		issuanceReverted: "Issuance failed — usually not enough authorized shares left.",
-		submittedTitle: {
-			stockClass: "Stock class submitted",
-			stakeholder: "Shareholder submitted",
-			issuance: "Issuance submitted",
-		},
-		submittedBody: "Waiting for wallet confirmation…",
 		confirmedTitle: {
 			stockClass: "Stock class created",
 			stakeholder: "Shareholder created",

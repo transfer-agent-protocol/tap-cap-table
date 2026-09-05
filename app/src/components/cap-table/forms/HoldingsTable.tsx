@@ -2,8 +2,6 @@ import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { Button } from "../../elements";
 import { DataTable, type Column } from "../../DataTable";
-import { SectionActions, SectionHeader } from "../../layout";
-import { H3 } from "../../typography";
 import { TextInput } from "../../forms";
 import { copy } from "../../../lib/copy";
 import { holdingStatusForIssuance } from "../../../utils/holdingStatus";
@@ -52,10 +50,8 @@ interface HoldingsTableProps {
 		txHash?: string;
 		confirmed?: boolean;
 	}>;
-	onRefresh?: () => void;
 	isLoading?: boolean;
 	error?: string | null;
-	compact?: boolean;
 	/** Extra empty-state guidance (e.g. class not onchain yet) */
 	emptyHint?: string;
 }
@@ -172,10 +168,8 @@ export function HoldingsTable({
 	createdStockClasses = [],
 	createdStakeholders = [],
 	createdIssuances = [],
-	onRefresh,
 	isLoading,
 	error = null,
-	compact = false,
 	emptyHint,
 }: HoldingsTableProps) {
 	const [query, setQuery] = useState("");
@@ -277,19 +271,6 @@ export function HoldingsTable({
 
 	return (
 		<div>
-			{!compact && (
-				<SectionHeader>
-					<H3>{copy.holdings.title}</H3>
-					{onRefresh && (
-						<SectionActions>
-							<Button onClick={onRefresh} disabled={isLoading}>
-								{isLoading ? "Refreshing…" : "Refresh"}
-							</Button>
-						</SectionActions>
-					)}
-				</SectionHeader>
-			)}
-
 			{showControls && (
 				<Controls style={{ marginBottom: "0.75rem" }}>
 					<SearchInput

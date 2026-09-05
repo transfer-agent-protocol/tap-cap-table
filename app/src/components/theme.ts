@@ -4,8 +4,8 @@ import { DefaultTheme } from "styled-components";
  * TAP Design System — strict ledger.
  *
  * Monochrome base: near-black background with a white-opacity gray ramp for
- * surfaces, hairlines, and secondary text. One rust accent for interactive
- * emphasis (AA on dark). 0 radius, 1px hairlines, 4px spacing grid.
+ * surfaces, hairlines, and secondary text. One lime accent (`#c8f542`) for
+ * interactive emphasis (AA on dark). 0 radius, 1px hairlines, 4px spacing grid.
  *
  * Fonts come from next/font CSS variables set in _app.tsx:
  * sans (Inter) for UI copy, mono (IBM Plex Mono) for data — numbers,

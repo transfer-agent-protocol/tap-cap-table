@@ -11,7 +11,6 @@ import {
 	isCompanyWorkspacePath,
 	isWorkspaceRoute,
 	issuerIdFromPath,
-	mintViewToCapTableView,
 	parseCapTableView,
 	VALID_CAP_TABLE_VIEWS,
 } from "./navConfig.js";
@@ -99,12 +98,5 @@ describe("path helpers", () => {
 		// Next router.pathname pattern must never be treated as a real id
 		assert.equal(issuerIdFromPath("/app/companies/[issuerId]"), null);
 		assert.equal(issuerIdFromPath("/app/companies/%5BissuerId%5D"), null);
-	});
-});
-
-describe("mintViewToCapTableView", () => {
-	it("maps legacy activity to transactions", () => {
-		assert.equal(mintViewToCapTableView("activity"), "transactions");
-		assert.equal(mintViewToCapTableView("overview"), "overview");
 	});
 });

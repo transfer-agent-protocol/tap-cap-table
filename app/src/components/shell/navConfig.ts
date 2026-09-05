@@ -77,14 +77,6 @@ export function capTableHref(issuerId: string, view: CapTableView = "overview"):
 	return `${base}?${params.toString()}`;
 }
 
-/** Legacy MintView → CapTableView. */
-export function mintViewToCapTableView(
-	view: "overview" | "stock-classes" | "stakeholders" | "activity",
-): CapTableView {
-	if (view === "activity") return "transactions";
-	return view;
-}
-
 /** True when the left workspace drawer + product chrome apply. */
 export function isWorkspaceRoute(pathname: string): boolean {
 	return pathname === "/app" || pathname.startsWith("/app/");

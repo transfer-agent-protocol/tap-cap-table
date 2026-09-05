@@ -860,7 +860,6 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 			createdIssuances={directIssuances}
 			isLoading={manager.isLoadingHoldings}
 			error={manager.holdingsError}
-			compact
 			emptyHint={holdingsEmptyHint}
 		/>
 	);

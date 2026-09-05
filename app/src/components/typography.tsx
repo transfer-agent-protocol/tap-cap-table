@@ -52,17 +52,6 @@ const P = styled.p`
 	}
 `;
 
-/** Uppercase micro-label for fields and table headers. */
-const Label = styled.label`
-	display: inline-block;
-	font-family: ${({ theme }) => theme.fonts.sans};
-	font-size: ${({ theme }) => theme.fontSizes.xs};
-	font-weight: ${({ theme }) => theme.fontWeights.semibold};
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: ${({ theme }) => theme.colors.textSubtle};
-`;
-
 /** Accent kicker above a heading. */
 const Eyebrow = styled.span`
 	display: inline-flex;
@@ -93,4 +82,4 @@ const Mono = styled.span`
 	letter-spacing: 0;
 `;
 
-export { H1, H2, H3, P, Label, Eyebrow, MutedText, Mono };
+export { H1, H2, H3, P, Eyebrow, MutedText, Mono };
