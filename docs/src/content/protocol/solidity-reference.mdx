@@ -10,6 +10,10 @@ This is a lookup page, not a linear tutorial. Use the page outline to jump betwe
 
 `CapTable.sol` stores issuer, stock class, stakeholder, wallet, active position, and transaction state.
 
+<Callout type="info">
+The **API** column is the server-signed `/create` path. The product UI under `/app` writes the same functions from the connected ADMIN wallet, then registers class, stakeholder, and issuance metadata with `/register-onchain`. Transfers have no registration route.
+</Callout>
+
 | Function | Access | Inputs | Effect | API |
 | --- | --- | --- | --- | --- |
 | `initialize` | Initializer | Issuer ID, name, authorized shares, admin, operator. | Sets roles and issuer; emits `IssuerCreated`. | Factory/frontend deploy. |

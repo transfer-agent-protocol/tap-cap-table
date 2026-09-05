@@ -3,6 +3,7 @@ const meta = {
     "tap-cap-table": "Solidity Cap Table",
     "structs-lib": "Structs Library",
     "stock-lib": "Stock Functions",
+    "solidity-reference": "Solidity Reference",
 };
 
 export default meta;

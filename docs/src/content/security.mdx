@@ -2,17 +2,15 @@
 
 [![Security Scans](https://github.com/transfer-agent-protocol/tap-cap-table/actions/workflows/security.yml/badge.svg)](https://github.com/transfer-agent-protocol/tap-cap-table/actions/workflows/security.yml)
 
-**Verify locally:** `make security && make test-invariant` — should pass with 0 high findings.
+**Verify locally:** `make security && make test-invariant`.
 
 ## Current Status
 
-The workflow badge above is the live status. The counts below describe the checked-in reports and can change whenever analysis is rerun; verify them locally before relying on the snapshot.
+The workflow badge above is live CI. Do not treat checked-in Aderyn counts as a scoreboard — they go stale as soon as someone reruns the analyzer.
 
-| Tool | High | Medium | Low | Status |
-|------|------|--------|-----|--------|
-| Aderyn | 0 | 0 | 5 | ✅ All acceptable |
-| Invariant Tests | - | - | - | ✅ 7 passing |
-| Unit Tests | - | - | - | ✅ All passing |
+- Run `make aderyn` and read `report.md`.
+- **H-1 (keccak of id, timestamp, prevrandao, nonce)** is certificate-id uniqueness, not a lottery. Do not replace it with Chainlink VRF.
+- Invariants: `make test-invariant` (`chain/test/invariants/`).
 
 ## Tools
 

@@ -1,10 +1,10 @@
 # WARP.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+Agent notes for this repository. Read this before changing architecture, contracts, or the write path.
 
 ## Project Overview
 
-Transfer Agent Protocol (TAP) Cap Table is an onchain cap table implementation that combines Solidity smart contracts with an off-chain Node.js API server. It implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard for representing cap table data.
+Transfer Agent Protocol (TAP) Cap Table is an onchain cap table implementation that combines Solidity smart contracts with an offchain Node.js API server. It implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard for representing cap table data.
 
 This is a **pnpm monorepo** with the following workspaces:
 - `app/` - Next.js frontend (tap-app)
@@ -20,14 +20,14 @@ The monorepo (chain, server, app, docs, packages) is **BUSL-1.1** (PALMER.EARTH 
 
 ## Architecture
 
-### Hybrid onchain/Off-chain Design
+### Hybrid onchain/offchain design
 
 The system maintains a **dual-state architecture**:
 
 - **Onchain (Ethereum/L2)**: Smart contracts (CapTable.sol, CapTableFactory.sol) store authoritative transaction data and active positions
-- **Off-chain (MongoDB + Node.js)**: Express API server stores OCF-compliant objects and metadata, processes blockchain events
+- **Offchain (MongoDB + Node.js)**: Express API server stores OCF-compliant objects and metadata, processes blockchain events
 
-**Critical**: The blockchain is the source of truth for transactions. The off-chain database mirrors this state by listening to contract events via the transaction poller.
+**Critical**: The blockchain is the source of truth for transactions. The offchain database mirrors this state by listening to contract events via the transaction poller.
 
 ### Ownership & Role Architecture
 
@@ -37,13 +37,13 @@ The protocol uses a three-tier access model:
 - **OPERATOR_ROLE** (Transfer Agent Protocol server): Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Granted during cap table creation if an operator address is provided.
 - **Factory owner** (wallet that deployed that factory): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies of **that** factory via `updateCapTableImplementation()`. Has no access to individual cap tables as admin. On the shared Plume demo factory this is the protocol builder (TAP Admin); a licensed transfer agent should deploy their own factory so they own upgrades.
 
-**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API / `deploy-factory`; `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/pages/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
+**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API / `deploy-factory`; `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/content/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
 
 **Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally designate an OPERATOR address (typically the TAP server) at creation time.
 
 **Access control split:**
-- `onlyOperator` (server + admins): `createStockClass`, `createStakeholder`, `createStockLegendTemplate`, `issueStock`, `transferStock`, `repurchaseStock`, `retractStockIssuance`, `reissueStock`, `cancelStock`, `addWalletToStakeholder`, `removeWalletFromStakeholder`, `mintActivePositions`, `mintSharesAuthorized`, `adjustIssuerAuthorizedShares`
-- `onlyAdmin` (asset manager only): `addAdmin`, `removeAdmin`, `addOperator`, `removeOperator`
+- `onlyOperator` (server + admins): `createStockClass`, `createStakeholder`, `createStockLegendTemplate`, `issueStock`, `transferStock`, `repurchaseStock`, `retractStockIssuance`, `reissueStock`, `cancelStock`, `acceptStock`, `addWalletToStakeholder`, `removeWalletFromStakeholder`, `mintActivePositions`, `mintSharesAuthorized`
+- `onlyAdmin` (issuer ADMIN only): `addAdmin`, `removeAdmin`, `addOperator`, `removeOperator`, `adjustIssuerAuthorizedShares`, `adjustStockClassAuthorizedShares`
 
 The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `BeaconProxy`. The factory owner can upgrade all cap tables at once via `updateCapTableImplementation()`.
 
@@ -237,17 +237,9 @@ make test-invariant
 - **Output**: `report.md`
 - **VS Code**: Install the [Aderyn Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time checks
 
-**Current Status** (re-run after Pashov fixes; `aderyn.toml` now scans `chain/src/lib/` as well as CapTable — do not exclude `"/lib/"` or Stock/TxHelper are skipped):
-- **H-1 (Weak Randomness)**: False positive. `keccak256(id, timestamp, prevrandao, nonce[, ordinal])` is for **unique certificate ids**, not a lottery. Operator-only. Do not replace with Chainlink VRF.
-- L-1 (Centralization): Factory owner controls beacon upgrades — intentional design
-- L-2 / L-5 / L-7 (Loops): Seed and `_hasActivePositions` walk classes/stakeholders; acceptable for one-shot import
-- L-3 (Internal function used once): `DeleteContext.find` / `remove` — keep, FIFO shift order matters
-- L-4 (PUSH0): Target EVM is shanghai; Plume supports PUSH0
-- L-6 (State Change Without Event): False positives — ledger writes emit via `TxHelper.createTx()`
-- L-8 (Unchecked Return): OpenZeppelin's `_grantRole`/`_revokeRole` are idempotent
-- L-9 (Unspecific pragma): `^0.8.30` on libraries; `foundry.toml` pins 0.8.30
+`aderyn.toml` (repo root) sets `root = "chain"` and excludes vendor `lib/openzeppelin` / `lib/forge-std`. **Do not** exclude `"/lib/"` — that also skips `chain/src/lib/` (Stock, TxHelper, Structs). Output is `report.md`. H-1 (keccak of id/timestamp/prevrandao/nonce) is certificate-id uniqueness, not a lottery — do not replace with Chainlink VRF. Interpret findings from the generated report; do not copy counts into docs.
 
-Slither was removed (low-signal SARIF). Aderyn plus Foundry invariants are the contract toolchain until a better semantic analyzer is chosen.
+Slither was removed. Aderyn plus Foundry invariants are the contract toolchain.
 
 #### Invariant Testing
 
@@ -283,7 +275,7 @@ The docs are a Nextra/Next.js site in the `docs/` workspace. See `docs/README.md
 
 ### Documentation DX conventions
 
-When editing pages under `docs/src/pages/`, follow these conventions established during a readability/DX review:
+When editing pages under `docs/src/content/`, follow these conventions established during a readability/DX review:
 
 - **Intro paragraphs**: Use plain language. Avoid unexplained implementation terms (e.g. "beacon proxy pattern") unless the page is specifically about that concept.
 - **Price/scaling gotchas**: Surface `share_price.amount` scaling rules (**1e10** on write; poller unscales by 1e10) in a `<Callout type="warning">` immediately after the response overview — never only at the bottom of a page. Docs that still say ×10000 are wrong.
@@ -310,7 +302,7 @@ pnpm app:start
 pnpm app:test:e2e
 ```
 
-The frontend is a Next.js 16 app in the `app/` workspace using styled-components v6, with wallet/onchain support via wagmi, viem, a first-party connect modal, and TanStack Query. It serves the marketing landing page (`/`) and the product workspace under `/app/*` (companies, mint, company cap table). Legacy `/mint` and `/manage*` redirect to `/app`. The UI follows a strict design system (monochrome + rust accent, 4px grid, sans UI copy + mono data) defined in `app/src/components/theme.ts`; the side nav is the working navigation and the top bar is system-only. Generated contract hooks live in `app/src/generated.ts` — regenerate them with `pnpm --filter tap-app generate:wagmi` after contract ABI changes. See [`app/WARP.md`](app/WARP.md) for full frontend conventions.
+The frontend is a Next.js 16 app in the `app/` workspace. Marketing is `/`; product is `/app/*`. Legacy `/mint` and `/manage*` redirect to `/app`. Design system, write path, and routes: [`app/WARP.md`](app/WARP.md). Generated contract hooks live in `app/src/generated.ts` — regenerate with `pnpm --filter tap-app generate:wagmi` after ABI changes.
 
 ### Deployment
 
@@ -459,23 +451,7 @@ OCF defines the standard for:
 
 ## Git Workflow
 
-Follow conventional commits and branch from `main`:
-
-- **Never commit to** `main` directly
-- Create feature branches from `main`
-- PR titles: `feat(scope): description` or `fix(scope): description`
-- Commit messages: Descriptive, imperative mood
-- All PRs merge into `main` (no separate dev branch)
-
-### Pull Request Descriptions
-
-All PRs must include three sections:
-
-- **What?** - Concise summary of the changes made
-- **Why?** - Business or technical motivation for the change
-- **How?** - Brief explanation of the implementation approach (optional for trivial changes)
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for full guidelines.
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Branch from `main`; never commit to `main`; Conventional Commits on PR titles.
 
 ## Database
 
@@ -486,9 +462,7 @@ Uses MongoDB with optional replica set for transactions:
 
 The Docker Compose file creates a single-node setup. For replica sets, use MongoDB's `--replSet` option.
 
-**Models**: Each OCF object type has a corresponding Mongoose model in `server/db/objects/`.
-
-**Note**: Legacy sample data (`server/db/samples/data/`) has been removed. Demo functionality will be provided through the frontend app in a future release.
+**Models**: OCF object types used by the poller, product UI, and zip import have Mongoose models in `server/db/objects/`.
 
 ## TypeScript Configuration
 
@@ -528,14 +502,6 @@ Libraries:
 
 **Compiler upgrades (do not mix with feature PRs):** next solc pin is **0.8.36** (Yul optimizer + inheritance-order fixes). A via-ir bump changes bytecode even if TAP source is identical. Sequence: land logic on 0.8.30 → separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Pin Foundry in CI if you upgrade the toolchain so `pnpm setup`'s `foundryup` cannot drift. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
 
-**Recent Migration (Oct 2025)**:
-- Migrated from OpenZeppelin v4.9.2 to v5.4.0
-- Updated Solidity from 0.8.20 to 0.8.30 (required for OZ v5)
-- Breaking changes addressed:
-  - `Ownable` constructor now requires `initialOwner` parameter
-  - `UpgradeableBeacon` constructor includes owner parameter
-  - Import paths updated for `AccessControlDefaultAdminRules` (now in `extensions/`)
-
 ## Common Pitfalls
 
 1. **Forgetting to scale numbers**: Always use `toScaledBigNumber()` for quantities and prices. Direct-wallet hooks must scale on the write side or the poller's 1e10 unscale will produce tiny fractions in Mongo (e.g. `69000` raw → `0.0000069` after unscale).
@@ -558,7 +524,7 @@ Libraries:
 
 ## Debugging
 
-- **Logs**: The server logs extensively. Look for emoji prefixes (✅, ❌, ⏳, 💾)
+- **Logs**: Server console (listen, poller block numbers, event processing)
 - **Database**: Connect to MongoDB on host port **27027** (credentials in `.env`)
 - **Blockchain**: Use RPC_URL to query contract state with ethers.js or cast
 - **Event poller**: Runs in-process by default; check console for event processing logs

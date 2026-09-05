@@ -1,6 +1,6 @@
 # WARP.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+Frontend agent notes for the `tap-app` workspace.
 
 ## Overview
 
@@ -54,7 +54,7 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
   - Design system: `theme.ts`, `global-style.ts`, `typography.tsx`, `elements.tsx`, `forms.tsx`, `layout.tsx` (+ `PageHeader.tsx`)
   - `shell/` — `AppShell` (shell root), `TopBar` (system bar), `SideNav` (working nav), `AppShellContext`, `navConfig`, `WalletButtonClient` (re-export)
   - `wallet/` — native connect modal + account menu (`WalletButton`, `WalletModal`, `AccountMenu`, connector ordering helpers)
-  - `cap-table/` — `CapTableDashboard.tsx` orchestrator (wallet writes, refresh, activity); `views/*` (Holdings, Shareholders, StockClasses, IssueStock, TransferStock, Transactions); `forms/*` (domain forms: Issuer, Stakeholder, StockClass, IssueStock, TransferStock, MintActions, IssuerHeader, HoldingsTable); `OwnershipBar`, `SetupChecklist`, `ownershipModel`, `types`
+  - `cap-table/` — `CapTableDashboard.tsx` orchestrator (wallet writes, refresh, activity); `views/*` (Holdings, Shareholders, StockClasses, IssueStock, TransferStock, Transactions); `forms/*` (domain forms: Issuer, Stakeholder, StockClass, IssueStock, TransferStock, MintActions, IssuerHeader, HoldingsTable); `OwnershipBoxes`, `SetupChecklist`, `ownershipModel`, `types`
   - Shared list UI: `DataTable` + `Table` / `TableFrame` (full-width framed tables); `Modal`, `TxSuccessModal`
 - `e2e/` — Playwright specs + `mocks.ts` fixtures (`playwright.config.ts` at app root)
 - `src/hooks/` — `useMintIssuer`, `useDirectCreateStockClass`, `useDirectCreateStakeholder`, `useDirectIssueStock`, **`useDirectTransferStock`**, `useOnchainAction`, `useResource`, `useCapTableManager`

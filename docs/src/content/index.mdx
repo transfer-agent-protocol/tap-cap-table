@@ -7,13 +7,11 @@ import { NextActions } from '../components/ContentPatterns';
 
 # Transfer Agent Protocol
 
-We use [Open Cap Table Format](/protocol/tap-ocf) and convert it into smart contracts. This creates a full cap table onchain and offchain. The onchain cap table is the source of truth and the offchain cap table is its mirror.
-
-_This documentation is currently in public preview._
+We use [Open Cap Table Format](/protocol/tap-ocf) and convert it into smart contracts. The onchain cap table is the source of truth; the offchain database is its mirror.
 
 ## Current Status
 
-The protocol is live on [Plume Mainnet](https://docs.plume.org/plume/developer-resources/network-parameters).
+The protocol is live on [Plume Mainnet](https://docs.plume.org/plume/developer-resources/network-parameters). This documentation covers the live stack.
 
 **Who deploys what:** the protocol builder ships contracts and may run a shared **demo** factory; a licensed **transfer agent** deploys **their own** `CapTableFactory` (book of business); **issuers** mint cap tables through a factory and become ADMIN of that table. Factory addresses are unique per deploy — see [Deploy factory](/development/factory-deploy) and the [Development Guide](/development).
 
