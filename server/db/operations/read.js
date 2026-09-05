@@ -28,10 +28,6 @@ export const readStakeholderByIssuerAndIssuerAssignedId = async (issuerId, id) =
     return await find(Stakeholder, { issuer: issuerId, issuer_assigned_id: id });
 };
 
-export const readStockClassById = async (id) => {
-    return await findById(StockClass, id);
-};
-
 export const readStockLegendTemplateById = async (id) => {
     return await findById(StockLegendTemplate, id);
 };
@@ -56,14 +52,6 @@ export const readHistoricalTransactionByIssuerId = async (issuerId) => {
 // COUNT
 export const countIssuers = async () => {
     return await countDocuments(Issuer);
-};
-
-export const countStakeholders = async () => {
-    return await countDocuments(Stakeholder);
-};
-
-export const countStockClasses = async () => {
-    return await countDocuments(StockClass);
 };
 
 export const countStockLegendTemplates = async () => {

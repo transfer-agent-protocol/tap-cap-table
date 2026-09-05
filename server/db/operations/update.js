@@ -3,10 +3,6 @@ import Factory from "../objects/Factory.js";
 import Issuer from "../objects/Issuer.js";
 import Stakeholder from "../objects/Stakeholder.js";
 import StockClass from "../objects/StockClass.js";
-import StockLegendTemplate from "../objects/StockLegendTemplate.js";
-import StockPlan from "../objects/StockPlan.js";
-import Valuation from "../objects/Valuation.js";
-import VestingTerms from "../objects/VestingTerms.js";
 import StockAcceptance from "../objects/transactions/acceptance/StockAcceptance.js";
 import IssuerAuthorizedSharesAdjustment from "../objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.js";
 import StockClassAuthorizedSharesAdjustment from "../objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.js";
@@ -70,22 +66,6 @@ export const upsertStakeholderOnchainMetadata = async (id, data) => {
         { ...data, _id: id, is_onchain_synced: true },
         { returnDocument: "after", upsert: true, setDefaultsOnInsert: true }
     );
-};
-
-export const updateStockLegendTemplateById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockLegendTemplate, id, updatedData, { returnDocument: "after" });
-};
-
-export const updateStockPlanById = async (id, updatedData) => {
-    return await findByIdAndUpdate(StockPlan, id, updatedData, { returnDocument: "after" });
-};
-
-export const updateValuationById = async (id, updatedData) => {
-    return await findByIdAndUpdate(Valuation, id, updatedData, { returnDocument: "after" });
-};
-
-export const updateVestingTermsById = async (id, updatedData) => {
-    return await findByIdAndUpdate(VestingTerms, id, updatedData, { returnDocument: "after" });
 };
 
 export const upsertStockIssuanceById = async (id, updatedData) => {
