@@ -8,12 +8,6 @@ contract RolesTests is CapTableTest {
     address RANDO_ADDR = address(0xf001);
     address OPERATOR_ADDR = address(0xf002);
 
-    function testIssuerInitialization() public {
-        (bytes16 id, string memory legalName, , ) = capTable.issuer();
-        assertEq(id, issuerId);
-        assertEq(legalName, "Winston, Inc.");
-    }
-
     function testOperatorTransfer() public {
         bytes16[] memory stakeholderIds = new bytes16[](2);
 

@@ -116,7 +116,5 @@ contract StockReissuanceTest is CapTableTest {
             }),
             resulting_security_ids
         );
-
-        capTable.getTransactionsCount();
     }
 }
