@@ -11,7 +11,6 @@ Use this page when the issuer already exists outside the main `POST /issuer/crea
 | --- | --- | --- |
 | You have nothing yet and want TAP to deploy the cap table | `POST /issuer/create` (see [Create an Issuer](/development/cap-table-deploy)) | Deploys a cap table through the factory and saves the issuer in MongoDB. |
 | The cap table was already deployed (frontend wallet, separate script, another system) | `POST /issuer/register` | Saves a TAP record that points at the existing onchain cap table. |
-| You have an OCF manifest zip and want TAP to import it end-to-end | `POST /mint-cap-table` | Validates the manifest, deploys a cap table, seeds stakeholders/classes/positions, and returns the issuer. |
 
 ## Before you use these routes
 
@@ -58,19 +57,6 @@ Send the same issuer fields used in [Create an Issuer](/development/cap-table-de
 
 The response returns `{ "issuer": ... }`. Keep that issuer object — you'll use `_id` for every later API call.
 
-## Import an existing OCF cap table
-
-Use `POST /mint-cap-table` when you already have an OCF manifest and want TAP to import the cap table, deploy it, and save the resulting `deployed_to` address on the issuer.
-
-This route expects a `multipart/form-data` upload with a zip file that contains one or more `ocf.json` files.
-
-```bash
-curl -X POST http://localhost:8293/mint-cap-table \
-  -F "file=@/path/to/your-ocf-manifest.zip"
-```
-
-After the import finishes, use the returned issuer record for later API calls, then check [View History](/features/issuer-management/read-history) to confirm what was created.
-
 ## Read issuer records
 
 - `GET /issuer/id/:id` and `GET /issuer/full/:id` return the full issuer document.
@@ -82,7 +68,6 @@ For most workflows, the response from `POST /issuer/create` or `POST /issuer/reg
 
 1. Confirm the response contains `_id`, `deployed_to`, and `tx_hash`.
 2. `GET /issuer/id/:id` (or `/issuer/full/:id`) with the returned `_id` should succeed.
-3. After ~20 seconds, `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` should include any seeded transactions (manifest imports only).
 
 ## What's next?
 

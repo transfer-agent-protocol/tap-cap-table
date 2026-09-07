@@ -16,11 +16,3 @@ export const getIssuerContract = async (issuer): Promise<CachePayload> => {
     }
     return contractCache[issuer._id];
 };
-
-/*
-issuerId = {
-        activePositions: {...},
-        activeSecurityIdsByStockClass: {...},
-    };
-*/
-export const preProcessorCache = {};

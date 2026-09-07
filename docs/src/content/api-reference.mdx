@@ -31,7 +31,6 @@ Each router mounts a `GET` that returns text so you can confirm it's up: `GET /`
 
 | Method | Route | Behavior | Request | Returns |
 | --- | --- | --- | --- | --- |
-| `POST` | `/mint-cap-table` | Onchain + DB | OCF manifest zip as `multipart/form-data` field `file`. | `{ issuer }` |
 | `POST` | `/factory/register` | DB-only | `factory_address`, `implementation_address` | `{ factory }` |
 | `GET` | `/issuer/id/:id` | DB-only | Path `id`. | Full issuer document (same as `/issuer/full/:id`). |
 | `GET` | `/issuer/total-number` | DB-only | None. | Count. |

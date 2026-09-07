@@ -34,7 +34,7 @@ The system maintains a **dual-state architecture**:
 The protocol uses a three-tier access model:
 
 - **ADMIN_ROLE** (asset manager's wallet): Grants/revokes roles, manages cap table governance. When created via the factory, `msg.sender` receives ADMIN. Admins are implicitly operators (`_checkOperatorRole` checks both roles).
-- **OPERATOR_ROLE** (Transfer Agent Protocol server): Issues stock, transfers it, cancels it, re-issues it, manages shareholders, creates stock classes and stakeholders. All day-to-day cap table operations. Granted during cap table creation if an operator address is provided.
+- **OPERATOR_ROLE**: Optional extra address granted at mint (`NEXT_PUBLIC_OPERATOR_ADDRESS`). Same day-to-day writes as ADMIN. **Not** the server `PRIVATE_KEY`. The product default is the deployer (ADMIN) operates the instance; admins already satisfy operator checks.
 - **Factory owner** (wallet that deployed that factory): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies of **that** factory via `updateCapTableImplementation()`. Has no access to individual cap tables as admin. On the shared Plume demo factory this is the protocol builder (TAP Admin); a licensed transfer agent should deploy their own factory so they own upgrades.
 
 **Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API / `deploy-factory`; `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/content/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
@@ -57,7 +57,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Supports: stock issuance, transfers, cancellations, repurchases, reissuances, adjustments
     - **Transfers** that span multiple lots salt issuance/security ids with an in-memory `issuanceOrdinal` (same `nonce`, distinct lots). Do not collapse that back to `generateDeterministicUniqueID` without the ordinal.
     - **Partial repurchase** `balance_security_id` is the remainder certificate id, or `bytes16(0)` when the lot is fully bought back. Not the stakeholder id.
-    - **Manifest seed** is two operator txs: `mintSharesAuthorized` (counters, every current stock class) then `mintActivePositions` (live lots must match those counters). Both are one-shot. `server/chain-operations/seed.js` runs them back-to-back; do not `issueStock` in between.
+    - **Onchain import helpers** `mintSharesAuthorized` (counters, every current stock class) then `mintActivePositions` (live lots must match those counters) are one-shot. Foundry tests run them back-to-back; do not `issueStock` in between.
 
 2. **Event Poller** (`server/chain-operations/transactionPoller.ts`):
     - Long-running process that polls blockchain for contract events
@@ -73,7 +73,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
     - **Route conventions** for entity creation:
       - `POST /<entity>/register-onchain` — **manage UI path**: caller's wallet already submitted onchain; endpoint validates (+ share-cap checks for issuance), sets `is_onchain_synced` / `tx_hash`, and persists metadata. Poller remains authoritative.
-      - `POST /<entity>/create` — server-signed legacy/API path (server OPERATOR key submits onchain). Still used by manifest seed tooling; **not** used by the `/app` manage UI.
+      - `POST /<entity>/create` — server-signed API/docs path. Signs with root `.env` `PRIVATE_KEY` (local **developer** key) if set. Not the protocol OPERATOR identity and **not** used by the `/app` manage UI. Wallet-first path can leave `PRIVATE_KEY` unset.
     - Issuer helpers for the product UI:
       - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (`Issuer.deployed_by`).
       - `GET /issuer/full/:id` — full Issuer document (read-only).
@@ -82,20 +82,16 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
       - `POST /issuer/poller-catchup` — reindex (rebuild cursor from deploy) vs head (fast-forward). Prefer reconcile for UI “Refresh”; reindex only when the mirror is empty/corrupt.
     - Stock transfer: `POST /transactions/transfer/stock` is the **server-signed** API/docs path (`transferController` → `contract.transferStock`). The manage UI does **not** call this; it uses direct-wallet `useDirectTransferStock` (same `StockTransferParams` / scaling). Poller `handleStockTransfer` mirrors either path into Mongo `StockTransfer` + historical rows.
 
-4. **State Machines** (`server/state-machines/`):
-    - XState machines used by **OCF manifest preprocess/seed** (not the live poller path) to compute active positions before minting
-    - Live day-to-day manage UI does not depend on these machines
-
-5. **Database Layer** (`server/db/`):
+4. **Database Layer** (`server/db/`):
     - Mongoose models for OCF objects (Issuer, Stakeholder, StockClass, VestingTerms, StockTransfer, etc.)
     - Atomic operations with MongoDB transactions when `DATABASE_REPLSET=1`
 
-6. **OCF Submodule** (`ocf/`):
+5. **OCF Submodule** (`ocf/`):
     - Git submodule containing the Open Cap Format standard
     - JSON schemas used for validation
     - Sample OCF files in `ocf/samples/`
 
-7. **Frontend Cap Table Management UI** (`app/src/pages/app/`, `app/src/components/cap-table/`):
+6. **Frontend Cap Table Management UI** (`app/src/pages/app/`, `app/src/components/cap-table/`):
     - **Marketing** `/` — landing only (docs, GitHub, demo contracts). No wallet chrome, no product CTAs.
     - **Product** under `/app/*` (wallet + left nav shell):
       - `/app` / `/app/companies` — company list (localStorage + `/issuer/by-deployer` + Load from wallet; summaries for readiness chips).
@@ -103,7 +99,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
       - `/app/companies/[issuerId]?view=…` — full company workspace. Sections (left nav, setup order): **Holdings** → **Stock classes** → **Shareholders** → **Issue stock** → **Transfer** → **Transactions**.
     - Legacy `/mint` and `/manage*` redirect into `/app/*`.
     - Direct-wallet writes: stock class, shareholder, issuance, **stock transfer** (`useDirect*` + `useOnchainAction`). Class/person/issuance metadata via `/register-onchain` after receipt; transfers rely on the poller (`StockTransfer` / historical TX) — no separate transfer register endpoint.
-    - UI lives in `components/cap-table/*` (dashboard orchestrator, views, ownership bar, `DataTable` lists). Product copy in `lib/copy.ts`. Nav config in `navConfig.ts` — always use `query.issuerId` / `asPath` for links, never `router.pathname` with a `[issuerId]` pattern (that produced `%5BissuerId%5D` URLs).
+    - UI lives in `components/cap-table/*` (`CapTableDashboard` shell plus screens named after the COMPANY left nav). Product copy in `lib/copy.ts`. Nav config in `navConfig.ts` — always use `query.issuerId` / `asPath` for links, never `router.pathname` with a `[issuerId]` pattern (that produced `%5BissuerId%5D` URLs).
     - Optimistic session rows for in-flight creates; holdings/API lists must work when `deployed_to` is missing (Mongo people/classes) and 404 only when the issuer id is unknown.
 
 ### Data Flow
@@ -115,18 +111,14 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
 3. For **transfer**: wallet calls `CapTable.transferStock` only; poller `handleStockTransfer` writes Mongo + historical TX (same as API-path transfers).
 4. The poller is still authoritative — it picks up events and writes canonical records (joining on bytes16 id where applicable). UI “Refresh” runs reconcile + reloads holdings/history; do not jump the poller to head on every refresh (that skipped events and created ghost classes).
 
-**Transaction Creation (server-signed, legacy / API / manifest seed)**:
+**Transaction Creation (server-signed API / docs)**:
 
 1. API receives OCF-formatted request at `/<entity>/create` (or `/transactions/transfer/stock`, etc.)
-2. Validates against OCF schema, converts, submits via the server's OPERATOR key
+2. Validates against OCF schema, converts, submits with the local developer `PRIVATE_KEY` if set. That key is not OPERATOR_ROLE and is not required for the wallet-first path.
 3. Poller mirrors events to MongoDB
 
 **Minting**:
-When a manifest is created, the system:
-
-1. Creates stakeholders and stock classes onchain
-2. Mints `shares_authorized` and `shares_issued` for issuer and stock classes
-3. Mints active positions and security IDs from preprocessor cache
+Product mint is the connected ADMIN wallet calling `createCapTable` (deployer of that instance), then `POST /issuer/register`. API mint is `POST /issuer/create`. The deployer is ADMIN; `NEXT_PUBLIC_OPERATOR_ADDRESS` is an optional extra address granted `OPERATOR_ROLE` at mint — not a key.
 
 ## Development Commands
 
@@ -341,14 +333,12 @@ tap-cap-table/
 │   │   ├── transactionPoller.ts      # Event polling
 │   │   ├── transactionHandlers.js    # Event handlers
 │   │   ├── deployCapTable.js         # Deploy contracts
-│   │   ├── seed.js                   # Seeding utilities
 │   │   └── structs.js                # Solidity struct definitions
 │   ├── controllers/    # Business logic for entities
 │   ├── db/
 │   │   ├── objects/    # Mongoose models
 │   │   ├── operations/ # CRUD operations
 │   ├── routes/         # Express routes
-│   ├── state-machines/ # XState stock lifecycle
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
 ├── docs/               # Developer documentation (Nextra 4 App Router, workspace: tap-docs)
 │   ├── src/content/    # MDX documentation pages

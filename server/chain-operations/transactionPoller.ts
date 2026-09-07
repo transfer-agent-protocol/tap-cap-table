@@ -7,7 +7,6 @@ import { readAllIssuers } from "../db/operations/read.js";
 import { updateIssuerById } from "../db/operations/update.js";
 import { getIssuerContract } from "../utils/caches.ts";
 import sleep from "../utils/sleep.js";
-import { verifyIssuerAndSeed } from "./seed.js";
 import {
     IssuerAuthorizedSharesAdjustment,
     StockAcceptance,
@@ -215,7 +214,6 @@ const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
     console.log("IssuerCreated event captured!", { issuerCreatedEventId });
     const lastProcessedBlock = receipt.blockNumber - 1;
     await withGlobalTransaction(async () => {
-        await verifyIssuerAndSeed(contract, issuerCreatedEventId);
         await updateLastProcessed(issuerId, lastProcessedBlock);
     }, dbConn);
     return lastProcessedBlock;
