@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { Section, SectionHeader, Stack } from "../../layout";
-import { StatusMessage } from "../../elements";
-import { H3, MutedText } from "../../typography";
-import { DataTable, type Column } from "../../DataTable";
-import { copy, shortTx } from "../../../lib/copy";
-import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
+import { Section, SectionHeader, Stack } from "../layout";
+import { StatusMessage } from "../elements";
+import { H3, MutedText } from "../typography";
+import { DataTable, type Column } from "../DataTable";
+import { copy, shortTx } from "../../lib/copy";
+import { EXPLORER_TX, type ActivityEntry } from "../../utils/activityLog";
 
-interface TransactionsViewProps {
+export interface TransactionsProps {
 	activityLog: ActivityEntry[];
 	historicalTransactions: any[];
 	isLoadingHistory: boolean;
@@ -61,13 +61,13 @@ const columns: Column<TxRow>[] = [
 	{ key: "tx", header: copy.transactions.columns.tx, width: "14%", render: (r) => r.tx },
 ];
 
-export function TransactionsView({
+export function Transactions({
 	activityLog,
 	historicalTransactions,
 	isLoadingHistory,
 	syncNote,
 	toolbar,
-}: TransactionsViewProps) {
+}: TransactionsProps) {
 	const localRows: TxRow[] = activityLog.map((e) => ({
 		key: e.id,
 		type: copy.txTypeLabel(e.kind) || copy.txTypeLabel(e.type) || e.type,

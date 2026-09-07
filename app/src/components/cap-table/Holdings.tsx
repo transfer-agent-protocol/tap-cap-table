@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
-import { Button, StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from "../../elements";
-import { H3, MutedText } from "../../typography";
-import { copy } from "../../../lib/copy";
-import { SetupChecklist } from "../SetupChecklist";
-import { OwnershipBoxes } from "../OwnershipBoxes";
-import { buildOwnershipChart, formatPct, formatShares } from "../ownershipModel";
-import type { CapTableView } from "../../shell/navConfig";
+import { Section, SectionActions, SectionHeader, Stack } from "../layout";
+import { Button, StatCard, StatGrid, StatLabel, StatValue, StatusMessage } from "../elements";
+import { H3, MutedText } from "../typography";
+import { copy } from "../../lib/copy";
+import { SetupChecklist } from "./SetupChecklist";
+import { OwnershipBoxes } from "./OwnershipBoxes";
+import { buildOwnershipChart, formatPct, formatShares } from "./ownershipModel";
+import type { CapTableView } from "../shell/navConfig";
 
-interface HoldingsViewProps {
+export interface HoldingsProps {
 	positionCount: number;
 	peopleCount: number;
 	onchainClassCount: number;
@@ -31,7 +31,7 @@ interface HoldingsViewProps {
 	onNavigate: (view: CapTableView) => void;
 }
 
-export function HoldingsView({
+export function Holdings({
 	positionCount,
 	peopleCount,
 	onchainClassCount,
@@ -44,7 +44,7 @@ export function HoldingsView({
 	holdingsData,
 	createdIssuances = [],
 	onNavigate,
-}: HoldingsViewProps) {
+}: HoldingsProps) {
 	const showSetup = !isLoading && positionCount === 0;
 	const showBar = !isLoading && positionCount > 0;
 
