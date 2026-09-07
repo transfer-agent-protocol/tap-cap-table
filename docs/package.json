@@ -20,7 +20,7 @@
         "react-dom": "^19.1.0"
     },
     "devDependencies": {
-        "@types/node": "^24.6.2",
+        "@types/node": "^26.4.1",
         "eslint": "^9.37.0",
         "eslint-config-next": "^16.3.2",
         "pagefind": "^1.4.0",
