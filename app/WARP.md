@@ -124,13 +124,13 @@ The theme is defined in `src/components/theme.ts` and typed in `styled.d.ts`. De
 - One file per concern — don't mix buttons and form inputs in the same file.
 - Inline styled components inside PascalCase files are fine when local-only.
 - **One Button**: `Button` from `elements.tsx` with `$variant` (primary | secondary | danger | ghost), `$size` (md | lg), `$block`. Never add a second button component.
-- **Grid discipline**: pages compose `Page` / `PageHeader` / `Section` / `Stack` / `Grid` from `layout.tsx` — no ad-hoc margins in views.
+- **Grid discipline**: pages compose `Page` / `PageHeader` / `Section` / `Stack` / `Grid` from `layout.tsx` — no ad-hoc margins on company screens.
 
 ### Naming & Exports
 - Use `const Name = styled.element` syntax.
 - Pure styled-component files use **named exports** grouped at the bottom of the file.
 - Avoid `default export` for files that only export styled components.
-- Public barrel: `src/components/index.ts` (do not re-export dead modules).
+- There is no `src/components/index.ts` barrel. Import from the file that owns the component. `cap-table/index.ts` exports `CapTableDashboard` only.
 
 ### Theme Tokens
 - Always use theme tokens via `${({ theme }) => theme.colors.accent}` — never hard-code values that exist in the theme.
@@ -149,7 +149,7 @@ The theme is defined in `src/components/theme.ts` and typed in `styled.d.ts`. De
 ### Where New Code Goes
 - Buttons/panels/tables/status → `elements.tsx`; inputs → `forms.tsx`; type → `typography.tsx`; page scaffolding → `layout.tsx`; tokens → `theme.ts`.
 - App chrome (top bar, side nav, shell) → `src/components/shell/`.
-- Company workspace views/logic → `src/components/cap-table/` (domain forms in `cap-table/forms/`).
+- Company workspace screens → `src/components/cap-table/` (`Holdings`, `StockClasses`, `Shareholders`, `IssueStock`, `Transfer`, `Transactions`; domain forms in `cap-table/forms/`).
 - Wallet/onchain hooks → `src/hooks/` (`useDirect*` pattern).
 - API client wrappers → `src/services/`.
 - Product strings → `src/lib/copy.ts`.
@@ -185,7 +185,7 @@ Frontend config lives in `app/.env.local` (git-ignored). All are build-time publ
 - `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
 - `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS` — address passed as operator on `createCapTable` (usually your server wallet)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on `createCapTable`. Address only; not `PRIVATE_KEY`. The minting wallet is ADMIN (deployer) and already satisfies operator checks.
 - `NEXT_PUBLIC_WALLET_MOCK` — set to `1` only for Playwright/local mock connector (never production)
 
 See the root `.env.example` for the canonical list. Keep Mongo `factories` and this factory address aligned.

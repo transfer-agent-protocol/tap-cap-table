@@ -37,9 +37,9 @@ The protocol uses a three-tier access model:
 - **OPERATOR_ROLE**: Optional extra address granted at mint (`NEXT_PUBLIC_OPERATOR_ADDRESS`). Same day-to-day writes as ADMIN. **Not** the server `PRIVATE_KEY`. The product default is the deployer (ADMIN) operates the instance; admins already satisfy operator checks.
 - **Factory owner** (wallet that deployed that factory): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies of **that** factory via `updateCapTableImplementation()`. Has no access to individual cap tables as admin. On the shared Plume demo factory this is the protocol builder (TAP Admin); a licensed transfer agent should deploy their own factory so they own upgrades.
 
-**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API / `deploy-factory`; `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/content/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
+**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`; deployer of that cap table instance. (3) **Developer `PRIVATE_KEY`** — optional root `.env` key for server-signed `/create` / `deploy-factory`. `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted `OPERATOR_ROLE` at mint (no key on the server for the wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/content/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
 
-**Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally designate an OPERATOR address (typically the TAP server) at creation time.
+**Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally pass `NEXT_PUBLIC_OPERATOR_ADDRESS` as an extra OPERATOR.
 
 **Access control split:**
 - `onlyOperator` (server + admins): `createStockClass`, `createStakeholder`, `createStockLegendTemplate`, `issueStock`, `transferStock`, `repurchaseStock`, `retractStockIssuance`, `reissueStock`, `cancelStock`, `acceptStock`, `addWalletToStakeholder`, `removeWalletFromStakeholder`, `mintActivePositions`, `mintSharesAuthorized`
@@ -274,7 +274,6 @@ When editing pages under `docs/src/content/`, follow these conventions establish
 - **Dependency lists**: Each tool in an install/setup page should have a one-line purpose annotation so readers understand why it is required.
 - **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
-- **OCF import routes**: Any `multipart/form-data` route should include a concrete `curl -F` example, not just prose.
 - **Factory deploy page**: Prefer `pnpm deploy-factory` (auto-register) and `pnpm factory:register` over hand-editing Mongo. Compass remains optional for inspection. Document TA-owned factory vs shared demo clearly; never hardcode a stale implementation address.
 - **Diagrams**: Prefer Mermaid fenced blocks (```` ```mermaid ````) over JPG/PNG diagrams for new content. Mermaid renders inline in Nextra, respects light/dark theme, and stays editable in MDX. Existing screenshots stay — do not delete them.
 
@@ -294,7 +293,7 @@ pnpm app:start
 pnpm app:test:e2e
 ```
 
-The frontend is a Next.js 16 app in the `app/` workspace. Marketing is `/`; product is `/app/*`. Legacy `/mint` and `/manage*` redirect to `/app`. Design system, write path, and routes: [`app/WARP.md`](app/WARP.md). Generated contract hooks live in `app/src/generated.ts` — regenerate with `pnpm --filter tap-app generate:wagmi` after ABI changes.
+The frontend is a Next.js 16 app in the `app/` workspace. Marketing is `/`; product is `/app/*`. Legacy `/mint` and `/manage*` redirect to `/app`. Design system, write path, and routes: [`app/WARP.md`](app/WARP.md). `app/src/generated.ts` is codegen from `app/wagmi.config.ts` (full ABIs + wallet write hooks including `acceptStock`). Regenerate with `pnpm --filter tap-app generate:wagmi`. Do not hand-edit it.
 
 ### Deployment
 
@@ -322,8 +321,8 @@ tap-cap-table/
 │   └── package.json
 ├── chain/              # Foundry project (Solidity contracts)
 │   ├── src/            # Smart contracts
-│   ├── test/           # Solidity tests
-│   ├── script/         # Deploy scripts
+│   ├── test/           # Solidity tests (`*.t.sol` + `invariants/`)
+│   ├── scripts/        # `check-warnings.sh` (factory deploy is root `scripts/deployFactory.sh`)
 │   └── foundry.toml    # Foundry config
 ├── server/             # API server (Express + Node.js)
 │   ├── app.js          # Express app setup
@@ -356,26 +355,19 @@ tap-cap-table/
 
 ### UUID ↔ bytes16 Conversion
 
-UUIDs (128-bit) are stored as `bytes16` in Solidity. Use:
-
-- `convertUUIDToBytes16()` before sending to contract
-- `convertBytes16ToUUID()` after reading from contract
+UUIDs (128-bit) are stored as `bytes16` in Solidity. Source of truth is `@tap/units` (`uuidToBytes16` / `bytes16ToUuid`). Server `convertUUID.js` wraps those; the app uses `src/utils/uuid.ts`.
 
 ### Fixed-Point Decimals
 
-Share quantities and prices use scaled BigNumbers (1e10 precision):
-
-- `toScaledBigNumber(value)` to convert before contract calls
-- Always scale quantities and prices in transaction parameters
-- The poller unscales by 1e10 on read (`toDecimal()` in `transactionHandlers.js`). Any new direct-wallet path must scale on the write side via `@tap/units` (`scaleShares` / `scaleAmount`).
+Share quantities and prices use 1e10 (`@tap/units` `SCALE`). App and new server code should call `scaleShares` / `scaleAmount` / `unscale` from `@tap/units`. Server `convertToFixedPointDecimals.js` is a thin wrapper (`toScaledBigNumber` → `scaleAmount`, `toDecimal` → `unscale`). The poller unscales by 1e10 on read. Do not reintroduce a USD 1e6 scale.
 
 ### OCF Validation
 
 Validate all input against OCF schemas:
 
 ```javascript
-import { validateInputAgainstSchema } from "./utils/validateInputAgainstSchema.js";
-validateInputAgainstSchema(data, "Stakeholder", "object");
+import validateInputAgainstOCF from "./utils/validateInputAgainstSchema.js";
+await validateInputAgainstOCF(data, stakeholderSchema);
 ```
 
 ### Atomic Database Operations
@@ -452,7 +444,7 @@ Uses MongoDB with optional replica set for transactions:
 
 The Docker Compose file creates a single-node setup. For replica sets, use MongoDB's `--replSet` option.
 
-**Models**: OCF object types used by the poller, product UI, and zip import have Mongoose models in `server/db/objects/`.
+**Models**: OCF object types used by the poller and product UI have Mongoose models in `server/db/objects/`.
 
 ## TypeScript Configuration
 
@@ -500,17 +492,16 @@ Libraries:
 4. **Missing replica set**: Atomic operations fail without `DATABASE_REPLSET=1`.
 5. **OCF validation skipped**: Always validate input against schemas.
 6. **Contract events not emitted**: Check that contract functions emit expected events.
-7. **Preprocessor cache not populated**: Ensure seeding happens after manifest creation.
-8. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
-9. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
-10. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
-11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The Docker app service gets `NEXT_PUBLIC_*` from compose env (root `.env`). `pnpm app:dev` reads only `app/.env.local` — keep both files aligned. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables. On the shared Plume demo factory that is TAP Admin (`0x366a…`), not your issuer wallet. Only reuse a factory whose owner wallet you control.
-12. **Docker Next rewrites vs browser**: `NEXT_PUBLIC_API_URL` drives Next **server-side** `/api/*` rewrites. In the Docker app container use `http://server:8293`. Host `pnpm app:dev` uses `http://localhost:8293` in `app/.env.local`. Wrong value → mint onchain succeeds but register shows Internal Server Error.
-13. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
-14. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
-15. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
-16. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
-17. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `pnpm docker:down` removes the container; `pnpm docker:mongo` starts only Mongo.
+7. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain (developer `PRIVATE_KEY`); `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
+8. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
+9. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
+10. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The Docker app service gets `NEXT_PUBLIC_*` from compose env (root `.env`). `pnpm app:dev` reads only `app/.env.local` — keep both files aligned. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables. On the shared Plume demo factory that is TAP Admin (`0x366a…`), not your issuer wallet. Only reuse a factory whose owner wallet you control.
+11. **Docker Next rewrites vs browser**: `NEXT_PUBLIC_API_URL` drives Next **server-side** `/api/*` rewrites. In the Docker app container use `http://server:8293`. Host `pnpm app:dev` uses `http://localhost:8293` in `app/.env.local`. Wrong value → mint onchain succeeds but register shows Internal Server Error.
+12. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
+13. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
+14. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
+15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
+16. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `pnpm docker:down` removes the container; `pnpm docker:mongo` starts only Mongo.
 
 ## Debugging
 
