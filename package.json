@@ -51,7 +51,7 @@
         "tsx": "^4.7.0",
         "uuid": "^14.0.2",
         "xstate": "^4.38.2",
-        "yauzl": "^2.10.0"
+        "yauzl": "^3.4.0"
     },
     "browserslist": [
         "defaults",
