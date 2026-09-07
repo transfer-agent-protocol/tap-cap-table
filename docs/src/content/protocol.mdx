@@ -16,7 +16,7 @@ How OCF records, the API, contracts, and poller fit.
 | Layer | Source | Responsibility |
 | --- | --- | --- |
 | OCF records | `ocf/schema` and MongoDB | Offchain issuer, stakeholder, stock class, transaction, and support-record shapes. |
-| API server | `server/routes` | Validates OCF-shaped input, writes MongoDB records, and calls contracts. |
+| API server | `server/routes` | Reads, metadata registration (`/register-onchain`), and optional server-signed `/create` automation. Product day-to-day writes are wallet-first. |
 | Contracts | `chain/src` | Stores issuer, stock class, stakeholder, active position, and transaction state onchain. |
 | Event poller | `server/chain-operations/transactionPoller.ts` | Syncs contract events back into MongoDB history records. |
 

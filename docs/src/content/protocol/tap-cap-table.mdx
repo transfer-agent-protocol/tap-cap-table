@@ -2,7 +2,7 @@ import { Cards, FileTree, Callout } from 'nextra/components'
 
 # Solidity Cap Table
 
-Contracts store issuer, stock class, stakeholder, position, and transaction state. The API calls them. The poller syncs their events to MongoDB.
+Contracts store issuer, stock class, stakeholder, position, and transaction state. The product UI writes from the issuer ADMIN wallet; the optional server-signed API can also call the same functions. The poller syncs confirmed events to MongoDB.
 
 <FileTree>
   <FileTree.Folder name="chain" defaultOpen>

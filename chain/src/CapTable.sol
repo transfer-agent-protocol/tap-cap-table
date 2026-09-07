@@ -59,13 +59,11 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     function initialize(bytes16 id, string memory name, uint256 initial_shares_authorized, address admin, address operator) external initializer {
         __AccessControlDefaultAdminRules_init(0 seconds, admin);
-        // slither-disable-next-line unused-return
         _grantRole(ADMIN_ROLE, admin);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
 
         if (operator != address(0)) {
-            // slither-disable-next-line unused-return
             _grantRole(OPERATOR_ROLE, operator);
         }
 
@@ -553,25 +551,21 @@ contract CapTable is ICapTable, AccessControlDefaultAdminRulesUpgradeable {
 
     /// @inheritdoc ICapTable
     function addAdmin(address addr) external override onlyAdmin {
-        // slither-disable-next-line unused-return
         _grantRole(ADMIN_ROLE, addr);
     }
 
     /// @inheritdoc ICapTable
     function removeAdmin(address addr) external override onlyAdmin {
-        // slither-disable-next-line unused-return
         _revokeRole(ADMIN_ROLE, addr);
     }
 
     /// @inheritdoc ICapTable
     function addOperator(address addr) external override onlyAdmin {
-        // slither-disable-next-line unused-return
         _grantRole(OPERATOR_ROLE, addr);
     }
 
     /// @inheritdoc ICapTable
     function removeOperator(address addr) external override onlyAdmin {
-        // slither-disable-next-line unused-return
         _revokeRole(OPERATOR_ROLE, addr);
     }
 

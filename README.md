@@ -6,7 +6,7 @@
 
 # Transfer Agent Protocol (TAP) Cap Table
 
-An onchain cap table implementation combining Solidity smart contracts with an off-chain Node.js API server. Implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard.
+An onchain cap table implementation combining Solidity smart contracts with an offchain Node.js API server. Implements the [Open Cap Table Coalition (OCF)](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF) standard.
 
 Read official docs at [https://docs.transferagentprotocol.xyz](https://docs.transferagentprotocol.xyz/).
 

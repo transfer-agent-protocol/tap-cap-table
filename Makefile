@@ -58,5 +58,3 @@ build:
 
 clean:
 	cd chain && forge clean
-	rm -rf chain/crytic-export
-	rm -rf chain/invariant-corpus

@@ -19,17 +19,6 @@ const Form = styled.form`
 	}
 `;
 
-/** Group of related fields (Proximity: related things sit together). */
-const Fieldset = styled.fieldset`
-	display: flex;
-	flex-flow: column nowrap;
-	gap: ${({ theme }) => theme.spacing.md};
-	margin: 0;
-	padding: 0;
-	border: none;
-	min-width: 0;
-`;
-
 /** One label + input + validation unit. */
 const Field = styled.div`
 	display: flex;
@@ -110,19 +99,4 @@ const Select = styled.select`
 	}
 `;
 
-const TextArea = styled.textarea`
-	${inputBase}
-	height: auto;
-	min-height: 8rem;
-	padding: ${({ theme }) => theme.spacing.md};
-	resize: vertical;
-`;
-
-/** Inline error under a field. */
-const ValidationMessage = styled.span`
-	display: block;
-	color: ${({ theme }) => theme.colors.error};
-	font-size: ${({ theme }) => theme.fontSizes.small};
-`;
-
-export { Form, Fieldset, Field, FieldRow, FieldLabel, TextInput, Select, TextArea, ValidationMessage };
+export { Form, Field, FieldRow, FieldLabel, TextInput, Select };

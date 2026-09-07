@@ -9,8 +9,6 @@ import Valuation from "../objects/Valuation.js";
 import VestingTerms from "../objects/VestingTerms.js";
 import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIssuance.js";
 import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
-import StockIssuance from "../objects/transactions/issuance/StockIssuance.js";
-import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
 import { findOne, save } from "./atomic.ts";
 
 export const createIssuer = (issuerData) => {
@@ -60,20 +58,12 @@ export const createHistoricalTransaction = async (transactionHistoryData) => {
     return save(new HistoricalTransaction(transactionHistoryData));
 };
 
-export const createStockIssuance = (stockIssuanceData) => {
-    return save(new StockIssuance(stockIssuanceData));
-};
-
 export const createEquityCompensationIssuance = (issuanceData) => {
     return save(new EquityCompensationIssuance(issuanceData));
 };
 
 export const createConvertibleIssuance = (issuanceData) => {
     return save(new ConvertibleIssuance(issuanceData));
-};
-
-export const createStockTransfer = (stockTransferData) => {
-    return save(new StockTransfer(stockTransferData));
 };
 
 export const createFactory = (factoryData) => {

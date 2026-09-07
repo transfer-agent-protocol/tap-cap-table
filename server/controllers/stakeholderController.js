@@ -1,5 +1,4 @@
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
-import { ethers } from "ethers";
 
 /**
  * Stakeholder controller.

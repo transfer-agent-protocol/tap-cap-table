@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import { Test } from "forge-std/Test.sol";
 import { CapTable } from "../../src/CapTable.sol";
-import { CapTableFactory } from "../../src/CapTableFactory.sol";
 import {
     InitialShares,
     IssuerInitialShares,
@@ -25,7 +24,6 @@ contract CapTableHandler is Test {
     }
 
     CapTable public capTable;
-    CapTableFactory public factory;
     address public admin;
     CapTableIssuanceDecoder public immutable issuanceDecoder;
 
@@ -43,9 +41,8 @@ contract CapTableHandler is Test {
 
     bytes32 private constant ISSUANCE_OBJECT_TYPE = keccak256("TX_STOCK_ISSUANCE");
 
-    constructor(CapTable _capTable, CapTableFactory _factory, address _admin) {
+    constructor(CapTable _capTable, address _admin) {
         capTable = _capTable;
-        factory = _factory;
         admin = _admin;
         issuanceDecoder = new CapTableIssuanceDecoder();
     }

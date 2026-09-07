@@ -73,7 +73,7 @@ After the import finishes, use the returned issuer record for later API calls, t
 
 ## Read issuer records
 
-- `GET /issuer/id/:id` returns a small issuer lookup, not the full issuer detail object.
+- `GET /issuer/full/:id` returns the full issuer document.
 - `GET /issuer/total-number` returns the issuer count.
 
 For most workflows, the response from `POST /issuer/create` or `POST /issuer/register` is still the main issuer record you keep.
@@ -81,7 +81,7 @@ For most workflows, the response from `POST /issuer/create` or `POST /issuer/reg
 ## Verify
 
 1. Confirm the response contains `_id`, `deployed_to`, and `tx_hash`.
-2. `GET /issuer/id/:id` with the returned `_id` should succeed.
+2. `GET /issuer/full/:id` with the returned `_id` should succeed.
 3. After ~20 seconds, `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` should include any seeded transactions (manifest imports only).
 
 ## What's next?

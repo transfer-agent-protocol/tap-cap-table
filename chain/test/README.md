@@ -19,7 +19,7 @@
 | `StockClass.t.sol` | Unit | CRUD + duplicates |
 | `Wallet.t.sol` | Unit | Wallet mapping |
 | `Minting.t.sol` | Unit | Batch minting |
-| `CapTableFactory.sol` | Unit | Factory + upgrades |
+| `CapTableFactory.t.sol` | Unit | Factory + upgrades |
 | `invariants/` | Invariant | Stateful fuzzing for accounting rules |
 
 ## Why Both Unit & Invariant Tests

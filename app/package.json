@@ -11,7 +11,6 @@
         "start": "next start",
         "typecheck": "tsc --noEmit",
         "typecheck:watch": "pnpm run typecheck -- --watch",
-        "start:ci": "INSECURE_AUTH=true pnpm run start",
         "eslint": "eslint --cache --cache-location=node_modules/.cache/.eslintcache --fix",
         "lint": "eslint src/",
         "test:nav": "node --import tsx --test src/components/shell/navConfig.test.ts src/components/cap-table/ownershipModel.test.ts src/utils/myIssuers.test.ts src/utils/holdingStatus.test.ts src/utils/activityLog.test.ts src/components/wallet/orderConnectors.test.ts src/components/wallet/recentConnector.test.ts",
@@ -22,12 +21,10 @@
     "dependencies": {
         "@tanstack/react-query": "^5.90.20",
         "@tap/units": "workspace:*",
-        "@wagmi/core": "^3.3.2",
         "next": "^16.3.2",
         "next-sitemap": "^4.2.3",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
-        "react-gtm-module": "^2.0.11",
         "styled-components": "^6.3.8",
         "viem": "^2.45.1",
         "wagmi": "3.4.2"

@@ -28,7 +28,7 @@ contract CapTableInvariants is Test {
         capTable = CapTable(capTableAddr);
 
         // Deploy handler
-        handler = new CapTableHandler(capTable, factory, admin);
+        handler = new CapTableHandler(capTable, admin);
 
         // Set handler as the target contract for invariant testing
         targetContract(address(handler));
@@ -165,13 +165,5 @@ contract CapTableInvariants is Test {
         }
 
         assertEq(sumIssued, issuerIssued, "Sum of stock class shares_issued does not match issuer");
-    }
-
-    /// @notice Called after each invariant run - can be used for logging/metrics
-    function afterInvariant() public view {
-        // Invariant run completed successfully
-        // Enable console.log statements below with -vvv for debugging
-        // console.log("Stakeholders created:", handler.getStakeholderCount());
-        // console.log("Stock classes created:", handler.getStockClassCount());
     }
 }

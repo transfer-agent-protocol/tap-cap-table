@@ -7,6 +7,7 @@ The canonical, always-up-to-date agent guidance for this repo lives in the `WARP
 - [`WARP.md`](./WARP.md) — monorepo architecture, development commands, important patterns, security tooling, and Git workflow.
 - [`app/WARP.md`](./app/WARP.md) — frontend (`tap-app`) conventions: routes under `/app`, styled-components, wallet/web3, generated contract hooks, direct-wallet write path.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch, commit, and pull-request conventions.
+- Setup docs: [`docs/src/content/development/setup.mdx`](./docs/src/content/development/setup.mdx) (not `docs/src/pages/`). Local stack troubleshooting: [`docs/src/content/development/run-server.mdx`](./docs/src/content/development/run-server.mdx).
 
 ## Initial setup (agents)
 
