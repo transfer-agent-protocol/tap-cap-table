@@ -19,14 +19,15 @@ issuer.get("/", async (req, res) => {
     res.send(`Hello issuer!`);
 });
 
-//WIP get routes are currently fetching offchain.
 issuer.get("/id/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
-        const { issuerId, type, role } = await readIssuerById(id);
-
-        res.status(200).send({ issuerId, type, role });
+        const issuerDoc = await readIssuerById(id);
+        if (!issuerDoc) {
+            return res.status(404).send("Issuer not found");
+        }
+        res.status(200).send(issuerDoc);
     } catch (error) {
         console.error(error);
         res.status(500).send(`${error}`);

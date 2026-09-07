@@ -66,7 +66,7 @@ export const convertAndCreateIssuanceStockOnchain = async (contract, issuance) =
         quantity: toScaledBigNumber(quantity),
         vesting_terms_id: convertUUIDToBytes16(vesting_terms_id),
         cost_basis, // not converted
-        stock_legend_ids,
+        stock_legend_ids: StockLegendIdsBytes16,
         issuance_type,
         comments,
         custom_id,

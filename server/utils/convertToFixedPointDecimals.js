@@ -1,35 +1,26 @@
 import { toBigInt } from "ethers";
+import { SCALE, scaleAmount, unscale } from "@tap/units";
 
-export const decimalScaleValue = 1e10;
-export const usdcDecimalScaleValue = 1e6;
+/** Protocol scale is always 1e10. Do not use a USD/USDC 1e6 fork. */
+export const decimalScaleValue = Number(SCALE);
 
-function getScale(currency) {
-    if (currency === "USD") {
-        return usdcDecimalScaleValue;
-    }
-    return decimalScaleValue;
+function toScaledBigNumber(value) {
+    return scaleAmount(value);
 }
 
-// Convert a price to a BigInt
-function toScaledBigNumber(price, currency) {
-    return toBigInt(Math.round(price * getScale(currency)).toString());
-}
-
-// TODO: might not be refactored correctly from ethers v5 to v6
-// Convert a BigInt back to a decimal price
-function toDecimal(scaledPriceBigInt, currency) {
+function toDecimal(scaledPriceBigInt) {
     if (typeof scaledPriceBigInt === "bigint") {
-        const numberString = scaledPriceBigInt.toString();
-        return parseFloat(numberString / getScale(currency)).toString();
-    } else {
-        return scaledPriceBigInt;
+        return unscale(scaledPriceBigInt);
     }
+    if (typeof scaledPriceBigInt === "number" || typeof scaledPriceBigInt === "string") {
+        try {
+            return unscale(scaledPriceBigInt);
+        } catch {
+            return scaledPriceBigInt;
+        }
+    }
+    return scaledPriceBigInt;
 }
-
-// const convertTimeStampToUint40 = (date) => {
-//     const datetime = new Date(date);
-//     return toBigInt(Math.floor(datetime.getTime() / 1000)).toNumber();
-// };
 
 const convertTimeStampToUint40 = (date) => {
     const datetime = new Date(date);

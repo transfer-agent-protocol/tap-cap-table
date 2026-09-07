@@ -3,8 +3,8 @@ import Issuer from "../db/objects/Issuer";
 import Stakeholder from "../db/objects/Stakeholder";
 import StockClass from "../db/objects/StockClass";
 import { StockIssuance } from "../db/objects/transactions/issuance";
+import { unscale } from "@tap/units";
 import { getIssuerContract } from "../utils/caches";
-import { decimalScaleValue } from "../utils/convertToFixedPointDecimals";
 import { convertUUIDToBytes16 } from "../utils/convertUUID";
 
 export const capTable = Router();
@@ -64,18 +64,15 @@ capTable.get("/holdings/stock", async (req, res) => {
 						convertUUIDToBytes16(stakeholder._id),
 						convertUUIDToBytes16(stockClass._id),
 					);
-					if (quantity == 0n || quantity === 0 || quantity === "0") {
-						continue;
-					}
-					const q = Number(quantity);
-					const qp = Number(quantityPrice);
-					if (!Number.isFinite(q) || q === 0) continue;
-					const sharePrice = q !== 0 ? qp / q : 0;
+					const q = typeof quantity === "bigint" ? quantity : BigInt(quantity);
+					if (q === 0n) continue;
+					const qp = typeof quantityPrice === "bigint" ? quantityPrice : BigInt(quantityPrice);
+					const sharePriceScaled = qp / q;
 					holdings.push({
 						stockClass,
 						stakeholder,
-						quantity: q / decimalScaleValue,
-						sharePrice: sharePrice / decimalScaleValue,
+						quantity: Number(unscale(q)),
+						sharePrice: Number(unscale(sharePriceScaled)),
 						timestamp: Number(timestamp),
 					});
 				} catch (pairErr) {
