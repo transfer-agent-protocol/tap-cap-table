@@ -1,15 +1,15 @@
 import { useState, type ReactNode } from "react";
 import styled from "styled-components";
-import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
-import { Button, StatusMessage } from "../../elements";
-import { H3, MutedText } from "../../typography";
-import { TextInput } from "../../forms";
-import { DataTable, type Column } from "../../DataTable";
-import { StakeholderForm } from "../forms/StakeholderForm";
-import { copy, shortTx } from "../../../lib/copy";
-import type { StakeholderData } from "../../../services/createStakeholder";
-import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
-import { formatRelationship, formatStakeholderType } from "../types";
+import { Section, SectionActions, SectionHeader, Stack } from "../layout";
+import { Button, StatusMessage } from "../elements";
+import { H3, MutedText } from "../typography";
+import { TextInput } from "../forms";
+import { DataTable, type Column } from "../DataTable";
+import { StakeholderForm } from "./forms/StakeholderForm";
+import { copy, shortTx } from "../../lib/copy";
+import type { StakeholderData } from "../../services/createStakeholder";
+import { EXPLORER_TX, type ActivityEntry } from "../../utils/activityLog";
+import { formatRelationship, formatStakeholderType } from "./types";
 
 const SearchInput = styled(TextInput)`
 	max-width: 16rem;
@@ -17,7 +17,7 @@ const SearchInput = styled(TextInput)`
 	font-size: ${({ theme }) => theme.fontSizes.small};
 `;
 
-interface ShareholdersViewProps {
+export interface ShareholdersProps {
 	stakeholders: any[];
 	activityLog: ActivityEntry[];
 	isLoading: boolean;
@@ -86,7 +86,7 @@ const columns: Column<ShareholderRow>[] = [
 	{ key: "tx", header: "Transaction", width: "16%", render: (r) => r.tx },
 ];
 
-export function ShareholdersView({
+export function Shareholders({
 	stakeholders,
 	activityLog,
 	isLoading,
@@ -96,10 +96,9 @@ export function ShareholdersView({
 	onSubmit,
 	toolbar,
 	holdings = [],
-}: ShareholdersViewProps) {
+}: ShareholdersProps) {
 	const [query, setQuery] = useState("");
 
-	// Aggregate positions per shareholder for the Total shares / Holdings columns
 	const sharesByHolder = new Map<string, { total: number; count: number }>();
 	for (const h of holdings) {
 		const id = h.stakeholder?._id;

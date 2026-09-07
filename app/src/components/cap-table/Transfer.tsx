@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { Section, SectionHeader, Stack } from "../../layout";
-import { StatusMessage } from "../../elements";
-import { H3, MutedText } from "../../typography";
-import { TransferStockForm, type TransferStockFormData } from "../forms/TransferStockForm";
-import { copy } from "../../../lib/copy";
+import { Section, SectionHeader, Stack } from "../layout";
+import { StatusMessage } from "../elements";
+import { H3, MutedText } from "../typography";
+import { TransferStockForm, type TransferStockFormData } from "./forms/TransferStockForm";
+import { copy } from "../../lib/copy";
 
-interface TransferStockViewProps {
+export interface TransferProps {
 	stakeholders: any[];
 	stockClasses: any[];
 	holdings: any[];
@@ -15,7 +15,7 @@ interface TransferStockViewProps {
 	toolbar: ReactNode;
 }
 
-export function TransferStockView({
+export function Transfer({
 	stakeholders,
 	stockClasses,
 	holdings,
@@ -23,7 +23,7 @@ export function TransferStockView({
 	syncNote,
 	onSubmit,
 	toolbar,
-}: TransferStockViewProps) {
+}: TransferProps) {
 	const hasPositions = holdings.some((h) => Number(h.quantity) > 0);
 	const canTransfer = hasPositions && stakeholders.length >= 2;
 

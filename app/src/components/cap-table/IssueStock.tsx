@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { Section, SectionHeader, Stack } from "../../layout";
-import { StatusMessage } from "../../elements";
-import { H3, MutedText } from "../../typography";
-import { IssueStockForm } from "../forms/IssueStockForm";
-import { copy } from "../../../lib/copy";
-import type { StockIssuanceData } from "../../../services/createStockIssuance";
+import { Section, SectionHeader, Stack } from "../layout";
+import { StatusMessage } from "../elements";
+import { H3, MutedText } from "../typography";
+import { IssueStockForm } from "./forms/IssueStockForm";
+import { copy } from "../../lib/copy";
+import type { StockIssuanceData } from "../../services/createStockIssuance";
 
-interface IssueStockViewProps {
+export interface IssueStockProps {
 	stockClasses: any[];
 	stakeholders: any[];
 	isLoading: boolean;
@@ -15,14 +15,14 @@ interface IssueStockViewProps {
 	toolbar: ReactNode;
 }
 
-export function IssueStockView({
+export function IssueStock({
 	stockClasses,
 	stakeholders,
 	isLoading,
 	syncNote,
 	onSubmit,
 	toolbar,
-}: IssueStockViewProps) {
+}: IssueStockProps) {
 	const disabled = isLoading || stockClasses.length === 0 || stakeholders.length === 0;
 	const hint =
 		!isLoading && stakeholders.length === 0

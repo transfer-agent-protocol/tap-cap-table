@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
-import { Section, SectionActions, SectionHeader, Stack } from "../../layout";
-import { Button, StatusMessage } from "../../elements";
-import { H3, MutedText } from "../../typography";
-import { DataTable, type Column } from "../../DataTable";
-import { StockClassForm } from "../forms/StockClassForm";
-import { copy, shortTx } from "../../../lib/copy";
-import type { StockClassData } from "../../../services/createStockClass";
-import { EXPLORER_TX, type ActivityEntry } from "../../../utils/activityLog";
-import { formatClassType, type OptimisticStockClass } from "../types";
+import { Section, SectionActions, SectionHeader, Stack } from "../layout";
+import { Button, StatusMessage } from "../elements";
+import { H3, MutedText } from "../typography";
+import { DataTable, type Column } from "../DataTable";
+import { StockClassForm } from "./forms/StockClassForm";
+import { copy, shortTx } from "../../lib/copy";
+import type { StockClassData } from "../../services/createStockClass";
+import { EXPLORER_TX, type ActivityEntry } from "../../utils/activityLog";
+import { formatClassType, type OptimisticStockClass } from "./types";
 
-interface StockClassesViewProps {
+export interface StockClassesProps {
 	stockClasses: any[];
 	sessionClasses: OptimisticStockClass[];
 	activityLog: ActivityEntry[];
@@ -77,7 +77,7 @@ const columns: Column<ClassRow>[] = [
 	{ key: "tx", header: "Transaction", width: "16%", render: (r) => r.tx },
 ];
 
-export function StockClassesView({
+export function StockClasses({
 	stockClasses,
 	sessionClasses,
 	activityLog,
@@ -89,8 +89,7 @@ export function StockClassesView({
 	onSubmit,
 	toolbar,
 	holdings = [],
-}: StockClassesViewProps) {
-	// Issued per class from current positions
+}: StockClassesProps) {
 	const issuedByClass = new Map<string, number>();
 	for (const h of holdings) {
 		const id = h.stockClass?._id;

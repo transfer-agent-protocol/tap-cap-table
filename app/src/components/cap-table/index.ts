@@ -1,6 +1,6 @@
 /**
  * Cap-table feature module.
- * Orchestrator + views for the company workspace.
+ * CapTableDashboard is the company workspace shell; screens are named after the left nav.
  */
 export { CapTableDashboard } from "./CapTableDashboard";
 export type {
