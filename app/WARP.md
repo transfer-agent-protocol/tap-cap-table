@@ -75,7 +75,8 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
 - `src/config/wagmi.ts` — pure `createConfig`. Networks: **Plume Mainnet (98866)**, **Plume Testnet (98867)**, **Anvil (31337)**. EIP-6963 injected wallets.
 
 ### Contract Bindings (wagmi codegen)
-- `src/generated.ts` is produced by `wagmi.config.ts` (`@wagmi/cli` foundry + react plugins). **Do not hand-edit it.**
+- `src/generated.ts` is produced by `wagmi.config.ts` (foundry plugin for full ABIs + a filtered react plugin for wallet write hooks). **Do not hand-edit it.**
+- Generated writes: `createCapTable`, `createStakeholder`, `createStockClass`, `issueStock`, `transferStock`, and `acceptStock` (kept for upcoming UI). Read/simulate/watch hooks are not generated.
 - Regenerate after ABI changes: `pnpm generate:wagmi` (from `app/`) or `pnpm --filter tap-app generate:wagmi` (from root). Contracts must be built first (`pnpm setup` / `forge build` in `chain/`).
 - Prefer `useWriteCapTable*` hooks from `generated` (or re-exports in `config/contracts.ts`).
 
