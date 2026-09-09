@@ -19,21 +19,21 @@
         "generate:wagmi": "wagmi generate"
     },
     "dependencies": {
-        "@tanstack/react-query": "^5.90.20",
+        "@tanstack/react-query": "^5.102.8",
         "@tap/units": "workspace:*",
-        "next": "^16.3.2",
+        "next": "^16.3.4",
         "next-sitemap": "^4.2.3",
-        "react": "^19.1.0",
-        "react-dom": "^19.1.0",
-        "styled-components": "^6.3.8",
-        "viem": "^2.45.1",
-        "wagmi": "3.4.2"
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "styled-components": "^6.5.3",
+        "viem": "^2.56.3",
+        "wagmi": "3.7.7"
     },
     "devDependencies": {
         "@playwright/test": "^1.61.1",
         "@types/node": "^22.0.0",
-        "@types/react": "^19.1.0",
-        "@types/react-dom": "^19.1.0",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.7",
         "@wagmi/cli": "^2.9.0",
         "eslint": "^9.37.0",
         "eslint-config-next": "^16.3.2",
