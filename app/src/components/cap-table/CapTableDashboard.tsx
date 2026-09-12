@@ -18,7 +18,10 @@ import {
 	type SuccessModalState,
 } from "./types";
 import { CapTableToolbar } from "./CapTableToolbar";
-import { useCapTableWrites } from "./useCapTableWrites";
+import { useCreateStockClass } from "./useCreateStockClass";
+import { useCreateShareholder } from "./useCreateShareholder";
+import { useIssueStockWrite } from "./useIssueStockWrite";
+import { useTransferStockWrite } from "./useTransferStockWrite";
 import { Holdings } from "./Holdings";
 import { Shareholders } from "./Shareholders";
 import { StockClasses } from "./StockClasses";
@@ -88,13 +91,26 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		""
 	) as `0x${string}` | "";
 
-	const writes = useCapTableWrites({
+	const writeHost = {
 		issuerId: issuerResult._id,
 		capTableAddress,
-		holdings: manager.holdings,
 		refreshHoldings: manager.refreshHoldings,
 		setSuccessModal,
 		setActivityLog,
+	};
+	const stockClassWrite = useCreateStockClass(writeHost);
+	const shareholderWrite = useCreateShareholder(writeHost);
+	const issueWrite = useIssueStockWrite({
+		...writeHost,
+		holdings: manager.holdings,
+		sessionClasses: stockClassWrite.directStockClasses,
+		sessionPeople: shareholderWrite.directStakeholders,
+	});
+	const transferWrite = useTransferStockWrite({
+		...writeHost,
+		holdings: manager.holdings,
+		sessionClasses: stockClassWrite.directStockClasses,
+		sessionPeople: shareholderWrite.directStakeholders,
 	});
 
 	useEffect(() => {
@@ -152,31 +168,31 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		if (currentView === "transactions" || currentView === "overview") {
 			loadHistory();
 		}
-	}, [currentView, loadHistory, writes.directIssuances.length]);
+	}, [currentView, loadHistory, issueWrite.directIssuances.length]);
 
 	const stockClassOptions = useMemo(() => {
 		const fromHoldings = manager.holdings?.stockClasses || [];
-		return dedupeById([...fromHoldings, ...writes.directStockClasses]);
-	}, [manager.holdings?.stockClasses, writes.directStockClasses]);
+		return dedupeById([...fromHoldings, ...stockClassWrite.directStockClasses]);
+	}, [manager.holdings?.stockClasses, stockClassWrite.directStockClasses]);
 
 	const issuableStockClasses = useMemo(() => {
 		return stockClassOptions.filter((sc: any) => {
 			if (sc.onchain) return true;
 			if (sc.is_onchain_synced === true) return true;
-			const session = writes.directStockClasses.find((d) => d._id === sc._id);
+			const session = stockClassWrite.directStockClasses.find((d) => d._id === sc._id);
 			if (session) return !!session.onchain;
 			if (sc.is_onchain_synced === false) return false;
 			return true;
 		});
-	}, [stockClassOptions, writes.directStockClasses]);
+	}, [stockClassOptions, stockClassWrite.directStockClasses]);
 
 	const stakeholderOptions = useMemo(() => {
 		const fromServer = manager.holdings?.stakeholders || [];
 		const fromHoldings = (manager.holdings?.holdings || [])
 			.map((h: { stakeholder?: any }) => h.stakeholder)
 			.filter(Boolean);
-		return dedupeById([...fromServer, ...fromHoldings, ...writes.directStakeholders]);
-	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, writes.directStakeholders]);
+		return dedupeById([...fromServer, ...fromHoldings, ...shareholderWrite.directStakeholders]);
+	}, [manager.holdings?.stakeholders, manager.holdings?.holdings, shareholderWrite.directStakeholders]);
 
 	const syncedHoldingKeys = new Set(
 		(manager.holdings?.holdings || []).map(
@@ -184,11 +200,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		),
 	);
 	const hasPendingSync =
-		writes.pendingStockClass ||
-		writes.pendingStakeholder ||
-		writes.pendingIssuance ||
-		writes.pendingTransfer ||
-		writes.directIssuances.some((iss) => issuanceStillSyncing(iss, syncedHoldingKeys));
+		stockClassWrite.pendingStockClass ||
+		shareholderWrite.pendingStakeholder ||
+		issueWrite.pendingIssuance ||
+		transferWrite.pendingTransfer ||
+		issueWrite.directIssuances.some((iss) => issuanceStillSyncing(iss, syncedHoldingKeys));
 
 	useEffect(() => {
 		setHasPendingSyncFlag(hasPendingSync);
@@ -237,11 +253,11 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const peopleCount = stakeholderOptions.length;
 	const positionCount =
 		(manager.holdings?.holdings || []).length +
-		writes.directIssuances.filter((i) => i.confirmed || i.txHash).length;
+		issueWrite.directIssuances.filter((i) => i.confirmed || i.txHash).length;
 	const ghostClassCount = stockClassOptions.length - onchainClassCount;
 
 	const holdingsEmptyHint =
-		positionCount === 0 && writes.directIssuances.length === 0
+		positionCount === 0 && issueWrite.directIssuances.length === 0
 			? onchainClassCount === 0
 				? "Nothing issued yet. Create a stock class, add a shareholder, then issue stock."
 				: peopleCount === 0
@@ -263,9 +279,9 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 	const holdingsTable = (
 		<HoldingsTable
 			holdingsData={manager.holdings}
-			createdStockClasses={writes.directStockClasses}
-			createdStakeholders={writes.directStakeholders}
-			createdIssuances={writes.directIssuances}
+			createdStockClasses={stockClassWrite.directStockClasses}
+			createdStakeholders={shareholderWrite.directStakeholders}
+			createdIssuances={issueWrite.directIssuances}
 			isLoading={manager.isLoadingHoldings}
 			error={manager.holdingsError}
 			emptyHint={holdingsEmptyHint}
@@ -277,14 +293,14 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 		main = (
 			<StockClasses
 				stockClasses={stockClassOptions}
-				sessionClasses={writes.directStockClasses}
+				sessionClasses={stockClassWrite.directStockClasses}
 				activityLog={activityLog}
 				ghostClassCount={ghostClassCount}
 				isLoading={manager.isLoadingHoldings}
 				syncNote={syncNote}
 				adding={addingStockClass}
 				onAddingChange={setAddingStockClass}
-				onSubmit={writes.handleStockClass}
+				onSubmit={stockClassWrite.handleStockClass}
 				toolbar={toolbar}
 				holdings={manager.holdings?.holdings || []}
 			/>
@@ -299,7 +315,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				holdings={manager.holdings?.holdings || []}
 				adding={addingShareholder}
 				onAddingChange={setAddingShareholder}
-				onSubmit={writes.handleStakeholder}
+				onSubmit={shareholderWrite.handleStakeholder}
 				toolbar={toolbar}
 			/>
 		);
@@ -310,7 +326,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				stakeholders={stakeholderOptions}
 				isLoading={manager.isLoadingHoldings}
 				syncNote={syncNote}
-				onSubmit={writes.handleIssuance}
+				onSubmit={issueWrite.handleIssuance}
 				toolbar={toolbar}
 			/>
 		);
@@ -322,7 +338,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				holdings={manager.holdings?.holdings || []}
 				isLoading={manager.isLoadingHoldings}
 				syncNote={syncNote}
-				onSubmit={writes.handleTransfer}
+				onSubmit={transferWrite.handleTransfer}
 				toolbar={toolbar}
 			/>
 		);
@@ -349,7 +365,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				toolbar={toolbar}
 				holdingsTable={holdingsTable}
 				holdingsData={manager.holdings}
-				createdIssuances={writes.directIssuances}
+				createdIssuances={issueWrite.directIssuances}
 				onNavigate={goTo}
 			/>
 		);
