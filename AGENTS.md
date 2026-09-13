@@ -32,7 +32,7 @@ pnpm app:dev                         # http://localhost:3000/app  (reads app/.en
 
 ### Factory mental model (do not confuse)
 
-1. **Protocol builder** — ships BUSL contracts; owns the **shared demo** factory on Plume (`0xcd6…`, owner TAP Admin `0x366a…`). Beacon upgrades for that demo deployment.
+1. **Protocol builder** — ships BUSL contracts; owns the **shared demo** factory on Plume (`0xcd6…`, factory owner `0x366a…`). TAP Admin (product wallet) is `0x3601…`. Beacon upgrades for that demo deployment.
 2. **Transfer-agent business** — deploys **their own** `CapTableFactory` (`pnpm deploy-factory`). That factory is their book of business (many issuer cap tables).
 3. **Issuer ADMIN** — calls `createCapTable` on a factory (permissionless); becomes admin of **that** cap table. Wallet manage UI is this path. Using the shared factory ≠ owning it.
 4. **Mongo `factories`** — local mirror only (`factory:register` / deploy auto-register). Not onchain ownership.
