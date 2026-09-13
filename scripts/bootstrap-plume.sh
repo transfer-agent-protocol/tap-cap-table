@@ -14,7 +14,7 @@ set -e
 #   7. Bring up mongodb + server (+ app) via docker compose
 #   8. Wait for API health
 #   9. Factory: never hardcode impl. Deploy your own (pnpm deploy-factory) or
-#      REUSE_TAP_FACTORY=1 to register the shared demo factory (owner = TAP Admin).
+#      REUSE_TAP_FACTORY=1 to register the shared demo factory (owner = 0x366a deploy key).
 #
 # Overrides: API_URL, REUSE_TAP_FACTORY=1, SKIP_APP=1 (mongo+server only).
 #
@@ -26,7 +26,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$ROOT_DIR"
 
 # Shared demo CapTableFactory on Plume (protocol-builder demo deployment).
-# Factory owner (beacon upgrades) is TAP Admin 0x366a… — NOT your issuer wallet.
+# Factory owner (beacon upgrades) is 0x366a… (deploy key). TAP Admin is 0x3601….
 # createCapTable is permissionless; issuers mint cap tables through this factory
 # without owning it. Licensed TAs should deploy their OWN factory instead.
 TAP_FACTORY_ADDRESS="0xcd6Df14406b0569ceEABa884A18717774EdeaCA1"
@@ -130,7 +130,7 @@ if [ "${FACTORY_COUNT:-0}" -gt 0 ]; then
     echo "✅ Factory already registered in Mongo (count=$FACTORY_COUNT) — leaving as-is."
 elif [ "${REUSE_TAP_FACTORY:-0}" = "1" ]; then
     echo "🌱 REUSE_TAP_FACTORY=1 — registering shared demo factory $TAP_FACTORY_ADDRESS (impl read onchain)..."
-    echo "   Beacon upgrades stay with that factory's owner (TAP Admin / protocol builder)."
+    echo "   Beacon upgrades stay with that factory's owner (0x366a… deploy key)."
     echo "   This is the demo/issuer-dev path — not the same as owning a transfer-agent factory."
     pnpm factory:register --factory "$TAP_FACTORY_ADDRESS"
 else
@@ -138,7 +138,7 @@ else
     echo "   Transfer-agent / production path — deploy YOUR factory (you become owner):"
     echo "      pnpm deploy-factory          # CapTable + CapTableFactory + auto Mongo register"
     echo "   Then set NEXT_PUBLIC_FACTORY_ADDRESS in app/.env.local to the printed factory address."
-    echo "   Demo/issuer-dev path — reuse TAP's shared Plume factory (owner is TAP Admin, not you):"
+    echo "   Demo/issuer-dev path — reuse TAP's shared Plume factory (owner is 0x366a…, not TAP Admin 0x3601…):"
     echo "      REUSE_TAP_FACTORY=1 pnpm bootstrap"
 fi
 

@@ -62,9 +62,25 @@ export default function Home() {
 					</thead>
 					<tbody>
 						<tr>
-							<td>TAP Admin / factory owner (demo)</td>
+							<td>TAP Admin</td>
 							<td>
-								<a href="https://explorer.plume.org/address/0x366aA809015061C101983900d0c2ebf7d71B96AF">
+								<a
+									href="https://explorer.plume.org/address/0x3601a913fD3466f30f5ABb978E484d1B37Ce995D"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									0x3601a913fD3466f30f5ABb978E484d1B37Ce995D
+								</a>
+							</td>
+						</tr>
+						<tr>
+							<td>Factory owner (beacon upgrades)</td>
+							<td>
+								<a
+									href="https://explorer.plume.org/address/0x366aA809015061C101983900d0c2ebf7d71B96AF"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
 									0x366aA809015061C101983900d0c2ebf7d71B96AF
 								</a>
 							</td>
