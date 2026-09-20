@@ -1,5 +1,5 @@
 const meta = {
-    "create-issuer": "Register or Import Issuer",
+    "create-issuer": "Register Issuer",
     "read-history": "View History",
     "append-history": "Add New History",
 };

@@ -5,7 +5,7 @@ import { NextActions } from '../../components/ContentPatterns';
 
 With an issuer, stock class, and stakeholder created, you can now issue stock to stakeholders. This is the first actual transaction on your cap table.
 
-In the primary `/app` flow, the connected ADMIN wallet calls `issueStock` directly. After confirmation, the app validates optimistic metadata through `POST /transactions/issuance/stock/register-onchain`; the poller writes the canonical issuance and chain-generated IDs. The server-signed alternative below calls `issuanceController.js`.
+In `/app`, open `/app/companies/<issuerId>?view=issue-stock`. The connected ADMIN wallet calls `issueStock`. After confirmation, the app validates optimistic metadata through `POST /transactions/issuance/stock/register-onchain`; the poller writes the canonical issuance and chain-generated IDs. The server-signed alternative below calls `issuanceController.js`.
 
 <Steps>
 

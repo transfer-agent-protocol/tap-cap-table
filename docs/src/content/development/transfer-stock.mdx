@@ -3,7 +3,7 @@ import { NextActions } from '../../components/ContentPatterns';
 
 # Transfer Stock
 
-The primary `/app` transfer flow calls `CapTable.transferStock` directly from the connected ADMIN wallet. There is no transfer registration endpoint: the poller mirrors the confirmed `TransferStock` transaction into MongoDB. The server-signed API alternative below uses `transferController.js`.
+In `/app`, open `/app/companies/<issuerId>?view=transfer-stock`. The connected ADMIN wallet calls `CapTable.transferStock`. There is no transfer registration endpoint: the poller mirrors the confirmed transfer into MongoDB. The server-signed API alternative below uses `transferController.js`.
 
 Transfer shares from one stakeholder to another. The recipient (transferee) must already exist on the cap table before you can transfer stock to them.
 
@@ -60,7 +60,7 @@ GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>
 
 ## Partial transfers
 
-If `quantity` is less than the current position on `security_id`, the contract automatically issues a *balance security* back to the transferor for the leftover shares. The new `security_id` shows up in [history](/development/historical-transactions); use it for any later action on the leftover position.
+The transfer API body has no `security_id`. `transferStock` walks the transferor's live lots for that stock class and salts new issuance/security ids with an in-memory `issuanceOrdinal` so multi-lot transfers stay distinct. If the requested quantity is less than a lot, the contract issues a balance security to the transferor for the leftover shares. Read the new `security_id` from [history](/development/historical-transactions) after the poller catches up; do not reuse validation UUIDs from `/transactions/issuance/stock`.
 
 ## What's next?
 

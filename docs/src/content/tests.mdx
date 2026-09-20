@@ -10,6 +10,9 @@ Start with **Before a PR** when choosing checks for a change. The matrices below
 | Solidity logic | `make test` |
 | Share accounting or lifecycle | `make test && make test-invariant` |
 | Frontend | `pnpm app:build` |
+| App unit tests | `pnpm --filter tap-app test:nav` |
+| App e2e | `pnpm app:test:e2e` |
+| Shared units | `pnpm test:units` |
 
 ## Commands
 
@@ -22,6 +25,11 @@ Start with **Before a PR** when choosing checks for a change. The matrices below
 | Deep invariants | `make test-invariant-deep` |
 | Docs build | `pnpm docs:build` |
 | Frontend build | `pnpm app:build` |
+| App unit tests | `pnpm --filter tap-app test:nav` |
+| App e2e | `pnpm app:test:e2e` |
+| `@tap/units` | `pnpm test:units` |
+
+Compiler pin is Solidity **0.8.30** (`chain/foundry.toml`).
 
 ## Solidity coverage
 

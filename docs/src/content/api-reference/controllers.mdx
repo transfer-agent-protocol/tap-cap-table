@@ -42,10 +42,9 @@ flowchart LR
 
 ## Common patterns
 
-- Convert IDs and numbers first: `convertUUIDToBytes16()`, `toScaledBigNumber()`.
+- Convert IDs and numbers first. `convertUUIDToBytes16()` and `toScaledBigNumber()` wrap `@tap/units` (`uuidToBytes16`, `scaleAmount`). Protocol scale is 1e10.
 - Wait for confirmation: `const tx = await contract.method(...); await tx.wait();`.
 - Logs use ✅ and ⏳ prefixes.
-- `seed.js` holds legacy bulk helpers (open TODO on dates).
 
 ## Controller Reference
 

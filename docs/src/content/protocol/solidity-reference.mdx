@@ -55,7 +55,7 @@ The **API** column is the server-signed `/create` path. The product UI under `/a
 
 | Kind | Names |
 | --- | --- |
-| Events | `IssuerCreated`, `StakeholderCreated`, `StockClassCreated`, `StockLegendTemplateCreated`, `WalletAdded`, `WalletRemoved`, `SharesAuthorizedMinted`, `ActivePositionMinted` |
+| Events | `IssuerCreated`, `StakeholderCreated`, `StockClassCreated`, `StockLegendTemplateCreated`, `WalletAdded`, `WalletRemoved`, `SharesAuthorizedMinted`, `ActivePositionMinted`. Lifecycle history is `TxHelper` `TxCreated` (what the poller writes). |
 | Errors | `StakeholderAlreadyExists`, `StockClassAlreadyExists`, `InvalidWallet`, `NoStakeholder`, `InvalidStockClass`, `NoIssuanceFound`, `WalletAlreadyExists`, `NoActivePositionFound` |
 
 ## CapTableFactory

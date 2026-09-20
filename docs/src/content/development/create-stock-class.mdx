@@ -5,7 +5,7 @@ import { NextActions } from '../../components/ContentPatterns';
 
 Stock classes define the types of equity your company can issue (e.g., Common, Preferred Series A). You must create at least one stock class before issuing stock to stakeholders.
 
-The primary `/app` flow submits `createStockClass` from the connected ADMIN wallet and, after confirmation, saves OCF metadata through `POST /stock-class/register-onchain`. The server-signed API alternative below requires a configured operator key.
+In `/app`, open `/app/companies/<issuerId>?view=stock-classes`. The connected ADMIN wallet submits `createStockClass` and, after confirmation, the app saves OCF metadata through `POST /stock-class/register-onchain`. The server-signed API alternative below requires a configured operator key.
 
 <Steps>
 

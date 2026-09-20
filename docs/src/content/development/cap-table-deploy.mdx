@@ -30,7 +30,7 @@ With a funded server/operator development key, `POST /issuer/create` does two th
 | `country_of_formation` | ISO 3166-1 alpha-2 country code (`US`, `GB`, etc.). |
 | `country_subdivision_of_formation` | ISO 3166-2 subdivision (`DE` for Delaware, `CA` for California). |
 | `initial_shares_authorized` | Total authorized shares for the issuer as a string integer. |
-| `tax_ids[]`, `email`, `address`, `comments` | OCF-shaped fields validated against the [OCF schema](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF). |
+| `tax_ids[]`, `email`, `address`, `comments` | OCF-shaped fields validated against the [TAP OCF pin](https://github.com/transfer-agent-protocol/tap-ocf). |
 
 <Steps>
 
@@ -67,7 +67,7 @@ Using Postman or curl, send a POST request to `http://localhost:8293/issuer/crea
 }
 ```
 
-All fields are validated against the [OCF schema](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF).
+All fields are validated against the [TAP OCF pin](https://github.com/transfer-agent-protocol/tap-ocf).
 
 ### Check the response
 

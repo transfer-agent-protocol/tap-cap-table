@@ -11,7 +11,7 @@ This is a **pnpm monorepo** with the following workspaces:
 - `docs/` - Nextra documentation site (tap-docs)
 - `packages/units` (`@tap/units`) - shared 1e10 scaling, UUID↔bytes16, share-cap validation (app + server)
 
-`ocf/` is a **git submodule** used for JSON schemas only. It is **not** a pnpm workspace (its unused docs/jest tree must not enter the lockfile).
+`ocf/` is a **git submodule** of [transfer-agent-protocol/tap-ocf](https://github.com/transfer-agent-protocol/tap-ocf), used for JSON schemas only. It is **not** a pnpm workspace (its unused docs/jest tree must not enter the lockfile). Pin: `6d8c9322`.
 
 ### Licensing
 
@@ -87,7 +87,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Atomic operations with MongoDB transactions when `DATABASE_REPLSET=1`
 
 5. **OCF Submodule** (`ocf/`):
-    - Git submodule containing the Open Cap Format standard
+    - Git submodule: [transfer-agent-protocol/tap-ocf](https://github.com/transfer-agent-protocol/tap-ocf) (JSON schemas only). Pin is `6d8c9322` (`ocf_version` `1.2.1-alpha+main`).
     - JSON schemas used for validation
     - Sample OCF files in `ocf/samples/`
 
@@ -344,7 +344,7 @@ tap-cap-table/
 │   ├── src/content/    # MDX documentation pages
 │   ├── src/app/        # App Router shell
 │   └── public/         # Static assets
-├── ocf/                # OCF standard (git submodule; JSON schemas only, not a pnpm workspace)
+├── ocf/                # https://github.com/transfer-agent-protocol/tap-ocf (schemas only; pin 6d8c9322)
 ├── packages/units/     # @tap/units — shared scale / UUID / share-caps
 ├── .env.example        # Environment template
 ├── docker-compose.yml  # Docker services (MongoDB, server, app)
@@ -422,14 +422,10 @@ The system supports multiple environments via `.env` files:
 
 ## Working with OCF
 
-The `ocf/` directory is a **git submodule**, not a pnpm workspace. TAP imports JSON schemas as files. When making changes:
+The `ocf/` directory is a **git submodule** of [transfer-agent-protocol/tap-ocf](https://github.com/transfer-agent-protocol/tap-ocf), not a pnpm workspace. TAP imports JSON schemas as files. The pin is `6d8c9322`. Do not `git pull origin main` in `ocf/` until the validator can compile OCF version dispatchers (see the tap-ocf bump issue).
 
 ```bash
-# Update submodule
 git submodule update --init --recursive
-
-# Pull latest OCF changes
-cd ocf && git pull origin main && cd ..
 ```
 
 OCF defines the standard for:
