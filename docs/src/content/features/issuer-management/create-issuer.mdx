@@ -1,9 +1,9 @@
 import { Callout } from 'nextra/components';
 import { NextActions } from '../../../components/ContentPatterns';
 
-# Register or Import Issuer
+# Register Issuer
 
-Use this page when the issuer already exists outside the main `POST /issuer/create` flow. For the standard create-and-deploy path, use [Create an Issuer](/development/cap-table-deploy).
+Use this page when the cap table was already deployed and you only need the TAP Mongo record. There is no OCF zip/manifest import route (`POST /mint-cap-table` was removed). For first-time create-and-deploy, use [Create an Issuer](/development/cap-table-deploy).
 
 ## Which route do I need?
 
@@ -39,7 +39,7 @@ Send the same issuer fields used in [Create an Issuer](/development/cap-table-de
 
 ```json
 {
-    "id": "b6ca9d9c1daa4b30830b444561ef7806",
+    "id": "0xb6ca9d9c1daa4b30830b444561ef7806",
     "legal_name": "Transfer Agent Protocol",
     "formation_date": "2022-08-23",
     "country_of_formation": "US",
@@ -52,7 +52,7 @@ Send the same issuer fields used in [Create an Issuer](/development/cap-table-de
 ```
 
 <Callout type="warning">
-`id` must be the 32-hex-character UUID-without-dashes that the cap table contract was initialized with (for example `b6ca9d9c1daa4b30830b444561ef7806`). If you omit `id`, TAP generates a new UUID and the TAP record will *not* match the onchain ID, which breaks event polling.
+`id` must be the same bytes16 the cap table was initialized with: `0x` plus 32 hex characters (for example `0xb6ca9d9c1daa4b30830b444561ef7806`). That is what `/app/mint` sends. `convertBytes16ToUUID` only converts `0x`-prefixed values into the dashed UUID stored as Mongo `_id`. A 32-hex string without `0x` is stored unchanged and will not match the poller. If you omit `id`, TAP generates a new UUID and polling breaks.
 </Callout>
 
 The response returns `{ "issuer": ... }`. Keep that issuer object — you'll use `_id` for every later API call.

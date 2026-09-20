@@ -63,7 +63,7 @@ REUSE_TAP_FACTORY=1 pnpm bootstrap
 | Actor / deployment | Address | Capability |
 | --- | --- | --- |
 | TAP Admin | `0x3601a913fD3466f30f5ABb978E484d1B37Ce995D` | Product / issuer wallet (mints cap tables through the demo factory) |
-| Shared demo `CapTableFactory` | `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` | Permissionless issuer cap-table creation (32 tables; live impl `0xB63C…`) |
+| Shared demo `CapTableFactory` | `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` | Permissionless issuer cap-table creation. Read the live implementation from the factory onchain; do not hardcode it. |
 | Factory owner | `0x366aA809015061C101983900d0c2ebf7d71B96AF` | Beacon upgrades for this factory (deploy key, not TAP Admin) |
 
 You can mint issuer cap tables through this factory (`createCapTable` is permissionless). **You do not own upgrades.** Production transfer agents should deploy their own factory.

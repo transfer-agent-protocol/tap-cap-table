@@ -2,7 +2,11 @@ import { FileTree } from 'nextra/components'
 
 # Open Cap Table Format
 
-The Open Cap Table Format ([OCF](https://www.opencaptablecoalition.com/)) is a JSON-based open-source standard for storing and sharing cap table data. TAP vendors the schemas as a git submodule (`ocf/`, [poet-network/tap-ocf](https://github.com/poet-network/tap-ocf.git)). We use OCF to store data offchain.
+The Open Cap Table Format ([OCF](https://www.opencaptablecoalition.com/)) is a JSON-based open-source standard for storing and sharing cap table data.
+
+TAP vendors the schemas as a git submodule at `ocf/`, from [transfer-agent-protocol/tap-ocf](https://github.com/transfer-agent-protocol/tap-ocf). The pin in this repo is commit `6d8c9322` (`ocf_version` `1.2.1-alpha+main`). We validate offchain records against those files.
+
+TAP is a stock-centric subset of OCF. Convertibles, warrants, vesting v2, consolidation, and stakeholder change events have no onchain TAP surface. Mongo also stores TAP-only fields (`tx_hash`, `is_onchain_synced`, `deployed_to`, `deployed_by`) that are not OCF.
 
 <FileTree>
   <FileTree.Folder name="ocf" defaultOpen>
@@ -11,6 +15,7 @@ The Open Cap Table Format ([OCF](https://www.opencaptablecoalition.com/)) is a J
 			<FileTree.File name="files" />
 			<FileTree.File name="objects" />
 			<FileTree.File name="primitives" />
+			<FileTree.File name="types" />
 		</FileTree.Folder>
 	</FileTree.Folder>
 </FileTree>
@@ -26,6 +31,8 @@ The Open Cap Format uses specific terminology:
 
 Note that "stakeholder" in OCF context is more specific than the general business term—it refers only to equity holders, not all parties with interest in the company.
 
+TAP still uses OCF's singular `current_relationship` onchain and in the product UI. The schema also has `current_relationships` (array); TAP does not persist that field yet.
+
 ## How TAP Uses OCF Offchain
 
 OCF defines the JSON shapes TAP uses for offchain records. The API routes on this site use those shapes for issuers, stakeholders, stock classes, transactions, and supporting records.
@@ -37,11 +44,11 @@ OCF defines the JSON shapes TAP uses for offchain records. The API routes on thi
 | Writes | Connected ADMIN wallet or server operator | Registration routes and event poller |
 | Recovery | Re-read contracts and event history | Reconcile or repopulate the mirror |
 
-Use the [Cap Table API](/features) guides for the routes you can call today. If you want the raw field-by-field reference, the generated schema docs live under `ocf/docs/schema_markdown`.
+Use the [Cap Table API](/features) guides for the routes you can call today. Generated schema docs live under `ocf/docs/schema_markdown`.
 
 ## Our Database
 
-TAP stores OCF-shaped records in a [database layer](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/server/db). Also found in the root folder, our db schema and the server:
+TAP stores OCF-shaped records in a [database layer](https://github.com/transfer-agent-protocol/tap-cap-table/tree/main/server/db). Models are under `server/db/objects`; reads and writes go through `server/db/operations`.
 
 <FileTree>
   <FileTree.Folder name="server" defaultOpen>
@@ -49,7 +56,6 @@ TAP stores OCF-shaped records in a [database layer](https://github.com/transfer-
 			<FileTree.File name="config" />
 			<FileTree.File name="objects" />
 			<FileTree.File name="operations" />
-			<FileTree.File name="scripts" />
 		</FileTree.Folder>
 	</FileTree.Folder>
 </FileTree>

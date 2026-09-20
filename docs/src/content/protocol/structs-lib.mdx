@@ -57,7 +57,7 @@ Structs are grouped by where they enter the lifecycle: core records, active posi
 
 | Type | Solidity | API |
 | --- | --- | --- |
-| Issuer/stakeholder/class/security IDs | `bytes16` | UUID strings converted by server utilities. |
+| Issuer/stakeholder/class/security IDs | `bytes16` | UUID strings converted by `@tap/units` (`uuidToBytes16` / `bytes16ToUuid`). |
 | Onchain tx IDs | `bytes16` | Decoded before MongoDB persistence. |
 | Wallets | `address` | Hex EVM address strings. |
 

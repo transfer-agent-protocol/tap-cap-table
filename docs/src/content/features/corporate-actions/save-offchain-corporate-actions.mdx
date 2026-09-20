@@ -64,7 +64,9 @@ Returns: `{ "equityCompensationIssuance": ... }`.
 | `OPTION_NSO` | Non-qualified stock options. Requires `exercise_price`. |
 | `OPTION_ISO` | Incentive stock options (US tax-advantaged). Requires `exercise_price`. |
 | `RSU` | Restricted stock units. No `exercise_price`. |
-| `SAR` | Stock appreciation rights. Requires `base_price` instead of `exercise_price`. |
+| `CSAR` | Cash-settled stock appreciation rights. Requires `base_price` instead of `exercise_price`. |
+| `SSAR` | Stock-settled stock appreciation rights. Requires `base_price` instead of `exercise_price`. |
+| `OPTION` | Option that is not NSO or ISO. Requires `exercise_price`. |
 
 ## Convertible
 

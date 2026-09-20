@@ -5,7 +5,7 @@ import { Detail, NextActions } from '../../components/ContentPatterns';
 
 Stakeholders are the equity holders on your cap table — founders, employees, investors, or any entity that holds shares.
 
-The primary `/app` flow calls `createStakeholder` from the connected ADMIN wallet, then saves the OCF metadata with `POST /stakeholder/register-onchain` after confirmation. The server-signed `/stakeholder/create` tutorial below is the API/automation alternative.
+In `/app`, open the company workspace at `/app/companies/<issuerId>?view=stakeholders`. The connected ADMIN wallet calls `createStakeholder`, then the app saves OCF metadata with `POST /stakeholder/register-onchain`. The server-signed `/stakeholder/create` tutorial below is the API/automation alternative.
 
 ## Minimal request
 

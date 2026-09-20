@@ -16,7 +16,7 @@ All routes here are `/transactions` routes and require `issuerId` in the body. E
 | `issuerId` | `POST /issuer/create` or `POST /issuer/register` |
 | `stakeholderId` | `POST /stakeholder/create` |
 | `stockClassId` | `POST /stock-class/create` |
-| `security_id` | `POST /transactions/issuance/stock` response |
+| `security_id` | Canonical id from poller-backed [history](/development/historical-transactions) or active holdings. Not the validation UUID returned by `POST /transactions/issuance/stock`. Transfer itself does not take `security_id`; cancel/retract/reissue/repurchase do. |
 
 ## Transfer stock
 
