@@ -301,6 +301,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				adding={addingStockClass}
 				onAddingChange={setAddingStockClass}
 				onSubmit={stockClassWrite.handleStockClass}
+				pending={stockClassWrite.pendingStockClass}
 				toolbar={toolbar}
 				holdings={manager.holdings?.holdings || []}
 			/>
@@ -316,6 +317,7 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				adding={addingShareholder}
 				onAddingChange={setAddingShareholder}
 				onSubmit={shareholderWrite.handleStakeholder}
+				pending={shareholderWrite.pendingStakeholder}
 				toolbar={toolbar}
 			/>
 		);
@@ -394,6 +396,8 @@ export function CapTableDashboard({ issuerResult, onReset }: CapTableDashboardPr
 				txHash={successModal?.txHash}
 				message={successModal?.message}
 				variant={successModal?.variant || "success"}
+				onRetry={successModal?.retry}
+				retryLabel={copy.tx.saveRecord}
 			/>
 		</Stack>
 	);

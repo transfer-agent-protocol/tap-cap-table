@@ -68,7 +68,7 @@ Then go read official [docs](https://docs.transferagentprotocol.xyz)
 # Docker (MongoDB, server, app)
 pnpm docker:up              # Start all services
 pnpm docker:mongo           # Mongo only (host 27027)
-pnpm docker:down            # Stop and remove containers (frees 27027)
+docker compose stop         # Stop containers, leave them in place (frees 27027)
 pnpm docker:logs            # Stream logs
 pnpm docker:build           # Rebuild and start
 

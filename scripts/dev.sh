@@ -8,7 +8,7 @@ set -e
 #   --mongo-only  Start only MongoDB
 #   --no-app      Start MongoDB and server, skip frontend app
 #   --no-server   Start MongoDB and app only (run server locally with 'pnpm dev')
-#   --down        Stop all services
+#   --down        Stop all services (containers stay)
 #   -h, --help    Show this help message
 #
 # Examples:
@@ -17,7 +17,7 @@ set -e
 #   ./scripts/dev.sh --mongo-only # Start only MongoDB
 #   ./scripts/dev.sh --no-app     # Start MongoDB and server only
 #   ./scripts/dev.sh --no-server  # Start MongoDB and app (run server locally)
-#   ./scripts/dev.sh --down       # Stop all services
+#   ./scripts/dev.sh --down       # Stop all services (containers stay)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -58,7 +58,7 @@ done
 # Handle --down
 if [ "$DOWN" = true ]; then
     echo "🛑 Stopping all services..."
-    docker compose down
+    docker compose stop
     exit 0
 fi
 

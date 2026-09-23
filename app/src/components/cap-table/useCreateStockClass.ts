@@ -1,11 +1,19 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useDirectCreateStockClass } from "../../hooks/useDirectCreateStockClass";
 import { bytes16ToUuid, generateBytes16Id } from "../../utils/uuid";
+import { updateActivity } from "../../utils/activityLog";
 import { registerStockClassOnchain, type StockClassData } from "../../services/createStockClass";
 import { copy } from "../../lib/copy";
-import { useWalletReceipt } from "./useWalletReceipt";
+import { RegisterSaveError, useWalletReceipt } from "./useWalletReceipt";
 import type { OptimisticStockClass } from "./types";
 import { pushActivity, requireWriteReady, type WriteHost } from "./writeHost";
+
+interface PendingClassSave {
+	id: string;
+	data: StockClassData;
+	activityId: string;
+	hash?: string;
+}
 
 export function useCreateStockClass({
 	issuerId,
@@ -17,10 +25,54 @@ export function useCreateStockClass({
 	const direct = useDirectCreateStockClass();
 	const [directStockClasses, setDirectStockClasses] = useState<OptimisticStockClass[]>([]);
 	const [pendingStockClass, setPendingStockClass] = useState(false);
-	const [pendingMeta, setPendingMeta] = useState<{ id: string; data: StockClassData } | null>(
-		null,
-	);
 	const [pendingActivityId, setPendingActivityId] = useState<string | null>(null);
+	const pendingSaveRef = useRef<PendingClassSave | null>(null);
+
+	const persistClass = useCallback(
+		async (meta: PendingClassSave) => {
+			await registerStockClassOnchain({
+				issuerId,
+				data: meta.data,
+				id: meta.id,
+				tx_hash: meta.hash || undefined,
+			});
+			pendingSaveRef.current = null;
+			setDirectStockClasses((prev) =>
+				prev.map((sc) => (sc._id === meta.id ? { ...sc, onchain: true } : sc)),
+			);
+			setActivityLog(
+				updateActivity(issuerId, meta.activityId, {
+					status: "confirmed",
+					txHash: meta.hash,
+				}),
+			);
+			refreshHoldings();
+		},
+		[issuerId, refreshHoldings, setActivityLog],
+	);
+
+	const presentSaveFailure = useCallback(
+		(meta: PendingClassSave) => {
+			setSuccessModal({
+				title: copy.tx.registerFailedTitle,
+				message: copy.tx.registerFailed,
+				txHash: meta.hash,
+				variant: "error",
+				retry: () => {
+					void persistClass(meta)
+						.then(() => {
+							setSuccessModal({
+								title: copy.tx.confirmedTitle.stockClass,
+								txHash: meta.hash,
+								variant: "success",
+							});
+						})
+						.catch(() => presentSaveFailure(meta));
+				},
+			});
+		},
+		[persistClass, setSuccessModal],
+	);
 
 	useWalletReceipt({
 		pending: pendingStockClass,
@@ -38,28 +90,33 @@ export function useCreateStockClass({
 			message: copy.tx.revertedGeneric,
 			variant: "error",
 		},
-		onConfirmed: (hash) => {
-			setDirectStockClasses((prev) =>
-				prev.map((sc, i) => (i === prev.length - 1 ? { ...sc, onchain: true } : sc)),
-			);
-			if (pendingMeta) {
-				registerStockClassOnchain({
-					issuerId,
-					data: pendingMeta.data,
-					id: pendingMeta.id,
-					tx_hash: hash || undefined,
-				}).catch((err) => console.warn("Failed to register stock class metadata:", err));
-				setPendingMeta(null);
+		onConfirmed: async (hash) => {
+			const meta = pendingSaveRef.current;
+			if (!meta) return;
+			meta.hash = hash;
+			try {
+				await persistClass(meta);
+			} catch {
+				presentSaveFailure(meta);
+				throw new RegisterSaveError(copy.tx.registerFailed);
 			}
 		},
 		onReverted: () => {
-			setDirectStockClasses((prev) => prev.slice(0, -1));
-			setPendingMeta(null);
+			const id = pendingSaveRef.current?.id;
+			pendingSaveRef.current = null;
+			if (!id) return;
+			setDirectStockClasses((prev) => prev.filter((sc) => sc._id !== id));
 		},
 	});
 
 	const handleStockClass = useCallback(
 		async (data: StockClassData) => {
+			if (pendingStockClass) return;
+			const unsaved = pendingSaveRef.current;
+			if (unsaved) {
+				presentSaveFailure(unsaved);
+				return;
+			}
 			if (!requireWriteReady(direct.isConnected, capTableAddress, setSuccessModal)) return;
 			try {
 				const stockClassBytes16 = generateBytes16Id() as `0x${string}`;
@@ -74,7 +131,7 @@ export function useCreateStockClass({
 				const activityId = `sc-${stockClassUuid}-${Date.now()}`;
 				setPendingActivityId(activityId);
 				setPendingStockClass(true);
-				setPendingMeta({ id: stockClassUuid, data });
+				pendingSaveRef.current = { id: stockClassUuid, data, activityId, hash: result.hash };
 				setDirectStockClasses((prev) => [
 					...prev,
 					{
@@ -104,7 +161,7 @@ export function useCreateStockClass({
 				});
 			}
 		},
-		[capTableAddress, issuerId, direct, setSuccessModal, setActivityLog],
+		[capTableAddress, issuerId, direct, pendingStockClass, presentSaveFailure, setSuccessModal, setActivityLog],
 	);
 
 	return { handleStockClass, directStockClasses, pendingStockClass };

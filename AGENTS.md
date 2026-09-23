@@ -25,7 +25,7 @@ pnpm app:dev                         # http://localhost:3000/app  (reads app/.en
 | Piece | Process |
 | --- | --- |
 | Mongo + API + poller | Docker via `pnpm bootstrap` / `docker compose up` |
-| Mongo only | `pnpm docker:mongo` — **host port 27027** (not 27017). `restart: unless-stopped`. `pnpm docker:down` frees the port. |
+| Mongo only | `pnpm docker:mongo` — **host port 27027** (not 27017). `restart: unless-stopped`. `docker compose stop` frees a port and leaves containers in place. |
 | Product UI / wallet | Host `pnpm app:dev` + `app/.env.local` + browser extension wallet (EIP-6963, no cloud key) |
 | Contract artifacts | `pnpm setup` → `chain/out` (required before server image build) |
 | Factory in Mongo | `REUSE_TAP_FACTORY=1` (demo) or `pnpm deploy-factory` (you own it) |
@@ -48,7 +48,7 @@ pnpm app:dev                         # http://localhost:3000/app  (reads app/.en
 | Stale factory impl in docs | Hardcoded old address | Always read impl onchain (`factory:register` does); live beacon ≠ landing screenshot |
 | Mint OK, register **500** | Docker app rewrites to `localhost:8293` | Docker: `NEXT_PUBLIC_API_URL=http://server:8293`; host app:dev: `localhost:8293` |
 | Poller `0xUPDATE_ME` / invalid BytesLike | Placeholder PRIVATE_KEY | Real hex for server-signed; placeholder OK for read-only poller |
-| TAP Mongo on 27017 / other app blocked | Old compose published default Mongo port with `restart: always` | Host port is **27027**. Host `DATABASE_URL` uses 27027. Inside compose, Mongo is still `mongodb:27017`. `pnpm docker:down` then `pnpm docker:mongo`. |
+| TAP Mongo on 27017 / other app blocked | Old compose published default Mongo port with `restart: always` | Host port is **27027**. Host `DATABASE_URL` uses 27027. Inside compose, Mongo is still `mongodb:27017`. `docker compose stop` the container that holds the port, then `pnpm docker:mongo` if Mongo is not running. |
 
 **Plume defaults:** `CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`. Prefer mainnet for product work (not Anvil mint).
 

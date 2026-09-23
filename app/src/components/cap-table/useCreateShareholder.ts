@@ -1,11 +1,19 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useDirectCreateStakeholder } from "../../hooks/useDirectCreateStakeholder";
 import { bytes16ToUuid, generateBytes16Id } from "../../utils/uuid";
+import { updateActivity } from "../../utils/activityLog";
 import { registerStakeholderOnchain, type StakeholderData } from "../../services/createStakeholder";
 import { copy } from "../../lib/copy";
-import { useWalletReceipt } from "./useWalletReceipt";
+import { RegisterSaveError, useWalletReceipt } from "./useWalletReceipt";
 import type { OptimisticStakeholder } from "./types";
 import { pushActivity, requireWriteReady, type WriteHost } from "./writeHost";
+
+interface PendingStakeholderSave {
+	id: string;
+	data: StakeholderData;
+	activityId: string;
+	hash?: string;
+}
 
 export function useCreateShareholder({
 	issuerId,
@@ -17,10 +25,51 @@ export function useCreateShareholder({
 	const direct = useDirectCreateStakeholder();
 	const [directStakeholders, setDirectStakeholders] = useState<OptimisticStakeholder[]>([]);
 	const [pendingStakeholder, setPendingStakeholder] = useState(false);
-	const [pendingMeta, setPendingMeta] = useState<{ id: string; data: StakeholderData } | null>(
-		null,
-	);
 	const [pendingActivityId, setPendingActivityId] = useState<string | null>(null);
+	const pendingSaveRef = useRef<PendingStakeholderSave | null>(null);
+
+	const persistStakeholder = useCallback(
+		async (meta: PendingStakeholderSave) => {
+			await registerStakeholderOnchain({
+				issuerId,
+				data: meta.data,
+				id: meta.id,
+				tx_hash: meta.hash || undefined,
+			});
+			pendingSaveRef.current = null;
+			setActivityLog(
+				updateActivity(issuerId, meta.activityId, {
+					status: "confirmed",
+					txHash: meta.hash,
+				}),
+			);
+			refreshHoldings();
+		},
+		[issuerId, refreshHoldings, setActivityLog],
+	);
+
+	const presentSaveFailure = useCallback(
+		(meta: PendingStakeholderSave) => {
+			setSuccessModal({
+				title: copy.tx.registerFailedTitle,
+				message: copy.tx.registerFailed,
+				txHash: meta.hash,
+				variant: "error",
+				retry: () => {
+					void persistStakeholder(meta)
+						.then(() => {
+							setSuccessModal({
+								title: copy.tx.confirmedTitle.stakeholder,
+								txHash: meta.hash,
+								variant: "success",
+							});
+						})
+						.catch(() => presentSaveFailure(meta));
+				},
+			});
+		},
+		[persistStakeholder, setSuccessModal],
+	);
 
 	useWalletReceipt({
 		pending: pendingStakeholder,
@@ -38,25 +87,33 @@ export function useCreateShareholder({
 			message: copy.tx.revertedGeneric,
 			variant: "error",
 		},
-		onConfirmed: (hash) => {
-			if (pendingMeta) {
-				registerStakeholderOnchain({
-					issuerId,
-					data: pendingMeta.data,
-					id: pendingMeta.id,
-					tx_hash: hash || undefined,
-				}).catch((err) => console.warn("Failed to register stakeholder metadata:", err));
-				setPendingMeta(null);
+		onConfirmed: async (hash) => {
+			const meta = pendingSaveRef.current;
+			if (!meta) return;
+			meta.hash = hash;
+			try {
+				await persistStakeholder(meta);
+			} catch {
+				presentSaveFailure(meta);
+				throw new RegisterSaveError(copy.tx.registerFailed);
 			}
 		},
 		onReverted: () => {
-			setDirectStakeholders((prev) => prev.slice(0, -1));
-			setPendingMeta(null);
+			const id = pendingSaveRef.current?.id;
+			pendingSaveRef.current = null;
+			if (!id) return;
+			setDirectStakeholders((prev) => prev.filter((sh) => sh._id !== id));
 		},
 	});
 
 	const handleStakeholder = useCallback(
 		async (data: StakeholderData) => {
+			if (pendingStakeholder) return;
+			const unsaved = pendingSaveRef.current;
+			if (unsaved) {
+				presentSaveFailure(unsaved);
+				return;
+			}
 			if (!requireWriteReady(direct.isConnected, capTableAddress, setSuccessModal)) return;
 			try {
 				const stakeholderBytes16 = generateBytes16Id() as `0x${string}`;
@@ -71,7 +128,7 @@ export function useCreateShareholder({
 				const legalName = data.name?.legal_name || "Shareholder";
 				setPendingActivityId(activityId);
 				setPendingStakeholder(true);
-				setPendingMeta({ id: stakeholderUuid, data });
+				pendingSaveRef.current = { id: stakeholderUuid, data, activityId, hash: result.hash };
 				setDirectStakeholders((prev) => [
 					...prev,
 					{
@@ -100,7 +157,15 @@ export function useCreateShareholder({
 				});
 			}
 		},
-		[capTableAddress, issuerId, direct, setSuccessModal, setActivityLog],
+		[
+			capTableAddress,
+			issuerId,
+			direct,
+			pendingStakeholder,
+			presentSaveFailure,
+			setSuccessModal,
+			setActivityLog,
+		],
 	);
 
 	return { handleStakeholder, directStakeholders, pendingStakeholder };

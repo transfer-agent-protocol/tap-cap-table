@@ -10,6 +10,8 @@ interface TxSuccessModalProps {
 	message?: string;
 	/** error | info | success — controls default body when no message/hash */
 	variant?: "success" | "error" | "info";
+	onRetry?: () => void;
+	retryLabel?: string;
 }
 
 const Stack = styled.div`
@@ -49,6 +51,8 @@ export function TxSuccessModal({
 	txHash,
 	message,
 	variant = "success",
+	onRetry,
+	retryLabel = "Save record",
 }: TxSuccessModalProps) {
 	const explorerUrl = txHash ? `https://explorer.plume.org/tx/${txHash}` : undefined;
 
@@ -84,6 +88,11 @@ export function TxSuccessModal({
 				)}
 
 				<Actions>
+					{onRetry && (
+						<Button onClick={onRetry} $variant="primary" type="button">
+							{retryLabel}
+						</Button>
+					)}
 					<Button onClick={onClose} $variant="secondary" type="button">
 						Close
 					</Button>

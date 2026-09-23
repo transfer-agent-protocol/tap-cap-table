@@ -28,8 +28,16 @@ interface UseWalletReceiptArgs {
 	delayedRefresh?: boolean;
 	confirmed: { title: string; variant?: SuccessModalState["variant"] };
 	reverted: { title: string; message: string; variant?: SuccessModalState["variant"] };
-	onConfirmed?: (hash: string | undefined) => void;
+	onConfirmed?: (hash: string | undefined) => void | Promise<void>;
 	onReverted?: () => void;
+}
+
+/** Thrown after the write hook has already shown the save-failed modal. */
+export class RegisterSaveError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "RegisterSaveError";
+	}
 }
 
 /**
@@ -58,36 +66,57 @@ export function useWalletReceipt(args: UseWalletReceiptArgs) {
 	useEffect(() => {
 		const o = argsRef.current;
 		if (!o.pending) return;
+		let cancelled = false;
 
-		if (o.action.isConfirmed) {
-			const txHash = o.action.hash;
-			o.setSuccessModal({
-				title: o.confirmed.title,
-				txHash,
-				variant: o.confirmed.variant,
-			});
-			o.onConfirmed?.(txHash);
-			if (o.pendingActivityId && o.issuerId) {
-				o.setActivityLog(
-					updateActivity(o.issuerId, o.pendingActivityId, {
-						status: "confirmed",
-						txHash: txHash || undefined,
-					}),
-				);
-			} else if (txHash && o.issuerId) {
-				o.setActivityLog(markActivityByTx(o.issuerId, txHash, "confirmed"));
-			}
+		const finish = () => {
 			o.setPendingActivityId(null);
 			o.clearPending();
 			o.action.reset();
-			o.refreshHoldings();
-			if (o.delayedRefresh) {
-				delayTimers.current.forEach(clearTimeout);
-				delayTimers.current = [
-					setTimeout(() => o.refreshHoldings(), 1500),
-					setTimeout(() => o.refreshHoldings(), 4000),
-				];
-			}
+		};
+
+		if (o.action.isConfirmed) {
+			const txHash = o.action.hash;
+			void (async () => {
+				try {
+					await o.onConfirmed?.(txHash);
+					if (cancelled) return;
+					o.setSuccessModal({
+						title: o.confirmed.title,
+						txHash,
+						variant: o.confirmed.variant,
+					});
+					if (o.pendingActivityId && o.issuerId) {
+						o.setActivityLog(
+							updateActivity(o.issuerId, o.pendingActivityId, {
+								status: "confirmed",
+								txHash: txHash || undefined,
+							}),
+						);
+					} else if (txHash && o.issuerId) {
+						o.setActivityLog(markActivityByTx(o.issuerId, txHash, "confirmed"));
+					}
+					finish();
+					o.refreshHoldings();
+					if (o.delayedRefresh) {
+						delayTimers.current.forEach(clearTimeout);
+						delayTimers.current = [
+							setTimeout(() => argsRef.current.refreshHoldings(), 1500),
+							setTimeout(() => argsRef.current.refreshHoldings(), 4000),
+						];
+					}
+				} catch (err) {
+					if (cancelled) return;
+					if (!(err instanceof RegisterSaveError)) {
+						o.setSuccessModal({
+							title: "Not saved to this company",
+							message: err instanceof Error ? err.message : "Registration failed",
+							txHash,
+							variant: "error",
+						});
+					}
+					finish();
+				}
+			})();
 		} else if (o.action.isReverted) {
 			o.setSuccessModal({
 				title: o.reverted.title,
@@ -100,9 +129,11 @@ export function useWalletReceipt(args: UseWalletReceiptArgs) {
 				);
 			}
 			o.onReverted?.();
-			o.setPendingActivityId(null);
-			o.clearPending();
-			o.action.reset();
+			finish();
 		}
+
+		return () => {
+			cancelled = true;
+		};
 	}, [pending, isConfirmed, isReverted, hash]);
 }
