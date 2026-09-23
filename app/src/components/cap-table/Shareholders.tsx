@@ -25,6 +25,8 @@ export interface ShareholdersProps {
 	adding: boolean;
 	onAddingChange: (v: boolean) => void;
 	onSubmit: (data: StakeholderData) => Promise<void>;
+	/** Wallet write still waiting for a receipt. */
+	pending?: boolean;
 	toolbar: ReactNode;
 	/** Current positions — drives Total shares / Holdings columns */
 	holdings?: Array<{ stakeholder?: { _id?: string }; quantity?: number | string }>;
@@ -94,6 +96,7 @@ export function Shareholders({
 	adding,
 	onAddingChange,
 	onSubmit,
+	pending = false,
 	toolbar,
 	holdings = [],
 }: ShareholdersProps) {
@@ -136,7 +139,7 @@ export function Shareholders({
 							<Button
 								onClick={() => onAddingChange(true)}
 								$variant="primary"
-								disabled={isLoading}
+								disabled={isLoading || pending}
 							>
 								{copy.shareholders.add}
 							</Button>
@@ -154,7 +157,7 @@ export function Shareholders({
 								onAddingChange(false);
 							}}
 							onCancel={() => onAddingChange(false)}
-							disabled={isLoading}
+							disabled={isLoading || pending}
 						/>
 					</Section>
 				)}

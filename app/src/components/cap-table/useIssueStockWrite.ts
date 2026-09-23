@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { validateShareCaps } from "@tap/units";
 import { useDirectIssueStock } from "../../hooks/useDirectIssueStock";
 import { registerStockIssuanceOnchain, type StockIssuanceData } from "../../services/createStockIssuance";
@@ -32,6 +32,7 @@ export function useIssueStockWrite({
 	const [directIssuances, setDirectIssuances] = useState<OptimisticIssuance[]>([]);
 	const [pendingIssuance, setPendingIssuance] = useState(false);
 	const [pendingActivityId, setPendingActivityId] = useState<string | null>(null);
+	const inflightIssuanceId = useRef<string | null>(null);
 
 	useWalletReceipt({
 		pending: pendingIssuance,
@@ -50,24 +51,26 @@ export function useIssueStockWrite({
 			message: copy.tx.issuanceReverted,
 		},
 		onConfirmed: (hash) => {
-			setDirectIssuances((prev) => {
-				if (!prev.length) return prev;
-				const next = [...prev];
-				next[next.length - 1] = {
-					...next[next.length - 1],
-					txHash: hash || next[next.length - 1].txHash,
-					confirmed: true,
-				};
-				return next;
-			});
+			const id = inflightIssuanceId.current;
+			inflightIssuanceId.current = null;
+			if (!id) return;
+			setDirectIssuances((prev) =>
+				prev.map((row) =>
+					row._id === id ? { ...row, txHash: hash || row.txHash, confirmed: true } : row,
+				),
+			);
 		},
 		onReverted: () => {
-			setDirectIssuances((prev) => prev.slice(0, -1));
+			const id = inflightIssuanceId.current;
+			inflightIssuanceId.current = null;
+			if (!id) return;
+			setDirectIssuances((prev) => prev.filter((row) => row._id !== id));
 		},
 	});
 
 	const handleIssuance = useCallback(
 		async (data: StockIssuanceData) => {
+			if (pendingIssuance) return;
 			if (!requireWriteReady(direct.isConnected, capTableAddress, setSuccessModal)) return;
 
 			const issuer = holdings?.issuer;
@@ -117,6 +120,8 @@ export function useIssueStockWrite({
 					}
 				}
 
+				await registerStockIssuanceOnchain({ issuerId, data });
+
 				const result = await direct.issueStock({
 					capTableAddress: capTableAddress as `0x${string}`,
 					stakeholderId: data.stakeholder_id,
@@ -127,6 +132,7 @@ export function useIssueStockWrite({
 					comments: data.comments,
 				});
 
+				inflightIssuanceId.current = result.issuanceId;
 				const activityId = `iss-${result.issuanceId}-${Date.now()}`;
 				const holderName =
 					stakeholder?.name?.legal_name || stakeholder?.name?.first_name || "Holder";
@@ -165,9 +171,6 @@ export function useIssueStockWrite({
 					createdAt: Date.now(),
 				});
 
-				registerStockIssuanceOnchain({ issuerId, data }).catch((err) =>
-					console.warn("Failed to register stock issuance metadata:", err),
-				);
 				refreshHoldings();
 			} catch (err) {
 				setSuccessModal({
@@ -184,6 +187,7 @@ export function useIssueStockWrite({
 			sessionClasses,
 			sessionPeople,
 			direct,
+			pendingIssuance,
 			refreshHoldings,
 			setSuccessModal,
 			setActivityLog,

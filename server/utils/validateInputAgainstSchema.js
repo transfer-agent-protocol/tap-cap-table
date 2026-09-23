@@ -2,18 +2,32 @@ import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 const ajv = new Ajv();
 addFormats(ajv); // To support formats like date-time
 
-const schemaDirPath = path.join("__dirname", "../../ocf/schema");
+const schemaDirPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../ocf/schema");
 
 function replaceRemoteUrlLocally(remoteUrl) {
-    const formattedUrl = remoteUrl.replace(
+    return remoteUrl.replace(
         "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema",
         schemaDirPath
     );
-    return path.join("__dirname", formattedUrl);
+}
+
+async function walkItems(items) {
+    if (!items || typeof items !== "object" || Array.isArray(items)) return;
+    if (items.$ref) {
+        await fetchAndAddExternalSchema(items.$ref);
+    }
+    for (const keyword of ["allOf", "anyOf", "oneOf"]) {
+        if (Array.isArray(items[keyword])) {
+            for (const subSchema of items[keyword]) {
+                await fetchRefsInSchema(subSchema);
+            }
+        }
+    }
 }
 
 async function fetchRefsInSchema(schema) {
@@ -32,9 +46,8 @@ async function fetchRefsInSchema(schema) {
                 await fetchAndAddExternalSchema(prop.$ref);
             }
 
-            // Check for $ref inside 'items' of an array property
-            if (prop.type === "array" && prop.items && prop.items.$ref) {
-                await fetchAndAddExternalSchema(prop.items.$ref);
+            if (prop.type === "array") {
+                await walkItems(prop.items);
             }
 
             // Handle nested oneOf, allOf, etc. inside properties
@@ -105,12 +118,9 @@ async function fetchAndAddExternalSchema(schemaOrUrl) {
                 await fetchAndAddExternalSchema(prop.$ref);
             }
 
-            // Check for $ref inside 'items' of an array property
-            if (prop.type === "array" && prop.items && prop.items.$ref) {
-                await fetchAndAddExternalSchema(prop.items.$ref);
+            if (prop.type === "array") {
+                await walkItems(prop.items);
             }
-
-            // You can further extend this to handle other nested structures as needed
         }
     }
 

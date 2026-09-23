@@ -83,6 +83,10 @@ export const copy = {
 			"This company has no contract address yet. Open it from Companies after mint, or Load from wallet so the address is saved.",
 		revertedTitle: "Transaction failed",
 		revertedGeneric: "Nothing changed. You can try again.",
+		registerFailedTitle: "Not saved to this company",
+		registerFailed:
+			"The wallet transaction succeeded, but this company record was not saved. Save the record before creating another. Refresh will not restore it.",
+		saveRecord: "Save record",
 		issuanceReverted: "Issuance failed — usually not enough authorized shares left.",
 		confirmedTitle: {
 			stockClass: "Stock class created",

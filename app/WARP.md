@@ -84,7 +84,7 @@ These mirror the rules in the root `WARP.md` — keep them in sync.
 - **Fixed-point scaling**: scale `quantity` and `share_price` by **1e10** on the write side via `@tap/units` (`scaleShares` / `scaleAmount`). Poller unscales by 1e10.
 - **UUID ↔ bytes16**: `uuidToBytes16`, `bytes16ToUuid`, `generateBytes16Id` from `@tap/units` (via `src/utils/uuid.ts`).
 - **Share caps**: pre-sign with `validateShareCaps` from `@tap/units` (issuer remaining **and** class remaining) for issuances.
-- **One write path (manage UI)**: `useDirect*` + `useOnchainAction` (submit → wait receipt → success/reverted). Then:
+- **One write path (manage UI)**: `useDirect*` + `useOnchainAction` (submit → wait receipt → success/reverted). A stock class or shareholder submit is ignored while that write is waiting for a receipt. `/register-onchain` for those two runs after the receipt. If it fails, the modal offers Save record, and a stock class is not marked ready to issue. Then:
   - Class / stakeholder / issuance → `registerXxxOnchain` (metadata + `is_onchain_synced` + `tx_hash`)
   - **Transfer** → wallet `transferStock` only; poller writes `StockTransfer` (mirrors server `transferController` scaling; no UI call to `POST /transactions/transfer/stock`)
 - Legacy server-signed `/create` and transfer API routes exist for docs/API tooling, not the product UI.

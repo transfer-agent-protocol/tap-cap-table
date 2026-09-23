@@ -274,7 +274,6 @@ When editing pages under `docs/src/content/`, follow these conventions establish
 - **Dependency lists**: Each tool in an install/setup page should have a one-line purpose annotation so readers understand why it is required.
 - **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
-- **OCF import routes**: Any `multipart/form-data` route should include a concrete `curl -F` example, not just prose.
 - **Factory deploy page**: Prefer `pnpm deploy-factory` (auto-register) and `pnpm factory:register` over hand-editing Mongo. Compass remains optional for inspection. Document TA-owned factory vs shared demo clearly; never hardcode a stale implementation address.
 - **Diagrams**: Prefer Mermaid fenced blocks (```` ```mermaid ````) over JPG/PNG diagrams for new content. Mermaid renders inline in Nextra, respects light/dark theme, and stays editable in MDX. Existing screenshots stay — do not delete them.
 
@@ -320,10 +319,9 @@ tap-cap-table/
 │   │   ├── hooks/      # useDirect*, useMintIssuer, useCapTableManager
 │   │   └── lib/copy.ts # product copy (human labels)
 │   └── package.json
-├── chain/              # Foundry project (Solidity contracts)
+├── chain/              # Foundry project (Solidity). Deploy: scripts/deployFactory.sh
 │   ├── src/            # Smart contracts
 │   ├── test/           # Solidity tests
-│   ├── script/         # Deploy scripts
 │   └── foundry.toml    # Foundry config
 ├── server/             # API server (Express + Node.js)
 │   ├── app.js          # Express app setup
@@ -371,11 +369,12 @@ Share quantities and prices use scaled BigNumbers (1e10 precision):
 
 ### OCF Validation
 
-Validate all input against OCF schemas:
+Validate all input against OCF schemas. Routes import the schema JSON and pass that object. The default export is `validateInputAgainstOCF`.
 
 ```javascript
-import { validateInputAgainstSchema } from "./utils/validateInputAgainstSchema.js";
-validateInputAgainstSchema(data, "Stakeholder", "object");
+import stakeholderSchema from "../../ocf/schema/objects/Stakeholder.schema.json" with { type: "json" };
+import validateInputAgainstOCF from "./utils/validateInputAgainstSchema.js";
+await validateInputAgainstOCF(data, stakeholderSchema);
 ```
 
 ### Atomic Database Operations
@@ -448,7 +447,7 @@ Uses MongoDB with optional replica set for transactions:
 
 The Docker Compose file creates a single-node setup. For replica sets, use MongoDB's `--replSet` option.
 
-**Models**: OCF object types used by the poller, product UI, and zip import have Mongoose models in `server/db/objects/`.
+**Models**: OCF object types used by the poller and product UI have Mongoose models in `server/db/objects/`. `Issuer.is_manifest_created` remains on the schema (default `false`). There is no zip or manifest import route.
 
 ## TypeScript Configuration
 
@@ -496,17 +495,16 @@ Libraries:
 4. **Missing replica set**: Atomic operations fail without `DATABASE_REPLSET=1`.
 5. **OCF validation skipped**: Always validate input against schemas.
 6. **Contract events not emitted**: Check that contract functions emit expected events.
-7. **Preprocessor cache not populated**: Ensure seeding happens after manifest creation.
-8. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
-9. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Use a TTL (current: 90s) and let the aggregated holding row absorb the new total once the poller catches up.
-10. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
-11. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The Docker app service gets `NEXT_PUBLIC_*` from compose env (root `.env`). `pnpm app:dev` reads only `app/.env.local` — keep both files aligned. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables. On the shared Plume demo factory that is `0x366a…` (deploy key), not TAP Admin `0x3601…`. Only reuse a factory whose owner wallet you control.
-12. **Docker Next rewrites vs browser**: `NEXT_PUBLIC_API_URL` drives Next **server-side** `/api/*` rewrites. In the Docker app container use `http://server:8293`. Host `pnpm app:dev` uses `http://localhost:8293` in `app/.env.local`. Wrong value → mint onchain succeeds but register shows Internal Server Error.
-13. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
-14. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
-15. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
-16. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
-17. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `pnpm docker:down` removes the container; `pnpm docker:mongo` starts only Mongo.
+7. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
+8. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Session rows live in the company dashboard until it unmounts. A second stock class or shareholder submit is ignored while that write is waiting for a receipt.
+9. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
+10. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The Docker app service gets `NEXT_PUBLIC_*` from compose env (root `.env`). `pnpm app:dev` reads only `app/.env.local` — keep both files aligned. The factory address is deployment-specific (deployer wallet + nonce) and the implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables. On the shared Plume demo factory that is `0x366a…` (deploy key), not TAP Admin `0x3601…`. Only reuse a factory whose owner wallet you control.
+11. **Docker Next rewrites vs browser**: `NEXT_PUBLIC_API_URL` drives Next **server-side** `/api/*` rewrites. In the Docker app container use `http://server:8293`. Host `pnpm app:dev` uses `http://localhost:8293` in `app/.env.local`. Wrong value → mint onchain succeeds but register shows Internal Server Error.
+12. **Issuing a stakeholder's first stock**: the Issue Stock dropdown needs the issuer's stakeholders, so `GET /cap-table/holdings/stock` returns `stakeholders` (and `stockClasses`) — the manage UI can populate the dropdown before any issuance exists. Don't source the stakeholder list only from `holdings[]`; it's empty until stock is issued, which would make a fresh cap table unable to issue its first shares after a page reload.
+13. **Nav issuer id**: company section links must use the real UUID from `router.query.issuerId` (or path), never a pattern string from `pathname` — otherwise users land on `/app/companies/%5BissuerId%5D`.
+14. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
+15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
+16. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `docker compose stop` frees the port and leaves the containers in place. `pnpm docker:down` removes them; do not use it to recover the stack.
 
 ## Debugging
 

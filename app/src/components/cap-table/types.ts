@@ -42,6 +42,8 @@ export interface SuccessModalState {
 	txHash?: string;
 	message?: string;
 	variant?: "success" | "error" | "info";
+	/** Re-save a chain write that did not land in Mongo. */
+	retry?: () => void;
 }
 
 export interface CapTableDashboardProps {

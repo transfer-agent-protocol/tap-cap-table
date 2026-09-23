@@ -50,12 +50,11 @@ Wallet mint/manage needs `app/.env.local` (`NEXT_PUBLIC_*`). Docker app reads ro
 ## Local server hot-reload
 
 ```bash
-pnpm docker:down
-pnpm docker:mongo
+docker compose stop server
 pnpm dev
 ```
 
-`pnpm dev` starts the API with hot reload and the poller.
+`docker compose stop server` frees port 8293 and leaves Mongo running. `pnpm dev` starts the API with hot reload and the poller.
 
 ## Event poller
 
@@ -76,7 +75,7 @@ A fresh Mongo **does not** auto-import every historical issuer on Plume. Use min
 | `Can't resolve '@tap/units'` on `:3000` | Docker app image must `COPY packages/`; or stop Docker app and run `pnpm app:dev` |
 | Empty connect modal / no wallets | Install a browser extension wallet (Rabby, MetaMask, etc.) — EIP-6963, no cloud key needed |
 | `EADDRINUSE` | Port 8293 or 3000 already in use (`lsof -i :3000`) |
-| Other app wants Mongo 27017 | TAP publishes **27027**. Host `DATABASE_URL` must use 27027. `pnpm docker:down` if an old container is still on 27017. |
+| Other app wants Mongo 27017 | TAP publishes **27027**. Host `DATABASE_URL` must use 27027. `docker compose stop` the container still bound to 27017. |
 | History does not update | Poller running; issuer registered with `deployed_to` |
 | Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293` (host-reachable) |
 | Factory misaligned | Mongo `factories` vs `NEXT_PUBLIC_FACTORY_ADDRESS` |

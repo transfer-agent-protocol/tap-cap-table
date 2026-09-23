@@ -19,6 +19,8 @@ export interface StockClassesProps {
 	adding: boolean;
 	onAddingChange: (v: boolean) => void;
 	onSubmit: (data: StockClassData) => Promise<void>;
+	/** Wallet write still waiting for a receipt. */
+	pending?: boolean;
 	toolbar: ReactNode;
 	/** Current positions — drives the per-class Issued column */
 	holdings?: Array<{ stockClass?: { _id?: string }; quantity?: number | string }>;
@@ -87,6 +89,7 @@ export function StockClasses({
 	adding,
 	onAddingChange,
 	onSubmit,
+	pending = false,
 	toolbar,
 	holdings = [],
 }: StockClassesProps) {
@@ -136,7 +139,7 @@ export function StockClasses({
 							<Button
 								onClick={() => onAddingChange(true)}
 								$variant="primary"
-								disabled={isLoading}
+								disabled={isLoading || pending}
 							>
 								{copy.stockClasses.add}
 							</Button>
@@ -154,7 +157,7 @@ export function StockClasses({
 								onAddingChange(false);
 							}}
 							onCancel={() => onAddingChange(false)}
-							disabled={isLoading}
+							disabled={isLoading || pending}
 						/>
 					</Section>
 				)}
