@@ -76,7 +76,7 @@ make test-invariant
 
 - Node lint / typecheck / `@tap/units` and Foundry unit tests: `.github/workflows/ci.yml`. Runs on pull requests to `main` and on pushes to `main`.
 - Invariant tests on Solidity changes: `.github/workflows/security.yml`
-- Both workflows grant the Actions token `contents: read` only. The repository default Actions token is read. Foundry in CI is `v1.7.1`.
+- Both workflows grant the Actions token `contents: read` only. The repository default Actions token is read. Foundry in CI is `v1.8.3`. Solidity is **0.8.37**.
 - `main` requires the `Node` and `Foundry` checks, plus one approving review. Invariant tests are not required.
 
 ### Local Setup

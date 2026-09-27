@@ -465,14 +465,14 @@ Use `tsx` for running TypeScript files directly (already configured in scripts).
 
 The repository includes `.vscode/extensions.json` with recommended extensions for development.
 
-If you encounter "Source file requires different compiler version" errors in VS Code, ensure your Solidity extension is configured to use compiler version 0.8.30 (matching `chain/foundry.toml`):
+If you encounter "Source file requires different compiler version" errors in VS Code, ensure your Solidity extension is configured to use compiler version 0.8.37 (matching `chain/foundry.toml`):
 1. Reload VS Code (Cmd+Shift+P → "Developer: Reload Window")
 2. The extension will download the correct compiler version automatically
 
 ## Foundry (Solidity)
 
-- **Compiler**: Solidity **0.8.30** (`chain/foundry.toml` `solc_version`; exact `pragma solidity 0.8.30` on CapTable / factory / interfaces)
-- **Foundry**: forge/cast/anvil **1.7.1** is the current numbered stable. CI installs `v1.7.1`. Do not `foundryup` to nightly for this repo.
+- **Compiler**: Solidity **0.8.37** (`chain/foundry.toml` `solc_version`; exact `pragma solidity 0.8.37` on CapTable / factory / interfaces)
+- **Foundry**: forge/cast/anvil **v1.8.3**. CI installs `v1.8.3`. `pnpm setup` runs `foundryup --install v1.8.3`. Do not `foundryup` to nightly for this repo.
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
 - **EVM**: `shanghai` — do not bump to Amsterdam unless Plume supports those opcodes
@@ -485,7 +485,7 @@ Libraries:
 - forge-std v1.10.0
 - Access control: `AccessControlDefaultAdminRulesUpgradeable`
 
-**Compiler upgrades (do not mix with feature PRs):** next solc pin is **0.8.36** (Yul optimizer + inheritance-order fixes). A via-ir bump changes bytecode even if TAP source is identical. Sequence: land logic on 0.8.30 → separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Keep the CI Foundry pin on the same release as this repo so `pnpm setup`'s `foundryup` cannot drift. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
+**Compiler upgrades (do not mix with feature PRs):** the pin is Solidity **0.8.37** and Foundry **v1.8.3**. A via-ir compiler bump changes bytecode even if TAP source is identical. Sequence for the next bump: separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Keep the CI Foundry pin on the same release as `pnpm setup`. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
 
 ## Common Pitfalls
 

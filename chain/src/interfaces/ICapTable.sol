@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.30;
+pragma solidity 0.8.37;
 
 import { InitialShares, StockParams, StockIssuanceParams, StockTransferParams } from "../lib/Structs.sol";
 
