@@ -61,6 +61,7 @@ Bootstrap is idempotent — safe to re-run. Without `SKIP_APP=1` it also builds 
 
 - Package manager is **pnpm** (pnpm workspace monorepo) — do not use `npm` or `yarn`.
 - Never commit directly to `main`; branch from it and open a PR. PR titles follow Conventional Commits.
+- end every task with a dated note in `memory/` and a commit (atomic groups, short lowercase messages, never on `main`). see `WARP.md` → git workflow.
 - The blockchain is the source of truth; the offchain DB mirrors it via the event poller.
 - Spell **onchain** / **offchain** in TAP contract comments (no hyphen). NatSpec on interfaces; `@inheritdoc` on implementations; no TODO/placeholder comments in `chain/src`.
 - Onchain import helpers `mintSharesAuthorized` then `mintActivePositions` are one-shot (Foundry tests). Do not `issueStock` between them.

@@ -426,6 +426,8 @@ OCF defines the standard for:
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). Branch from `main`; never commit to `main`; Conventional Commits on PR titles.
 
+**memory + commit rule:** end every task by adding or updating a dated note in `memory/` (`memory/<mon>-<d>-<yyyy>.md`, e.g. `memory/sep-27-2026.md`) and linking it from the previous note's last line. then commit the work and the note on the feature branch in atomic groups. keep notes, commit messages, and pr text short and lowercase (code, paths, and addresses keep their case).
+
 ## Database
 
 Uses MongoDB with optional replica set for transactions:
