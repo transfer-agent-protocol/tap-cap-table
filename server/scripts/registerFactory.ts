@@ -100,6 +100,9 @@ const main = async () => {
     }
 
     const factory = await upsertFactory(payload);
+    if (!factory) {
+        throw new Error("Factory upsert returned no document");
+    }
     console.log(
         `✅ | Registered factory_address=${factory.factory_address} implementation_address=${factory.implementation_address ?? "(unset)"}`
     );

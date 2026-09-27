@@ -12,7 +12,7 @@ import StockReissuance from "../objects/transactions/reissuance/StockReissuance.
 import StockRepurchase from "../objects/transactions/repurchase/StockRepurchase.js";
 import StockRetraction from "../objects/transactions/retraction/StockRetraction.js";
 import StockTransfer from "../objects/transactions/transfer/StockTransfer.js";
-import { findByIdAndUpdate, findOne } from "./atomic.ts";
+import { findByIdAndUpdate, findOne, findOneAndUpdate } from "./atomic.ts";
 import { createFactory } from "./create.js";
 
 export const web3WaitTime = 5000;
@@ -105,10 +105,12 @@ export const upsertIssuerAuthorizedSharesAdjustment = async (id, updatedData) =>
 };
 
 export const upsertFactory = async (updatedData) => {
-    // For now, we only allow a single record in the database
+    // One operator factory. Match the address, not _id: older rows use an ObjectId
+    // while the schema types _id as a string, and Mongoose 9 then misses the update.
     const existing = await findOne(Factory);
     if (existing) {
-        return await findByIdAndUpdate(Factory, existing._id, updatedData, { returnDocument: "after" });
+        const filter = existing.factory_address ? { factory_address: existing.factory_address } : { _id: existing._id };
+        return await findOneAndUpdate(Factory, filter, updatedData, { returnDocument: "after" });
     }
     return await createFactory(updatedData);
 };
