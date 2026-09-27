@@ -223,8 +223,6 @@ Key invariants tested:
 
 Do not reintroduce unused `ghost_*` counters on the handler. Assert against onchain state.
 
-Certificate ids are a keccak of the id, timestamp, prevrandao, and nonce. That is uniqueness, not a lottery. Do not replace it with Chainlink VRF.
-
 ### Documentation
 
 ```bash

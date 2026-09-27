@@ -6,8 +6,6 @@
 
 Report vulnerabilities to security@palmer.earth. Do not open a public GitHub issue.
 
-Certificate ids are a keccak of the id, timestamp, prevrandao, and nonce. That is uniqueness, not a lottery. Do not replace it with Chainlink VRF.
-
 ## Foundry invariant tests
 
 Stateful fuzzing for core accounting rules (256 runs / 50 depth).
@@ -32,9 +30,3 @@ Tests covering core flows, edge cases, access control, factory logic, and operat
 | `make test` | Run all unit tests |
 | `make test-invariant` | Short invariant fuzz (256 runs, 50 depth) |
 | `make test-invariant-deep` | Deep invariant fuzz (2000 runs, 100 depth) |
-
-## Philosophy
-
-- Stress-test logic over sequences (invariants)
-- Verify specific behaviors and errors (unit tests)
-- No single tool replaces a full audit
