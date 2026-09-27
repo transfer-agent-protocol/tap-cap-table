@@ -33,10 +33,10 @@ export interface StockIssuanceResponse {
 }
 
 /**
- * Register a stock issuance that the caller already submitted onchain via their own wallet.
+ * Validate stock issuance metadata before the caller submits via their own wallet.
  * No id is required — the contract assigns issuance + security ids internally, and the poller
- * writes the authoritative StockIssuance doc when it sees the event. This endpoint just
- * validates the metadata so the UI can render optimistically until the poller catches up.
+ * writes the authoritative StockIssuance doc when it sees the event. This endpoint validates
+ * metadata and share caps only; it does not submit or persist the issuance.
  */
 export async function registerStockIssuanceOnchain(payload: CreateStockIssuancePayload): Promise<StockIssuanceResponse> {
 	const res = await fetch("/api/transactions/issuance/stock/register-onchain", {

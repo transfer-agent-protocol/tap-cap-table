@@ -37,7 +37,7 @@ The protocol uses a three-tier access model:
 - **OPERATOR_ROLE**: Optional extra address granted at mint (`NEXT_PUBLIC_OPERATOR_ADDRESS`). Same day-to-day writes as ADMIN. **Not** the server `PRIVATE_KEY`. The product default is the deployer (ADMIN) operates the instance; admins already satisfy operator checks.
 - **Factory owner** (wallet that deployed that factory): Controls the `UpgradeableBeacon`, can upgrade the `CapTable` implementation for ALL proxies of **that** factory via `updateCapTableImplementation()`. Has no access to individual cap tables as admin. On the shared Plume demo factory this is `0x366a…` (deploy key). TAP Admin is `0x3601…`. A licensed transfer agent should deploy their own factory so they own upgrades.
 
-**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API / `deploy-factory`; `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/content/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
+**Three keys (do not conflate):** (1) **Factory owner** — cold/infrequent CLI for deploy + beacon upgrades; never the long-running Docker `PRIVATE_KEY`. (2) **Issuer ADMIN** — browser wallet in `/app` that called `createCapTable`. (3) **Server/operator** — optional root `.env` `PRIVATE_KEY` for server-signed API. `deploy-factory` reads the same variable by default and the deploying key becomes the factory owner, so deploy a real factory from a separate env file (`./scripts/deployFactory.sh .env.prod`). `NEXT_PUBLIC_OPERATOR_ADDRESS` is only the **address** granted at mint (no key required on server for wallet-first path). Local `PRIVATE_KEY` is **dev/demo only** (placeholder OK; poller read-only). Full write-up: `docs/src/content/development/setup.mdx` → “Three wallets / keys” (`#three-wallets-keys`).
 
 **Cap table creation** is permissionless — anyone can call `createCapTable()` on the factory. The caller becomes the ADMIN of the new cap table and can optionally designate an OPERATOR address (typically the TAP server) at creation time.
 
@@ -72,7 +72,8 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Submits transactions to smart contracts
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
     - **Route conventions** for entity creation:
-      - `POST /<entity>/register-onchain` — **manage UI path**: caller's wallet already submitted onchain; endpoint validates (+ share-cap checks for issuance), sets `is_onchain_synced` / `tx_hash`, and persists metadata. Poller remains authoritative.
+      - `POST /stock-class/register-onchain` and `POST /stakeholder/register-onchain` — **manage UI path after a confirmed wallet receipt**: validates, sets `is_onchain_synced` / `tx_hash`, and persists metadata. Poller remains authoritative.
+      - `POST /transactions/issuance/stock/register-onchain` — **manage UI preflight before the wallet tx**: validates OCF metadata and share caps only. It does not persist; the poller writes the canonical issuance from the event.
       - `POST /<entity>/create` — server-signed API/docs path. Signs with root `.env` `PRIVATE_KEY` (local **developer** key) if set. Not the protocol OPERATOR identity and **not** used by the `/app` manage UI. Wallet-first path can leave `PRIVATE_KEY` unset.
     - Issuer helpers for the product UI:
       - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (`Issuer.deployed_by`).
@@ -98,7 +99,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
       - `/app/mint` — deploy a new cap table from the connected admin wallet.
       - `/app/companies/[issuerId]?view=…` — full company workspace. Sections (left nav, setup order): **Holdings** → **Stock classes** → **Shareholders** → **Issue stock** → **Transfer** → **Transactions**.
     - Legacy `/mint` and `/manage*` redirect into `/app/*`.
-    - Direct-wallet writes: stock class, shareholder, issuance, **stock transfer** (`useDirect*` + `useOnchainAction`). Class/person/issuance metadata via `/register-onchain` after receipt; transfers rely on the poller (`StockTransfer` / historical TX) — no separate transfer register endpoint.
+    - Direct-wallet writes: stock class, shareholder, issuance, **stock transfer** (`useDirect*` + `useOnchainAction`). Class/person metadata is registered after the receipt; issuance uses `/register-onchain` as a validation-only preflight before submission; the poller persists issuance and transfer events — there is no separate transfer register endpoint.
     - UI lives in `components/cap-table/*` (`CapTableDashboard` shell plus screens named after the COMPANY left nav). Product copy in `lib/copy.ts`. Nav config in `navConfig.ts` — always use `query.issuerId` / `asPath` for links, never `router.pathname` with a `[issuerId]` pattern (that produced `%5BissuerId%5D` URLs).
     - Optimistic session rows for in-flight creates; holdings/API lists must work when `deployed_to` is missing (Mongo people/classes) and 404 only when the issuer id is unknown.
 
@@ -106,10 +107,11 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
 
 **Transaction Creation (direct wallet — `/app` manage UI)**:
 
-1. Frontend generates a bytes16 id (where required) and submits the tx from the connected admin wallet via wagmi (`useDirect*` + `useOnchainAction`: submit → wait receipt → success/reverted). Scaling/IDs/share-caps use `@tap/units`. The chain assigns issuance + security ids internally for `issueStock` and transfer balance securities; the frontend supplies its own ids for `createStakeholder` and `createStockClass`.
-2. For class / stakeholder / issuance: frontend POSTs OCF metadata to `/<entity>/register-onchain` after confirmation. Server validates (and asserts share caps on issuance) and persists offchain metadata; **does not** submit onchain again.
-3. For **transfer**: wallet calls `CapTable.transferStock` only; poller `handleStockTransfer` writes Mongo + historical TX (same as API-path transfers).
-4. The poller is still authoritative — it picks up events and writes canonical records (joining on bytes16 id where applicable). UI “Refresh” runs reconcile + reloads holdings/history; do not jump the poller to head on every refresh (that skipped events and created ghost classes).
+1. Frontend generates a bytes16 id where required and submits from the connected admin wallet via wagmi (`useDirect*` + `useOnchainAction`: submit → wait receipt → success/reverted). Scaling/IDs/share-cap checks use `@tap/units`. The chain assigns issuance + security ids internally for `issueStock` and transfer balance securities; the frontend supplies ids for `createStakeholder` and `createStockClass`.
+2. For **class and stakeholder**, the frontend POSTs OCF metadata to `/register-onchain` only after the receipt confirms. The server validates and persists metadata with `is_onchain_synced` / `tx_hash`; it does not submit onchain again.
+3. For **issuance**, the frontend first calls `/transactions/issuance/stock/register-onchain` to validate OCF metadata and share caps, then submits the wallet tx. That endpoint does not persist the issuance; the poller writes it from the event.
+4. For **transfer**, the wallet calls `CapTable.transferStock` only; poller `handleStockTransfer` writes Mongo + historical TX (same as API-path transfers).
+5. The poller is still authoritative — it picks up events and writes canonical records (joining on bytes16 id where applicable). UI “Refresh” runs reconcile + reloads holdings/history; do not jump the poller to head on every refresh (that skipped events and created ghost classes).
 
 **Transaction Creation (server-signed API / docs)**:
 
@@ -128,12 +130,13 @@ Product mint is the connected ADMIN wallet calling `createCapTable` (deployer of
 
 ```bash
 pnpm install
-REUSE_TAP_FACTORY=1 pnpm bootstrap   # Mongo + API (+ app image), demo factory in Mongo
+# Mongo + API + poller; registers the shared demo factory in Mongo. SKIP_APP=1 keeps :3000 free.
+REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
 # app/.env.local: NEXT_PUBLIC_* (factory, chain, operator address). PRIVATE_KEY optional for wallet UI
 pnpm app:dev                         # product UI — do not rely on Docker app alone
 ```
 
-`pnpm bootstrap` is idempotent. Use `SKIP_APP=1` for mongodb+server only, or `pnpm docker:mongo` for Mongo alone (host **27027**, not 27017). Factory model + failure matrix: [`AGENTS.md`](./AGENTS.md).
+`pnpm bootstrap` is idempotent. Without `SKIP_APP=1` it also builds the Docker `next start` preview on :3000; run `docker compose stop app` before `pnpm app:dev`. `pnpm docker:mongo` starts Mongo alone (host **27027**, not 27017). Factory model + failure matrix: [`AGENTS.md`](./AGENTS.md).
 
 Manual steps (if not using bootstrap):
 
@@ -178,7 +181,7 @@ pnpm test
 # Or: make test
 
 # Run specific test
-cd chain && forge test --match-test testStockIssuance
+cd chain && forge test --match-test testAdjustIssuerAuthorizedShares
 
 # Invariant tests (stateful fuzzing)
 make test-invariant           # Standard run (256 runs, 50 depth)
@@ -206,6 +209,8 @@ pnpm format
 pnpm typecheck
 ```
 
+CI (`.github/workflows/ci.yml`) also runs `pnpm --filter tap-docs lint`, `pnpm --filter tap-app lint`, and `pnpm --filter tap-app typecheck`; root `pnpm lint` ignores `docs/`. `security.yml` runs the invariant suite when Solidity or `foundry.toml` changes.
+
 ### Invariant Testing
 
 Foundry's coverage-guided invariant testing validates protocol-wide properties:
@@ -226,7 +231,7 @@ Do not reintroduce unused `ghost_*` counters on the handler. Assert against onch
 ### Documentation
 
 ```bash
-# Run docs dev server
+# Run docs dev server (http://localhost:3001)
 pnpm docs:dev
 
 # Build docs for production
@@ -274,14 +279,17 @@ The frontend is a Next.js 16 app in the `app/` workspace. Marketing is `/`; prod
 # Deploy factory contract
 pnpm deploy-factory
 # Or with custom env file: ./scripts/deployFactory.sh .env.prod
+# Add source verification: ./scripts/deployFactory.sh .env.prod --verify
 
 # The script:
-# 1. Sources environment variables
+# 1. Parses KEY=VALUE environment variables without executing the env file
 # 2. Runs forge script (chain/script/DeployFactory.s.sol) with the deploy profile
 # 3. CREATE2-deploys libraries, CapTable, and CapTableFactory; the beacon is CREATE2 from the factory
 # Upgrade an existing beacon in place (no second factory):
 #   ./scripts/deployFactory.sh --upgrade-factory 0xYourFactory
 ```
+
+`--verify` submits to Sourcify. Plume Blockscout currently does not offer Solidity 0.8.37, so direct Blockscout compilation fails even when the deployed bytecode is correct. Open each contract address on `explorer.plume.org` after Sourcify succeeds; Blockscout imports the match automatically. `is_partially_verified: true` is expected because `bytecode_hash = "none"` and `cbor_metadata = false` omit the metadata fingerprint required for a full match.
 
 ## Project Structure
 
@@ -296,8 +304,10 @@ tap-cap-table/
 │   └── package.json
 ├── chain/              # Foundry project (Solidity). Deploy: scripts/deployFactory.sh
 │   ├── src/            # Smart contracts
+│   ├── script/         # DeployFactory.s.sol (CREATE2 deploy + beacon upgrade)
+│   ├── broadcast/      # Committed forge records of live Plume deploys
 │   ├── test/           # Solidity tests
-│   └── foundry.toml    # Foundry config
+│   └── foundry.toml    # Foundry config (deploy profile holds the library CREATE2 salt)
 ├── server/             # API server (Express + Node.js)
 │   ├── app.js          # Express app setup
 │   ├── server.js       # Main entry point (server + poller)
@@ -312,6 +322,7 @@ tap-cap-table/
 │   │   ├── objects/    # Mongoose models
 │   │   ├── operations/ # CRUD operations
 │   ├── routes/         # Express routes
+│   ├── scripts/        # factory:register, poller:fast-forward
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
 ├── docs/               # Developer documentation (Nextra 4 App Router, workspace: tap-docs)
 │   ├── src/content/    # MDX documentation pages
@@ -319,6 +330,8 @@ tap-cap-table/
 │   └── public/         # Static assets
 ├── ocf/                # https://github.com/transfer-agent-protocol/tap-ocf (schemas only; pin 6d8c9322)
 ├── packages/units/     # @tap/units — shared scale / UUID / share-caps
+├── scripts/            # bootstrap-plume, deployFactory, setup, dev
+├── docker/             # Dockerfile.server (API) + Dockerfile.app (next start preview)
 ├── .env.example        # Environment template
 ├── docker-compose.yml  # Docker services (MongoDB, server, app)
 ├── pnpm-workspace.yaml # Workspace config
@@ -375,9 +388,9 @@ API routes requiring contract access use `contractMiddleware`:
 
 The system supports multiple environments via `.env` files:
 
-- `.env`: Default development
-- `.env.test.local`: Testing (uses separate database)
-- Custom files: Pass as argument to scripts
+- `.env`: Default server, Docker Compose, and CLI configuration
+- `app/.env.local`: Host Next.js configuration (`NEXT_PUBLIC_*`)
+- Custom files such as `.env.prod`: pass the path to `scripts/deployFactory.sh`, or set `USE_ENV_FILE` for server scripts that call `setupEnv()`
 
 **Key Variables**:
 
@@ -392,7 +405,7 @@ The system supports multiple environments via `.env` files:
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
 - `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables
-- `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (default 5, raised to 8 in `docker-compose.yml`). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
+- `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (code default 5; `.env.example` and `docker-compose.yml` use 8). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
 
 ## Working with OCF
 
@@ -451,16 +464,17 @@ If you encounter "Source file requires different compiler version" errors in VS 
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
 - **EVM**: `osaka`. Plume mainnet and testnet list Fusaka as the latest supported EVM (ArbOS 51, activated 5 February 2026). Do not set `amsterdam`; that target is for Glamsterdam and is not live on Plume.
+- **Verification**: use `--verifier sourcify` while Plume Blockscout lacks Solidity 0.8.37, then visit the explorer address to trigger its Sourcify import. A partial match is expected with metadata disabled; do not downgrade the compiler just to satisfy Blockscout.
 - **Tests**: Use `forge test` with optional filters: `--match-test`, `--match-contract`
 - **Comments**: NatSpec lives on interfaces (`@notice` / `@dev` gotchas). Implementations use `@inheritdoc`. Spell **onchain** / **offchain** (no hyphen). No TODO/placeholder/MVP comments in `chain/src`. Explain why, not what.
 
 Libraries:
 
-- OpenZeppelin v5.4.0 (upgradeable contracts)
+- OpenZeppelin v5.4.0: `openzeppelin-contracts` (factory, beacon, proxy) and `openzeppelin-contracts-upgradeable` (CapTable)
 - forge-std v1.16.2
 - Access control: `AccessControlDefaultAdminRulesUpgradeable`
 
-**Compiler upgrades (do not mix with feature PRs):** the pin is Solidity **0.8.37** and Foundry **v1.8.3**. A via-ir compiler bump changes bytecode even if TAP source is identical. Sequence for the next bump: separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Keep the CI Foundry pin on the same release as `pnpm setup`. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
+**Compiler upgrades (do not mix with feature PRs):** the pin is Solidity **0.8.37** and Foundry **v1.8.3**. A via-ir compiler bump changes bytecode even if TAP source is identical, so it also moves CREATE2 addresses. Sequence for the next bump: separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume (Sourcify if Plume Blockscout's compiler list lacks the new solc) → update the landing demo table in `app/src/pages/index.tsx`. Keep the CI Foundry pin on the same release as `pnpm setup`. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
 
 ## Common Pitfalls
 
@@ -470,7 +484,7 @@ Libraries:
 4. **Missing replica set**: Atomic operations fail without `DATABASE_REPLSET=1`.
 5. **OCF validation skipped**: Always validate input against schemas.
 6. **Contract events not emitted**: Check that contract functions emit expected events.
-7. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain; `/register-onchain` assumes the caller already did. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
+7. **Mixing `/create` and `/register-onchain` semantics**: `/create` makes the server submit onchain. Class/stakeholder `/register-onchain` assumes a confirmed wallet receipt; issuance `/register-onchain` is a validation-only preflight before the wallet tx. Don't reintroduce a `suppliedId`-style overload on the `/create` route — that pattern was explicitly removed.
 8. **Optimistic-state dedupe by stakeholder+stockclass**: Don't. Multiple issuances can exist for the same pair; deduping there hides legitimate in-flight rows. Session rows live in the company dashboard until it unmounts. A second stock class or shareholder submit is ignored while that write is waiting for a receipt.
 9. **MongoDB "Connection ended" log lines are not an error**: they're normal idle connection-pool churn (`connectionCount` ticks down as pooled sockets close). A real failure logs "Error connecting to Mongo". The poller printing `Processing for <issuer>: <block>` with an advancing block number means it is healthy.
 10. **Factory config has two independent sources — don't conflate them**: the server reads the factory from the Mongo `factories` collection (`deployCapTable` uses `factories[0].factory_address`); the frontend reads `NEXT_PUBLIC_FACTORY_ADDRESS` from `app/.env.local`. The Docker app service gets `NEXT_PUBLIC_*` from compose env (root `.env`). `pnpm app:dev` reads only `app/.env.local` — keep both files aligned. A new factory address is CREATE2 (salt + bytecode + owner via the Arachnid deployer), not deployer nonce. The shared Plume demo factory is the older CREATE deployment; do not replace its beacon or upsert a second factory over it. The implementation is an **upgradeable** beacon target, so **never hardcode them**: `pnpm deploy-factory` auto-registers both from the real deploy, and `pnpm factory:register --factory <addr>` reads the current implementation from the factory onchain (`upsertFactory` keeps a single record — one operator factory, many cap tables). Keep the Mongo factory and `app/.env.local` on the same address. A factory's **owner** (the wallet that deployed it) controls beacon upgrades for all its cap tables. On the shared Plume demo factory that is `0x366a…` (deploy key), not TAP Admin `0x3601…`. Only reuse a factory whose owner wallet you control.

@@ -57,10 +57,10 @@ transactions.post("/issuance/stock", async (req, res) => {
     }
 });
 
-// Register a stock issuance that the caller already issued onchain from their own wallet.
-// We do NOT submit onchain. We don't persist a StockIssuance doc here either — the poller
-// writes the authoritative doc when it sees the TxCreated event. We just validate + return
-// the prepared OCF shape so the UI can render optimistically until the poller catches up.
+// Preflight stock issuance metadata before the caller submits from their own wallet.
+// We do NOT submit onchain or persist a StockIssuance doc — the poller writes the
+// authoritative doc when it sees the TxCreated event. We only validate the OCF shape
+// and share caps so the UI can stop an invalid request before wallet confirmation.
 transactions.post("/issuance/stock/register-onchain", async (req, res) => {
     const { issuerId, data } = req.body;
 
@@ -101,7 +101,7 @@ transactions.post("/issuance/stock/register-onchain", async (req, res) => {
 
         await validateInputAgainstOCF(incomingStockIssuance, stockIssuanceSchema);
 
-        console.log("✅ | Stock issuance metadata accepted (onchain by caller's wallet)");
+        console.log("✅ | Stock issuance metadata accepted for wallet submission");
 
         res.status(200).send({ stockIssuance: incomingStockIssuance });
     } catch (error) {
