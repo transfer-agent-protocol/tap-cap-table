@@ -1,6 +1,5 @@
 # GitHub only reads this file at the repository root. Nested .github/ folders
-# in app/, docs/, server/, or chain/ are ignored — keep package-specific notes
-# in WARP.md / SECURITY.md instead.
+# in app/, docs/, server/, or chain/ are ignored.
 version: 2
 updates:
     # One npm ecosystem: the workspace lockfile is pnpm-lock.yaml at /.

@@ -1,102 +1,41 @@
-# Security
+# Security Policy
 
-## Reporting Security Issues
+## Reporting a vulnerability
 
-If you discover a security vulnerability in this project, please report it by emailing the project maintainers. Please do not create public GitHub issues for security vulnerabilities.
+Email security@palmer.earth. Do not open a public GitHub issue.
 
-## Monorepo dependency surfaces
+Include the component (contracts, API, app, or workflows), what you observed, and the impact. This project is not in production. There is no bug bounty and no response-time commitment. Reports against the default branch are the ones we can act on.
 
-GitHub Dependabot and GitHub Actions only read **root** `.github/` (`dependabot.yml`, `workflows/`). Nested `.github/` folders under `app/`, `docs/`, `server/`, or `chain/` are ignored. Package-specific conventions live here and in `WARP.md` / `app/WARP.md`.
+## Scope
 
-| Surface | Manifest | What to patch | What not to do |
-| --- | --- | --- | --- |
-| API + poller | root `package.json` | Direct runtime deps (`mongoose`, `express` 4.x, `uuid`, `ethers`) and their transitives | Do not jump Express 5 without a dedicated migration. Do not add unused compilers. |
-| Product UI | `app/package.json` | `next` / `react` / `wagmi` / `viem` (same Next major as docs) | Do not hand-edit `app/src/generated.ts`. |
-| Docs | `docs/package.json` | `nextra` + the same `next` major as the app | Docs is App Router (Nextra 4). Do not reintroduce Pages Router. |
-| Contracts | Foundry (`chain/`) | Aderyn + invariant tests | Not an npm ecosystem. Do not install Slither. |
-| OCF schemas | `ocf/` git submodule | JSON schemas only (imported as files) | Not a pnpm workspace. Upstream docs/jest deps must not enter `pnpm-lock.yaml`. |
+In scope:
 
-Dependabot scans the **root** npm lockfile weekly (production and development groups) plus GitHub Actions monthly. Ignore Express major upgrades.
+- Contracts in `chain/src` (cap table, factory, and the libraries in this repo)
+- The API and event poller in `server/`
+- The product app in `app/`
+- Workflows in `.github/workflows`
 
-## Direct Dependencies
+Out of scope:
 
-We actively monitor and update our direct dependencies for security vulnerabilities. Run `pnpm audit` to see the current status.
+- Vendored contracts in `chain/lib` (OpenZeppelin, forge-std). Report those upstream.
+- The `ocf/` submodule. Report schema issues upstream.
+- Plume, browser wallets, and public RPC providers.
+- The local Docker setup. The development database uses published development credentials, and the API does not authenticate callers. That is the local stack, not a production deployment. A report is in scope when the same behavior would matter for a hosted API, a hosted app, or a deployed contract.
 
-Unused packages that only existed to generate alerts (`solc`, `date-fns`, OCF npm workspace membership) were removed rather than patched.
+## Supported versions
 
-## Security Best Practices
+No release is supported. There is no production version line. `1.0.0` in `package.json` is not a supported release.
 
-When deploying this application:
+## What we run
 
-1. **Environment Variables**: Never commit `.env` files with real credentials
-2. **Private Keys**: Store blockchain private keys securely (e.g., using secret managers)
-3. **Database**: Use MongoDB with authentication enabled and restrict network access
-4. **RPC Endpoints**: Use authenticated RPC endpoints for blockchain access
-5. **HTTPS**: Always use HTTPS in production
-6. **Updates**: Keep dependencies updated regularly
-7. **Secret scanning**: Secret scanning and push protection are enabled on the repository (Settings → Code security). They are not configurable from workflow YAML.
+- Pull requests to `main` run the Node and Foundry checks. Both are required to merge, along with one approving review.
+- Changes under `chain/` also run Foundry invariant tests. That job is not required to merge.
+- Dependabot opens update requests for the root pnpm lockfile and for GitHub Actions. Dependabot security updates are on.
+- Secret scanning and push protection are on.
+- This repository does not run a Solidity static analyzer.
 
-## Supported Versions
+## Before this is production
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-
-## Security Toolchain
-
-We use a multi-layered approach to smart contract security:
-
-### Static Analysis
-
-| Tool | Purpose | Output |
-|------|---------|--------|
-| [Aderyn](https://github.com/Cyfrin/aderyn) | Fast linting, IDE integration | `report.md` (re-run after contract changes; must include `chain/src/lib/`) |
-
-Slither was removed. Low-severity reentrancy SARIF on `CapTableFactory` (event after `new BeaconProxy`, state write after `upgradeTo`) was noise; Aderyn plus Foundry invariants are the replacement until a better semantic analyzer is chosen.
-
-### Dynamic Analysis
-
-| Tool | Purpose | Location |
-|------|---------|----------|
-| Foundry Invariant Tests | Stateful fuzzing, property-based testing | `chain/test/invariants/` |
-| Foundry unit tests | Access control, factory, accounting | `chain/test/` (`make test`) |
-
-### Running Security Checks
-
-```bash
-# Static analysis
-make security
-
-# Individual tools
-make aderyn
-make test-invariant
-```
-
-### CI Integration
-
-- Node lint / typecheck / `@tap/units` and Foundry unit tests: `.github/workflows/ci.yml`. Runs on pull requests to `main` and on pushes to `main`.
-- Invariant tests on Solidity changes: `.github/workflows/security.yml`
-- Both workflows grant the Actions token `contents: read` only. The repository default Actions token is read. Foundry in CI is `v1.8.3`. Solidity is **0.8.37**.
-- `main` requires the `Node` and `Foundry` checks, plus one approving review. Invariant tests are not required.
-
-### Local Setup
-
-**Aderyn** (Rust):
-```bash
-cargo install aderyn
-```
-
-### Pre-Audit Checklist
-
-Before external audits:
-1. Run `make security` and address all high/medium findings
-2. Run `make test-invariant-deep` for extended fuzzing
-3. Review `report.md`
-4. Ensure all tests pass: `make test`
-
-## Security Features
-
-- MongoDB transactions support for atomic operations
-- OCF schema validation on all API inputs
-- Smart contract access control (RBAC)
-- Event-driven architecture with blockchain as source of truth
+- Do not commit `.env` files or private keys.
+- Do not put the API or the development database on the public internet.
+- Product writes are signed by the connected wallet. The chain is the record. The database is a copy.

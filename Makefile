@@ -1,7 +1,7 @@
 # TAP Cap Table - Development Makefile
 # Run `make help` to see available targets
 
-.PHONY: help test test-v test-invariant test-invariant-deep build aderyn security clean
+.PHONY: help test test-v test-invariant test-invariant-deep build clean
 
 help:
 	@echo "TAP Cap Table - Available targets:"
@@ -11,10 +11,6 @@ help:
 	@echo "    make test-v            - Run all tests with verbose output"
 	@echo "    make test-invariant    - Run invariant tests (256 runs, 50 depth)"
 	@echo "    make test-invariant-deep - Run deep invariant tests (2000 runs, 100 depth)"
-	@echo ""
-	@echo "  Security Analysis:"
-	@echo "    make aderyn            - Run Aderyn static analysis (outputs to report.md)"
-	@echo "    make security          - Run Aderyn"
 	@echo ""
 	@echo "  Other:"
 	@echo "    make build             - Build contracts with Foundry"
@@ -35,19 +31,6 @@ test-invariant:
 
 test-invariant-deep:
 	cd chain && forge test --mt invariant --invariant-runs 2000 --invariant-depth 100 -vvv
-
-# =============================================================================
-# Security Analysis
-# =============================================================================
-
-aderyn:
-	aderyn .
-
-security: aderyn
-	@echo ""
-	@echo "Security analysis complete."
-	@echo "  - Aderyn report: report.md"
-	@echo "  Foundry invariants: make test-invariant"
 
 # =============================================================================
 # Build & Clean
