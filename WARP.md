@@ -206,34 +206,7 @@ pnpm format
 pnpm typecheck
 ```
 
-### Static Analysis & Security
-
-We use a multi-layered security toolchain:
-
-```bash
-# Run all security checks
-make security
-
-# Individual tools:
-make aderyn     # Fast linting (Rust-based, real-time IDE integration)
-
-# Invariant testing (stateful fuzzing)
-make test-invariant
-```
-
-#### Aderyn
-
-[Aderyn](https://github.com/Cyfrin/aderyn) is a Rust-based Solidity static analyzer. Configured via `aderyn.toml`:
-
-- **Scope**: Production contracts in `chain/src/`
-- **Output**: `report.md`
-- **VS Code**: Install the [Aderyn Extension](https://marketplace.visualstudio.com/items?itemName=Cyfrin.aderyn) for real-time checks
-
-`aderyn.toml` (repo root) sets `root = "chain"` and excludes vendor `lib/openzeppelin` / `lib/forge-std`. **Do not** exclude `"/lib/"` — that also skips `chain/src/lib/` (Stock, TxHelper, Structs). Output is `report.md`. H-1 (keccak of id/timestamp/prevrandao/nonce) is certificate-id uniqueness, not a lottery — do not replace with Chainlink VRF. Interpret findings from the generated report; do not copy counts into docs.
-
-Slither was removed. Aderyn plus Foundry invariants are the contract toolchain.
-
-#### Invariant Testing
+### Invariant Testing
 
 Foundry's coverage-guided invariant testing validates protocol-wide properties:
 
@@ -249,6 +222,8 @@ Key invariants tested:
 - Stock class authorized shares never exceed issuer authorized
 
 Do not reintroduce unused `ghost_*` counters on the handler. Assert against onchain state.
+
+Certificate ids are a keccak of the id, timestamp, prevrandao, and nonce. That is uniqueness, not a lottery. Do not replace it with Chainlink VRF.
 
 ### Documentation
 
