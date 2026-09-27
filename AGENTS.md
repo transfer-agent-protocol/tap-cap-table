@@ -4,7 +4,7 @@ Guidance for AI coding agents working in the Transfer Agent Protocol (TAP) Cap T
 
 The canonical, always-up-to-date agent guidance for this repo lives in the `WARP.md` files. **Read them before making changes:**
 
-- [`WARP.md`](./WARP.md) — monorepo architecture, development commands, important patterns, security tooling, and Git workflow.
+- [`WARP.md`](./WARP.md) — monorepo architecture, development commands, important patterns, and Git workflow.
 - [`app/WARP.md`](./app/WARP.md) — frontend (`tap-app`) conventions: routes under `/app`, styled-components, wallet/web3, generated contract hooks, direct-wallet write path.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch, commit, and pull-request conventions.
 - Setup docs: [`docs/src/content/development/setup.mdx`](./docs/src/content/development/setup.mdx) (not `docs/src/pages/`). Local stack troubleshooting: [`docs/src/content/development/run-server.mdx`](./docs/src/content/development/run-server.mdx).
@@ -16,8 +16,8 @@ The canonical, always-up-to-date agent guidance for this repo lives in the `WARP
 ```bash
 pnpm install
 REUSE_TAP_FACTORY=1 pnpm bootstrap   # Plume stack + register shared demo factory in Mongo
-# Fill secrets once in .env AND app/.env.local:
-#   NEXT_PUBLIC_OPERATOR_ADDRESS, PRIVATE_KEY (if server-signed / deploy)
+# Optional: NEXT_PUBLIC_OPERATOR_ADDRESS (an address, not a key) and PRIVATE_KEY
+# (dev/demo only, for server-signed API or deploy). Wallet UI does not need either.
 # Wallet UI: install a browser extension wallet (Rabby, MetaMask, etc.) — no cloud key needed
 pnpm app:dev                         # http://localhost:3000/app  (reads app/.env.local)
 ```
@@ -68,5 +68,5 @@ Bootstrap is idempotent — safe to re-run. Prefer `SKIP_APP=1 pnpm bootstrap` i
 - **Product UI is `/app/*`** (Companies, New company, company workspace). Marketing is `/`. Legacy `/mint` and `/manage*` redirect to `/app`. Frontend dev = `pnpm app:dev`.
 - Manage UI write path is **direct-wallet only** (`useDirect*` + `useOnchainAction` + `/register-onchain` for class/person/issuance). **Transfer** = `useDirectTransferStock` → `CapTable.transferStock`; poller mirrors TransferStock — do not call the server transfer API from the UI.
 - Company nav: use real `issuerId` via `capTableHref` / `query.issuerId` — never link with a pathname that still contains `[issuerId]`.
-- Factory addresses are deployment-specific. Never hardcode impl addresses; keep Mongo `factories` and `app/.env.local` aligned. CLI/Mongo register is **local config**, not product onboarding.
+- New factory deploys are CREATE2 (`pnpm deploy-factory`): address is salt + bytecode + owner, via the Arachnid deployer, not the deployer nonce. The shared Plume demo factory `0xcd6…` is the older CREATE deployment — do not replace its beacon or register a second factory over it. Upgrade that implementation with `./scripts/deployFactory.sh --upgrade-factory 0xcd6…`. Never hardcode impl addresses. CLI/Mongo register is **local config**, not product onboarding.
 - Invariant handler: `chain/test/invariants/CapTableHandler.sol`. It must exercise transfer / repurchase / cancel (and retract / reissue). Assert onchain counters, not unused `ghost_*` notebooks.

@@ -39,7 +39,7 @@ Set `NEXT_PUBLIC_FACTORY_ADDRESS` in `app/.env.local` (and root `.env` if using 
 </Steps>
 
 <Callout type="warning">
-Factory addresses are unique to the deployer wallet and nonce. Do not hardcode someone else’s factory as “yours,” and do not paste a stale implementation address — read it from the factory onchain.
+A new factory is a CREATE2 deployment. Its address depends on the owner, the salt, and the bytecode, not the deployer nonce, so the same owner and bytecode land at the same address on every chain that has the Arachnid deployer. The shared Plume demo factory is an older CREATE deployment and will not match that address. Do not hardcode someone else’s factory as “yours,” and do not paste a stale implementation address — read it from the factory onchain.
 </Callout>
 
 ## Register an existing factory you control

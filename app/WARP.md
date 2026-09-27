@@ -184,7 +184,7 @@ Frontend config lives in `app/.env.local` (git-ignored). All are build-time publ
 - `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
 - `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS` — address passed as operator on `createCapTable` (usually your server wallet)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on new cap tables. Not a key, and not required for the wallet UI (issuer ADMIN already operates).
 - `NEXT_PUBLIC_WALLET_MOCK` — set to `1` only for Playwright/local mock connector (never production)
 
 See the root `.env.example` for the canonical list. Keep Mongo `factories` and this factory address aligned.
