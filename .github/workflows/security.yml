@@ -1,5 +1,8 @@
 name: Security
 
+permissions:
+    contents: read
+
 on:
     push:
         branches: [main]
@@ -9,6 +12,7 @@ on:
             - "chain/script/**/*.sol"
             - "chain/foundry.toml"
     pull_request:
+        branches: [main]
         paths:
             - "chain/src/**/*.sol"
             - "chain/test/**/*.sol"
@@ -23,10 +27,13 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
               with:
+                  persist-credentials: false
                   submodules: recursive
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: v1.7.1
 
             - name: Run invariant tests
               working-directory: chain

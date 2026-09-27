@@ -1,5 +1,14 @@
 name: CI
-on: push
+
+on:
+    pull_request:
+        branches: [main]
+    push:
+        branches: [main]
+
+permissions:
+    contents: read
+
 jobs:
     node:
         name: Node
@@ -8,6 +17,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
               with:
+                  persist-credentials: false
                   submodules: recursive
             - name: Setup Node
               uses: actions/setup-node@v6
@@ -46,9 +56,12 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
               with:
+                  persist-credentials: false
                   submodules: recursive
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: v1.7.1
             - name: Forge test
               working-directory: chain
               run: forge test
