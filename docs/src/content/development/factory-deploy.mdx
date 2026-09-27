@@ -28,9 +28,13 @@ Root `.env` (or a dedicated deploy env file) needs a funded deployer key for thi
 
 ```bash
 pnpm deploy-factory
+# Or use a dedicated owner env and verify source:
+./scripts/deployFactory.sh .env.prod --verify
 ```
 
 The script deploys libraries + CapTable implementation + CapTableFactory, then **auto-registers** factory + live implementation in Mongo (unless `--no-register`).
+
+`--verify` submits to Sourcify. Plume Blockscout does not currently offer Solidity 0.8.37, so direct Blockscout compilation fails. After Sourcify succeeds, open each contract address on `explorer.plume.org` to trigger its automatic import. A partial match is expected because compiler metadata is disabled; the deployed bytecode still matches the source.
 
 ### Point the frontend at your factory
 

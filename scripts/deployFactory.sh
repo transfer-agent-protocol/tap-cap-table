@@ -7,6 +7,9 @@ set -e
 #   ./scripts/deployFactory.sh
 #   ./scripts/deployFactory.sh .env.prod --verify
 #
+# --verify submits source to Sourcify. Visit the Plume explorer address afterward
+# to trigger Blockscout's automatic import of the Sourcify match.
+#
 # Point an existing factory's beacon at the CREATE2 implementation. Does not deploy a second factory.
 #   ./scripts/deployFactory.sh --upgrade-factory 0xYourFactory
 #
@@ -41,7 +44,7 @@ done
 echo "Loading environment from $USE_ENV_FILE"
 CLEAN_ENV="$(mktemp)"
 python3 - "$USE_ENV_FILE" "$CLEAN_ENV" << 'PY'
-import pathlib, re, sys
+import pathlib, re, shlex, sys
 src, dest = sys.argv[1], sys.argv[2]
 lines = []
 for raw in pathlib.Path(src).read_text().splitlines():
@@ -53,7 +56,7 @@ for raw in pathlib.Path(src).read_text().splitlines():
     val = val.strip().strip("\u2502").strip().strip('"').strip("'")
     if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
         continue
-    lines.append(f"{key}={val}")
+    lines.append(f"export {key}={shlex.quote(val)}")
 pathlib.Path(dest).write_text("\n".join(lines) + "\n")
 PY
 set -a
@@ -72,20 +75,10 @@ if [ -n "$UPGRADE_FACTORY" ] && ! [[ "$UPGRADE_FACTORY" =~ ^0x[0-9a-fA-F]{40}$ ]
     exit 1
 fi
 
-VERIFY_FLAGS=""
+VERIFY_FLAGS=()
 if [ "$VERIFY" = true ]; then
-    if [ "$CHAIN_ID" = "98866" ]; then
-        VERIFIER_URL="https://explorer.plume.org/api/"
-    elif [ "$CHAIN_ID" = "98867" ]; then
-        VERIFIER_URL="https://testnet-explorer.plume.org/api/"
-    else
-        echo "Warning: verification only supported for Plume (chain 98866/98867). Skipping verification."
-        VERIFY=false
-    fi
-    if [ "$VERIFY" = true ]; then
-        VERIFY_FLAGS="--verify --verifier blockscout --verifier-url $VERIFIER_URL"
-        echo "Verification enabled using Blockscout at $VERIFIER_URL"
-    fi
+    VERIFY_FLAGS=(--verify --verifier sourcify)
+    echo "Verification enabled using Sourcify"
 fi
 
 export ETH_RPC_URL="$RPC_URL"
@@ -108,14 +101,13 @@ echo "   RPC: $RPC_URL"
 echo ""
 
 LOG_FILE="$(mktemp)"
-# shellcheck disable=SC2086
 FOUNDRY_PROFILE=deploy forge script "$SCRIPT_CONTRACT" \
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
     --broadcast \
     --legacy \
     --color never \
-    $VERIFY_FLAGS | tee "$LOG_FILE"
+    "${VERIFY_FLAGS[@]}" | tee "$LOG_FILE"
 
 extract() {
     awk -v key="$1" '$1 == key { print $NF }' "$LOG_FILE" | tail -1
@@ -163,6 +155,11 @@ echo "CapTableFactory:           $FACTORY_ADDR"
 echo "Beacon:                    $BEACON_ADDR"
 echo "========================================"
 echo ""
+if [ "$VERIFY" = true ]; then
+    echo "Sourcify verification submitted."
+    echo "Visit each contract on the Plume explorer to trigger its automatic Sourcify import."
+    echo ""
+fi
 
 if [ "$NO_REGISTER" = true ]; then
     echo "Skipping DB registration (--no-register)."
