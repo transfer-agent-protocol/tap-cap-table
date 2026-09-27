@@ -448,14 +448,14 @@ If you encounter "Source file requires different compiler version" errors in VS 
 - **Foundry**: forge/cast/anvil **v1.8.3**. CI installs `v1.8.3`. `pnpm setup` runs `foundryup --install v1.8.3`. Do not `foundryup` to nightly for this repo.
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
-- **EVM**: `shanghai` — do not bump to Amsterdam unless Plume supports those opcodes
+- **EVM**: `osaka`. Plume mainnet and testnet list Fusaka as the latest supported EVM (ArbOS 51, activated 5 February 2026). Do not set `amsterdam`; that target is for Glamsterdam and is not live on Plume.
 - **Tests**: Use `forge test` with optional filters: `--match-test`, `--match-contract`
 - **Comments**: NatSpec lives on interfaces (`@notice` / `@dev` gotchas). Implementations use `@inheritdoc`. Spell **onchain** / **offchain** (no hyphen). No TODO/placeholder/MVP comments in `chain/src`. Explain why, not what.
 
 Libraries:
 
 - OpenZeppelin v5.4.0 (upgradeable contracts)
-- forge-std v1.10.0
+- forge-std v1.16.2
 - Access control: `AccessControlDefaultAdminRulesUpgradeable`
 
 **Compiler upgrades (do not mix with feature PRs):** the pin is Solidity **0.8.37** and Foundry **v1.8.3**. A via-ir compiler bump changes bytecode even if TAP source is identical. Sequence for the next bump: separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Keep the CI Foundry pin on the same release as `pnpm setup`. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
