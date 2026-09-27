@@ -775,7 +775,15 @@ export const capTableAbi = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export const capTableFactoryAbi = [
-    { type: "constructor", inputs: [{ name: "_capTableImplementation", internalType: "address", type: "address" }], stateMutability: "nonpayable" },
+    {
+        type: "constructor",
+        inputs: [
+            { name: "_capTableImplementation", internalType: "address", type: "address" },
+            { name: "initialOwner", internalType: "address", type: "address" },
+        ],
+        stateMutability: "nonpayable",
+    },
+    { type: "function", inputs: [], name: "BEACON_SALT", outputs: [{ name: "", internalType: "bytes32", type: "bytes32" }], stateMutability: "view" },
     {
         type: "function",
         inputs: [],
@@ -1519,6 +1527,11 @@ export const useWatchCapTableWalletRemovedEvent = /*#__PURE__*/ createUseWatchCo
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link capTableFactoryAbi}__
  */
 export const useReadCapTableFactory = /*#__PURE__*/ createUseReadContract({ abi: capTableFactoryAbi });
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link capTableFactoryAbi}__ and `functionName` set to `"BEACON_SALT"`
+ */
+export const useReadCapTableFactoryBeaconSalt = /*#__PURE__*/ createUseReadContract({ abi: capTableFactoryAbi, functionName: "BEACON_SALT" });
 
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link capTableFactoryAbi}__ and `functionName` set to `"capTableBeacon"`

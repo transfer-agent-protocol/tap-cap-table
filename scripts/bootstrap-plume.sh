@@ -58,7 +58,7 @@ if [ ! -f app/.env.local ]; then
 NEXT_PUBLIC_FACTORY_ADDRESS=0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
 NEXT_PUBLIC_CHAIN_ID=98866
 NEXT_PUBLIC_API_URL=http://localhost:8293
-# Address granted OPERATOR_ROLE on new cap tables (usually the server wallet from PRIVATE_KEY)
+# Optional address granted OPERATOR_ROLE on new cap tables. Not a key, and not required for the wallet UI.
 NEXT_PUBLIC_OPERATOR_ADDRESS=UPDATE_ME
 APPEOF
     echo "📝 Created app/.env.local with Plume defaults — set OPERATOR (and align factory if you deploy your own)."

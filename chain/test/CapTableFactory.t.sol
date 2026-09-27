@@ -2,6 +2,7 @@
 pragma solidity ^0.8.37;
 
 import { Test } from "forge-std/Test.sol";
+import { UpgradeableBeacon } from "openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { CapTableFactory } from "../src/CapTableFactory.sol";
 import { CapTable } from "../src/CapTable.sol";
 
@@ -13,12 +14,48 @@ contract CapTableFactoryTest is Test {
         // Deploy empty implementation
         _capTableImplementation = new CapTable();
 
-        _capTableFactory = new CapTableFactory(address(_capTableImplementation));
+        _capTableFactory = new CapTableFactory(address(_capTableImplementation), address(this));
     }
 
     function testRevertsInvalidImplementationAddress() public {
         vm.expectRevert("Invalid implementation address");
-        _capTableFactory = new CapTableFactory(address(0));
+        new CapTableFactory(address(0), address(this));
+    }
+
+    function testRevertsInvalidOwner() public {
+        vm.expectRevert(abi.encodeWithSignature("OwnableInvalidOwner(address)", address(0)));
+        new CapTableFactory(address(_capTableImplementation), address(0));
+    }
+
+    function testExplicitOwnerIsNotMsgSender() public {
+        address owner = address(0xBEEF);
+        CapTableFactory factory = new CapTableFactory(address(_capTableImplementation), owner);
+        assertEq(factory.owner(), owner);
+        assertEq(factory.capTableBeacon().owner(), address(factory));
+        assertEq(factory.capTableBeacon().implementation(), address(_capTableImplementation));
+    }
+
+    function testBeaconAddressIsCreate2FromFactory() public view {
+        address predicted = address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            bytes1(0xff),
+                            address(_capTableFactory),
+                            keccak256("tap.capTable.beacon.v1"),
+                            keccak256(
+                                abi.encodePacked(
+                                    type(UpgradeableBeacon).creationCode,
+                                    abi.encode(address(_capTableImplementation), address(_capTableFactory))
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
+        assertEq(address(_capTableFactory.capTableBeacon()), predicted);
     }
 
     function testCreateCapTable() public {

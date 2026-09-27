@@ -73,6 +73,10 @@ export const findByIdAndUpdate = (model, id, updatedData, options?: TQueryOption
     return model.findByIdAndUpdate(id, updatedData, includeSession(options));
 };
 
+export const findOneAndUpdate = (model, filter, updatedData, options?: TQueryOptions) => {
+    return model.findOneAndUpdate(filter, updatedData, includeSession(options));
+};
+
 // QUERY
 
 export const findById = (model, id, projection?, options?: TQueryOptions) => {

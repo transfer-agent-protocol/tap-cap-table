@@ -17,6 +17,11 @@ runs = 256
 depth = 50
 fail_on_revert = false
 
+# Linked-library CREATE2 salt for `forge script --profile deploy` only.
+# Preimage: tap.capTable.libraries.v1. A compiler bump changes the resulting addresses.
+[profile.deploy]
+create2_library_salt = "0x0dadbe108255a84d55a430b560fbb83d81b0b20799f1942d4ed345f663661a10"
+
 [rpc_endpoints]
 rpc_url = "${RPC_URL}"
 plume_mainnet = "https://rpc.plume.org"

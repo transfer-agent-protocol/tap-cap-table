@@ -2,9 +2,10 @@
  * Register (or update) the CapTableFactory + implementation addresses in Mongo.
  *
  * The server deploys cap tables through the factory recorded in the Mongo `factories`
- * collection (`deployCapTable` uses `factories[0].factory_address`). These addresses are
- * deployment-specific — they're derived from the operator's deployer wallet + nonce — so
- * they must come from a real `pnpm deploy-factory` run, never a hardcoded constant. A
+ * collection (`deployCapTable` uses `factories[0].factory_address`). New deploys are CREATE2:
+ * the address is salt + bytecode + owner, not the deployer nonce. The shared Plume demo
+ * factory is an older CREATE deployment and is not reproduced by `pnpm deploy-factory`.
+ * Addresses must come from a real deploy, never a hardcoded constant. A
  * transfer-agent operator deploys ONE factory and manages MANY cap tables under it; the
  * factory owner controls the beacon upgrade for all of them, so operators should own (and
  * register) their own factory rather than reuse someone else's.
@@ -100,6 +101,9 @@ const main = async () => {
     }
 
     const factory = await upsertFactory(payload);
+    if (!factory) {
+        throw new Error("Factory upsert returned no document");
+    }
     console.log(
         `✅ | Registered factory_address=${factory.factory_address} implementation_address=${factory.implementation_address ?? "(unset)"}`
     );

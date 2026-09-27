@@ -118,7 +118,7 @@ const getRetryOptions = (action: string, options?: RetryOptions): RetryOptions =
         minTimeout: 10 * 1000,
         maxTimeout: 2 * 60 * 1000,
         retries: 5,
-        onFailedAttempt: (error) => {
+        onFailedAttempt: ({ error }) => {
             console.error(`Error with ${action} (retrying shortly):`);
             console.error(error);
         },

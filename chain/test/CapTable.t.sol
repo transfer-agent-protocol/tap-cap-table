@@ -16,7 +16,7 @@ contract CapTableTest is Test {
     function setUp() public {
         CapTable capTableImplementation = new CapTable();
 
-        factory = new CapTableFactory(address(capTableImplementation));
+        factory = new CapTableFactory(address(capTableImplementation), address(this));
 
         capTable = CapTable(factory.createCapTable(issuerId, issuerName, issuerInitialSharesAuthorized, address(0)));
     }
