@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.37;
 
 import { CapTableTest } from "./CapTable.t.sol";
 import { StockTransferParams } from "../src/lib/Structs.sol";

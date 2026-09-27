@@ -61,7 +61,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: v1.7.1
+                  version: v1.8.3
             - name: Forge test
               working-directory: chain
               run: forge test

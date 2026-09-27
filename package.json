@@ -18,7 +18,7 @@
         "typecheck:server": "tsc --noEmit",
         "typecheck:app": "pnpm --filter tap-app typecheck",
         "deploy-factory": "./scripts/deployFactory.sh",
-        "setup": "cd chain && foundryup && forge build --via-ir",
+        "setup": "cd chain && foundryup --install v1.8.3 && forge build --via-ir",
         "test": "cd chain && forge test",
         "docs:dev": "pnpm --filter tap-docs dev",
         "docs:build": "pnpm --filter tap-docs build",

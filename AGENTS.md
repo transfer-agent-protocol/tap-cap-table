@@ -62,7 +62,7 @@ Bootstrap is idempotent — safe to re-run. Prefer `SKIP_APP=1 pnpm bootstrap` i
 - Spell **onchain** / **offchain** in TAP contract comments (no hyphen). NatSpec on interfaces; `@inheritdoc` on implementations; no TODO/placeholder comments in `chain/src`.
 - Onchain import helpers `mintSharesAuthorized` then `mintActivePositions` are one-shot (Foundry tests). Do not `issueStock` between them.
 - Multi-lot `transferStock` salts ids with `issuanceOrdinal`. Partial repurchase `balance_security_id` is the remainder certificate (or zero), not the stakeholder id.
-- Solidity stays **0.8.30** on feature PRs. A bump to 0.8.36 is a **separate** PR (rebuild, storage-layout diff, new impl, beacon upgrade, re-verify). Do not mix it with logic changes. Foundry 1.7.1 stable; no nightlies.
+- Solidity stays **0.8.37** on feature PRs. A compiler bump is a **separate** PR (rebuild, storage-layout diff, new impl, beacon upgrade, re-verify). Do not mix it with logic changes. Foundry v1.8.3 stable; no nightlies.
 - Don't hand-edit `app/src/generated.ts` — regenerate with `pnpm --filter tap-app generate:wagmi`.
 - Shared write-path units live in **`@tap/units`** (`packages/units`): 1e10 scaling, UUID↔bytes16, share-cap checks. Import from there in app and server; don't reintroduce local `scaleAmount` copies or ×10000 docs.
 - **Product UI is `/app/*`** (Companies, New company, company workspace). Marketing is `/`. Legacy `/mint` and `/manage*` redirect to `/app`. Frontend dev = `pnpm app:dev`.
