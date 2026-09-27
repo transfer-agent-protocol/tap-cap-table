@@ -66,7 +66,7 @@ fi
 if [ ! -f .env ]; then
     echo "⚠️  No .env file found. Creating from .env.example..."
     cp .env.example .env
-    echo "📝 Please update .env with your PRIVATE_KEY (get from 'anvil' output)"
+    echo "📝 Created Plume defaults; PRIVATE_KEY may stay as UPDATE_ME for wallet-first/read-only use"
     echo ""
 fi
 
@@ -78,11 +78,11 @@ if [ "$MONGO_ONLY" = true ]; then
     exit 0
 fi
 
-# Check if anvil is needed
+# A placeholder is valid for the read-only poller and wallet-first product path.
 if ! grep -q "PRIVATE_KEY=0x" .env 2>/dev/null; then
     echo ""
-    echo "💡 Tip: Start anvil in another terminal and copy a private key to .env"
-    echo "   Run: anvil"
+    echo "ℹ️  PRIVATE_KEY is unset/placeholder: wallet-first UI works; server-signed writes are disabled."
+    echo "   Use a dev/demo key only when testing server-signed API paths."
     echo ""
 fi
 

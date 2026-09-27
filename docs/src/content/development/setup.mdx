@@ -4,7 +4,7 @@ import { Steps, Callout } from 'nextra/components';
 
 Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker) and the product UI on the host.
 
-**Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 pnpm bootstrap`, set `NEXT_PUBLIC_*` in `.env` and `app/.env.local`, then `pnpm app:dev`. Server `PRIVATE_KEY` is optional for the wallet UI.
+**Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap`, set `NEXT_PUBLIC_*` in `.env` and `app/.env.local`, then `pnpm app:dev`. Server `PRIVATE_KEY` is optional for the wallet UI.
 
 ## Secrets and env files
 
@@ -57,7 +57,8 @@ Wallet connection is first-party (EIP-6963). Install a browser extension (Rabby,
 
 ```bash
 # Demo / issuer-dev: register TAP’s shared Plume factory in Mongo (owner is 0x366a…, not TAP Admin 0x3601…)
-REUSE_TAP_FACTORY=1 pnpm bootstrap
+# SKIP_APP=1 leaves :3000 free for host pnpm app:dev
+REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
 
 # Transfer-agent path: after bootstrap with no factory, deploy your own instead
 # pnpm deploy-factory
@@ -71,7 +72,7 @@ Bootstrap is idempotent: deps, contract build (`chain/out`), Docker volume, comp
 | Product UI | `pnpm app:dev` → http://localhost:3000/app |
 | MongoDB | localhost:27027 (TAP does not use 27017) |
 
-Prefer **host** `pnpm app:dev` for wallet work. Docker app is optional.
+Prefer **host** `pnpm app:dev` for wallet work. Without `SKIP_APP=1`, bootstrap also starts the Docker app preview on :3000; run `docker compose stop app` before `pnpm app:dev`.
 
 ## Demo reuse vs your own factory
 
