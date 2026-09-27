@@ -472,7 +472,7 @@ If you encounter "Source file requires different compiler version" errors in VS 
 ## Foundry (Solidity)
 
 - **Compiler**: Solidity **0.8.30** (`chain/foundry.toml` `solc_version`; exact `pragma solidity 0.8.30` on CapTable / factory / interfaces)
-- **Foundry**: forge/cast/anvil **1.7.1** is the current numbered stable. Do not `foundryup` to nightly for this repo.
+- **Foundry**: forge/cast/anvil **1.7.1** is the current numbered stable. CI installs `v1.7.1`. Do not `foundryup` to nightly for this repo.
 - **Config**: `chain/foundry.toml`
 - **Optimizer**: Enabled, 200 runs, via-ir
 - **EVM**: `shanghai` — do not bump to Amsterdam unless Plume supports those opcodes
@@ -485,7 +485,7 @@ Libraries:
 - forge-std v1.10.0
 - Access control: `AccessControlDefaultAdminRulesUpgradeable`
 
-**Compiler upgrades (do not mix with feature PRs):** next solc pin is **0.8.36** (Yul optimizer + inheritance-order fixes). A via-ir bump changes bytecode even if TAP source is identical. Sequence: land logic on 0.8.30 → separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Pin Foundry in CI if you upgrade the toolchain so `pnpm setup`'s `foundryup` cannot drift. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
+**Compiler upgrades (do not mix with feature PRs):** next solc pin is **0.8.36** (Yul optimizer + inheritance-order fixes). A via-ir bump changes bytecode even if TAP source is identical. Sequence: land logic on 0.8.30 → separate PR for pragma/`foundry.toml`/docs → `forge clean && forge build --via-ir` → storage-layout diff (must be identical) → deploy new CapTable implementation → factory `updateCapTableImplementation` (one beacon, every company) → re-verify on Plume. Keep the CI Foundry pin on the same release as this repo so `pnpm setup`'s `foundryup` cannot drift. ABI-only? regenerate wagmi; compiler-only usually does not change ABI.
 
 ## Common Pitfalls
 

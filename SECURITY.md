@@ -34,7 +34,7 @@ When deploying this application:
 4. **RPC Endpoints**: Use authenticated RPC endpoints for blockchain access
 5. **HTTPS**: Always use HTTPS in production
 6. **Updates**: Keep dependencies updated regularly
-7. **Secret scanning**: Enable GitHub secret scanning + push protection on the repository (Settings → Code security). It is not configurable from workflow YAML.
+7. **Secret scanning**: Secret scanning and push protection are enabled on the repository (Settings → Code security). They are not configurable from workflow YAML.
 
 ## Supported Versions
 
@@ -74,8 +74,10 @@ make test-invariant
 
 ### CI Integration
 
-- Node lint / typecheck / `@tap/units` and Foundry unit tests: `.github/workflows/ci.yml`
+- Node lint / typecheck / `@tap/units` and Foundry unit tests: `.github/workflows/ci.yml`. Runs on pull requests to `main` and on pushes to `main`.
 - Invariant tests on Solidity changes: `.github/workflows/security.yml`
+- Both workflows grant the Actions token `contents: read` only. The repository default Actions token is read. Foundry in CI is `v1.7.1`.
+- `main` requires the `Node` and `Foundry` checks, plus one approving review. Invariant tests are not required.
 
 ### Local Setup
 
