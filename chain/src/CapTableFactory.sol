@@ -8,14 +8,18 @@ import { ICapTableFactory } from "./interfaces/ICapTableFactory.sol";
 import { ICapTable } from "./interfaces/ICapTable.sol";
 
 contract CapTableFactory is ICapTableFactory, Ownable {
+    /// @dev Fixed so the beacon address does not move if the constructor later creates other contracts.
+    bytes32 public constant BEACON_SALT = keccak256("tap.capTable.beacon.v1");
+
     address public capTableImplementation;
     UpgradeableBeacon public immutable capTableBeacon;
     address[] public capTableProxies;
 
-    constructor(address _capTableImplementation) Ownable(msg.sender) {
+    /// @dev Owner is an argument because a CREATE2 deploy sets msg.sender to the Arachnid deployer, not the broadcaster.
+    constructor(address _capTableImplementation, address initialOwner) Ownable(initialOwner) {
         require(_capTableImplementation != address(0), "Invalid implementation address");
         capTableImplementation = _capTableImplementation;
-        capTableBeacon = new UpgradeableBeacon(capTableImplementation, address(this));
+        capTableBeacon = new UpgradeableBeacon{ salt: BEACON_SALT }(capTableImplementation, address(this));
     }
 
     function createCapTable(bytes16 id, string memory name, uint256 initial_shares_authorized, address operator) external returns (address) {

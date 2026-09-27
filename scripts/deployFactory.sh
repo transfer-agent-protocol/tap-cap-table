@@ -1,48 +1,77 @@
 #!/bin/bash
 set -e
 
-# Usage: ./scripts/deployFactory.sh [env_file] [--verify]
-# Examples:
-#   ./scripts/deployFactory.sh                    # Deploy using .env
-#   ./scripts/deployFactory.sh --verify           # Deploy using .env with verification
-#   ./scripts/deployFactory.sh .env.prod          # Deploy using .env.prod
-#   ./scripts/deployFactory.sh .env.prod --verify # Deploy using .env.prod with verification
+# Usage: ./scripts/deployFactory.sh [env_file] [--verify] [--no-register] [--upgrade-factory 0x...]
 #
-# This script deploys:
-#   1. DeleteContext library
-#   2. Adjustment library
-#   3. StockLib library
-#   4. CapTable implementation contract
-#   5. CapTableFactory (constructor takes CapTable address)
+# New factory (CREATE2 libraries, implementation, factory; beacon is CREATE2 from the factory):
+#   ./scripts/deployFactory.sh
+#   ./scripts/deployFactory.sh .env.prod --verify
 #
-# After a successful deploy, the factory + implementation are auto-registered in MongoDB
-# (addresses written from the deploy output, never hardcoded). Use --no-register to skip.
+# Point an existing factory's beacon at the CREATE2 implementation. Does not deploy a second factory.
+#   ./scripts/deployFactory.sh --upgrade-factory 0xYourFactory
+#
+# Addresses come from the deploy output. Same owner + salt + bytecode => same address on every
+# chain that has the Arachnid deployer (0x4e59b44847b379578588920cA78FbF26c0B4956C).
 
-# Parse arguments
 USE_ENV_FILE=".env"
 VERIFY=false
 NO_REGISTER=false
+UPGRADE_FACTORY=""
 
-for arg in "$@"; do
+args=("$@")
+i=0
+while [ "$i" -lt "${#args[@]}" ]; do
+    arg="${args[$i]}"
     if [ "$arg" = "--verify" ]; then
         VERIFY=true
     elif [ "$arg" = "--no-register" ]; then
         NO_REGISTER=true
+    elif [ "$arg" = "--upgrade-factory" ]; then
+        i=$((i + 1))
+        UPGRADE_FACTORY="${args[$i]:-}"
     elif [ -f "$arg" ]; then
         USE_ENV_FILE="$arg"
+    else
+        echo "Unknown argument: $arg"
+        exit 1
     fi
+    i=$((i + 1))
 done
 
-echo "📋 Loading environment from $USE_ENV_FILE"
-source $USE_ENV_FILE
+echo "Loading environment from $USE_ENV_FILE"
+CLEAN_ENV="$(mktemp)"
+python3 - "$USE_ENV_FILE" "$CLEAN_ENV" << 'PY'
+import pathlib, re, sys
+src, dest = sys.argv[1], sys.argv[2]
+lines = []
+for raw in pathlib.Path(src).read_text().splitlines():
+    line = raw.split("#", 1)[0].strip().strip("\u2502").strip()
+    if "=" not in line:
+        continue
+    key, val = line.split("=", 1)
+    key = key.strip()
+    val = val.strip().strip("\u2502").strip().strip('"').strip("'")
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
+        continue
+    lines.append(f"{key}={val}")
+pathlib.Path(dest).write_text("\n".join(lines) + "\n")
+PY
+set -a
+# shellcheck disable=SC1090
+source "$CLEAN_ENV"
+set +a
+rm -f "$CLEAN_ENV"
 
-# Validate required env vars
 if [ -z "$RPC_URL" ] || [ -z "$PRIVATE_KEY" ]; then
-    echo "❌ Error: RPC_URL and PRIVATE_KEY must be set in $USE_ENV_FILE"
+    echo "Error: RPC_URL and PRIVATE_KEY must be set in $USE_ENV_FILE"
     exit 1
 fi
 
-# Set up verification flags for Plume (Blockscout)
+if [ -n "$UPGRADE_FACTORY" ] && ! [[ "$UPGRADE_FACTORY" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
+    echo "Error: --upgrade-factory must be a 0x address"
+    exit 1
+fi
+
 VERIFY_FLAGS=""
 if [ "$VERIFY" = true ]; then
     if [ "$CHAIN_ID" = "98866" ]; then
@@ -50,128 +79,105 @@ if [ "$VERIFY" = true ]; then
     elif [ "$CHAIN_ID" = "98867" ]; then
         VERIFIER_URL="https://testnet-explorer.plume.org/api/"
     else
-        echo "⚠️  Warning: Verification only supported for Plume (chain 98866/98867). Skipping verification."
+        echo "Warning: verification only supported for Plume (chain 98866/98867). Skipping verification."
         VERIFY=false
     fi
-    
     if [ "$VERIFY" = true ]; then
         VERIFY_FLAGS="--verify --verifier blockscout --verifier-url $VERIFIER_URL"
-        echo "✅ Verification enabled using Blockscout at $VERIFIER_URL"
+        echo "Verification enabled using Blockscout at $VERIFIER_URL"
     fi
 fi
 
-# Common flags for forge create
-# --legacy is required for Plume and other non-EIP-1559 chains
-# ETH_RPC_URL is used because --rpc-url can be overridden by foundry.toml
 export ETH_RPC_URL="$RPC_URL"
-COMMON_FLAGS="--private-key $PRIVATE_KEY --broadcast --legacy $VERIFY_FLAGS"
+export PRIVATE_KEY
+if [ -n "$UPGRADE_FACTORY" ]; then
+    export FACTORY_ADDRESS="$UPGRADE_FACTORY"
+    SCRIPT_CONTRACT="script/DeployFactory.s.sol:UpgradeCapTableImplementation"
+    echo "Upgrading existing factory $UPGRADE_FACTORY (no new factory)"
+else
+    SCRIPT_CONTRACT="script/DeployFactory.s.sol:DeployFactory"
+    echo "Deploying a new CREATE2 factory"
+fi
 
 ROOT_DIR="$(pwd)"
 cd chain
 
 echo ""
-echo "🚀 Deploying CapTable + CapTableFactory"
+echo "Running forge script ($SCRIPT_CONTRACT)"
 echo "   RPC: $RPC_URL"
 echo ""
 
-# Helper function to extract deployed address from forge create output
-extract_address() {
-    grep "Deployed to:" | awk '{print $3}'
+LOG_FILE="$(mktemp)"
+# shellcheck disable=SC2086
+FOUNDRY_PROFILE=deploy forge script "$SCRIPT_CONTRACT" \
+    --rpc-url "$RPC_URL" \
+    --private-key "$PRIVATE_KEY" \
+    --broadcast \
+    --legacy \
+    --color never \
+    $VERIFY_FLAGS | tee "$LOG_FILE"
+
+extract() {
+    awk -v key="$1" '$1 == key { print $NF }' "$LOG_FILE" | tail -1
 }
 
-# 1. Deploy DeleteContext library
-echo "📦 [1/5] Deploying DeleteContext library..."
-DELETE_CONTEXT_OUTPUT=$(forge create src/lib/DeleteContext.sol:DeleteContext $COMMON_FLAGS 2>&1)
-echo "$DELETE_CONTEXT_OUTPUT"
-DELETE_CONTEXT_ADDR=$(echo "$DELETE_CONTEXT_OUTPUT" | extract_address)
-if [ -z "$DELETE_CONTEXT_ADDR" ]; then
-    echo "❌ Failed to deploy DeleteContext"
+CAP_TABLE_ADDR="$(extract TAP_DEPLOY_IMPLEMENTATION)"
+FACTORY_ADDR="$(extract TAP_DEPLOY_FACTORY)"
+BEACON_ADDR="$(extract TAP_DEPLOY_BEACON)"
+rm -f "$LOG_FILE"
+
+if [ -z "$CAP_TABLE_ADDR" ] || [ -z "$FACTORY_ADDR" ] || [ -z "$BEACON_ADDR" ]; then
+    echo "Failed to parse deploy addresses from forge script output"
     exit 1
 fi
-echo "✅ DeleteContext deployed at: $DELETE_CONTEXT_ADDR"
-echo ""
 
-# 2. Deploy Adjustment library
-echo "📦 [2/5] Deploying Adjustment library..."
-ADJUSTMENT_OUTPUT=$(forge create src/lib/transactions/Adjustment.sol:Adjustment $COMMON_FLAGS 2>&1)
-echo "$ADJUSTMENT_OUTPUT"
-ADJUSTMENT_ADDR=$(echo "$ADJUSTMENT_OUTPUT" | extract_address)
-if [ -z "$ADJUSTMENT_ADDR" ]; then
-    echo "❌ Failed to deploy Adjustment"
-    exit 1
-fi
-echo "✅ Adjustment deployed at: $ADJUSTMENT_ADDR"
-echo ""
+cd "$ROOT_DIR"
+python3 - "$FACTORY_ADDR" << 'PY'
+import json, pathlib, sys
+files = sorted(pathlib.Path("chain/broadcast").glob("**/run-latest.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+files = [p for p in files if "dry-run" not in p.parts]
+if not files:
+    sys.exit("no forge broadcast file")
+data = json.loads(files[0].read_text())
+names = set()
+for tx in data.get("transactions", []):
+    if tx.get("contractName"):
+        names.add(tx["contractName"])
+for lib in data.get("libraries", []) or []:
+    parts = lib.split(":")
+    if len(parts) >= 2:
+        names.add(parts[-2])
+missing = {"DeleteContext", "Adjustment", "StockLib"} - names
+print(f"broadcast {files[0]}")
+print("contracts " + ", ".join(sorted(names)))
+if missing:
+    sys.exit("missing CREATE2 library deploys: " + ", ".join(sorted(missing)))
+PY
 
-# 3. Deploy StockLib library (links DeleteContext)
-echo "📦 [3/5] Deploying StockLib library..."
-STOCK_LIB_OUTPUT=$(forge create src/lib/Stock.sol:StockLib \
-    --libraries src/lib/DeleteContext.sol:DeleteContext:$DELETE_CONTEXT_ADDR \
-    $COMMON_FLAGS 2>&1)
-echo "$STOCK_LIB_OUTPUT"
-STOCK_LIB_ADDR=$(echo "$STOCK_LIB_OUTPUT" | extract_address)
-if [ -z "$STOCK_LIB_ADDR" ]; then
-    echo "❌ Failed to deploy StockLib"
-    exit 1
-fi
-echo "✅ StockLib deployed at: $STOCK_LIB_ADDR"
 echo ""
-
-# 4. Deploy CapTable implementation (links StockLib + Adjustment)
-echo "📦 [4/5] Deploying CapTable implementation..."
-CAP_TABLE_OUTPUT=$(forge create src/CapTable.sol:CapTable \
-    --libraries src/lib/Stock.sol:StockLib:$STOCK_LIB_ADDR \
-    --libraries src/lib/transactions/Adjustment.sol:Adjustment:$ADJUSTMENT_ADDR \
-    $COMMON_FLAGS 2>&1)
-echo "$CAP_TABLE_OUTPUT"
-CAP_TABLE_ADDR=$(echo "$CAP_TABLE_OUTPUT" | extract_address)
-if [ -z "$CAP_TABLE_ADDR" ]; then
-    echo "❌ Failed to deploy CapTable"
-    exit 1
-fi
-echo "✅ CapTable deployed at: $CAP_TABLE_ADDR"
-echo ""
-
-# 5. Deploy CapTableFactory (constructor takes CapTable address)
-# Note: Using --constructor-args-path because --constructor-args conflicts with --private-key in forge
-echo "📦 [5/5] Deploying CapTableFactory..."
-echo "$CAP_TABLE_ADDR" > /tmp/factory-constructor-args.txt
-FACTORY_OUTPUT=$(forge create src/CapTableFactory.sol:CapTableFactory \
-    --constructor-args-path /tmp/factory-constructor-args.txt \
-    $COMMON_FLAGS 2>&1)
-rm -f /tmp/factory-constructor-args.txt
-echo "$FACTORY_OUTPUT"
-FACTORY_ADDR=$(echo "$FACTORY_OUTPUT" | extract_address)
-if [ -z "$FACTORY_ADDR" ]; then
-    echo "❌ Failed to deploy CapTableFactory"
-    exit 1
-fi
-echo "✅ CapTableFactory deployed at: $FACTORY_ADDR"
-echo ""
-
-# Summary
 echo "========================================"
-echo "🎉 Deployment Complete!"
+echo "Deployment complete"
 echo "========================================"
 echo "CapTable (implementation): $CAP_TABLE_ADDR"
 echo "CapTableFactory:           $FACTORY_ADDR"
+echo "Beacon:                    $BEACON_ADDR"
 echo "========================================"
 echo ""
-# Register the deployed addresses in Mongo so the server/API deploys cap tables through
-# THIS factory. These addresses are unique to this deployment — written from the deploy
-# output, never hardcoded. Skip with --no-register and register manually as shown.
+
 if [ "$NO_REGISTER" = true ]; then
-    echo "Skipping DB registration (--no-register). Register it manually with:"
-    echo "  pnpm factory:register --factory $FACTORY_ADDR --implementation $CAP_TABLE_ADDR"
-else
-    echo "🌱 Registering factory in Mongo (pnpm factory:register)..."
-    cd "$ROOT_DIR"
-    if pnpm factory:register --factory "$FACTORY_ADDR" --implementation "$CAP_TABLE_ADDR"; then
-        echo "✅ Factory registered — the API will deploy cap tables through it."
+    echo "Skipping DB registration (--no-register)."
+    if [ -n "$UPGRADE_FACTORY" ]; then
+        echo "  pnpm factory:register --factory $UPGRADE_FACTORY"
     else
-        echo "⚠️  Auto-registration failed (is Mongo up? try 'pnpm docker:up'). Register it with either:"
         echo "  pnpm factory:register --factory $FACTORY_ADDR --implementation $CAP_TABLE_ADDR"
-        echo "  ...or insert into the Mongo 'factories' collection (e.g. via MongoDB Compass):"
-        echo "  { \"implementation_address\": \"$CAP_TABLE_ADDR\", \"factory_address\": \"$FACTORY_ADDR\" }"
     fi
+    exit 0
+fi
+
+if [ -n "$UPGRADE_FACTORY" ]; then
+    echo "Refreshing the existing factory in Mongo (address unchanged)..."
+    pnpm factory:register --factory "$UPGRADE_FACTORY" --implementation "$CAP_TABLE_ADDR"
+else
+    echo "Registering the new factory in Mongo..."
+    pnpm factory:register --factory "$FACTORY_ADDR" --implementation "$CAP_TABLE_ADDR"
 fi

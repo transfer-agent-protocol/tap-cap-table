@@ -21,7 +21,7 @@ contract CapTableInvariants is Test {
     function setUp() public {
         // Deploy implementation and factory
         CapTable implementation = new CapTable();
-        factory = new CapTableFactory(address(implementation));
+        factory = new CapTableFactory(address(implementation), address(this));
 
         // Create a cap table via factory
         address capTableAddr = factory.createCapTable(issuerId, "Test Issuer Inc.", initialSharesAuthorized, address(0));
