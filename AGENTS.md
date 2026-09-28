@@ -2,7 +2,7 @@
 
 Guidance for AI coding agents working in the Transfer Agent Protocol (TAP) Cap Table monorepo.
 
-The canonical, always-up-to-date agent guidance for this repo lives in the `WARP.md` files. **Read them before making changes:**
+Architecture, commands, and conventions live in the `WARP.md` files; this file adds the agent setup path, factory model, and failure matrix. **Read them before making changes:**
 
 - [`WARP.md`](./WARP.md) — monorepo architecture, development commands, important patterns, and Git workflow.
 - [`app/WARP.md`](./app/WARP.md) — frontend (`tap-app`) conventions: routes under `/app`, styled-components, wallet/web3, generated contract hooks, direct-wallet write path.
@@ -15,9 +15,12 @@ The canonical, always-up-to-date agent guidance for this repo lives in the `WARP
 
 ```bash
 pnpm install
-REUSE_TAP_FACTORY=1 pnpm bootstrap   # Plume stack + register shared demo factory in Mongo
+# Mongo + API + poller on Plume; registers the shared demo factory in Mongo.
+# SKIP_APP=1 keeps :3000 free for the host UI.
+REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
 # Optional: NEXT_PUBLIC_OPERATOR_ADDRESS (an address, not a key) and PRIVATE_KEY
-# (dev/demo only, for server-signed API or deploy). Wallet UI does not need either.
+# (dev/demo only, for server-signed API). Use a dedicated env file for a factory-owner
+# deploy key; never leave it in the always-on API env. Wallet UI does not need either.
 # Wallet UI: install a browser extension wallet (Rabby, MetaMask, etc.) — no cloud key needed
 pnpm app:dev                         # http://localhost:3000/app  (reads app/.env.local)
 ```
@@ -45,28 +48,29 @@ pnpm app:dev                         # http://localhost:3000/app  (reads app/.en
 | No wallets in connect modal | No browser extension / EIP-6963 | Install Rabby / MetaMask (EIP-6963) — no cloud key or project id needed |
 | `COPY chain/out` docker build fail | Artifacts missing | `pnpm setup` / `forge build --via-ir`; bootstrap now asserts non-empty `chain/out` |
 | Fresh Mongo empty of companies | Poller only tracks registered issuers | Mint new company, or Load from wallet / register existing; not auto-import of all chain history |
-| Stale factory impl in docs | Hardcoded old address | Always read impl onchain (`factory:register` does); live beacon ≠ landing screenshot |
+| Stale factory impl in docs | Hardcoded old address | Always read impl onchain (`factory:register` does). After a demo beacon upgrade, update the landing demo table in `app/src/pages/index.tsx`. |
 | Mint OK, register **500** | Docker app rewrites to `localhost:8293` | Docker: `NEXT_PUBLIC_API_URL=http://server:8293`; host app:dev: `localhost:8293` |
 | Poller `0xUPDATE_ME` / invalid BytesLike | Placeholder PRIVATE_KEY | Real hex for server-signed; placeholder OK for read-only poller |
 | TAP Mongo on 27017 / other app blocked | Old compose published default Mongo port with `restart: always` | Host port is **27027**. Host `DATABASE_URL` uses 27027. Inside compose, Mongo is still `mongodb:27017`. `docker compose stop` the container that holds the port, then `pnpm docker:mongo` if Mongo is not running. |
 
 **Plume defaults:** `CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`. Prefer mainnet for product work (not Anvil mint).
 
-Bootstrap is idempotent — safe to re-run. Prefer `SKIP_APP=1 pnpm bootstrap` if you only need API and will run `pnpm app:dev` on the host.
+Bootstrap is idempotent — safe to re-run. Without `SKIP_APP=1` it also builds the Docker `next start` preview on :3000; run `docker compose stop app` before `pnpm app:dev`.
 
 ## Quick reminders
 
 - Package manager is **pnpm** (pnpm workspace monorepo) — do not use `npm` or `yarn`.
 - Never commit directly to `main`; branch from it and open a PR. PR titles follow Conventional Commits.
+- end every task with a dated note in `memory/` and a commit (atomic groups, short lowercase messages, never on `main`). see `WARP.md` → git workflow.
 - The blockchain is the source of truth; the offchain DB mirrors it via the event poller.
 - Spell **onchain** / **offchain** in TAP contract comments (no hyphen). NatSpec on interfaces; `@inheritdoc` on implementations; no TODO/placeholder comments in `chain/src`.
 - Onchain import helpers `mintSharesAuthorized` then `mintActivePositions` are one-shot (Foundry tests). Do not `issueStock` between them.
 - Multi-lot `transferStock` salts ids with `issuanceOrdinal`. Partial repurchase `balance_security_id` is the remainder certificate (or zero), not the stakeholder id.
-- Solidity stays **0.8.37** on feature PRs. A compiler bump is a **separate** PR (rebuild, storage-layout diff, new impl, beacon upgrade, re-verify). Do not mix it with logic changes. Foundry v1.8.3 stable; no nightlies.
+- Solidity stays **0.8.37** on feature PRs. A compiler bump is a **separate** PR (rebuild, storage-layout diff, new impl at new CREATE2 addresses, beacon upgrade, re-verify, landing demo addresses). Do not mix it with logic changes. Foundry v1.8.3 stable; no nightlies.
 - Don't hand-edit `app/src/generated.ts` — regenerate with `pnpm --filter tap-app generate:wagmi`.
 - Shared write-path units live in **`@tap/units`** (`packages/units`): 1e10 scaling, UUID↔bytes16, share-cap checks. Import from there in app and server; don't reintroduce local `scaleAmount` copies or ×10000 docs.
 - **Product UI is `/app/*`** (Companies, New company, company workspace). Marketing is `/`. Legacy `/mint` and `/manage*` redirect to `/app`. Frontend dev = `pnpm app:dev`.
-- Manage UI write path is **direct-wallet only** (`useDirect*` + `useOnchainAction` + `/register-onchain` for class/person/issuance). **Transfer** = `useDirectTransferStock` → `CapTable.transferStock`; poller mirrors TransferStock — do not call the server transfer API from the UI.
+- Manage UI write path is **direct-wallet only** (`useDirect*` + `useOnchainAction`). Class/person metadata is saved through `/register-onchain` **after** a confirmed receipt. Issuance calls its `/register-onchain` endpoint **before** the wallet tx as validation only; the poller persists the canonical issuance. **Transfer** = `useDirectTransferStock` → `CapTable.transferStock`; poller mirrors TransferStock — do not call the server transfer API from the UI.
 - Company nav: use real `issuerId` via `capTableHref` / `query.issuerId` — never link with a pathname that still contains `[issuerId]`.
-- New factory deploys are CREATE2 (`pnpm deploy-factory`): address is salt + bytecode + owner, via the Arachnid deployer, not the deployer nonce. The shared Plume demo factory `0xcd6…` is the older CREATE deployment — do not replace its beacon or register a second factory over it. Upgrade that implementation with `./scripts/deployFactory.sh --upgrade-factory 0xcd6…`. Never hardcode impl addresses. CLI/Mongo register is **local config**, not product onboarding.
+- New factory deploys are CREATE2 (`pnpm deploy-factory`): address is salt + bytecode + owner, via the Arachnid deployer, not the deployer nonce. The shared Plume demo factory `0xcd6…` is the older CREATE deployment — do not replace its beacon or register a second factory over it. Upgrade that implementation with `./scripts/deployFactory.sh --upgrade-factory 0xcd6…`. Never hardcode impl addresses. `--verify` uses Sourcify because Plume Blockscout cannot compile Solidity 0.8.37 yet; opening the explorer address imports the Sourcify match. CLI/Mongo register is **local config**, not product onboarding.
 - Invariant handler: `chain/test/invariants/CapTableHandler.sol`. It must exercise transfer / repurchase / cancel (and retract / reissue). Assert onchain counters, not unused `ghost_*` notebooks.

@@ -18,9 +18,8 @@ Healthy local product stack: **Docker for Mongo + API + poller**, **host Next fo
 ### Start services
 
 ```bash
-pnpm bootstrap
-# or: pnpm docker:up
-# or mongo+server only: SKIP_APP=1 pnpm bootstrap
+SKIP_APP=1 pnpm bootstrap   # Mongo + API + poller; leaves :3000 for host pnpm app:dev
+# Include the Docker app preview on :3000: pnpm bootstrap (or pnpm docker:up)
 ```
 
 Rebuild after app source, env, or Dockerfile changes: `pnpm docker:build`. The Docker app is `next start` (no file watcher). Wallet work still prefers host `pnpm app:dev` (`app/.env.local`).

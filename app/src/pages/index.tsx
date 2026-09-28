@@ -101,11 +101,11 @@ export default function Home() {
 							<td>CapTable (beacon impl)</td>
 							<td>
 								<a
-									href="https://explorer.plume.org/address/0xB63C08eF002E5Da7C894168a01790836049C8ff3?tab=contract"
+									href="https://explorer.plume.org/address/0x23C06a1f68253FE7e041f2B92eD42AD3ab71FFab?tab=contract"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									0xB63C08eF002E5Da7C894168a01790836049C8ff3
+									0x23C06a1f68253FE7e041f2B92eD42AD3ab71FFab
 								</a>
 							</td>
 						</tr>
@@ -113,11 +113,11 @@ export default function Home() {
 							<td>StockLib</td>
 							<td>
 								<a
-									href="https://explorer.plume.org/address/0x1cc50D34D02E6fB3c6aa3f164A9D694d69B8ee76?tab=contract"
+									href="https://explorer.plume.org/address/0xe5Ff7f2f1E36C83E3A0983e7C908504d178B3b01?tab=contract"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									0x1cc50D34D02E6fB3c6aa3f164A9D694d69B8ee76
+									0xe5Ff7f2f1E36C83E3A0983e7C908504d178B3b01
 								</a>
 							</td>
 						</tr>
@@ -125,11 +125,11 @@ export default function Home() {
 							<td>Adjustment</td>
 							<td>
 								<a
-									href="https://explorer.plume.org/address/0x0a1A962cAb45d7094901339Aa7A259024600B74d?tab=contract"
+									href="https://explorer.plume.org/address/0x8FfD8677DB3f66B7B95B991c43e357bcEcf79b99?tab=contract"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									0x0a1A962cAb45d7094901339Aa7A259024600B74d
+									0x8FfD8677DB3f66B7B95B991c43e357bcEcf79b99
 								</a>
 							</td>
 						</tr>
@@ -137,11 +137,11 @@ export default function Home() {
 							<td>DeleteContext</td>
 							<td>
 								<a
-									href="https://explorer.plume.org/address/0xB566e7AF2d86afD192A14f883f3733ab1cB0DB62?tab=contract"
+									href="https://explorer.plume.org/address/0x69F73AD08d160671b5E28CBD75DC40a51872b64B?tab=contract"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									0xB566e7AF2d86afD192A14f883f3733ab1cB0DB62
+									0x69F73AD08d160671b5E28CBD75DC40a51872b64B
 								</a>
 							</td>
 						</tr>

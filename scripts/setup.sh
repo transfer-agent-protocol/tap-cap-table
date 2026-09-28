@@ -11,12 +11,8 @@ set -e
 #   4. Sets up Foundry and builds contracts
 #
 # After running this script:
-#   - Start MongoDB: pnpm docker:mongo   (host port 27027)
-#   - Start Anvil:   anvil (in separate terminal)
-#   - Copy a private key from anvil output to .env
-#   - Run server:    pnpm dev
-#
-# Or use Docker for everything: ./scripts/dev.sh
+#   - Start the Plume stack: REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
+#   - Start the host product UI: pnpm app:dev
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -40,7 +36,7 @@ if [ -f .env ]; then
 else
     cp .env.example .env
     echo "✅ Created .env from .env.example"
-    echo "   ⚠️  Remember to update PRIVATE_KEY after starting anvil"
+    echo "   ℹ️  PRIVATE_KEY may stay as UPDATE_ME for the wallet-first UI/read-only poller"
 fi
 echo ""
 
@@ -60,11 +56,9 @@ echo "===================================="
 echo "🎉 Setup complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Start MongoDB:  pnpm docker:mongo   # host port 27027"
-echo "  2. Start Anvil:    anvil  (in new terminal)"
-echo "  3. Copy a private key from anvil to .env"
-echo "  4. Run server:     pnpm dev"
+echo "  1. Start the Plume stack: REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap"
+echo "  2. Start the product UI:  pnpm app:dev"
 echo ""
-echo "Or start everything with Docker:"
-echo "  ./scripts/dev.sh"
+echo "Use the Anvil alternate only when explicitly testing local-chain behavior;"
+echo "the default development and deployment target is Plume Mainnet."
 echo ""

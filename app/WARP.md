@@ -55,7 +55,7 @@ pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
   - `shell/` — `AppShell` (shell root), `TopBar` (system bar), `SideNav` (working nav), `AppShellContext`, `navConfig`, `WalletButtonClient` (re-export)
   - `wallet/` — native connect modal + account menu (`WalletButton`, `WalletModal`, `AccountMenu`, connector ordering helpers)
   - `cap-table/` — `CapTableDashboard.tsx` shell (heal/reconcile/refresh/activity). Screens match the COMPANY left nav: `Holdings`, `StockClasses`, `Shareholders`, `IssueStock`, `Transfer`, `Transactions`. Wallet writes: `useCreateStockClass`, `useCreateShareholder`, `useIssueStockWrite`, `useTransferStockWrite` + `useWalletReceipt`. `forms/*` are fields, not nav destinations. Also `OwnershipBoxes`, `SetupChecklist`, `ownershipModel`, `types`.
-  - Shared list UI: `DataTable` + `Table` / `TableFrame` (full-width framed tables); `Modal`, `TxSuccessModal`
+  - Shared list UI: `DataTable` (wraps `Table` / `TableFrame` from `elements.tsx`); `Modal`, `TxSuccessModal`
 - `e2e/` — Playwright specs + `mocks.ts` fixtures (`playwright.config.ts` at app root)
 - `src/hooks/` — `useMintIssuer`, `useDirectCreateStockClass`, `useDirectCreateStakeholder`, `useDirectIssueStock`, **`useDirectTransferStock`**, `useOnchainAction`, `useResource`, `useCapTableManager`
 - `src/services/` — typed `fetch` wrappers: `registerIssuer`, `register*Onchain`, `fetchHistoricalTransactions`
@@ -84,8 +84,9 @@ These mirror the rules in the root `WARP.md` — keep them in sync.
 - **Fixed-point scaling**: scale `quantity` and `share_price` by **1e10** on the write side via `@tap/units` (`scaleShares` / `scaleAmount`). Poller unscales by 1e10.
 - **UUID ↔ bytes16**: `uuidToBytes16`, `bytes16ToUuid`, `generateBytes16Id` from `@tap/units` (via `src/utils/uuid.ts`).
 - **Share caps**: pre-sign with `validateShareCaps` from `@tap/units` (issuer remaining **and** class remaining) for issuances.
-- **One write path (manage UI)**: `useDirect*` + `useOnchainAction` (submit → wait receipt → success/reverted). A stock class or shareholder submit is ignored while that write is waiting for a receipt. `/register-onchain` for those two runs after the receipt. If it fails, the modal offers Save record, and a stock class is not marked ready to issue. Then:
-  - Class / stakeholder / issuance → `registerXxxOnchain` (metadata + `is_onchain_synced` + `tx_hash`)
+- **One write path (manage UI)**: `useDirect*` + `useOnchainAction` (submit → wait receipt → success/reverted). A stock class or shareholder submit is ignored while that write is waiting for a receipt.
+  - Class / stakeholder → wallet tx first, then `registerXxxOnchain` after the receipt (metadata + `is_onchain_synced` + `tx_hash`). If saving fails, the modal offers Save record; a stock class is not ready to issue until that succeeds.
+  - Issuance → `registerStockIssuanceOnchain` first as OCF/share-cap validation only, then the wallet tx. The endpoint does not persist; the poller writes the canonical issuance.
   - **Transfer** → wallet `transferStock` only; poller writes `StockTransfer` (mirrors server `transferController` scaling; no UI call to `POST /transactions/transfer/stock`)
 - Legacy server-signed `/create` and transfer API routes exist for docs/API tooling, not the product UI.
 - **API access**: frontend calls `/api/*`; `next.config.js` rewrites to `NEXT_PUBLIC_API_URL` (default `http://localhost:8293`).
@@ -129,7 +130,6 @@ The theme is defined in `src/components/theme.ts` and typed in `styled.d.ts`. De
 - Use `const Name = styled.element` syntax.
 - Pure styled-component files use **named exports** grouped at the bottom of the file.
 - Avoid `default export` for files that only export styled components.
-- Public barrel: `src/components/index.ts` (do not re-export dead modules).
 
 ### Theme Tokens
 - Always use theme tokens via `${({ theme }) => theme.colors.accent}` — never hard-code values that exist in the theme.
@@ -185,9 +185,9 @@ Frontend config lives in `app/.env.local` (git-ignored). All are build-time publ
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
 - `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
 - `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on new cap tables. Not a key, and not required for the wallet UI (issuer ADMIN already operates).
-- `NEXT_PUBLIC_WALLET_MOCK` — set to `1` only for Playwright/local mock connector (never production)
+- `NEXT_PUBLIC_WALLET_MOCK` — `1` adds a mock connector under `next dev` only. Production builds ignore it, including the Playwright webServer (`next build && next start`), so e2e stops at the connect gate.
 
-See the root `.env.example` for the canonical list. Keep Mongo `factories` and this factory address aligned.
+The root `.env.example` lists the four `NEXT_PUBLIC_*` values the app needs (`NEXT_PUBLIC_WALLET_MOCK` is dev-only and intentionally absent). Keep Mongo `factories` and this factory address aligned.
 
 **Host vs Docker:** Prefer `pnpm app:dev` for product work (`app/.env.local`). The Docker app is a `next start` preview (no webpack/turbopack watcher — that polling ate ~8 cores). Rebuild the image after source or `NEXT_PUBLIC_*` changes. If `:3000` is Docker, `docker compose stop app` before host `pnpm app:dev`. TAP Mongo is host **27027**.
 
