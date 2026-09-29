@@ -154,7 +154,7 @@ These describe `main`. Fixes are on the `fix/docs-audit-bugs` branch, pending re
 - `POST /transactions/issuance/stock` returns a 500 when the body includes `cost_basis`, `share_numbers_issued`, or any `security_law_exemptions` entries, because their OCF shapes don't match the contract's fields.
 - The app's issuance check, `POST /transactions/issuance/stock/register-onchain`, counts shares from MongoDB instead of the chain, so it can refuse a valid issuance once shares have moved or authorized shares have changed.
 - `POST /transactions/issuance/equity-compensation` and `POST /transactions/issuance/convertible` don't save an `issuer` field, so their records can't be filtered by issuer.
-- Some OCF fields pass validation but aren't saved: `stockholder_approval_date` on valuations, `vestings` on equity compensation, and `stock_class_ids` on stock plans.
+- Some OCF fields pass validation but aren't saved: `country_subdivision_name_of_formation` on issuers; `current_relationships`, `current_status`, `addresses`, and `tax_ids` on stakeholders; `stockholder_approval_date` on stock classes and valuations; `stock_class_ids` on stock plans; and `vestings` on equity compensation.
 - Creating a company in `/app/mint` fails with `Address "UPDATE_ME" is invalid` while `app/.env.local` still holds the placeholder that bootstrap writes.
 
 Controllers behind these routes: [Controllers](/api-reference/controllers).

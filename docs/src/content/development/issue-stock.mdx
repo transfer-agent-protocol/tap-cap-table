@@ -87,7 +87,7 @@ The poller also needs the stakeholder in MongoDB. If the stakeholder exists onch
 | `board_approval_date`, `stockholder_approval_date` | No | `YYYY-MM-DD`. |
 | `consideration_text` | No | What the stakeholder paid, in words. |
 
-OCF also accepts `cost_basis` and `share_numbers_issued`, but on `main` the route fails if you send them. See [Known issues](/api-reference#known-issues).
+OCF also accepts `cost_basis` and `share_numbers_issued`, but on `main` the route fails if you send them; see [Known issues](/api-reference#known-issues). `vestings` passes validation but isn't stored anywhere, because the contract has no field for it.
 
 ## What's next?
 
