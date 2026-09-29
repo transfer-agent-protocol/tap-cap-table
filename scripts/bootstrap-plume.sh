@@ -59,9 +59,10 @@ NEXT_PUBLIC_FACTORY_ADDRESS=0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
 NEXT_PUBLIC_CHAIN_ID=98866
 NEXT_PUBLIC_API_URL=http://localhost:8293
 # Optional address granted OPERATOR_ROLE on new cap tables. Not a key, and not required for the wallet UI.
-NEXT_PUBLIC_OPERATOR_ADDRESS=UPDATE_ME
+# Leave empty to mint without an extra operator (the issuer ADMIN wallet already operates).
+NEXT_PUBLIC_OPERATOR_ADDRESS=
 APPEOF
-    echo "📝 Created app/.env.local with Plume defaults — set OPERATOR (and align factory if you deploy your own)."
+    echo "📝 Created app/.env.local with Plume defaults (operator address optional; align the factory if you deploy your own)."
 else
     echo "✅ app/.env.local present"
 fi
@@ -154,16 +155,16 @@ fi
 echo "  Product UI:   pnpm app:dev  →  http://localhost:3000/app  (reads app/.env.local)"
 echo ""
 
+# The operator address is optional and the app ignores a placeholder there, so skip that line.
 SECRETS_OK=1
 for f in .env app/.env.local; do
-    if [ -f "$f" ] && grep -q 'UPDATE_ME' "$f" 2>/dev/null; then
+    if [ -f "$f" ] && grep -v '^NEXT_PUBLIC_OPERATOR_ADDRESS=' "$f" | grep -q 'UPDATE_ME'; then
         SECRETS_OK=0
     fi
 done
 if [ "$SECRETS_OK" -eq 0 ]; then
     echo "⚠️  UPDATE_ME placeholders still present (often fine for wallet-first /app):"
-    echo "      NEXT_PUBLIC_OPERATOR_ADDRESS — address granted OPERATOR on new mints (not a private key)"
-    echo "      PRIVATE_KEY                 — optional dev/demo only; needed for server-signed API / deploy-factory"
+    echo "      PRIVATE_KEY — optional dev/demo only; needed for server-signed API / deploy-factory"
     echo "      Wallet UI needs a browser extension wallet (Rabby, MetaMask, etc.) — EIP-6963, no cloud key required"
     echo "      Three keys: factory owner ≠ issuer ADMIN ≠ server key — docs development/setup"
 else
