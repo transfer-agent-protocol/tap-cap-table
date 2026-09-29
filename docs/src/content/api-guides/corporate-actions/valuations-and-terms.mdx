@@ -3,7 +3,7 @@ import { Detail } from '../../../components/ContentPatterns';
 
 # Save Valuations and Terms
 
-Save pricing, vesting, legends, plans, and stock-class support data. Each create route writes a MongoDB record only — history rows come from the [Transfer, Cancel, and Reissue Stock](/features/corporate-actions/transfer-cancel-and-reissue-stock) routes.
+Save pricing, vesting, legends, plans, and stock-class support data. Each create route writes a MongoDB record only — history rows come from the [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock) routes.
 
 <Callout type="info">
 Records are immutable in TAP. When terms change, create a new record and reference it by ID from the next issuance.
@@ -132,7 +132,7 @@ There is no general stock-class metadata update route. To change a stock class, 
 | --- | --- |
 | Read | `GET /stock-class/id/:id` with `issuerId` body |
 | Count | `GET /stock-class/total-number` with `issuerId` body |
-| Change authorized shares | See [Adjust authorized shares](/features/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares) on the Transfer, Cancel, and Reissue Stock page — those are history-producing routes that live with the rest of the corporate-action flows. |
+| Change authorized shares | See [Adjust authorized shares](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares) on the Transfer, Cancel, and Reissue Stock page — those are history-producing routes that live with the rest of the corporate-action flows. |
 
 ## Read back
 
@@ -143,4 +143,4 @@ There is no general stock-class metadata update route. To change a stock class, 
 | Stock legend | `GET /stock-legend/id/:id` |
 | Stock plan | `GET /stock-plan/id/:id` |
 
-Next: [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions).
+Next: [Save Equity Compensation and Convertibles](/api-guides/corporate-actions/equity-compensation-and-convertibles).

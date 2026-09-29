@@ -6,7 +6,7 @@ import { Detail } from '../../../components/ContentPatterns';
 Use after stock issuance. Read the current canonical `security_id` from poller-backed history or active positions. Lifecycle operations can consume an existing security and create new balance/resulting security IDs, so do not assume the original issuance ID remains active forever.
 
 <Callout type="info">
-All routes here are `/transactions` routes and require `issuerId` in the body. Each one emits a contract event, so the row appears in [View History](/features/issuer-management/read-history) once the poller catches up (~20 s on Plume Mainnet).
+All routes here are `/transactions` routes and require `issuerId` in the body. Each one emits a contract event, so the row appears in [View History](/api-guides/issuer-management/read-history) once the poller catches up (~20 s on Plume Mainnet).
 </Callout>
 
 ## Inputs
@@ -111,7 +111,7 @@ Returns: `{ "stockClassAdjustment": ... }`. The class authorized cap can never e
 
 ## Verify
 
-- Holdings: [View Cap Table](/features/cap-table-management/view-cap-table)
-- History: [View History](/features/issuer-management/read-history)
+- Holdings: [View Cap Table](/api-guides/cap-table-management/view-cap-table)
+- History: [View History](/api-guides/issuer-management/read-history)
 
-Next: [Save Equity Compensation and Convertibles](/features/corporate-actions/save-offchain-corporate-actions).
+Next: [Save Equity Compensation and Convertibles](/api-guides/corporate-actions/equity-compensation-and-convertibles).

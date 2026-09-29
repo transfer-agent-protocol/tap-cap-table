@@ -6,7 +6,7 @@ import { Detail } from '../../../components/ContentPatterns';
 Save options, RSUs, SARs, SAFEs, notes, and other offchain issuances.
 
 <Callout type="info">
-These `/transactions` routes require `issuerId`, but they only save MongoDB records. They never produce a row in [View History](/features/issuer-management/read-history).
+These `/transactions` routes require `issuerId`, but they only save MongoDB records. They never produce a row in [View History](/api-guides/issuer-management/read-history).
 </Callout>
 
 ## Inputs
@@ -17,7 +17,7 @@ These `/transactions` routes require `issuerId`, but they only save MongoDB reco
 | `stakeholder_id` | Required. |
 | `stock_class_id` | Usually needed for equity compensation. |
 | `stock_plan_id` | Usually needed for options (the plan caps the pool). |
-| `vesting_terms_id` | Optional. Reference a record from [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms). |
+| `vesting_terms_id` | Optional. Reference a record from [Save Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms). |
 
 ## Equity compensation
 
@@ -132,6 +132,6 @@ Returns: `{ "convertibleIssuance": ... }`.
 | Valuation | `GET /valuation/id/:id` |
 | Equity compensation / convertible | Currently only available via direct database queries. |
 
-Do not expect these records in [View History](/features/issuer-management/read-history) — they're DB-only by design.
+Do not expect these records in [View History](/api-guides/issuer-management/read-history) — they're DB-only by design.
 
-Next: [Save Valuations and Terms](/features/corporate-actions/update-valuations-and-terms).
+Next: [Save Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms).

@@ -15,7 +15,7 @@ History entries are produced by the event poller after a contract transaction is
 
 ## Routes that add new history
 
-These routes submit an onchain transaction. After the poller processes the event (~20 s on Plume Mainnet), the entry appears in [View History](/features/issuer-management/read-history).
+These routes submit an onchain transaction. After the poller processes the event (~20 s on Plume Mainnet), the entry appears in [View History](/api-guides/issuer-management/read-history).
 
 | Route | Resulting history |
 | --- | --- |
@@ -46,11 +46,11 @@ These routes write a MongoDB record only. They never appear in history on their 
 
 1. Send the route.
 2. Wait for the poller (~20 s on Plume Mainnet).
-3. Fetch [View History](/features/issuer-management/read-history) again and look for the new `date`, `security_id`, and `object_type`.
+3. Fetch [View History](/api-guides/issuer-management/read-history) again and look for the new `date`, `security_id`, and `object_type`.
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'Onchain security actions', href: '/features/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Use routes that create poller-backed history.' },
-  { title: 'Offchain instruments', href: '/features/corporate-actions/save-offchain-corporate-actions', description: 'Save compensation and convertibles without chain history.' }
+  { title: 'Onchain security actions', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Use routes that create poller-backed history.' },
+  { title: 'Offchain instruments', href: '/api-guides/corporate-actions/equity-compensation-and-convertibles', description: 'Save compensation and convertibles without chain history.' }
 ]} />
