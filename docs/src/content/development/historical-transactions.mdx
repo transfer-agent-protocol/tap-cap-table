@@ -1,80 +1,83 @@
-import { Steps, Callout } from 'nextra/components';
+import { Callout } from 'nextra/components';
 import { NextActions } from '../../components/ContentPatterns';
 
 # Historical Transactions
 
-Returns every stock issuance, transfer, cancellation, and other equity event recorded for a cap table.
+`GET /historical-transactions/issuer-id/:issuerId` returns every stock issuance, transfer, cancellation, and other equity event recorded for a cap table.
 
-History is populated by the event poller, not by the route that submits the contract transaction. Allow ~20 seconds on Plume Mainnet between an onchain transaction and a successful read. `pnpm dev` and `pnpm docker:up` both run a poller; `pnpm prod` does not — pair it with `pnpm prod-poller`.
+## When rows appear
 
-<Steps>
+History comes from the event poller, not from the route or wallet that sent the transaction, so a confirmed transaction shows up after the poller's next pass, usually within about 20 seconds. `pnpm prod-poller` reads only finalized blocks, which adds about 20 minutes on Plume.
 
-### Send a GET request
-
-Using Postman or curl:
+## Read the history
 
 ```bash
-curl http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID"
 ```
 
-Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
+The response is an array of rows:
 
-### Check the response
-
-The response is an array of historical transactions, each containing:
-
-- `transaction`: the full transaction object (populated from the referenced document)
-- `transactionType`: the type of transaction (e.g., `StockIssuance`, `StockTransfer`)
-- `issuer`: the issuer ID this transaction belongs to
-
-</Steps>
-
-<Callout type="warning">
-**Price scaling:** Contract values are scaled by 1e10 (10,000,000,000) on write. The poller unscales by 1e10 before writing to MongoDB, so **API responses show human-readable values** (e.g. `"4.20"` not `42000000000`). If you ever read values directly from the contract, divide by 1e10.
-</Callout>
-
-## Transaction types
-
-`transactionType` is one of:
-
-| Type | Description |
+| Field | Meaning |
 | --- | --- |
-| `StockIssuance` | New shares issued to a stakeholder |
-| `StockTransfer` | Shares transferred between stakeholders |
-| `StockCancellation` | Shares cancelled |
-| `StockRetraction` | Issuance retracted |
-| `StockReissuance` | Shares reissued |
-| `StockRepurchase` | Company repurchased shares |
-| `StockAcceptance` | Stakeholder accepted shares |
-| `IssuerAuthorizedSharesAdjustment` | Issuer's authorized shares changed |
-| `StockClassAuthorizedSharesAdjustment` | Stock class authorized shares changed |
+| `_id` | The history row's id. |
+| `transactionType` | One of the types below. |
+| `transaction` | The full transaction document, populated from its own collection. |
+| `issuer` | The issuer id. |
+| `tx_hash` | Hash of the onchain transaction, for explorer links. Older rows may have `null`. |
+| `createdAt`, `updatedAt` | When the row was written to MongoDB. |
 
-## Example response
-
-```json
+```json filename="Response"
 [
-    {
-        "transactionType": "StockIssuance",
-        "issuer": "<YOUR_ISSUER_ID>",
-        "transaction": {
-            "date": "2026-01-01",
-            "security_id": "56d14df5-6b04-7d93-1976-5e3f0d1703de",
-            "quantity": "100000",
-            "share_price": { "amount": "4.20", "currency": "USD" },
-            "is_onchain_synced": true
-        }
-    }
+  {
+    "_id": "6719d3c1f1a2b3c4d5e6f701",
+    "transactionType": "StockIssuance",
+    "issuer": "<ISSUER_ID>",
+    "tx_hash": "0x4f8a2c1e9b7d6a5f3e2d1c0b9a8f7e6d5c4b3a2918f7e6d5c4b3a2918f7e6d5c",
+    "transaction": {
+      "_id": "56d14df5-6b04-7d93-1976-5e3f0d1703de",
+      "object_type": "TX_STOCK_ISSUANCE",
+      "security_id": "9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d",
+      "stakeholder_id": "<STAKEHOLDER_ID>",
+      "stock_class_id": "<STOCK_CLASS_ID>",
+      "quantity": "100000",
+      "share_price": { "amount": "4.2", "currency": "USD" },
+      "custom_id": "CS-001",
+      "date": "2026-01-01",
+      "issuer": "<ISSUER_ID>",
+      "is_onchain_synced": true
+    },
+    "createdAt": "2026-01-01T18:40:12.345Z",
+    "updatedAt": "2026-01-01T18:40:12.345Z"
+  }
 ]
 ```
 
+The poller converts quantities and prices back to human values, so `"4.2"` is 4.20 per share. Authorized-share adjustment rows are the exception: they store `new_shares_authorized` as the raw ×1e10 value. See [Known issues](/api-reference#known-issues).
+
+## Transaction types
+
+| `transactionType` | Written for |
+| --- | --- |
+| `StockIssuance` | `issueStock`, plus every new security created by a transfer or by a partial cancel or repurchase |
+| `StockTransfer` | `transferStock`, one row per security the transfer uses |
+| `StockCancellation` | `cancelStock` |
+| `StockRetraction` | `retractStockIssuance` |
+| `StockReissuance` | `reissueStock` |
+| `StockRepurchase` | `repurchaseStock` |
+| `StockAcceptance` | `acceptStock` |
+| `IssuerAuthorizedSharesAdjustment` | `adjustIssuerAuthorizedShares` |
+| `StockClassAuthorizedSharesAdjustment` | `adjustStockClassAuthorizedShares` |
+
+Creating a stakeholder or stock class adds no history row. The poller only marks the record `is_onchain_synced`.
+
 ## Sorting and pagination
 
-The response is a flat array in MongoDB insertion order. No pagination is built in today — sort on the client by `transaction.date` (with the populated transaction's `_id` as a stable tiebreaker) if you need ordering.
+Rows come back unsorted, with no pagination. `StockTransfer` documents have no `date`, so sort by `createdAt`, which follows the order the poller processed the events.
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'Transfer stock', href: '/development/transfer-stock', description: 'Use the active canonical security ID from history.' },
-  { title: 'View current cap table', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read current holdings instead of the complete event trail.' },
-  { title: 'Change a security', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Cancel, retract, reissue, repurchase, or accept a position.' }
+  { title: 'Transfer stock', href: '/development/transfer-stock', description: 'Use a security id from history in your next action.' },
+  { title: 'View current holdings', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read who holds what now instead of the full event trail.' },
+  { title: 'Confirm a write landed', href: '/api-guides/issuer-management/read-history', description: 'Filter history for one transaction and debug missing rows.' }
 ]} />

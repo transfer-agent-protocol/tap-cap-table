@@ -1,185 +1,94 @@
-import { Steps } from 'nextra/components';
+import { Callout } from 'nextra/components';
 import { Detail, NextActions } from '../../components/ContentPatterns';
 
 # Create a Stakeholder
 
-Stakeholders are the equity holders on your cap table — founders, employees, investors, or any entity that holds shares.
+Stakeholders are the equity holders on your cap table: founders, employees, investors, or any entity that holds shares.
 
-In `/app`, open the company workspace at `/app/companies/<issuerId>?view=stakeholders`. The connected ADMIN wallet calls `createStakeholder`, then the app saves OCF metadata with `POST /stakeholder/register-onchain`. The server-signed `/stakeholder/create` tutorial below is the API/automation alternative.
+## In the app
 
-## Minimal request
+Open the company and choose **Shareholders** (`/app/companies/<issuerId>?view=stakeholders`). Your wallet calls `createStakeholder`. After the transaction confirms, the app saves the details with `POST /stakeholder/register-onchain`, using the same id it sent onchain.
 
-The smallest valid body identifies the issuer and the stakeholder's name, type, and relationship:
+The contract stores only the stakeholder's id, type, and relationship. Names and contact details live in MongoDB.
 
-```json
+## With the API
+
+`POST /stakeholder/create` creates the stakeholder onchain with the server key, then saves it in MongoDB. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
+
+<Callout type="warning">
+On `main`, the `_id` this route returns is not the id it writes onchain, so issuing stock to that `_id` reverts with `NoStakeholder`. Create stakeholders in the app until the fix lands. See [Known issues](/api-reference#known-issues).
+</Callout>
+
+The smallest valid request names the stakeholder and sets its type and relationship:
+
+```bash
+curl -s -X POST "$API/stakeholder/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": { "legal_name": "Alex Palmer" },
-        "stakeholder_type": "INDIVIDUAL",
-        "current_relationship": "FOUNDER"
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": { "legal_name": "Jordan Lee" },
+    "stakeholder_type": "INDIVIDUAL",
+    "current_relationship": "FOUNDER"
+  }
 }
+JSON
 ```
 
-Use the full request when you also want to capture contact details.
+<Detail summary="Full request with contact details">
 
-<Steps>
-
-### Send a POST request
-
-Using Postman or curl, send a POST request to `http://localhost:8293/stakeholder/create`
-
-<Detail summary="Show full request with contact details">
-
-```json
+```bash
+curl -s -X POST "$API/stakeholder/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": {
-            "legal_name": "Alex Palmer",
-            "first_name": "Alex",
-            "last_name": "Palmer"
-        },
-        "issuer_assigned_id": "",
-        "stakeholder_type": "INDIVIDUAL",
-        "current_relationship": "FOUNDER",
-        "primary_contact": {
-            "name": {
-                "legal_name": "Alex Palmer",
-                "first_name": "Alex",
-                "last_name": "Palmer"
-            },
-            "emails": [
-                {
-                    "email_type": "PERSONAL",
-                    "email_address": "alex@palmer.earth"
-                }
-            ],
-            "phone_numbers": [
-                {
-                    "phone_type": "MOBILE",
-                    "phone_number": "+1 555-555-5555"
-                }
-            ]
-        },
-        "contact_info": {
-            "emails": [
-                {
-                    "email_type": "BUSINESS",
-                    "email_address": "alex@plume.org"
-                }
-            ],
-            "phone_numbers": [
-                {
-                    "phone_type": "MOBILE",
-                    "phone_number": "+1 555-555-5555"
-                }
-            ]
-        },
-        "comments": []
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": { "legal_name": "Jordan Lee", "first_name": "Jordan", "last_name": "Lee" },
+    "issuer_assigned_id": "EMP-0001",
+    "stakeholder_type": "INDIVIDUAL",
+    "current_relationship": "FOUNDER",
+    "primary_contact": {
+      "name": { "legal_name": "Jordan Lee" },
+      "emails": [{ "email_type": "PERSONAL", "email_address": "jordan@example.com" }],
+      "phone_numbers": [{ "phone_type": "MOBILE", "phone_number": "+1 555 555 0100" }]
+    },
+    "contact_info": {
+      "emails": [{ "email_type": "BUSINESS", "email_address": "jordan@example.org" }]
+    },
+    "comments": []
+  }
 }
+JSON
 ```
 
 </Detail>
 
-Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
+The response is the saved stakeholder, with `_id`, the fields you sent, `issuer`, `is_onchain_synced: false`, `tx_hash: null`, and timestamps. On this route, `is_onchain_synced` turns `true` when the poller processes the `StakeholderCreated` event.
 
-### Check the response
-
-The response includes your new stakeholder. Keep `_id`; later issuances and transfers use it.
-
-<Detail summary="Show complete response">
-
-```json
-{
-    "stakeholder": {
-        "_id": "<GENERATED_STAKEHOLDER_ID>",
-        "object_type": "STAKEHOLDER",
-        "name": {
-            "legal_name": "Alex Palmer",
-            "first_name": "Alex",
-            "last_name": "Palmer"
-        },
-        "stakeholder_type": "INDIVIDUAL",
-        "issuer_assigned_id": "",
-        "current_relationship": "FOUNDER",
-        "primary_contact": {
-            "name": {
-                "legal_name": "Alex Palmer",
-                "first_name": "Alex",
-                "last_name": "Palmer"
-            },
-            "emails": [
-                {
-                    "email_type": "PERSONAL",
-                    "email_address": "alex@palmer.earth"
-                }
-            ],
-            "phone_numbers": [
-                {
-                    "phone_type": "MOBILE",
-                    "phone_number": "+1 555-555-5555"
-                }
-            ]
-        },
-        "contact_info": {
-            "emails": [
-                {
-                    "email_type": "BUSINESS",
-                    "email_address": "alex@plume.org"
-                }
-            ],
-            "phone_numbers": [
-                {
-                    "phone_type": "MOBILE",
-                    "phone_number": "+1 555-555-5555"
-                }
-            ]
-        },
-        "comments": [],
-        "issuer": "<YOUR_ISSUER_ID>",
-        "is_onchain_synced": false
-    }
-}
+```bash
+export STAKEHOLDER_ID="<your stakeholder _id>"
 ```
 
-</Detail>
+## Fields
 
-The `is_onchain_synced` field starts as `false`. The event poller will update it to `true` once the blockchain confirms the transaction.
+| Field | Required | Notes |
+| --- | --- | --- |
+| `issuerId` | Yes | The issuer `_id` from [Create an Issuer](/development/cap-table-deploy). |
+| `data.name.legal_name` | Yes | Full legal name. `first_name` and `last_name` are optional. |
+| `data.stakeholder_type` | Yes | `INDIVIDUAL` (a person) or `INSTITUTION` (a company or fund). |
+| `data.current_relationship` | Yes, for TAP | Sent onchain with the stakeholder. OCF marks it optional. |
+| `data.issuer_assigned_id` | No | Your own id for the person, such as an employee number. |
+| `data.primary_contact`, `data.contact_info` | No | Phone numbers use OCF's format: `+1 555 555 0100`, with spaces and no dashes. |
 
-</Steps>
+## Relationship values
 
-## Required fields
-
-| Field | Description |
-| --- | --- |
-| `issuerId` | Issuer `_id` from the [Create an Issuer](/development/cap-table-deploy) response. |
-| `data.name.legal_name` | Stakeholder's full legal name. `first_name`/`last_name` are optional. |
-| `data.stakeholder_type` | `INDIVIDUAL` or `INSTITUTION`. |
-| `data.current_relationship` | Relationship enum (see below). |
-| `data.issuer_assigned_id` | Optional. Pass `""` when you have no internal stakeholder ID yet — the field still appears on the record so you can update it later. |
-
-## Stakeholder types
-
-The `stakeholder_type` field accepts:
-- `INDIVIDUAL` — A person (founder, employee, advisor)
-- `INSTITUTION` — A company or entity (VC fund, corporate investor)
-
-## Relationship types
-
-The `current_relationship` field accepts values like:
-- `FOUNDER`
-- `EMPLOYEE`
-- `ADVISOR`
-- `BOARD_MEMBER`
-- `INVESTOR`
-- `FORMER_EMPLOYEE`
+`current_relationship` takes one of these OCF values: `ADVISOR`, `BOARD_MEMBER`, `CONSULTANT`, `EMPLOYEE`, `EX_ADVISOR`, `EX_CONSULTANT`, `EX_EMPLOYEE`, `EXECUTIVE`, `FOUNDER`, `INVESTOR`, `NON_US_EMPLOYEE`, `OFFICER`, or `OTHER`.
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'Issue stock', href: '/development/issue-stock', description: 'Create the stakeholder’s first active position.' },
-  { title: 'Create another stakeholder', href: '/development/create-stakeholder', description: 'Add another holder before allocating shares.' }
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Issue the stakeholder their first shares.' },
+  { title: 'Add another stakeholder', href: '/development/create-stakeholder', description: 'Transfers need a second stakeholder to receive shares.' }
 ]} />

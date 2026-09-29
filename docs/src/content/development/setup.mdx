@@ -1,101 +1,91 @@
-import { Steps, Callout } from 'nextra/components';
+import { Callout } from 'nextra/components';
 
 # Initial setup
 
-Default path targets **Plume Mainnet**. You’ll end up with Mongo + API (Docker) and the product UI on the host.
+Setup targets Plume Mainnet. When you're done, MongoDB, the API, and the event poller run in Docker, and the product app runs on your machine.
 
-**Quick start:** `pnpm install && REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap`, set `NEXT_PUBLIC_*` in `.env` and `app/.env.local`, then `pnpm app:dev`. Server `PRIVATE_KEY` is optional for the wallet UI.
+## Environment files
 
-## Secrets and env files
+| File | Read by | Holds |
+| --- | --- | --- |
+| `.env` | The API, event poller, Docker Compose, and CLI scripts | `RPC_URL`, `CHAIN_ID`, `PRIVATE_KEY`, `DATABASE_URL`, and the `NEXT_PUBLIC_*` values for the Docker app preview |
+| `app/.env.local` | `pnpm app:dev` | The `NEXT_PUBLIC_*` values for the app on your machine |
+| `.env.prod` (optional) | `./scripts/deployFactory.sh .env.prod` | A factory-owner key for a one-off factory deploy |
 
-### Three wallets / keys [#three-wallets-keys]
-
-These are easy to conflate. They are **not** the same wallet.
-
-| Role | What it controls | Where it lives | Needed for golden path? |
-| --- | --- | --- | --- |
-| **Factory owner** | Beacon upgrades for **that** factory’s cap tables (`updateCapTableImplementation`) | Cold / hardware / vault. Used only for rare deploy or upgrade CLI runs | **No** for day-to-day product work |
-| **Issuer ADMIN** | The wallet that called `createCapTable` — governance + day-to-day writes (admins count as operators onchain) | Browser wallet in `/app` | **Yes** — connect an extension wallet |
-| **Server / operator** | API process signing server-side txs (`/*/create`, API transfer, etc.). Often the address passed as operator at mint | Root `.env` → `PRIVATE_KEY` (key) and `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only) | **No** if you only use the wallet UI + poller |
-
-**What to do in practice**
-
-- **Wallet-first `/app` UI** — ADMIN signs in the browser. Poller needs RPC only. Leave `PRIVATE_KEY=UPDATE_ME` (or unset). Server runs read-only for chain writes; that is expected. ADMIN alone is enough for the manage UI.
-- **`NEXT_PUBLIC_OPERATOR_ADDRESS`** — an **address** granted `OPERATOR_ROLE` on **new** mints (for server/automation later). Setting it does **not** put a key on the server. You only need that private key in `.env` if the API itself will sign as operator.
-- **Factory owner key** — never put this in the long-running Docker/API env. Compromise would let an attacker upgrade every cap table on that factory. Inject only for a one-shot `pnpm deploy-factory` or upgrade script (separate env file / CI secret), then remove.
-- **Shared Plume demo factory** (`0xcd6Df14406b0569ceEABa884A18717774EdeaCA1`) — factory owner is `0x366aA809015061C101983900d0c2ebf7d71B96AF` (deploy key). TAP Admin is `0x3601a913fD3466f30f5ABb978E484d1B37Ce995D`. Reusing the factory does not make you factory owner.
-
-<Callout type="warning">
-`PRIVATE_KEY` in local `.env` is **dev/demo only**. Optional for the wallet-first path. Never put production or factory-owner keys here. Do not commit real keys.
-</Callout>
-
-<Steps>
-
-### 1. Root `.env`
+Create the root file from the template. Bootstrap creates `app/.env.local` if it's missing.
 
 ```bash
 cp .env.example .env
 ```
 
-`.env.example` defaults to Plume (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Typical local values:
+`.env.example` targets Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`) and points `DATABASE_URL` at MongoDB on host port 27027.
 
-| Variable | Purpose |
+### Frontend values
+
+`pnpm app:dev` reads only `app/.env.local`. The Docker app preview reads the root `.env`. Keep the two in sync.
+
+| Variable | Value |
 | --- | --- |
-| `PRIVATE_KEY` | **Optional** for wallet UI. Funded **dev** key only if you need server-signed API routes or CLI `deploy-factory` from this machine. Demo placeholder is fine otherwise. |
-| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Address granted `OPERATOR_ROLE` on new cap tables (often a server/ops address; not a private key) |
-| `NEXT_PUBLIC_FACTORY_ADDRESS` | Factory the app mints against |
+| `NEXT_PUBLIC_FACTORY_ADDRESS` | The factory the app mints against. |
+| `NEXT_PUBLIC_CHAIN_ID` | `98866` for Plume Mainnet. |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8293`, the API as your browser reaches it. |
+| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Optional. An address that gets `OPERATOR_ROLE` on each new cap table. Leave it empty or set a real address. |
 
-### 2. Frontend `app/.env.local`
+<Callout type="warning">
+Bootstrap writes `NEXT_PUBLIC_OPERATOR_ADDRESS=UPDATE_ME` into a new `app/.env.local`. Replace it with an address or clear it, then restart `pnpm app:dev`. With the placeholder, creating a company in `/app/mint` fails with `Address "UPDATE_ME" is invalid`.
+</Callout>
 
-Host `pnpm app:dev` reads **`app/.env.local`**, not only root `.env`. Copy the same `NEXT_PUBLIC_*` values there. Bootstrap creates a starter file if missing.
+The app connects to browser extension wallets such as Rabby or MetaMask (EIP-6963). It needs no cloud account or project id.
 
-Wallet connection is first-party (EIP-6963). Install a browser extension (Rabby, MetaMask, etc.) — no third-party cloud account required.
+## Three wallets and keys [#three-wallets-keys]
 
-</Steps>
+Three different wallets control different things. Keep them separate.
+
+| Wallet | Controls | Where it lives | Needed for the app? |
+| --- | --- | --- | --- |
+| Factory owner | Upgrades for every cap table on its factory (`updateCapTableImplementation`) | Cold storage, used only for a deploy or an upgrade | No |
+| Issuer admin | The cap table it created with `createCapTable`: roles, authorized shares, and day-to-day writes | Your browser wallet in `/app` | Yes |
+| Server key | Server-signed routes such as `POST /stakeholder/create` and `POST /transactions/issuance/stock` | `PRIVATE_KEY` in the root `.env` | No |
+
+- The app only needs the issuer admin wallet. You can leave `PRIVATE_KEY=UPDATE_ME`: the poller only reads the chain, and server-signed routes fail until you set a real key.
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` holds an address, not a key. Set it to the server key's address if you want server-signed routes to work on the cap tables you mint in the app.
+- Never keep the factory owner key in the long-running `.env`. Whoever holds it can upgrade every cap table on that factory. Load it from a separate file for a deploy or upgrade, then remove it.
+
+<Callout type="warning">
+`PRIVATE_KEY` in the local `.env` is for development only. Never put a production or factory-owner key there, and never commit a real key.
+</Callout>
 
 ## Bootstrap the stack
 
 ```bash
-# Demo / issuer-dev: register TAP’s shared Plume factory in Mongo
-# owner 0x366aA809015061C101983900d0c2ebf7d71B96AF, not TAP Admin 0x3601a913fD3466f30f5ABb978E484d1B37Ce995D
-# SKIP_APP=1 leaves :3000 free for host pnpm app:dev
 REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
-
-# Transfer-agent path: after bootstrap with no factory, deploy your own instead
-# pnpm deploy-factory
 ```
 
-Bootstrap is idempotent: deps, contract build (`chain/out`), Docker volume, compose up, API health, optional factory register.
+- `REUSE_TAP_FACTORY=1` registers TAP's shared demo factory in MongoDB. To use your own factory instead, leave it out and [deploy a factory](/development/factory-deploy).
+- `SKIP_APP=1` leaves port 3000 free for `pnpm app:dev`.
 
-| Service | URL |
+Bootstrap is safe to re-run. It creates missing env files, installs dependencies, builds the contracts if `chain/out` is missing, creates the `offchain-db` Docker volume, starts MongoDB and the API, waits for the API to answer, and registers a factory if you asked for one.
+
+| Service | Address |
 | --- | --- |
 | API | http://localhost:8293 |
-| Product UI | `pnpm app:dev` → http://localhost:3000/app |
-| MongoDB | localhost:27027 (TAP does not use 27017) |
+| Product app | `pnpm app:dev`, then http://localhost:3000/app |
+| MongoDB | `localhost:27027` (not 27017) |
 
-Prefer **host** `pnpm app:dev` for wallet work. Without `SKIP_APP=1`, bootstrap also starts the Docker app preview on :3000; run `docker compose stop app` before `pnpm app:dev`.
+Without `SKIP_APP=1`, bootstrap also starts a Docker preview of the app on port 3000. Run `docker compose stop app` before `pnpm app:dev`.
 
-## Demo reuse vs your own factory
+## Local chain (optional)
 
-| Path | Command | You own beacon upgrades? |
-| --- | --- | --- |
-| Shared demo factory | `REUSE_TAP_FACTORY=1 pnpm bootstrap` | **No** (factory owner `0x366aA809015061C101983900d0c2ebf7d71B96AF`) |
-| Your TA factory | `pnpm deploy-factory` | **Yes** |
-
-Issuers can mint cap tables on either factory (`createCapTable` is permissionless). Using the demo factory is normal for local product work; production transfer agents should deploy their own.
-
-## Anvil (local chain) alternate
-
-For pure contract tests without Plume:
+Contract tests (`pnpm test`) run in Foundry's in-memory EVM and don't need a chain. To work offline against Anvil, run the API on your machine so every process reaches the chain at `127.0.0.1`:
 
 ```bash
-# .env: RPC_URL=http://127.0.0.1:8545 CHAIN_ID=31337 + Anvil PRIVATE_KEY
+# In .env: RPC_URL=http://127.0.0.1:8545, CHAIN_ID=31337, PRIVATE_KEY=<an Anvil test key>
 anvil
-pnpm setup
+pnpm docker:mongo
 pnpm deploy-factory
-pnpm docker:up   # or bootstrap without REUSE_TAP_FACTORY
+pnpm dev
 ```
 
-Anvil keys are test-only — never use them on mainnet.
+Start MongoDB before `pnpm deploy-factory`, because the script registers the new factory there. Anvil keys are public test keys; never use them on a real network.
 
-Next: [Run server / app](/development/run-server) and [Deploy factory](/development/factory-deploy).
+Next: [run the server and app](/development/run-server), then [deploy or register a factory](/development/factory-deploy).

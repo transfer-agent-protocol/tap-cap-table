@@ -1,89 +1,94 @@
-import { Steps } from 'nextra/components';
+import { Callout } from 'nextra/components';
 import { NextActions } from '../../components/ContentPatterns';
 
 # Create a Stock Class
 
-Stock classes define the types of equity your company can issue (e.g., Common, Preferred Series A). You must create at least one stock class before issuing stock to stakeholders.
+Stock classes define the types of equity your company can issue, such as Common or Series A Preferred. You need at least one before you can issue stock.
 
-In `/app`, open `/app/companies/<issuerId>?view=stock-classes`. The connected ADMIN wallet submits `createStockClass` and, after confirmation, the app saves OCF metadata through `POST /stock-class/register-onchain`. The server-signed API alternative below requires a configured operator key.
+## In the app
 
-<Steps>
+Open the company and choose **Stock classes** (`/app/companies/<issuerId>?view=stock-classes`). Your wallet calls `createStockClass`. After the transaction confirms, the app saves the class details with `POST /stock-class/register-onchain`, using the same id it sent onchain, and marks the class as synced.
 
-### Send a POST request
+## With the API
 
-Using Postman or curl, send a POST request to `http://localhost:8293/stock-class/create`
+`POST /stock-class/create` creates the class onchain with the server key, then saves it in MongoDB. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
 
-```json
+<Callout type="warning">
+On `main`, the `_id` this route returns is not the id it writes onchain, so issuing stock with that `_id` reverts with `InvalidStockClass`. Create stock classes in the app until the fix lands. See [Known issues](/api-reference#known-issues).
+</Callout>
+
+These examples use `$API` and `$ISSUER_ID` from [Create an Issuer](/development/cap-table-deploy).
+
+```bash
+curl -s -X POST "$API/stock-class/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": "Series A Common",
-        "class_type": "COMMON",
-        "default_id_prefix": "CS-A",
-        "initial_shares_authorized": "1000000",
-        "votes_per_share": "1",
-        "price_per_share": {
-            "currency": "USD",
-            "amount": "4.20"
-        },
-        "seniority": "1",
-        "comments": []
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": "Common Stock",
+    "class_type": "COMMON",
+    "default_id_prefix": "CS",
+    "initial_shares_authorized": "1000000",
+    "votes_per_share": "1",
+    "price_per_share": { "amount": "4.20", "currency": "USD" },
+    "seniority": "1",
+    "comments": []
+  }
+}
+JSON
+```
+
+The response is the saved class:
+
+```json filename="Response"
+{
+  "stockClass": {
+    "_id": "<STOCK_CLASS_ID>",
+    "object_type": "STOCK_CLASS",
+    "name": "Common Stock",
+    "class_type": "COMMON",
+    "default_id_prefix": "CS",
+    "initial_shares_authorized": "1000000",
+    "votes_per_share": "1",
+    "price_per_share": { "amount": "4.20", "currency": "USD" },
+    "seniority": "1",
+    "comments": [],
+    "issuer": "<ISSUER_ID>",
+    "is_onchain_synced": false,
+    "tx_hash": null,
+    "createdAt": "2026-01-01T18:30:00.000Z",
+    "updatedAt": "2026-01-01T18:30:00.000Z",
+    "__v": 0
+  }
 }
 ```
 
-Replace `<YOUR_ISSUER_ID>` with the `_id` from your issuer creation response.
+<Callout type="warning">
+Send human values. The contract stores `price_per_share` and `initial_shares_authorized` ×1e10, and the server does the scaling. See [Scaling](/api-reference#scaling).
+</Callout>
 
-### Check the response
+On this route, `is_onchain_synced` starts as `false` and turns `true` when the poller processes the class's `StockClassCreated` event. The app's `register-onchain` path saves it as `true` with the transaction hash.
 
-The response includes your new stock class:
-
-```json
-{
-    "stockClass": {
-        "_id": "<GENERATED_STOCK_CLASS_ID>",
-        "object_type": "STOCK_CLASS",
-        "name": "Series A Common",
-        "class_type": "COMMON",
-        "default_id_prefix": "CS-A",
-        "initial_shares_authorized": "1000000",
-        "votes_per_share": "1",
-        "price_per_share": {
-            "currency": "USD",
-            "amount": "4.20"
-        },
-        "seniority": "1",
-        "comments": [],
-        "issuer": "<YOUR_ISSUER_ID>",
-        "is_onchain_synced": false
-    }
-}
+```bash
+export STOCK_CLASS_ID="<your stock class _id>"
 ```
-On the server-signed `/create` path, `is_onchain_synced` starts as `false` and the event poller updates it after processing the confirmed event. The wallet-first `/register-onchain` path records the already-confirmed write as synced immediately.
 
-</Steps>
+## Fields
 
-## Required fields
-
-| Field | Description |
-| --- | --- |
-| `name` | Display name (`Series A Common`, `Series Seed Preferred`, etc.). |
-| `class_type` | `COMMON` or `PREFERRED`. |
-| `default_id_prefix` | Short prefix used to label issuances of this class (`CS-A`, `PA`). |
-| `initial_shares_authorized` | Authorized shares for this class — must be ≤ the issuer's `initial_shares_authorized`. |
-| `votes_per_share` | Voting weight per share. `"1"` is one-vote-per-share; `"0"` for non-voting. |
-| `price_per_share.amount` | Human price per share. The contract stores it scaled by 1e10 (10,000,000,000) — see the [scaling note](/api-reference#stock-transactions). |
-| `seniority` | Liquidation rank as a string integer. Lower numbers liquidate first; common stock typically uses `"1"`. |
-
-## Stock class types
-
-The `class_type` field accepts these values per the OCF standard:
-- `COMMON` — Standard common stock
-- `PREFERRED` — Preferred stock (typically with liquidation preferences)
+| Field | Required | Notes |
+| --- | --- | --- |
+| `name` | Yes | Display name, such as `Common Stock` or `Series Seed Preferred`. |
+| `class_type` | Yes | `COMMON` or `PREFERRED`. |
+| `default_id_prefix` | Yes | Short prefix for labeling issuances of this class, such as `CS`. |
+| `initial_shares_authorized` | Yes | Whole shares as a string. Keep it at or below the issuer's authorized shares: the contract doesn't check this when the class is created, but every issuance is capped by both limits. |
+| `votes_per_share` | Yes | `"1"` for one vote per share, `"0"` for non-voting. |
+| `seniority` | Yes | Repayment priority. Higher numbers are repaid first, and classes can share a number. |
+| `price_per_share` | Yes, for TAP | `amount` and `currency`. OCF makes it optional, but `/stock-class/create` reads `price_per_share.amount`. |
 
 ## What's next?
 
 <NextActions items={[
   { title: 'Create a stakeholder', href: '/development/create-stakeholder', description: 'Add a person or institution that can receive equity.' },
-  { title: 'Issue stock', href: '/development/issue-stock', description: 'Already have a stakeholder? Create their first position.' }
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Already have a stakeholder? Issue their first shares.' }
 ]} />
