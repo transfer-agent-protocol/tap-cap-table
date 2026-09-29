@@ -24,10 +24,9 @@ import { convertAndCreateTransferStockOnchain } from "../controllers/transaction
 import { createConvertibleIssuance, createEquityCompensationIssuance } from "../db/operations/create.js";
 
 import { readIssuerById } from "../db/operations/read.js";
-import StockClass from "../db/objects/StockClass.js";
-import { StockIssuance } from "../db/objects/transactions/issuance/index.js";
+import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 import validateInputAgainstOCF from "../utils/validateInputAgainstSchema.js";
-import { assertShareCaps } from "@tap/units";
+import { assertShareCaps, unscale } from "@tap/units";
 
 const transactions = Router();
 
@@ -62,31 +61,27 @@ transactions.post("/issuance/stock", async (req, res) => {
 // authoritative doc when it sees the TxCreated event. We only validate the OCF shape
 // and share caps so the UI can stop an invalid request before wallet confirmation.
 transactions.post("/issuance/stock/register-onchain", async (req, res) => {
-    const { issuerId, data } = req.body;
+    const { contract } = req;
+    const { data } = req.body;
 
     try {
-        const issuer = await readIssuerById(issuerId);
+        // Check caps against the live counts issueStock enforces (1e10-scaled). Mongo can't supply
+        // them: adjustments never update initial_shares_authorized, and StockIssuance rows keep the
+        // lots that transfers, cancels, and repurchases consumed.
+        const [, , issuerIssued, issuerAuthorized] = await contract.issuer();
+        const caps = { quantity: data?.quantity, issuerAuthorized: unscale(issuerAuthorized), issuerIssued: unscale(issuerIssued) };
 
-        const stockClass = data?.stock_class_id
-            ? await StockClass.findById(data.stock_class_id).lean()
-            : null;
-
-        // Best-effort issued totals from Mongo (poller mirror). Chain remains authoritative;
-        // this blocks obviously over-authorized metadata before the UI shows Pending.
-        const issuances = await StockIssuance.find({ issuer: issuerId }).select("quantity stock_class_id").lean();
-        const issuerIssued = issuances.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
-        const classIssued = issuances
-            .filter((row) => row.stock_class_id === data?.stock_class_id)
-            .reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
+        if (data?.stock_class_id) {
+            const [classId, , , classIssued, classAuthorized] = await contract.getStockClassById(convertUUIDToBytes16(data.stock_class_id));
+            if (/^0x0*$/i.test(classId)) {
+                return res.status(400).send(`Stock class ${data.stock_class_id} is not onchain for this issuer.`);
+            }
+            caps.classAuthorized = unscale(classAuthorized);
+            caps.classIssued = unscale(classIssued);
+        }
 
         try {
-            assertShareCaps({
-                quantity: data?.quantity,
-                issuerAuthorized: issuer?.initial_shares_authorized ?? 0,
-                issuerIssued,
-                classAuthorized: stockClass?.initial_shares_authorized,
-                classIssued,
-            });
+            assertShareCaps(caps);
         } catch (capErr) {
             return res.status(400).send(`${capErr}`);
         }
