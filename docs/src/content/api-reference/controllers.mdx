@@ -1,71 +1,43 @@
-import { Callout } from 'nextra/components';
-
 # Controllers
 
-Controllers bridge the server-signed Express routes and `CapTable.sol`. They convert OCF data into the structs the contract expects and send the transaction; the event poller then syncs the resulting events back into MongoDB. The wallet-first `/app` path uses `useDirect*` hooks instead of these controllers, but calls the same contract methods and uses the same `@tap/units` conversions.
-
-```mermaid
-flowchart TD
-    A["API route<br/><small>OCF JSON + issuerId</small>"] --> B["Schema validation"]
-    B --> C["Controller<br/><small>UUID → bytes16, scale ×1e10, build struct</small>"]
-    C --> D["Contract call<br/><small>issueStock / transferStock / …</small>"]
-    D --> E["tx.wait() + events"]
-    E --> F[("Event poller → MongoDB")]
-```
-
-<Callout type="warning">
-Quantities and prices are scaled by 1e10 (10_000_000_000) via `toScaledBigNumber()`. Divide raw onchain values by 1e10 to match the numbers in API examples.
-</Callout>
-
-## Conversion
+Controllers sit between the server-signed routes and `CapTable.sol`. A route validates the OCF body, the controller converts it into the contract's argument types and sends the transaction, and the event poller later writes the resulting events to MongoDB. The app's wallet path builds the same arguments in the browser with the same `@tap/units` helpers.
 
 ```mermaid
 flowchart LR
-    subgraph OCF["OCF JSON"]
-        A["stakeholder_id: UUID string<br/>share_price.amount: 4.20"]
-    end
-    subgraph SOL["Solidity call"]
-        B["stakeholder_id: bytes16<br/>share_price: uint256 42000000000"]
-    end
-    OCF -- "convertUUIDToBytes16<br/>toScaledBigNumber" --> SOL
+    A["Route<br/><small>OCF JSON + issuerId</small>"] --> B["OCF validation"]
+    B --> C["Controller<br/><small>UUID → bytes16, ×1e10</small>"]
+    C --> D["CapTable.sol<br/><small>emits events</small>"]
+    D --> E[("Event poller → MongoDB")]
 ```
 
-## Lifecycle
+## Conversions
 
-```mermaid
-flowchart LR
-    API["Express route"] --> CTRL["Controller"]
-    CTRL --> SOL["CapTable.sol"]
-    SOL -- "emit event" --> POLL["Event poller"]
-    POLL --> DB[("MongoDB OCF record")]
-```
+- Ids: `convertUUIDToBytes16()` turns an OCF UUID into the contract's `bytes16`. It wraps `uuidToBytes16` from `@tap/units`.
+- Numbers: `toScaledBigNumber()` scales quantities, prices, and authorized-share counts by 1e10. It wraps `scaleAmount` from `@tap/units`, so `"4.20"` becomes `42000000000`.
+- Each controller waits for the transaction receipt before the route responds.
 
-## Common patterns
+## Routes to contract methods
 
-- Convert IDs and numbers first. `convertUUIDToBytes16()` and `toScaledBigNumber()` wrap `@tap/units` (`uuidToBytes16`, `scaleAmount`). Protocol scale is 1e10.
-- Wait for confirmation: `const tx = await contract.method(...); await tx.wait();`.
-- Logs use ✅ and ⏳ prefixes.
+| Route | Controller function | Contract method | Role |
+| --- | --- | --- | --- |
+| `POST /stakeholder/create` | `convertAndReflectStakeholderOnchain` | `createStakeholder` | OPERATOR |
+| `POST /stakeholder/add-wallet` | `addWalletToStakeholder` | `addWalletToStakeholder` | OPERATOR |
+| `POST /stakeholder/remove-wallet` | `removeWalletFromStakeholder` | `removeWalletFromStakeholder` | OPERATOR |
+| `GET /stakeholder/id/:id`, `/wallet/:address`, `/total-number` | `getStakeholderById`, `getStakeholderByWalletAddress`, `getTotalNumberOfStakeholders` | Matching read functions | None |
+| `POST /stock-class/create` | `convertAndReflectStockClassOnchain` | `createStockClass` | OPERATOR |
+| `GET /stock-class/id/:id`, `/total-number` | `getStockClassById`, `getTotalNumberOfStockClasses` | Matching read functions | None |
+| `POST /transactions/issuance/stock` | `convertAndCreateIssuanceStockOnchain` | `issueStock` | OPERATOR |
+| `POST /transactions/transfer/stock` | `convertAndCreateTransferStockOnchain` | `transferStock` | OPERATOR |
+| `POST /transactions/cancel/stock` | `convertAndCreateCancellationStockOnchain` | `cancelStock` | OPERATOR |
+| `POST /transactions/retract/stock` | `convertAndCreateRetractionStockOnchain` | `retractStockIssuance` | OPERATOR |
+| `POST /transactions/reissue/stock` | `convertAndCreateReissuanceStockOnchain` | `reissueStock` | OPERATOR |
+| `POST /transactions/repurchase/stock` | `convertAndCreateRepurchaseStockOnchain` | `repurchaseStock` | OPERATOR |
+| `POST /transactions/accept/stock` | `convertAndCreateAcceptanceStockOnchain` | `acceptStock` | OPERATOR |
+| `POST /transactions/adjust/issuer/authorized-shares` | `convertAndAdjustIssuerAuthorizedSharesOnChain` | `adjustIssuerAuthorizedShares` | ADMIN |
+| `POST /transactions/adjust/stock-class/authorized-shares` | `convertAndAdjustStockClassAuthorizedSharesOnchain` | `adjustStockClassAuthorizedShares` | ADMIN |
 
-## Controller Reference
+OPERATOR means OPERATOR or ADMIN. `POST /issuer/create` doesn't use a controller: it calls the factory's `createCapTable` through `server/chain-operations/deployCapTable.js`. Equity compensation, convertibles, and the other MongoDB-only records have no controller.
 
-| Area | Main Functions | What It Does | Contract Method |
-|------|----------------|--------------|-----------------|
-| **Issuer** | `convertAndAdjustIssuerAuthorizedSharesOnChain` | Scales shares and adjusts issuer authorized amount | `adjustIssuerAuthorizedShares` |
-| **Stakeholder** | `convertAndReflectStakeholderOnchain`, `addWalletToStakeholder`, `removeWalletFromStakeholder`, getters | Creates stakeholder + manages wallets | `createStakeholder`, `addWalletToStakeholder`, `getStakeholderById`, etc. |
-| **Stock Class** | `convertAndReflectStockClassOnchain`, `convertAndAdjustStockClassAuthorizedSharesOnchain`, getters | Creates class and adjusts authorized shares | `createStockClass`, `adjustStockClassAuthorizedShares` |
-| **Transactions** | `convertAndCreate*Onchain` (one per file) | Full equity lifecycle (issue, transfer, cancel, repurchase, reissue, retract, accept) | `issueStock`, `transferStock`, `cancelStock`, `repurchaseStock`, etc. |
+Every onchain route follows the same order: the contract middleware loads the cap table from `issuerId`, the route validates the OCF body, and the controller sends the transaction. `/stakeholder/create` and `/stock-class/create` then save the record in MongoDB. The stock transaction routes save nothing themselves; history rows come from the poller.
 
-**Notes on Transactions**:
-- `issuanceController.js` is the most complex (uses helper for defaults).
-- Most pair 1:1 with an OCF schema and a Solidity function.
-- Equity compensation and convertible issuances are **offchain-only** (no controller).
-
-## How a POST route uses a controller
-
-1. Issuer middleware attaches `req.contract`.
-2. The OCF body is validated.
-3. The matching controller converts and sends the transaction.
-4. The route may save the submitted OCF record; transaction history is written from emitted events.
-5. The poller mirrors the confirmed event into MongoDB.
-
-For walkthroughs see [Create Stakeholder](/development/create-stakeholder), [Create Stock Class](/development/create-stock-class), [Issue Stock](/development/issue-stock), and [Transfer Stock](/development/transfer-stock). For the contract-side reference see [Solidity Reference](/protocol/solidity-reference) and [Stock Library](/protocol/stock-lib).
+Related: [API Reference](/api-reference), [Solidity Reference](/protocol/solidity-reference), and [Stock Library](/protocol/stock-lib).
