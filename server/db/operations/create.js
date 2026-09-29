@@ -11,32 +11,38 @@ import ConvertibleIssuance from "../objects/transactions/issuance/ConvertibleIss
 import EquityCompensationIssuance from "../objects/transactions/issuance/EquityCompensationIssuance.js";
 import { findOne, save } from "./atomic.ts";
 
+/**
+ * Routes build OCF objects with `id`, the same id they send onchain. Mongoose ignores `id`,
+ * so without this the schema default would save the row under a different random _id.
+ */
+const saveNew = (Model, data) => save(new Model(data?.id && data._id == null ? { ...data, _id: data.id } : data));
+
 export const createIssuer = (issuerData) => {
-    return save(new Issuer(issuerData));
+    return saveNew(Issuer, issuerData);
 };
 
 export const createStakeholder = (stakeholderData) => {
-    return save(new Stakeholder(stakeholderData));
+    return saveNew(Stakeholder, stakeholderData);
 };
 
 export const createStockClass = (stockClassData) => {
-    return save(new StockClass(stockClassData));
+    return saveNew(StockClass, stockClassData);
 };
 
 export const createStockLegendTemplate = (stockLegendTemplateData) => {
-    return save(new StockLegendTemplate(stockLegendTemplateData));
+    return saveNew(StockLegendTemplate, stockLegendTemplateData);
 };
 
 export const createStockPlan = (stockPlanData) => {
-    return save(new StockPlan(stockPlanData));
+    return saveNew(StockPlan, stockPlanData);
 };
 
 export const createValuation = (valuationData) => {
-    return save(new Valuation(valuationData));
+    return saveNew(Valuation, valuationData);
 };
 
 export const createVestingTerms = (vestingTermsData) => {
-    return save(new VestingTerms(vestingTermsData));
+    return saveNew(VestingTerms, vestingTermsData);
 };
 
 /**
@@ -59,13 +65,13 @@ export const createHistoricalTransaction = async (transactionHistoryData) => {
 };
 
 export const createEquityCompensationIssuance = (issuanceData) => {
-    return save(new EquityCompensationIssuance(issuanceData));
+    return saveNew(EquityCompensationIssuance, issuanceData);
 };
 
 export const createConvertibleIssuance = (issuanceData) => {
-    return save(new ConvertibleIssuance(issuanceData));
+    return saveNew(ConvertibleIssuance, issuanceData);
 };
 
 export const createFactory = (factoryData) => {
-    return save(new Factory(factoryData));
+    return saveNew(Factory, factoryData);
 };
