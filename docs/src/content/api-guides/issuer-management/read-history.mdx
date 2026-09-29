@@ -1,63 +1,51 @@
-import { Steps, Callout } from 'nextra/components';
 import { NextActions } from '../../../components/ContentPatterns';
 
-# View History
+# Read History
 
-Use this page when you want to check whether a stock action or share adjustment has already been recorded for an issuer.
+Use the history route to confirm that a write reached MongoDB. Rows come from the event poller, so a confirmed transaction appears after its next pass. For the row format and transaction types, see [Historical Transactions](/development/historical-transactions). The filters below use [jq](https://jqlang.org).
 
-<Callout type="info">
-The event poller is the source of new history entries. Allow ~20 seconds on Plume Mainnet between an onchain transaction and a successful read.
-</Callout>
+## Find one transaction
 
-<Steps>
-
-### Send a GET request
+Filter by the transaction hash from your wallet or the explorer:
 
 ```bash
-curl http://localhost:8293/historical-transactions/issuer-id/<YOUR_ISSUER_ID>
+export TX_HASH="<transaction hash>"
+
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID" \
+  | jq --arg tx "$TX_HASH" '[.[] | select(.tx_hash == $tx) | {transactionType, transaction}]'
 ```
 
-Replace `<YOUR_ISSUER_ID>` with the issuer `_id` from your issuer creation response.
+A transfer, or a partial cancel or repurchase, returns several rows for one hash. Older rows can have `tx_hash: null`; `POST /issuer/reconcile` with `{ "issuerId": "..." }` fills them in from the chain.
 
-### Check the response
+The stock transaction routes don't return a hash. After one of them, filter by type and take the newest rows:
 
-The response is an array of `{ issuer, transaction }` items. Each `transaction` is a fully populated OCF document.
-
-```json
-[
-    {
-        "issuer": "<YOUR_ISSUER_ID>",
-        "transaction": {
-            "object_type": "TX_STOCK_ISSUANCE",
-            "date": "2026-01-01",
-            "security_id": "<YOUR_SECURITY_ID>",
-            "stakeholder_id": "<YOUR_STAKEHOLDER_ID>",
-            "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
-            "quantity": "100000",
-            "share_price": {
-                "amount": "4.20",
-                "currency": "USD"
-            }
-        }
-    }
-]
+```bash
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID" \
+  | jq '[.[] | select(.transactionType == "StockIssuance")] | sort_by(.createdAt) | .[-3:]'
 ```
 
-</Steps>
+An unknown issuer id returns `[]` rather than an error, so check `$ISSUER_ID` if every query comes back empty.
 
-## Use this route to answer common checks
+## If the row doesn't appear
 
-- Did my stock action land yet?
-- Did an authorized-shares adjustment show up?
-- Am I looking at the right issuer history?
+1. Wait for the next poller pass: about 20 seconds, or about 20 minutes with `pnpm prod-poller`.
+2. Check that the transaction succeeded onchain. A reverted transaction adds no row.
+3. Follow **History never updates** in [Run Server troubleshooting](/development/run-server#troubleshooting).
+4. If events were skipped, replay the issuer from its deploy block. Rows that already exist aren't duplicated.
 
-## Why you might not see a record
+```bash
+curl -s -X POST "$API/issuer/poller-catchup" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{ "issuerId": "$ISSUER_ID", "mode": "reindex" }
+JSON
+```
 
-Some routes save data but never appear here on their own — typically equity compensation, convertibles, and supporting records like stock plans or vesting terms. For the full list of which routes do and do not appear, see [Add New History](/api-guides/issuer-management/history-routes).
+Some writes never add rows, such as creating a stakeholder; see [History Routes](/api-guides/issuer-management/history-routes).
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'Add new history', href: '/api-guides/issuer-management/history-routes', description: 'See which writes emit events and appear here.' },
-  { title: 'View current holdings', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read the latest cap-table state instead of the event trail.' }
+  { title: 'History routes', href: '/api-guides/issuer-management/history-routes', description: 'See which writes add history rows.' },
+  { title: 'View cap table', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read current holdings instead of the event trail.' }
 ]} />

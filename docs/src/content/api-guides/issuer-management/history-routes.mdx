@@ -1,56 +1,36 @@
-import { Callout } from 'nextra/components';
 import { NextActions } from '../../../components/ContentPatterns';
 
-# Add New History
+# History Routes
 
-Use this page when you need to know whether a route creates a new history entry or only saves data for later use.
+The poller writes history rows when it sees a stock transaction onchain, whether the server key or the issuer's wallet sent it. Records saved only in MongoDB never add rows, and the API has no route to edit or delete past rows.
 
-<Callout type="warning">
-You can add new events to the history feed. You cannot rewrite past events through the TAP API.
-</Callout>
+## Writes that add rows
 
-## Why two lists?
-
-History entries are produced by the event poller after a contract transaction is mined. Routes that emit a contract event show up in history; routes that only write to MongoDB do not. Use the lists below to predict which side of the line a route falls on.
-
-## Routes that add new history
-
-These routes submit an onchain transaction. After the poller processes the event (~20 s on Plume Mainnet), the entry appears in [View History](/api-guides/issuer-management/read-history).
-
-| Route | Resulting history |
+| Write | Rows |
 | --- | --- |
-| `POST /transactions/issuance/stock` | New stock position |
-| `POST /transactions/transfer/stock` | Transfer and any balance position |
-| `POST /transactions/cancel/stock` | Cancellation |
-| `POST /transactions/retract/stock` | Retraction |
-| `POST /transactions/reissue/stock` | Reissuance |
-| `POST /transactions/repurchase/stock` | Repurchase |
-| `POST /transactions/accept/stock` | Acceptance |
-| `POST /transactions/adjust/issuer/authorized-shares` | Issuer authorized-share adjustment |
-| `POST /transactions/adjust/stock-class/authorized-shares` | Stock-class authorized-share adjustment |
+| Issue stock: `POST /transactions/issuance/stock`, or **Issue stock** in the app | One `StockIssuance` |
+| Transfer stock: `POST /transactions/transfer/stock`, or **Transfer** in the app | For each security the transfer uses: a `StockIssuance` for the recipient, a `StockIssuance` for the sender's remainder if the security was only partly used, and a `StockTransfer` |
+| `POST /transactions/cancel/stock` | A `StockCancellation`, plus a `StockIssuance` for the remainder of a partial cancel |
+| `POST /transactions/repurchase/stock` | A `StockRepurchase`, plus a `StockIssuance` for the remainder of a partial repurchase |
+| `POST /transactions/retract/stock` | One `StockRetraction` |
+| `POST /transactions/reissue/stock` | One `StockReissuance` |
+| `POST /transactions/accept/stock` | One `StockAcceptance` |
+| `POST /transactions/adjust/issuer/authorized-shares` | One `IssuerAuthorizedSharesAdjustment` |
+| `POST /transactions/adjust/stock-class/authorized-shares` | One `StockClassAuthorizedSharesAdjustment` |
 
-## Routes that only save data
+## Writes that add no rows
 
-These routes write a MongoDB record only. They never appear in history on their own.
-
-| Route | Storage |
+| Write | What happens instead |
 | --- | --- |
-| `POST /transactions/issuance/equity-compensation` | MongoDB equity-compensation record |
-| `POST /transactions/issuance/convertible` | MongoDB convertible record |
-| `POST /stock-legend/create` | MongoDB supporting record |
-| `POST /stock-plan/create` | MongoDB supporting record |
-| `POST /valuation/create` | MongoDB supporting record |
-| `POST /vesting-terms/create` | MongoDB supporting record |
-
-## Verify a new history entry
-
-1. Send the route.
-2. Wait for the poller (~20 s on Plume Mainnet).
-3. Fetch [View History](/api-guides/issuer-management/read-history) again and look for the new `date`, `security_id`, and `object_type`.
+| Create a stakeholder or stock class, from the API or the app | The poller marks the record `is_onchain_synced`. |
+| `POST /stakeholder/add-wallet`, `POST /stakeholder/remove-wallet` | The change is onchain only; MongoDB doesn't store wallets. |
+| `POST /issuer/create`, `POST /issuer/register` | The poller starts following the cap table. |
+| Stock legends, stock plans, valuations, vesting terms, equity compensation, and convertibles | Saved in MongoDB only. |
+| `mintSharesAuthorized` and `mintActivePositions`, called directly on the contract | Seeded positions create no transactions, so they never appear in history. |
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'Onchain security actions', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Use routes that create poller-backed history.' },
-  { title: 'Offchain instruments', href: '/api-guides/corporate-actions/equity-compensation-and-convertibles', description: 'Save compensation and convertibles without chain history.' }
+  { title: 'Read history', href: '/api-guides/issuer-management/read-history', description: 'Confirm that a row landed.' },
+  { title: 'Transfer, cancel, and reissue stock', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Send the writes that add rows.' }
 ]} />
