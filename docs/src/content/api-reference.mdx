@@ -149,8 +149,11 @@ These describe `main`. Fixes are on the `fix/docs-audit-bugs` branch, pending re
 - `GET /stock-class/id/:id` returns a 500 on every call because the contract values are BigInts that can't be serialized. It also labels issued shares as `initialSharesAuthorized`.
 - `POST /transactions/repurchase/stock` passes `consideration_text` through validation but doesn't send it onchain.
 - `POST /transactions/adjust/stock-class/authorized-shares` doesn't send `stockholder_approval_date` onchain.
+- `POST /transactions/adjust/issuer/authorized-shares` returns a 500 when the body has no `comments`.
 - Authorized-share adjustment rows in history store `new_shares_authorized` ×1e10 and leave out the OCF `issuer_id` or `stock_class_id` field.
 - The app's issuance check, `POST /transactions/issuance/stock/register-onchain`, counts shares from MongoDB instead of the chain, so it can refuse a valid issuance once shares have moved or authorized shares have changed.
+- `POST /transactions/issuance/equity-compensation` and `POST /transactions/issuance/convertible` don't save an `issuer` field, so their records can't be filtered by issuer.
+- Some OCF fields pass validation but aren't saved: `stockholder_approval_date` on valuations, `vestings` on equity compensation, and `stock_class_ids` on stock plans.
 - Creating a company in `/app/mint` fails with `Address "UPDATE_ME" is invalid` while `app/.env.local` still holds the placeholder that bootstrap writes.
 
 Controllers behind these routes: [Controllers](/api-reference/controllers).

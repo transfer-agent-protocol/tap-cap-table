@@ -1,16 +1,13 @@
 # Corporate Actions
 
-Use this section after the first stock issuance, when you need to change holdings or save supporting data for later transactions.
+These guides change stock after it's issued and record the terms and instruments around it. Onchain actions sign with the server key, which needs the role shown; see [Server-signed routes](/api-reference#server-signed-routes). Every onchain action adds history rows, and the MongoDB-only records don't.
 
-## Choose a page
+| Action | Route | Role | Guide |
+| --- | --- | --- | --- |
+| Transfer stock | `POST /transactions/transfer/stock` | OPERATOR | [Transfer Stock](/development/transfer-stock) |
+| Cancel, retract, reissue, or repurchase a security | `POST /transactions/<action>/stock` | OPERATOR | [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock) |
+| Change issuer or stock class authorized shares | `POST /transactions/adjust/issuer/authorized-shares`, `POST /transactions/adjust/stock-class/authorized-shares` | ADMIN | [Adjust authorized shares](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares) |
+| Record options, RSUs, SARs, SAFEs, or convertible notes | `POST /transactions/issuance/equity-compensation`, `POST /transactions/issuance/convertible` | None (MongoDB only) | [Equity Compensation and Convertibles](/api-guides/corporate-actions/equity-compensation-and-convertibles) |
+| Record a 409A valuation, vesting terms, or a stock plan | `POST /valuation/create`, `POST /vesting-terms/create`, `POST /stock-plan/create` | None (MongoDB only) | [Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms) |
 
-| If you want to... | Go to | History row? |
-| --- | --- | --- |
-| Transfer, cancel, retract, reissue, or repurchase shares; adjust authorized shares | [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock) | Yes, after polling. |
-| Save options, RSUs, CSAR/SSAR, SAFEs, or notes | [Save Equity Compensation and Convertibles](/api-guides/corporate-actions/equity-compensation-and-convertibles) | No — record only. |
-| Save 409A valuations, vesting terms, legends, or stock plans | [Save Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms) | No — record only. |
-
-## Not available through TAP today
-
-- Stock conversion and stock class split exist in the OCF model but have no public create routes.
-- Stock consolidation is not exposed at all.
+OPERATOR means OPERATOR or ADMIN. OCF also defines stock conversions, class splits, and consolidations, which TAP has no routes for.

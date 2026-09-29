@@ -1,146 +1,109 @@
-import { Callout } from 'nextra/components';
-import { Detail } from '../../../components/ContentPatterns';
+import { NextActions } from '../../../components/ContentPatterns';
 
-# Save Valuations and Terms
+# Valuations and Terms
 
-Save pricing, vesting, legends, plans, and stock-class support data. Each create route writes a MongoDB record only — history rows come from the [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock) routes.
+These routes save 409A valuations, vesting terms, and stock plans as MongoDB records that issuances and awards reference by id. They write nothing onchain and add no history rows. There are no update routes: when terms change, create a new record and reference the new id.
 
-<Callout type="info">
-Records are immutable in TAP. When terms change, create a new record and reference it by ID from the next issuance.
-</Callout>
+Stock classes have no update route either. To change a class's authorized shares, see [Adjust authorized shares](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares).
 
-## Inputs
+## Valuations
 
-| ID | Used by |
-| --- | --- |
-| `issuerId` | Every create route. |
-| `stock_class_id` | Valuations, plans, stock-class adjustments. |
-| `vesting_terms_id` | Later issuance workflows. |
-
-## Valuation
-
-`POST /valuation/create`
-
-<Detail summary="Show valuation request">
-
-```json
+```bash
+curl -s -X POST "$API/valuation/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "provider": "Example Valuation Firm",
-        "board_approval_date": "2026-04-20",
-        "stockholder_approval_date": "2026-04-20",
-        "price_per_share": {
-            "currency": "USD",
-            "amount": "4.20"
-        },
-        "effective_date": "2026-04-20",
-        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
-        "valuation_type": "409A",
-        "comments": []
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stock_class_id": "$STOCK_CLASS_ID",
+    "valuation_type": "409A",
+    "price_per_share": { "amount": "4.20", "currency": "USD" },
+    "effective_date": "2026-04-20",
+    "provider": "Example Valuation Firm",
+    "board_approval_date": "2026-04-20",
+    "comments": []
+  }
 }
+JSON
 ```
 
-</Detail>
-
-Returns: `{ "valuation": ... }`.
-
-### `valuation_type` values
-
-| Value | Use for |
-| --- | --- |
-| `409A` | IRS §409A common-stock fair-market valuations (US-only). |
-| `COMMON_STOCK` | Generic common-stock valuation outside the 409A framework. |
-| `FUNDING_ROUND` | Preferred-stock pricing for a specific financing round. |
+The response is `{ "valuation": { ... } }`. `stock_class_id`, `valuation_type`, `price_per_share`, and `effective_date` are required, and `valuation_type` accepts only `409A`. `stockholder_approval_date` passes validation but isn't saved; see [Known issues](/api-reference#known-issues).
 
 ## Vesting terms
 
-`POST /vesting-terms/create`
-
-<Detail summary="Show vesting-terms request">
-
-```json
+```bash
+curl -s -X POST "$API/vesting-terms/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": "Founder Vesting",
-        "description": "Full vesting at the vesting commencement date.",
-        "allocation_type": "CUMULATIVE_ROUNDING",
-        "vesting_conditions": [
-            {
-                "id": "founder-start",
-                "description": "Fully vested at start date.",
-                "quantity": "100000",
-                "trigger": {
-                    "type": "VESTING_START_DATE"
-                },
-                "next_condition_ids": []
-            }
-        ]
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": "Founder vesting",
+    "description": "Fully vested at the vesting start date.",
+    "allocation_type": "CUMULATIVE_ROUNDING",
+    "vesting_conditions": [
+      {
+        "id": "start",
+        "description": "All shares vest at the start date.",
+        "portion": { "numerator": "1", "denominator": "1" },
+        "trigger": { "type": "VESTING_START_DATE" },
+        "next_condition_ids": []
+      }
+    ],
+    "comments": []
+  }
 }
+JSON
 ```
 
-</Detail>
+The response is `{ "vestingTerms": { ... } }`. `name`, `description`, `allocation_type`, and `vesting_conditions` are required. `allocation_type` sets how fractional shares round across tranches, such as `CUMULATIVE_ROUNDING` or `FRACTIONAL`.
 
-Returns: `{ "vestingTerms": ... }`.
+Each vesting condition takes these fields:
 
-### `vesting_conditions[]` fields
-
-| Field | Required | Description |
+| Field | Required | Notes |
 | --- | --- | --- |
-| `id` | Yes | Unique within this set of conditions. Used by `next_condition_ids` to chain. |
-| `description` | No | Human-readable explanation. |
-| `quantity` | Yes | Shares released when this condition fires. |
-| `trigger.type` | Yes | OCF trigger type — e.g. `VESTING_START_DATE`, `VESTING_SCHEDULE_RELATIVE`, `VESTING_SCHEDULE_ABSOLUTE`, `VESTING_EVENT`. |
-| `next_condition_ids` | Yes | IDs of conditions that fire after this one. Empty array marks a leaf. |
+| `id` | Yes | Unique within these terms. Other conditions point to it from `next_condition_ids`. |
+| `quantity` or `portion` | One of them | A fixed number of shares, or a fraction of the grant as `numerator` and `denominator` strings. |
+| `trigger` | Yes | `trigger.type` is `VESTING_START_DATE`, `VESTING_SCHEDULE_ABSOLUTE`, `VESTING_SCHEDULE_RELATIVE`, or `VESTING_EVENT`. |
+| `next_condition_ids` | Yes | Conditions that can vest after this one. `[]` ends the chain. |
+| `description` | No | Plain-language summary. |
 
-## Legends and plans
+## Stock plans
 
-| Route | Saves | Returns |
-| --- | --- | --- |
-| `POST /stock-legend/create` | Transfer restriction text. | `{ "stockLegend": ... }` |
-| `POST /stock-plan/create` | Plan terms for future equity comp. | `{ "stockPlan": ... }` |
-
-Stock plan body:
-
-<Detail summary="Show stock-plan request">
-
-```json
+```bash
+curl -s -X POST "$API/stock-plan/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "plan_name": "Transfer Agent Protocol 2026 Plan",
-        "board_approval_date": "2026-01-15",
-        "stockholder_approval_date": "2026-01-20",
-        "initial_shares_reserved": "1000000",
-        "default_cancellation_behavior": "RETURN_TO_POOL",
-        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
-        "comments": []
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "plan_name": "2026 Equity Incentive Plan",
+    "initial_shares_reserved": "1000000",
+    "default_cancellation_behavior": "RETURN_TO_POOL",
+    "stock_class_id": "$STOCK_CLASS_ID",
+    "board_approval_date": "2026-01-15",
+    "stockholder_approval_date": "2026-01-20",
+    "comments": []
+  }
 }
+JSON
 ```
 
-</Detail>
+The response is `{ "stockPlan": { ... } }`. `plan_name` and `initial_shares_reserved` are required. `default_cancellation_behavior` is `RETIRE`, `RETURN_TO_POOL`, `HOLD_AS_CAPITAL_STOCK`, or `DEFINED_PER_PLAN_SECURITY`. Send `stock_class_id`: OCF prefers `stock_class_ids`, which passes validation but isn't saved; see [Known issues](/api-reference#known-issues).
 
-## Stock class
+## Read records back
 
-There is no general stock-class metadata update route. To change a stock class, use:
+| Record | By id | Count |
+| --- | --- | --- |
+| Valuation | `GET /valuation/id/:id` | `GET /valuation/total-number` |
+| Vesting terms | `GET /vesting-terms/id/:id` | `GET /vesting-terms/total-number` |
+| Stock plan | `GET /stock-plan/id/:id` | `GET /stock-plan/total-number` |
 
-| Goal | Route |
-| --- | --- |
-| Read | `GET /stock-class/id/:id` with `issuerId` body |
-| Count | `GET /stock-class/total-number` with `issuerId` body |
-| Change authorized shares | See [Adjust authorized shares](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares) on the Transfer, Cancel, and Reissue Stock page — those are history-producing routes that live with the rest of the corporate-action flows. |
+The counts include records from every issuer in the database.
 
-## Read back
+## What's next?
 
-| Record | Route |
-| --- | --- |
-| Valuation | `GET /valuation/id/:id` |
-| Vesting terms | `GET /vesting-terms/id/:id` |
-| Stock legend | `GET /stock-legend/id/:id` |
-| Stock plan | `GET /stock-plan/id/:id` |
-
-Next: [Save Equity Compensation and Convertibles](/api-guides/corporate-actions/equity-compensation-and-convertibles).
+<NextActions items={[
+  { title: 'Equity compensation and convertibles', href: '/api-guides/corporate-actions/equity-compensation-and-convertibles', description: 'Record awards that reference these ids.' },
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Reference a stock plan or vesting terms from an issuance.' }
+]} />
