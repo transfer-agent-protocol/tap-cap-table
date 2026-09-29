@@ -1,72 +1,40 @@
-import { Steps, Callout } from 'nextra/components';
+import { Callout } from 'nextra/components';
 import { NextActions } from '../../../components/ContentPatterns';
 
 # View Cap Table
 
-Use this page when you want to answer one question: who currently holds stock for this issuer?
-
-<Callout type="info">
-This route returns active stock positions only. Options, warrants, and convertibles never appear here.
-</Callout>
-
-<Steps>
-
-### Send a GET request
+`GET /cap-table/holdings/stock` returns who holds stock right now. It reads positions from the contract and joins them with the stakeholder and stock class records in MongoDB. The app's **Holdings** view uses the same route.
 
 ```bash
-curl "http://localhost:8293/cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>"
+curl -s "$API/cap-table/holdings/stock?issuerId=$ISSUER_ID"
 ```
 
-### Check the response
+| Key | Contents |
+| --- | --- |
+| `holdings` | One entry per stakeholder and stock class with shares: the full `stakeholder` and `stockClass` records, plus `quantity`, `sharePrice`, and `timestamp`. |
+| `stakeholders` | Every stakeholder in MongoDB for the issuer, including those with no shares. |
+| `stockClasses` | Every stock class in MongoDB for the issuer. |
+| `issuer` | The issuer record. |
+| `meta` | `issuanceCount` (issuance records in MongoDB), `positions` (entries in `holdings`), and `chainSkipped`, which is `true` when the issuer has no `deployed_to`. |
 
-```json
-{
-    "holdings": [
-        {
-            "stockClass": {
-                "_id": "<YOUR_STOCK_CLASS_ID>"
-            },
-            "stakeholder": {
-                "_id": "<YOUR_STAKEHOLDER_ID>"
-            },
-            "quantity": 100000,
-            "sharePrice": 4.2,
-            "timestamp": 1767225600
-        }
-    ],
-    "stockClasses": [
-        {
-            "_id": "<YOUR_STOCK_CLASS_ID>"
-        }
-    ],
-    "issuer": {
-        "_id": "<YOUR_ISSUER_ID>"
-    }
-}
-```
+<Callout type="warning">
+`quantity` and `sharePrice` are human values: the route divides the contract's ×1e10 values before responding. See [Scaling](/api-reference#scaling).
+</Callout>
 
-</Steps>
+The route returns 400 without `issuerId` and 404 for an unknown issuer.
 
-## Response fields
+## How holdings are calculated
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `holdings[].stockClass._id` | string | Use this to join against the `stockClasses` array. |
-| `holdings[].stakeholder._id` | string | Stakeholder currently holding the position. |
-| `holdings[].quantity` | number | Active share count. |
-| `holdings[].sharePrice` | number | Human-readable — the poller already unscaled by 1e10. The raw onchain value is `sharePrice * 1e10`; see the [scaling note](/api-reference#stock-transactions). |
-| `holdings[].timestamp` | number | Unix seconds at the issuing block. |
-| `stockClasses[]` | array | Every stock class on the issuer, even if it has no active holdings. |
-| `issuer._id` | string | Use this to confirm you queried the right cap table. |
+- A stakeholder can hold several securities in one class, and each holding combines them. `quantity` is their total, `sharePrice` is the price weighted by quantity, and `timestamp` is when the newest of them was created, in Unix seconds.
+- Only stakeholders and stock classes in MongoDB are checked, so shares held by a stakeholder missing from MongoDB don't appear.
+- The route reads the contract once per stakeholder and class pair, so it slows down as the cap table grows. If a read fails, that pair is left out and the server logs a warning.
+- Options, RSUs, convertibles, and other MongoDB-only records never appear here.
 
-## Excluded from this route
-
-- Positions with zero remaining quantity (cancelled, transferred, repurchased).
-- Equity compensation, convertibles, and any non-stock instruments — those live on their own DB-only routes.
+To see each security and its id, read [history](/development/historical-transactions).
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'View history', href: '/api-guides/issuer-management/read-history', description: 'See the transactions that produced the current state.' },
-  { title: 'Add new history', href: '/api-guides/issuer-management/history-routes', description: 'Choose an onchain action that the poller will append.' }
+  { title: 'Read history', href: '/api-guides/issuer-management/read-history', description: 'Find the transactions behind the current holdings.' },
+  { title: 'Accept stock', href: '/api-guides/cap-table-management/accept-stock', description: 'Find a security id and record an acceptance.' }
 ]} />

@@ -1,57 +1,55 @@
-import { Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
 
-# Issue and Accept Stock
+# Accept Stock
 
-Acceptance is an optional, standalone event. Use it when the stakeholder confirms receipt of an existing issuance and you want that confirmation to land as its own history row — typical for regulatory or audit signal. If acceptance is implicit at issuance time, skip this page.
+An acceptance records that a stakeholder accepted a security. It adds a `StockAcceptance` history row and doesn't change holdings. Issue the stock first with [Issue Stock](/development/issue-stock).
 
-For the issuance itself, use [Issue Stock](/development/issue-stock).
+## Find the security id
 
-## Inputs
+The contract assigns each security's id, so read it from the issuance's history row once the poller has written it:
 
-| Field | Source |
+```bash
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID" \
+  | jq '[.[] | select(.transactionType == "StockIssuance") | .transaction | {security_id, stakeholder_id, stock_class_id, quantity}]'
+```
+
+The security must still be live. A transfer, cancellation, retraction, reissue, or repurchase closes the security it acts on. When a partial cancel, repurchase, or transfer leaves shares behind, the remainder is a new security with its own `StockIssuance` row.
+
+```bash
+export SECURITY_ID="<security_id from history>"
+```
+
+## Accept the security
+
+The server key needs OPERATOR or ADMIN; see [Server-signed routes](/api-reference#server-signed-routes).
+
+```bash
+curl -s -X POST "$API/transactions/accept/stock" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholderId": "$STAKEHOLDER_ID",
+    "stockClassId": "$STOCK_CLASS_ID",
+    "security_id": "$SECURITY_ID",
+    "comments": ["Accepted by the stakeholder"]
+  }
+}
+JSON
+```
+
+The response echoes the acceptance with a placeholder `id` and today's UTC `date`. The contract assigns the real id, which appears in the `StockAcceptance` history row after the poller's next pass.
+
+| Revert | Cause |
 | --- | --- |
-| `issuerId` | `POST /issuer/create` or `POST /issuer/register` |
-| `stakeholderId` | `POST /stakeholder/create` |
-| `stockClassId` | `POST /stock-class/create` |
-| `security_id` | Canonical issuance/history row written from the onchain event |
+| `NoStakeholder` | The stakeholder isn't onchain. |
+| `InvalidStockClass` | The stock class isn't onchain. |
+| `NoActivePositionFound` | The stakeholder doesn't hold that security, or it was closed. |
 
-## Accept stock
+## What's next?
 
-`POST /transactions/accept/stock`
-
-```json
-{
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "stakeholderId": "<YOUR_STAKEHOLDER_ID>",
-        "stockClassId": "<YOUR_STOCK_CLASS_ID>",
-        "security_id": "<YOUR_SECURITY_ID>",
-        "comments": ["Accepted by stakeholder"]
-    }
-}
-```
-
-Response:
-
-```json
-{
-    "stockAcceptance": {
-        "id": "<GENERATED_ACCEPTANCE_ID>",
-        "object_type": "TX_STOCK_ACCEPTANCE",
-        "security_id": "<YOUR_SECURITY_ID>",
-        "date": "2026-01-01",
-        "comments": ["Accepted by stakeholder"]
-    }
-}
-```
-
-<Callout type="info">
-Reuse the same `security_id` for accept, cancel, retract, reissue, and repurchase. Acceptance does not change holdings; it only records the event.
-</Callout>
-
-## Verify
-
-- Holdings: `GET /cap-table/holdings/stock?issuerId=<YOUR_ISSUER_ID>`
-- History: `GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>` — expect a new `TX_STOCK_ACCEPTANCE` row after polling (~20 s on Plume Mainnet).
-
-Next: [View Cap Table](/api-guides/cap-table-management/view-cap-table) or [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock).
+<NextActions items={[
+  { title: 'View cap table', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read current holdings.' },
+  { title: 'Transfer, cancel, and reissue stock', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Change a security after it is issued.' }
+]} />

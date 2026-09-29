@@ -1,112 +1,69 @@
-import { Callout } from 'nextra/components';
-import { Detail } from '../../../components/ContentPatterns';
+import { NextActions } from '../../../components/ContentPatterns';
 
-# Add Supporting Records
+# Supporting Records
 
-For legends, plans, and stakeholder wallets after issuer setup.
+Stock legends and stakeholder wallets sit alongside the core cap table. Legends live only in MongoDB, and wallets live only onchain. Stock plans are covered in [Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms).
 
-Use [Create Stock Class](/development/create-stock-class) and [Create Stakeholder](/development/create-stakeholder) for first-time setup.
-
-## Inputs
-
-| ID | Source |
-| --- | --- |
-| `issuerId` | `POST /issuer/create` or `POST /issuer/register` |
-| `stockClassId` | `POST /stock-class/create` |
-| `stakeholderId` | `POST /stakeholder/create` |
-
-<Callout type="info">
-`/stakeholder`, `/stock-class`, and `/transactions` pass through contract middleware, so every request — even `GET` — must include `issuerId` in the JSON body. The `curl` examples below show the shape.
-</Callout>
+The examples use `$ISSUER_ID` and `$STAKEHOLDER_ID` from the [Development Guide](/development).
 
 ## Stock legends
 
-`POST /stock-legend/create` saves transfer-restriction text that you can attach to issuances later via `stock_legend_ids`.
-
-<Detail summary="Show stock-legend request">
-
-```json
-{
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "name": "Restricted Stock Legend",
-        "text": "THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933\u2026",
-        "comments": []
-    }
-}
-```
-
-</Detail>
-
-| Field | Required | Description |
-| --- | --- | --- |
-| `name` | Yes | Short label shown in UI/responses. |
-| `text` | Yes | Full legend body printed on certificates. |
-| `comments` | No | Free-form notes. |
-
-Returns: `{ "stockLegend": ... }`.
-
-## Stock plans
-
-`POST /stock-plan/create` saves plan terms that future equity-compensation issuances reference via `stock_plan_id`.
-
-<Detail summary="Show stock-plan request">
-
-```json
-{
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "plan_name": "Transfer Agent Protocol 2026 Plan",
-        "board_approval_date": "2026-01-15",
-        "stockholder_approval_date": "2026-01-20",
-        "initial_shares_reserved": "1000000",
-        "default_cancellation_behavior": "RETURN_TO_POOL",
-        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
-        "comments": []
-    }
-}
-```
-
-</Detail>
-
-Returns: `{ "stockPlan": ... }`.
-
-## Wallets
-
-`POST /stakeholder/add-wallet` and `POST /stakeholder/remove-wallet`:
-
-<Detail summary="Show wallet request">
-
-```json
-{
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "id": "<YOUR_STAKEHOLDER_ID>",
-    "wallet": "<YOUR_WALLET_ADDRESS>"
-}
-```
-
-</Detail>
-
-Returns: `"Success"`. Add can also return `"Wallet already added"`.
-
-## Read back
-
-GETs that go through contract middleware still require `issuerId` in the JSON body:
+A stock legend is the restriction text printed on a certificate. Save one, then list its `_id` in an issuance's `stock_legend_ids`.
 
 ```bash
-curl http://localhost:8293/stakeholder/id/<YOUR_STAKEHOLDER_ID> \
-  -H 'Content-Type: application/json' \
-  -d '{"issuerId":"<YOUR_ISSUER_ID>"}'
+curl -s -X POST "$API/stock-legend/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": "Restricted Stock Legend",
+    "text": "THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933, AS AMENDED.",
+    "comments": []
+  }
+}
+JSON
 ```
 
-| Record | Route | Body |
+| Field | Required | Notes |
 | --- | --- | --- |
-| Stock class | `GET /stock-class/id/:id` | `{ issuerId }` |
-| Stock class count | `GET /stock-class/total-number` | `{ issuerId }` |
-| Stakeholder | `GET /stakeholder/id/:id` | `{ issuerId }` |
-| Stakeholder by issuer-assigned ID | `GET /stakeholder/issuer_assigned_id/:id` | `{ issuerId }` |
-| Stakeholder by wallet | `GET /stakeholder/wallet/:address` | `{ issuerId }` |
-| Stock legend | `GET /stock-legend/id/:id` | None |
-| Stock plan | `GET /stock-plan/id/:id` | None |
+| `name` | Yes | A short label. |
+| `text` | Yes | The full legend. |
+| `comments` | No | Free-form notes. |
 
-Next: [Issue and Accept Stock](/api-guides/cap-table-management/accept-stock) or [API Reference](/api-reference).
+The response is `{ "stockLegend": { ... } }`. Read it back with `GET /stock-legend/id/:id`. No route writes legends onchain, and they add no history rows.
+
+## Stakeholder wallets
+
+Linking a wallet to a stakeholder lets you look up the stakeholder by wallet onchain. These routes write to the contract with the server key, which needs OPERATOR or ADMIN; see [Server-signed routes](/api-reference#server-signed-routes). MongoDB doesn't store wallets.
+
+```bash
+export WALLET="<wallet address>"
+
+curl -s -X POST "$API/stakeholder/add-wallet" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{ "issuerId": "$ISSUER_ID", "id": "$STAKEHOLDER_ID", "wallet": "$WALLET" }
+JSON
+```
+
+The response is `"Success"`, or `"Wallet already added"` if the wallet is already linked to a stakeholder. Each wallet belongs to one stakeholder, and a stakeholder can have several. `POST /stakeholder/remove-wallet` takes the same body. The contract doesn't check that the wallet belongs to the stakeholder you name, so check the address before removing it.
+
+To find a wallet's stakeholder, send the body with `-X GET`:
+
+```bash
+curl -s -X GET "$API/stakeholder/wallet/$WALLET" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{ "issuerId": "$ISSUER_ID" }
+JSON
+```
+
+It returns `{ "stakeholderId": "0x..." }` with the stakeholder's bytes16 id, or a 500 when no stakeholder has the wallet.
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Attach legends to an issuance with stock_legend_ids.' },
+  { title: 'Valuations and terms', href: '/api-guides/corporate-actions/valuations-and-terms', description: 'Save a stock plan, vesting terms, or a 409A valuation.' }
+]} />
