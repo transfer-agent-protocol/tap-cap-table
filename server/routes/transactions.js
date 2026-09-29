@@ -47,6 +47,10 @@ transactions.post("/issuance/stock", async (req, res) => {
 
         await validateInputAgainstOCF(incomingStockIssuance, stockIssuanceSchema);
 
+        if (incomingStockIssuance.share_numbers_issued?.length > 1) {
+            return res.status(400).send("share_numbers_issued: the onchain issuance holds one range");
+        }
+
         await convertAndCreateIssuanceStockOnchain(contract, incomingStockIssuance);
 
         res.status(200).send({ stockIssuance: incomingStockIssuance });

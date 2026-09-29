@@ -19,6 +19,17 @@ import {
 
 import { toDecimal } from "../utils/convertToFixedPointDecimals.js";
 
+// Server issuances JSON-encode each OCF exemption object into the struct's string[]. Anything that
+// is not a JSON object (older rows, the app's []) is kept as it is.
+const parseExemption = (entry) => {
+    try {
+        const parsed = JSON.parse(entry);
+        return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : entry;
+    } catch {
+        return entry;
+    }
+};
+
 const options = {
     year: "numeric",
     month: "long",
@@ -91,7 +102,7 @@ export const handleStockIssuance = async (stock, issuerId, timestamp, meta = {})
         board_approval_date,
         stockholder_approval_date,
         consideration_text,
-        security_law_exemptions,
+        security_law_exemptions: security_law_exemptions.map(parseExemption),
         // TAP Native Fields
         issuer: issuerId,
         is_onchain_synced: true,
