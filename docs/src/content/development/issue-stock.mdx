@@ -7,7 +7,7 @@ With an issuer, a stock class, and a stakeholder in place, you can issue stock. 
 
 ## In the app
 
-Open the company and choose **Issue stock** (`/app/companies/<issuerId>?view=issue-stock`). The app first checks the request with `POST /transactions/issuance/stock/register-onchain`, which validates the OCF fields and the remaining authorized shares without saving anything. Then your wallet calls `issueStock`. The poller writes the issuance to MongoDB from the onchain event, including the ids the contract assigns.
+Open the company and choose **Issue stock** (`/app/companies/<issuerId>?view=issue-stock`). The app checks the request, then your wallet calls `issueStock`. The poller writes the issuance to MongoDB from the onchain event, including the ids the contract assigns.
 
 ## With the API
 

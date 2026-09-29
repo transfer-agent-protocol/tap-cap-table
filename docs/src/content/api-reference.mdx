@@ -40,7 +40,7 @@ The API doesn't authenticate callers. Anyone who can reach it can make the serve
 
 | Status | When |
 | --- | --- |
-| 400 | `issuerId` is missing (`issuerId is required`) or unknown (`Issuer not found`) on a route that needs it, `deployed_to` or `tx_hash` is missing on `/issuer/register`, or the issuance preflight finds too few authorized shares. |
+| 400 | `issuerId` is missing (`issuerId is required`) or unknown (`Issuer not found`) on a route that needs it, `deployed_to` or `tx_hash` is missing on `/issuer/register`, or the app's issuance check finds too few authorized shares. |
 | 404 | The issuer doesn't exist, on `/issuer/id`, `/issuer/full`, `/cap-table/holdings/stock`, `/issuer/reconcile`, and `/issuer/poller-catchup`. |
 | 500 | Everything else, including OCF validation failures and contract reverts. The body is the error message as text. |
 
@@ -123,7 +123,7 @@ All of these write onchain, add history rows, and take `{ "issuerId": "...", "da
 
 OPERATOR means OPERATOR or ADMIN. The contract assigns balance and resulting security ids, so don't send `balance_security_id` or `split_transaction_id`: validation accepts them, but they're ignored. For worked examples, see [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock).
 
-`POST /transactions/issuance/stock/register-onchain` is the app's preflight check. It takes the same body as an issuance, validates the OCF fields and the remaining authorized shares against MongoDB, and saves nothing. The app calls it before the wallet sends `issueStock`.
+`POST /transactions/issuance/stock/register-onchain` is the check the app runs before the wallet sends `issueStock`. It validates an issuance body and the remaining authorized shares, and saves nothing.
 
 ## Records stored only in MongoDB
 
@@ -145,10 +145,12 @@ The last two live under `/transactions`, so they also need `issuerId` to pass th
 These describe `main`. Fixes are on the `fix/docs-audit-bugs` branch, pending review.
 
 - `POST /stakeholder/create`, `POST /stock-class/create`, `POST /issuer/create`, and `POST /issuer/register` save a random MongoDB `_id` instead of the id they validated and sent onchain. Stakeholders and stock classes from these routes can't be used in later server-signed writes (`NoStakeholder`, `InvalidStockClass`), and their `is_onchain_synced` never turns `true`. The issuer `_id` doesn't match the onchain issuer id, including issuers the app registers. Stakeholders and stock classes created in the app aren't affected.
+- `POST /issuer/create` takes the factory's newest cap table as its own, so on a shared factory another mint at the same moment can give the issuer the wrong `deployed_to`.
 - `GET /stock-class/id/:id` returns a 500 on every call because the contract values are BigInts that can't be serialized. It also labels issued shares as `initialSharesAuthorized`.
 - `POST /transactions/repurchase/stock` passes `consideration_text` through validation but doesn't send it onchain.
 - `POST /transactions/adjust/stock-class/authorized-shares` doesn't send `stockholder_approval_date` onchain.
-- Authorized-share adjustment rows in history store `new_shares_authorized` ×1e10, and stock class adjustment rows don't record the class.
+- Authorized-share adjustment rows in history store `new_shares_authorized` ×1e10 and leave out the OCF `issuer_id` or `stock_class_id` field.
+- The app's issuance check, `POST /transactions/issuance/stock/register-onchain`, counts shares from MongoDB instead of the chain, so it can refuse a valid issuance once shares have moved or authorized shares have changed.
 - Creating a company in `/app/mint` fails with `Address "UPDATE_ME" is invalid` while `app/.env.local` still holds the placeholder that bootstrap writes.
 
 Controllers behind these routes: [Controllers](/api-reference/controllers).
