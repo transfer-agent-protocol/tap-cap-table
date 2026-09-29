@@ -345,8 +345,7 @@ transactions.post("/issuance/equity-compensation", async (req, res) => {
     const { issuerId, data } = req.body;
 
     try {
-        // ensuring issuer exists
-        await readIssuerById(issuerId);
+        const issuer = await readIssuerById(issuerId);
 
         const incomingEquityCompensationIssuance = {
             id: uuid(), // for OCF Validation
@@ -357,8 +356,8 @@ transactions.post("/issuance/equity-compensation", async (req, res) => {
         };
         await validateInputAgainstOCF(incomingEquityCompensationIssuance, equityCompensationIssuanceSchema);
 
-        // save to DB
-        const createdIssuance = await createEquityCompensationIssuance(incomingEquityCompensationIssuance);
+        // save to DB, linked to the issuer (OCF rejects the extra field, so add it after validation)
+        const createdIssuance = await createEquityCompensationIssuance({ ...incomingEquityCompensationIssuance, issuer: issuer._id });
 
         res.status(200).send({ equityCompensationIssuance: createdIssuance });
     } catch (error) {
@@ -371,8 +370,7 @@ transactions.post("/issuance/convertible", async (req, res) => {
     const { issuerId, data } = req.body;
 
     try {
-        // ensuring issuer exists
-        await readIssuerById(issuerId);
+        const issuer = await readIssuerById(issuerId);
 
         const incomingConvertibleIssuance = {
             id: uuid(), // for OCF Validation
@@ -385,8 +383,8 @@ transactions.post("/issuance/convertible", async (req, res) => {
         console.log("incomingConvertibleIssuance", incomingConvertibleIssuance);
         await validateInputAgainstOCF(incomingConvertibleIssuance, convertibleIssuanceSchema);
 
-        // save to DB
-        const createdIssuance = await createConvertibleIssuance(incomingConvertibleIssuance);
+        // save to DB, linked to the issuer (OCF rejects the extra field, so add it after validation)
+        const createdIssuance = await createConvertibleIssuance({ ...incomingConvertibleIssuance, issuer: issuer._id });
 
         res.status(200).send({ convertibleIssuance: createdIssuance });
     } catch (error) {
