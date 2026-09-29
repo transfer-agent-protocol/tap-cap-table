@@ -1,3 +1,5 @@
+import { Interface } from "ethers";
+import CAP_TABLE from "../../chain/out/CapTable.sol/CapTable.json" with { type: "json" };
 import { convertBytes16ToUUID } from "../utils/convertUUID.js";
 import { createHistoricalTransaction } from "../db/operations/create.js";
 import { readStakeholderById } from "../db/operations/read.js";
@@ -327,11 +329,45 @@ export const handleStockAcceptance = async (stock, issuerId, timestamp, meta = {
     );
 };
 
+const capTableInterface = new Interface(CAP_TABLE.abi);
+const loggedStockClassMisses = new Set();
+
+/**
+ * The onchain StockClassAuthorizedSharesAdjustment struct has no stock_class_id, so read it back
+ * from the adjustStockClassAuthorizedShares calldata of the emitting tx. Returns null when the call
+ * went through another contract (e.g. a multisig) or the tx cannot be fetched or decoded.
+ */
+export const recoverAdjustedStockClassId = async (provider, txHash, capTableAddress) => {
+    let reason;
+    try {
+        const tx = await provider.getTransaction(txHash);
+        if (!tx) {
+            reason = "transaction not found";
+        } else if (capTableAddress && tx.to?.toLowerCase() !== capTableAddress.toLowerCase()) {
+            reason = `sent to ${tx.to}, not the cap table`;
+        } else {
+            const call = capTableInterface.parseTransaction({ data: tx.data, value: tx.value });
+            if (call?.name === "adjustStockClassAuthorizedShares") {
+                return convertBytes16ToUUID(call.args[0]);
+            }
+            reason = `calldata is ${call?.name ?? "not a CapTable call"}`;
+        }
+    } catch (err) {
+        reason = err?.shortMessage || err?.message || String(err);
+    }
+    // Replays and retried DB transactions hit the same tx again; say it once.
+    if (!loggedStockClassMisses.has(txHash)) {
+        loggedStockClassMisses.add(txHash);
+        console.warn(`StockClassAuthorizedSharesAdjusted: no stock_class_id for tx ${txHash} (${reason}); storing null`);
+    }
+    return null;
+};
+
 export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, timestamp, meta = {}) => {
     console.log("StockClassAuthorizedSharesAdjusted Event Emitted!", stock.id);
     const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(stock.id);
-    console.log("stock price", stock.price);
+    const stockClassId = await recoverAdjustedStockClassId(meta?.provider, txHash, meta?.address);
 
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
 
@@ -339,11 +375,12 @@ export const handleStockClassAuthorizedSharesAdjusted = async (stock, issuerId, 
         _id: id,
         object_type: stock.object_type,
         comments: stock.comments,
-        issuer_id: convertBytes16ToUUID(stock.security_id),
         date: dateOCF,
-        new_shares_authorized: stock.new_shares_authorized,
+        new_shares_authorized: toDecimal(stock.new_shares_authorized).toString(),
         board_approval_date: stock.board_approval_date,
         stockholder_approval_date: stock.stockholder_approval_date,
+        // null only on insert: a replay that cannot reach the RPC must not erase a recovered id
+        ...(stockClassId ? { stock_class_id: stockClassId } : { $setOnInsert: { stock_class_id: null } }),
 
         // TAP Native Fields
         issuer: issuerId,
@@ -367,7 +404,6 @@ export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, tim
     console.log("IssuerAuthorizedSharesAdjusted Event Emitted!", issuer.id);
     const txHash = meta?.txHash || null;
     const id = convertBytes16ToUUID(issuer.id);
-    console.log("stock price", issuer.price);
 
     const dateOCF = new Date(timestamp * 1000).toISOString().split("T")[0];
 
@@ -375,9 +411,9 @@ export const handleIssuerAuthorizedSharesAdjusted = async (issuer, issuerId, tim
         _id: id,
         object_type: issuer.object_type,
         comments: issuer.comments,
-        issuer_id: convertBytes16ToUUID(issuer.security_id),
+        issuer_id: issuerId,
         date: dateOCF,
-        new_shares_authorized: issuer.new_shares_authorized,
+        new_shares_authorized: toDecimal(issuer.new_shares_authorized).toString(),
         board_approval_date: issuer.board_approval_date,
         stockholder_approval_date: issuer.stockholder_approval_date,
 
