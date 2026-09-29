@@ -151,6 +151,7 @@ These describe `main`. Fixes are on the `fix/docs-audit-bugs` branch, pending re
 - `POST /transactions/adjust/stock-class/authorized-shares` doesn't send `stockholder_approval_date` onchain.
 - `POST /transactions/adjust/issuer/authorized-shares` returns a 500 when the body has no `comments`.
 - Authorized-share adjustment rows in history store `new_shares_authorized` ×1e10 and leave out the OCF `issuer_id` or `stock_class_id` field.
+- `POST /transactions/issuance/stock` returns a 500 when the body includes `cost_basis`, `share_numbers_issued`, or any `security_law_exemptions` entries, because their OCF shapes don't match the contract's fields.
 - The app's issuance check, `POST /transactions/issuance/stock/register-onchain`, counts shares from MongoDB instead of the chain, so it can refuse a valid issuance once shares have moved or authorized shares have changed.
 - `POST /transactions/issuance/equity-compensation` and `POST /transactions/issuance/convertible` don't save an `issuer` field, so their records can't be filtered by issuer.
 - Some OCF fields pass validation but aren't saved: `stockholder_approval_date` on valuations, `vestings` on equity compensation, and `stock_class_ids` on stock plans.
