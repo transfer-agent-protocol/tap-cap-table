@@ -1,3 +1,4 @@
+import { unscale } from "@tap/units";
 import { toScaledBigNumber } from "../utils/convertToFixedPointDecimals.js";
 import { convertUUIDToBytes16 } from "../utils/convertUUID.js";
 
@@ -29,15 +30,19 @@ export const convertAndReflectStockClassOnchain = async (contract, stockClass) =
 export const getStockClassById = async (contract, id) => {
     // First: convert OCF Types to Onchain Types
     const stockClassIdBytes16 = convertUUIDToBytes16(id);
-    // Second: get stock class onchain
-    const stockClassAdded = await contract.getStockClassById(stockClassIdBytes16);
-    const stockClassId = stockClassAdded[0];
-    const classType = stockClassAdded[1];
-    const pricePerShare = stockClassAdded[2];
-    const initialSharesAuthorized = stockClassAdded[3];
-    console.log("Stock Class:", { stockClassId, classType, pricePerShare, initialSharesAuthorized });
+    // Second: get stock class onchain as (id, class_type, price_per_share, shares_issued, shares_authorized).
+    // The numbers are 1e10-scaled BigInts, which JSON cannot carry, so return decimal strings.
+    const [stockClassId, classType, pricePerShare, sharesIssued, sharesAuthorized] = await contract.getStockClassById(stockClassIdBytes16);
+    const stockClass = {
+        stockClassId,
+        classType,
+        pricePerShare: unscale(pricePerShare),
+        sharesIssued: unscale(sharesIssued),
+        sharesAuthorized: unscale(sharesAuthorized),
+    };
+    console.log("Stock Class:", stockClass);
 
-    return { stockClassId, classType, pricePerShare, initialSharesAuthorized };
+    return stockClass;
 };
 
 export const getTotalNumberOfStockClasses = async (contract) => {
