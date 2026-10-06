@@ -6,6 +6,7 @@ import { scaleShares } from "@tap/units";
 import {
 	FACTORY_ADDRESS,
 	OPERATOR_ADDRESS,
+	operatorAddressError,
 	capTableFactoryAbi,
 	useWriteCapTableFactoryCreateCapTable,
 } from "../config/contracts";
@@ -130,8 +131,12 @@ export function useMintIssuer(): UseMintIssuerReturn {
 		if (!canMint) return;
 		reset();
 		setDeployedAddress(null);
-		setServerError(null);
 		setResult(null);
+		if (operatorAddressError) {
+			setServerError(operatorAddressError);
+			return;
+		}
+		setServerError(null);
 		writeContract({
 			address: FACTORY_ADDRESS,
 			args: [id as `0x${string}`, fields.legalName.trim(), scaleShares(fields.sharesAuthorized), OPERATOR_ADDRESS],

@@ -11,6 +11,7 @@ const StockClassSchema = new mongoose.Schema(
         default_id_prefix: String,
         initial_shares_authorized: String,
         board_approval_date: String,
+        stockholder_approval_date: String,
         votes_per_share: String,
         par_value: {},
         price_per_share: {},

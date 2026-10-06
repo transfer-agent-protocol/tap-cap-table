@@ -15,6 +15,7 @@ const EquityCompensationIssuanceSchema = new mongoose.Schema({
     base_price: {},
     early_exercisable: Boolean,
     vesting_terms_id: String,
+    vestings: [{}],
     expiration_date: String,
     termination_exercise_windows: {},
     comments: [String],
