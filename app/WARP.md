@@ -29,7 +29,7 @@ pnpm start            # Serve production build      (root: pnpm app:start)
 pnpm typecheck        # tsc --noEmit
 pnpm lint             # eslint src/
 pnpm eslint <paths>   # eslint --fix
-pnpm test:nav         # nav + ownership + activity + wallet helper unit tests (node:test)
+pnpm test:nav         # nav + ownership + activity + wallet helper unit tests (node:test); local only, never in CI
 pnpm test:e2e         # Playwright e2e (root: pnpm app:test:e2e)
 pnpm test:e2e:ui      # Playwright UI mode
 pnpm generate:wagmi   # Regenerate src/generated.ts from chain ABIs
@@ -86,7 +86,7 @@ These mirror the rules in the root `WARP.md` — keep them in sync.
 - **Share caps**: pre-sign with `validateShareCaps` from `@tap/units` (issuer remaining **and** class remaining) for issuances.
 - **One write path (manage UI)**: `useDirect*` + `useOnchainAction` (submit → wait receipt → success/reverted). A stock class or shareholder submit is ignored while that write is waiting for a receipt.
   - Class / stakeholder → wallet tx first, then `registerXxxOnchain` after the receipt (metadata + `is_onchain_synced` + `tx_hash`). If saving fails, the modal offers Save record; a stock class is not ready to issue until that succeeds.
-  - Issuance → `registerStockIssuanceOnchain` first as OCF/share-cap validation only, then the wallet tx. The endpoint does not persist; the poller writes the canonical issuance.
+  - Issuance → `registerStockIssuanceOnchain` first as OCF/share-cap validation only, then the wallet tx. The endpoint does not persist; the poller writes the canonical issuance. On `main` its share-cap check sums Mongo issuance rows (closed securities included) against the caps from creation, so it can 400 a valid issuance after a transfer, cancel, or adjustment; `fix/docs-audit-bugs` reads the live counts from the contract instead (root `WARP.md` → Common Pitfalls 17).
   - **Transfer** → wallet `transferStock` only; poller writes `StockTransfer` (mirrors server `transferController` scaling; no UI call to `POST /transactions/transfer/stock`)
 - Legacy server-signed `/create` and transfer API routes exist for docs/API tooling, not the product UI.
 - **API access**: frontend calls `/api/*`; `next.config.js` rewrites to `NEXT_PUBLIC_API_URL` (default `http://localhost:8293`).
@@ -184,7 +184,7 @@ Frontend config lives in `app/.env.local` (git-ignored). All are build-time publ
 - `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
 - `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on new cap tables. Not a key, and not required for the wallet UI (issuer ADMIN already operates).
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on new cap tables. Not a key, and not required for the wallet UI (issuer ADMIN already operates). Set a real address or leave it empty: on `main`, `config/contracts.ts` passes the value straight to `createCapTable`, so the `UPDATE_ME` placeholder that bootstrap writes makes `/app/mint` fail with `Address "UPDATE_ME" is invalid` (`fix/docs-audit-bugs` falls back to the zero address).
 - `NEXT_PUBLIC_WALLET_MOCK` — `1` adds a mock connector under `next dev` only. Production builds ignore it, including the Playwright webServer (`next build && next start`), so e2e stops at the connect gate.
 
 The root `.env.example` lists the four `NEXT_PUBLIC_*` values the app needs (`NEXT_PUBLIC_WALLET_MOCK` is dev-only and intentionally absent). Keep Mongo `factories` and this factory address aligned.
