@@ -40,7 +40,7 @@ The API doesn't authenticate callers. Anyone who can reach it can make the serve
 
 | Status | When |
 | --- | --- |
-| 400 | `issuerId` is missing (`issuerId is required`) or unknown (`Issuer not found`) on a route that needs it, `deployed_to` or `tx_hash` is missing on `/issuer/register`, or the app's issuance check finds too few authorized shares. |
+| 400 | `issuerId` is missing (`issuerId is required`) or unknown (`Issuer not found`) on a route that needs it, `deployed_to` or `tx_hash` is missing on `/issuer/register`, an issuance sends more than one `share_numbers_issued` range, or the app's issuance check finds too few authorized shares or a stock class that isn't onchain. |
 | 404 | The issuer doesn't exist, on `/issuer/id`, `/issuer/full`, `/cap-table/holdings/stock`, `/issuer/reconcile`, and `/issuer/poller-catchup`. |
 | 500 | Everything else, including OCF validation failures and contract reverts. The body is the error message as text. |
 
@@ -51,7 +51,6 @@ The contract stores quantities, prices, and authorized-share counts as integers 
 - Send human values as strings, such as `"100000"` shares at `"4.20"`. Server-signed routes scale them before calling the contract.
 - The event poller divides by 1e10 before it writes history, and `/cap-table/holdings/stock` divides the chain reads it returns.
 - If you read the contract directly, divide by 1e10 yourself. A price of 4.20 is stored as `42000000000`.
-- Authorized-share adjustment rows in history are the exception; see [Known issues](#known-issues).
 
 ## Health checks
 
@@ -63,7 +62,7 @@ Each router answers `GET` at its root with a short text reply: `/`, `/factory`, 
 | --- | --- | --- | --- | --- |
 | POST | `/factory/register` | MongoDB | `factory_address`, `implementation_address` | `{ factory }` |
 | POST | `/issuer/create` | Onchain + MongoDB | Issuer fields; see [Create an Issuer](/development/cap-table-deploy) | `{ issuer }` |
-| POST | `/issuer/register` | MongoDB | Issuer fields, plus `deployed_to` and `tx_hash` (required), `id` (the bytes16 sent to `createCapTable`), and `deployed_by` (the admin wallet) | `{ issuer }` |
+| POST | `/issuer/register` | MongoDB | Issuer fields, plus `deployed_to` and `tx_hash` (required), `id` (the bytes16 sent to `createCapTable`; its UUID form becomes the record's `_id`), and `deployed_by` (the admin wallet) | `{ issuer }` |
 | GET | `/issuer/id/:id`, `/issuer/full/:id` | Read | None | The issuer document |
 | GET | `/issuer/total-number` | Read | None | Issuer count |
 | GET | `/issuer/by-deployer/:address` | Read | None | `{ issuers, count }`: issuers whose `deployed_by` matches, case-insensitive |
@@ -93,7 +92,7 @@ Every route here needs `issuerId` in the body.
 
 | Method | Route | Writes | Body | Returns |
 | --- | --- | --- | --- | --- |
-| GET | `/stock-class/id/:id` | Onchain read | `issuerId` | Fails with a 500; see [Known issues](#known-issues) |
+| GET | `/stock-class/id/:id` | Onchain read | `issuerId` | `stockClassId` (bytes16), `classType`, and `pricePerShare`, `sharesIssued`, `sharesAuthorized` as human-value strings |
 | GET | `/stock-class/total-number` | Onchain read | `issuerId` | Stock class count |
 | POST | `/stock-class/create` | Onchain + MongoDB | `issuerId`, `data` | `{ stockClass }` |
 | POST | `/stock-class/register-onchain` | MongoDB | `issuerId`, `id` (the UUID used onchain), `data`, optional `tx_hash` | `{ stockClass }`, saved as synced |
@@ -111,7 +110,7 @@ All of these write onchain, add history rows, and take `{ "issuerId": "...", "da
 
 | Route | Role | `data` fields | Returns |
 | --- | --- | --- | --- |
-| `POST /transactions/issuance/stock` | OPERATOR | `stakeholder_id`, `stock_class_id`, `quantity`, `share_price`, `stock_legend_ids`, `custom_id`, `security_law_exemptions` (`comments`, `issuance_type`, `stock_plan_id`, `vesting_terms_id`, `board_approval_date`, `stockholder_approval_date`, `consideration_text`) | `{ stockIssuance }` |
+| `POST /transactions/issuance/stock` | OPERATOR | `stakeholder_id`, `stock_class_id`, `quantity`, `share_price`, `stock_legend_ids`, `custom_id`, `security_law_exemptions` (`comments`, `issuance_type`, `stock_plan_id`, `vesting_terms_id`, `board_approval_date`, `stockholder_approval_date`, `consideration_text`, `cost_basis`, one `share_numbers_issued` range) | `{ stockIssuance }` |
 | `POST /transactions/transfer/stock` | OPERATOR | `transferorId`, `transfereeId`, `stockClassId`, `quantity`, `sharePrice`, `isBuyerVerified` | `"success"` |
 | `POST /transactions/cancel/stock` | OPERATOR | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `reason_text` (`comments`) | `{ stockCancellation }` |
 | `POST /transactions/retract/stock` | OPERATOR | `stakeholderId`, `stockClassId`, `security_id`, `reason_text` (`comments`) | `{ stockRetraction }` |
@@ -123,7 +122,7 @@ All of these write onchain, add history rows, and take `{ "issuerId": "...", "da
 
 OPERATOR means OPERATOR or ADMIN. The contract assigns balance and resulting security ids, so don't send `balance_security_id` or `split_transaction_id`: validation accepts them, but they're ignored. For worked examples, see [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock).
 
-`POST /transactions/issuance/stock/register-onchain` is the check the app runs before the wallet sends `issueStock`. It validates an issuance body and the remaining authorized shares, and saves nothing.
+`POST /transactions/issuance/stock/register-onchain` is the check the app runs before the wallet sends `issueStock`. It validates an issuance body, reads the remaining authorized shares from the contract, and saves nothing. It returns 400 when the shares don't fit or the stock class isn't onchain.
 
 ## Records stored only in MongoDB
 
@@ -142,19 +141,8 @@ The last two live under `/transactions`, so they also need `issuerId` to pass th
 
 ## Known issues
 
-These describe `main`. Fixes are on the `fix/docs-audit-bugs` branch, pending review.
-
-- `POST /stakeholder/create`, `POST /stock-class/create`, `POST /issuer/create`, and `POST /issuer/register` save a random MongoDB `_id` instead of the id they validated and sent onchain. Stakeholders and stock classes from these routes can't be used in later server-signed writes (`NoStakeholder`, `InvalidStockClass`), and their `is_onchain_synced` never turns `true`. The issuer `_id` doesn't match the onchain issuer id, including issuers the app registers. Stakeholders and stock classes created in the app aren't affected.
-- `POST /issuer/create` takes the factory's newest cap table as its own, so on a shared factory another mint at the same moment can give the issuer the wrong `deployed_to`.
-- `GET /stock-class/id/:id` returns a 500 on every call because the contract values are BigInts that can't be serialized. It also labels issued shares as `initialSharesAuthorized`.
-- `POST /transactions/repurchase/stock` passes `consideration_text` through validation but doesn't send it onchain.
-- `POST /transactions/adjust/stock-class/authorized-shares` doesn't send `stockholder_approval_date` onchain.
-- `POST /transactions/adjust/issuer/authorized-shares` returns a 500 when the body has no `comments`.
-- Authorized-share adjustment rows in history store `new_shares_authorized` ×1e10 and leave out the OCF `issuer_id` or `stock_class_id` field.
-- `POST /transactions/issuance/stock` returns a 500 when the body includes `cost_basis`, `share_numbers_issued`, or any `security_law_exemptions` entries, because their OCF shapes don't match the contract's fields.
-- The app's issuance check, `POST /transactions/issuance/stock/register-onchain`, counts shares from MongoDB instead of the chain, so it can refuse a valid issuance once shares have moved or authorized shares have changed.
-- `POST /transactions/issuance/equity-compensation` and `POST /transactions/issuance/convertible` don't save an `issuer` field, so their records can't be filtered by issuer.
-- Some OCF fields pass validation but aren't saved: `country_subdivision_name_of_formation` on issuers; `current_relationships`, `current_status`, `addresses`, and `tax_ids` on stakeholders; `stockholder_approval_date` on stock classes and valuations; `stock_class_ids` on stock plans; and `vestings` on equity compensation.
-- Creating a company in `/app/mint` fails with `Address "UPDATE_ME" is invalid` while `app/.env.local` still holds the placeholder that bootstrap writes.
+- Authorized-share adjustments change the contract but not the `initial_shares_authorized` saved on the issuer and stock class records in MongoDB. Read current caps from the contract, or from `GET /stock-class/id/:id`.
+- Records written by older server versions can be out of date: stakeholders and stock classes from `/stakeholder/create` or `/stock-class/create` may have a MongoDB `_id` that doesn't match their onchain id, so they stay `is_onchain_synced: false` and revert in later server-signed writes (`NoStakeholder`, `InvalidStockClass`). Register each one again with `/register-onchain` under its onchain id and delete the old record. Adjustment history rows from those versions hold `new_shares_authorized` ×1e10 until a poller reindex (`POST /issuer/poller-catchup`) rewrites them.
+- The contract doesn't enforce every share-cap relationship; see [Security](/security#what-the-contracts-dont-enforce).
 
 Controllers behind these routes: [Controllers](/api-reference/controllers).

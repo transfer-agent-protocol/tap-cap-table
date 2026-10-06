@@ -20,7 +20,7 @@ Cancel, retract, reissue, and repurchase each close the live security they act o
 | Cancel | Cancels `quantity` shares | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `reason_text`, optional `comments` | Go to a new security |
 | Retract | Voids the whole security, for example an issuance made in error | `stakeholderId`, `stockClassId`, `security_id`, `reason_text`, optional `comments` | None |
 | Reissue | Replaces the security with securities you've already issued | `stakeholderId`, `stockClassId`, `security_id`, `resulting_security_ids`, optional `reason_text` and `comments` | None |
-| Repurchase | The issuer buys back `quantity` shares at `price` | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `price`, optional `comments` | Go to a new security |
+| Repurchase | The issuer buys back `quantity` shares at `price` | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `price`, optional `consideration_text` and `comments` | Go to a new security |
 
 Each route responds with the OCF object it validated, with a placeholder `id` and today's UTC `date`. The contract assigns the ids of leftover and resulting securities, so don't send `balance_security_id` or `split_transaction_id`; they pass validation and are ignored. Read the new ids from [history](/development/historical-transactions).
 
@@ -62,13 +62,12 @@ curl -s -X POST "$API/transactions/repurchase/stock" \
     "security_id": "$SECURITY_ID",
     "quantity": "1000",
     "price": { "amount": "1.25", "currency": "USD" },
+    "consideration_text": "Cash, 1.25 USD per share",
     "comments": []
   }
 }
 JSON
 ```
-
-`consideration_text` passes validation but isn't recorded onchain; see [Known issues](/api-reference#known-issues).
 
 ### Reissue
 
@@ -127,7 +126,7 @@ curl -s -X POST "$API/transactions/adjust/issuer/authorized-shares" \
 JSON
 ```
 
-OCF requires `issuer_id`; send the issuer `_id`. Send `comments` too, even as `[]`, or the route returns a 500. The new total can't be below the shares already issued (`InsufficientIssuerSharesAuthorized`). The contract doesn't compare it with each stock class's authorized shares, so check that no class ends up above it.
+OCF requires `issuer_id`; send the issuer `_id`. The new total can't be below the shares already issued (`InsufficientIssuerSharesAuthorized`). The contract doesn't compare it with each stock class's authorized shares, so check that no class ends up above it.
 
 ### Stock class
 
@@ -148,7 +147,7 @@ curl -s -X POST "$API/transactions/adjust/stock-class/authorized-shares" \
 JSON
 ```
 
-A class can't exceed the issuer's authorized shares (`InsufficientStockClassSharesAuthorized`). The contract doesn't stop a class from dropping below the shares it has already issued, so check before lowering it. `stockholder_approval_date` isn't sent onchain; see [Known issues](/api-reference#known-issues).
+A class can't exceed the issuer's authorized shares (`InsufficientStockClassSharesAuthorized`). The contract doesn't stop a class from dropping below the shares it has already issued, so check before lowering it.
 
 ## What's next?
 

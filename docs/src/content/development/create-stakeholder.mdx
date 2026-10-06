@@ -1,4 +1,3 @@
-import { Callout } from 'nextra/components';
 import { Detail, NextActions } from '../../components/ContentPatterns';
 
 # Create a Stakeholder
@@ -13,11 +12,7 @@ The contract stores only the stakeholder's id, type, and relationship. Names and
 
 ## With the API
 
-`POST /stakeholder/create` creates the stakeholder onchain with the server key, then saves it in MongoDB. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
-
-<Callout type="warning">
-On `main`, the `_id` this route returns is not the id it writes onchain, so issuing stock to that `_id` reverts with `NoStakeholder`. Create stakeholders in the app until the fix lands. See [Known issues](/api-reference#known-issues).
-</Callout>
+`POST /stakeholder/create` creates the stakeholder onchain with the server key, then saves it in MongoDB under the same id. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
 
 The smallest valid request names the stakeholder and sets its type and relationship:
 

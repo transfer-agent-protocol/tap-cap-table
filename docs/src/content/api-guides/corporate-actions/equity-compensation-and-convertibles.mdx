@@ -103,7 +103,7 @@ The response is `{ "convertibleIssuance": { ... } }`.
 
 ## Finding saved records
 
-No route reads these records back. Query MongoDB directly (host port 27027, credentials in `.env`), in the `equitycompensationissuances` and `convertibleissuances` collections. On `main` the records have no `issuer` field, so filter by `stakeholder_id`; see [Known issues](/api-reference#known-issues).
+No route reads these records back. Query MongoDB directly (host port 27027, credentials in `.env`), in the `equitycompensationissuances` and `convertibleissuances` collections, and filter by `issuer`.
 
 ## What's next?
 

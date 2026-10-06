@@ -16,7 +16,7 @@ REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
 pnpm app:dev
 ```
 
-Open http://localhost:3000/app and connect a browser wallet. Before you create a company, set `NEXT_PUBLIC_OPERATOR_ADDRESS` in `app/.env.local` to an address or leave it empty. The placeholder bootstrap writes there makes minting fail ([details](/development/setup#frontend-values)).
+Open http://localhost:3000/app and connect a browser wallet. The app reads `app/.env.local`, which bootstrap creates with Plume defaults ([details](/development/setup#frontend-values)).
 
 ## Setup
 

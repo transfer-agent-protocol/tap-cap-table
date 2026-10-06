@@ -11,11 +11,7 @@ Open the company and choose **Stock classes** (`/app/companies/<issuerId>?view=s
 
 ## With the API
 
-`POST /stock-class/create` creates the class onchain with the server key, then saves it in MongoDB. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
-
-<Callout type="warning">
-On `main`, the `_id` this route returns is not the id it writes onchain, so issuing stock with that `_id` reverts with `InvalidStockClass`. Create stock classes in the app until the fix lands. See [Known issues](/api-reference#known-issues).
-</Callout>
+`POST /stock-class/create` creates the class onchain with the server key, then saves it in MongoDB under the same id. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
 
 These examples use `$API` and `$ISSUER_ID` from [Create an Issuer](/development/cap-table-deploy).
 

@@ -51,7 +51,7 @@ The poller follows only issuers registered in this database. **Load from wallet*
 
 | Symptom | Fix |
 | --- | --- |
-| Creating a company fails with `Address "UPDATE_ME" is invalid` | Set `NEXT_PUBLIC_OPERATOR_ADDRESS` in `app/.env.local` to an address or leave it empty, then restart `pnpm app:dev`. |
+| `pnpm dev` stops with `Unable to locate .env` | Run it from a checkout with a root `.env` (`cp .env.example .env`), or set `DATABASE_URL` and `PORT` in the environment. |
 | The wallet dialog lists no wallets | Install a browser extension wallet such as Rabby or MetaMask. |
 | `EADDRINUSE` on port 8293 or 3000 | Find the process with `lsof -i :3000`. If it's the Docker app preview, run `docker compose stop app`. |
 | Another app expects MongoDB on 27017 | TAP uses host port 27027. Point `DATABASE_URL` at 27027 and stop any old container still bound to 27017 with `docker compose stop`. |

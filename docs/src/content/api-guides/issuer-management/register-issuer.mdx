@@ -38,7 +38,7 @@ JSON
 | --- | --- | --- |
 | `deployed_to` | Yes | The cap table's address. |
 | `tx_hash` | Yes | The `createCapTable` transaction. The poller starts reading the cap table's events from its block, so it must be the real deploy transaction. |
-| `id` | No | The id passed to `createCapTable`: `0x` plus 32 hex characters. Keep the `0x`; TAP converts only `0x` values to the UUID form. |
+| `id` | No | The id passed to `createCapTable`: `0x` plus 32 hex characters. Keep the `0x`; TAP converts it to the dashed UUID and saves the record under that `_id`. Without `id`, the record gets a random `_id`. |
 | `deployed_by` | No | The admin wallet. **Load from wallet** in the app and `GET /issuer/by-deployer/:address` find companies by it. |
 
 A missing `deployed_to` or `tx_hash` returns 400 (`deployed_to and tx_hash are required`). Register each cap table once; the route doesn't check whether `deployed_to` is already registered.
@@ -48,8 +48,6 @@ The response is `{ "issuer": { ... } }`. Save its `_id`, which every later call 
 ```bash
 export ISSUER_ID="<your issuer _id>"
 ```
-
-On `main` the saved `_id` is random rather than taken from `id`; see [Known issues](/api-reference#known-issues).
 
 ## Check the record
 

@@ -29,7 +29,7 @@ The schemas come from a git submodule at `ocf/`, pinned to commit `6d8c9322` of 
 
 Only stock lives onchain: issuances, transfers, cancellations, retractions, reissues, repurchases, acceptances, and authorized-share adjustments. Equity compensation, convertibles, valuations, vesting terms, stock plans, and stock legends are MongoDB-only records. TAP has no routes for warrants, stock conversions, splits, consolidations, or stakeholder change events.
 
-TAP sends a stakeholder's singular `current_relationship` onchain and stores it in MongoDB. On `main`, OCF's `current_relationships` array isn't stored; see [Known issues](/api-reference#known-issues). MongoDB records also carry TAP fields that aren't part of OCF, such as `issuer`, `tx_hash`, `is_onchain_synced`, `deployed_to`, and `deployed_by`.
+TAP sends a stakeholder's singular `current_relationship` onchain; MongoDB stores it along with OCF's `current_relationships` array. MongoDB records also carry TAP fields that aren't part of OCF, such as `issuer`, `tx_hash`, `is_onchain_synced`, `deployed_to`, and `deployed_by`.
 
 ## Onchain and offchain
 

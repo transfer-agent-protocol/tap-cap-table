@@ -29,11 +29,7 @@ cp .env.example .env
 | `NEXT_PUBLIC_FACTORY_ADDRESS` | The factory the app mints against. |
 | `NEXT_PUBLIC_CHAIN_ID` | `98866` for Plume Mainnet. |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8293`, the API as your browser reaches it. |
-| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Optional. An address that gets `OPERATOR_ROLE` on each new cap table. Leave it empty or set a real address. |
-
-<Callout type="warning">
-Bootstrap writes `NEXT_PUBLIC_OPERATOR_ADDRESS=UPDATE_ME` into a new `app/.env.local`. Replace it with an address or clear it, then restart `pnpm app:dev`. With the placeholder, creating a company in `/app/mint` fails with `Address "UPDATE_ME" is invalid`.
-</Callout>
+| `NEXT_PUBLIC_OPERATOR_ADDRESS` | Optional. An address that gets `OPERATOR_ROLE` on each new cap table. Bootstrap leaves it empty, which mints without an extra operator. |
 
 The app connects to browser extension wallets such as Rabby or MetaMask (EIP-6963). It needs no cloud account or project id.
 

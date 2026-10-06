@@ -80,14 +80,16 @@ The poller also needs the stakeholder in MongoDB. If the stakeholder exists onch
 | `share_price` | Yes | `amount` and `currency`. |
 | `stock_legend_ids` | Yes | Ids of [stock legends](/api-guides/cap-table-management/supporting-records). Send `[]` for none. |
 | `custom_id` | Yes | Your label for the issuance, such as a certificate number. |
-| `security_law_exemptions` | Yes | Exemptions the issuance relies on. Send `[]`; on `main` a non-empty list makes the route fail. |
+| `security_law_exemptions` | Yes | Exemptions the issuance relies on, as `{ "description", "jurisdiction" }` objects. Send `[]` for none. |
 | `comments` | No | Free-form notes, stored onchain. |
 | `issuance_type` | No | `RSA` or `FOUNDERS_STOCK`. |
 | `stock_plan_id`, `vesting_terms_id` | No | Ids of a [stock plan or vesting terms](/api-guides/corporate-actions/valuations-and-terms) record. |
 | `board_approval_date`, `stockholder_approval_date` | No | `YYYY-MM-DD`. |
 | `consideration_text` | No | What the stakeholder paid, in words. |
+| `cost_basis` | No | `amount` and `currency`. |
+| `share_numbers_issued` | No | One `{ starting_share_number, ending_share_number }` range. More than one returns 400. |
 
-OCF also accepts `cost_basis` and `share_numbers_issued`, but on `main` the route fails if you send them; see [Known issues](/api-reference#known-issues). `vestings` passes validation but isn't stored anywhere, because the contract has no field for it.
+`vestings` passes validation but isn't stored, because the contract has no field for it.
 
 ## What's next?
 
