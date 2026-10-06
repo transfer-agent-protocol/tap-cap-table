@@ -132,7 +132,8 @@ Product mint is the connected ADMIN wallet calling `createCapTable` (deployer of
 pnpm install
 # Mongo + API + poller; registers the shared demo factory in Mongo. SKIP_APP=1 keeps :3000 free.
 REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
-# app/.env.local: NEXT_PUBLIC_* (factory, chain, operator address). PRIVATE_KEY optional for wallet UI
+# app/.env.local: NEXT_PUBLIC_* (factory, chain, api url). Set NEXT_PUBLIC_OPERATOR_ADDRESS to a real
+# address or leave it empty: the UPDATE_ME placeholder bootstrap writes breaks /app/mint. PRIVATE_KEY optional for wallet UI
 pnpm app:dev                         # product UI — do not rely on Docker app alone
 ```
 
@@ -209,7 +210,7 @@ pnpm format
 pnpm typecheck
 ```
 
-CI (`.github/workflows/ci.yml`) also runs `pnpm --filter tap-docs lint`, `pnpm --filter tap-app lint`, and `pnpm --filter tap-app typecheck`; root `pnpm lint` ignores `docs/`. `security.yml` runs the invariant suite when Solidity or `foundry.toml` changes.
+CI (`.github/workflows/ci.yml`) also runs `pnpm --filter tap-docs lint`, `pnpm --filter tap-app lint`, and `pnpm --filter tap-app typecheck`; root `pnpm lint` ignores `docs/`. `security.yml` runs the invariant suite when Solidity or `foundry.toml` changes. CI doesn't typecheck the server, build the app or docs, or run e2e; run those locally. `pnpm --filter tap-app test:nav` is a local-only check and never goes in CI.
 
 ### Invariant Testing
 
@@ -219,14 +220,17 @@ Foundry's coverage-guided invariant testing validates protocol-wide properties:
 - **Handler**: `chain/test/invariants/CapTableHandler.sol` — bounded actions for create, issue, seed, transfer (including self-transfer), repurchase, cancel, retract, reissue, and authorized-share adjusts. It tracks live lots from issuance txs; seed lots are recorded from the ids passed to `mintActivePositions` (seed writes no `transactions` entries).
 - **Config**: `chain/foundry.toml` `[invariant]` section (`fail_on_revert = false`; handler early-returns or `try/catch` so the campaign is not drowned in setup reverts)
 
-Key invariants tested:
-- `shares_issued <= shares_authorized` for issuer and all stock classes
-- Live holdings per class equal that class's `shares_issued`
-- Issuer `shares_issued` equals the sum of every class's `shares_issued`
-- Stakeholder/stock class index mapping consistency
+The nine invariants (`docs/src/content/tests.mdx#invariants` lists them by name):
+- `shares_issued <= shares_authorized` for the issuer and every stock class
 - Stock class authorized shares never exceed issuer authorized
+- Issuer `shares_issued` equals the sum of every class's `shares_issued`
+- Live holdings per class equal that class's `shares_issued`
+- Stakeholder and stock class index mappings point back to their records
+- Stakeholder and stock class counts match the handler's
 
 Do not reintroduce unused `ghost_*` counters on the handler. Assert against onchain state.
+
+The handler bounds its inputs to the share caps, so the two cap invariants hold because of the handler as well as the contract. The contract doesn't check class authorized ≤ issuer authorized at `createStockClass`, class authorized ≥ issued on a class adjust, issuer authorized ≥ every class's authorized on an issuer adjust, or that `removeWalletFromStakeholder` gets the wallet's own stakeholder. Each needs a beacon upgrade; they're documented on `docs/src/content/security.mdx` and left unchanged pending a decision. The app allows class > issuer at create on purpose (`validateShareCaps` only warns).
 
 ### Documentation
 
@@ -241,21 +245,29 @@ pnpm docs:build
 pnpm docs:start
 ```
 
-The docs are a Nextra/Next.js site in the `docs/` workspace. See `docs/README.md` for more details.
+The docs are a Nextra 4 App Router site in the `docs/` workspace (`tap-docs`). Pages are MDX under `docs/src/content`, and each file's path is its URL; every folder's `_meta.js` sets sidebar order and titles. Sections: `/development`, `/api-reference`, `/protocol`, `/api-guides`, `/security`, `/tests`. `/api-guides` replaced `/features` in Sep 2026 (six pages were renamed with it); `docs/next.config.mjs` redirects every old URL permanently. Vercel deploys docs on each push to `main` and builds no previews, so check the production build locally. See `docs/README.md`.
 
 ### Documentation DX conventions
 
-When editing pages under `docs/src/content/`, follow these conventions established during a readability/DX review:
+When editing pages under `docs/src/content/`, follow these conventions. They come from the Sep 2026 readability and accuracy rewrite (`memory/sep-28-2026.md`):
 
+- **Human-written pages**: `index.mdx`, `development.mdx`, `development/factory-deploy.mdx`, and `development/cap-table-deploy.mdx` keep Alex's wording. Cut AI-added text and fix facts; don't rewrite the voice.
 - **Intro paragraphs**: Use plain language. Avoid unexplained implementation terms (e.g. "beacon proxy pattern") unless the page is specifically about that concept.
+- **No slop**: no roadmap or changelog asides ("today", "currently", "yet"), no "Use this page when…" meta-text, no emphasis bold outside real warnings, no em-dash chains or sentence fragments, and no internal trivia (log emoji, controller filenames, `issuanceOrdinal`).
+- **One home per concept**; every other page gets one sentence and a link. Scaling, server-signed routes, request conventions, and Known issues live in `api-reference.mdx`; onchain roles in `protocol/tap-cap-table.mdx#roles`; keys in `development/setup.mdx#three-wallets-keys`; demo addresses in `development/factory-deploy.mdx`; history shape and timing in `development/historical-transactions.mdx`; invariants in `tests.mdx`; the stock plan example in `api-guides/corporate-actions/valuations-and-terms.mdx`.
+- **Poller coverage stays minimal** (an indexer replaces it): history arrives after the poller's next pass (about 20 s, or about 20 min behind with `prod-poller`), how to run it, and the one "history never updates" fix. No mode tables, tuning knobs, or `fast-forward` walkthroughs in public docs.
+- **Internal steps stay short**: the app's issuance check runs in under a second, so it gets one clause ("the app checks the request, then your wallet calls `issueStock`"), not its internals.
 - **Scaling callout**: Pages that send or show quantities or prices get a one-line `<Callout type="warning">` right after the response overview, never only at the bottom: send human values; the contract stores quantities and prices ×**1e10**; the server scales on write, and the poller and `/cap-table/holdings/stock` scale back. Link to `/api-reference#scaling`, the one place with the full rules. Docs that still say ×10000 are wrong.
-- **Slugs match titles**: When a page title changes, rename the file with `git mv`, update its `_meta.js` key and every link, and add a permanent redirect for the old URL in `docs/next.config.mjs`.
-- **Examples**: Write requests as runnable `curl` commands against `"$API/..."` with heredoc JSON bodies (`-d @- <<JSON`). GET routes that need an `issuerId` body use `-X GET`, because `curl -d` alone sends POST. Every body must pass the server's OCF validation.
+- **Slugs match titles**: When a page title changes, rename the file with `git mv`, update its `_meta.js` key and every link, and add a permanent redirect for the old URL in `docs/next.config.mjs`. `_meta.js` titles match the page H1.
+- **Examples**: Write requests as runnable `curl` commands against `"$API/..."` with heredoc JSON bodies (`-d @- <<JSON`). GET routes that need an `issuerId` body use `-X GET`, because `curl -d` alone sends POST. Every body must pass the server's OCF validation. Use `$API`, `$ISSUER_ID`, `$STOCK_CLASS_ID`, and `$STAKEHOLDER_ID` (exported on the Development pages) and reserved example data (`example.com`, EIN `00-0000000`, a 555 phone number), never real-looking personal data.
+- **Page structure**: Development step pages use `## In the app` then `## With the API`. Task pages end with `NextActions`; reference pages end with a one-line "Related".
+- **Known issues**: `api-reference.mdx` → Known issues describes `main` and names the fix branch. Code bugs found while writing docs go to a separate fix branch and PR, not the docs PR. When a fix merges, remove its entry and update the pages that mention it (listed under "next" in `memory/sep-28-2026.md`).
 - **Dependency lists**: Each tool in an install/setup page should have a one-line purpose annotation so readers understand why it is required.
 - **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
 - **Factory deploy page**: Prefer `pnpm deploy-factory` (auto-register) and `pnpm factory:register` over hand-editing Mongo. Compass remains optional for inspection. Document TA-owned factory vs shared demo clearly; never hardcode a stale implementation address.
 - **Diagrams**: Prefer Mermaid fenced blocks (```` ```mermaid ````) over JPG/PNG diagrams for new content. Mermaid renders inline in Nextra, respects light/dark theme, and stays editable in MDX. Existing screenshots stay — do not delete them.
+- **Before merging docs**: validate every `curl` body with `server/utils/validateInputAgainstSchema.js`, built the way its route builds it (placeholder `id`, `date`, and `object_type`; `stakeholderId` and `stockClassId` stripped). Check internal links, anchors, and `_meta.js` keys. Run `pnpm --filter tap-docs lint`, then `pnpm docs:build && pnpm docs:start` and request the old URLs to confirm the redirects. Keep validation scripts out of the repo and CI; record what passed in the memory note.
 
 ### Frontend App
 
@@ -327,9 +339,10 @@ tap-cap-table/
 │   ├── scripts/        # factory:register, poller:fast-forward
 │   └── utils/          # Utilities (UUID, OCF validation, etc.)
 ├── docs/               # Developer documentation (Nextra 4 App Router, workspace: tap-docs)
-│   ├── src/content/    # MDX documentation pages
+│   ├── src/content/    # MDX pages (path = URL) + _meta.js per folder
 │   ├── src/app/        # App Router shell
-│   └── public/         # Static assets
+│   ├── next.config.mjs # Permanent redirects for renamed pages (/features → /api-guides)
+│   └── public/         # Static assets (icons/; _pagefind/ is build output, gitignored)
 ├── ocf/                # https://github.com/transfer-agent-protocol/tap-ocf (schemas only; pin 6d8c9322)
 ├── packages/units/     # @tap/units — shared scale / UUID / share-caps
 ├── scripts/            # bootstrap-plume, deployFactory, setup, dev
@@ -406,7 +419,7 @@ The system supports multiple environments via `.env` files:
 - `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables
+- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables. Set a real address or leave it empty: on `main`, the `UPDATE_ME` placeholder that bootstrap writes makes `/app/mint` fail with `Address "UPDATE_ME" is invalid` (see Known issues)
 - `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (code default 5; `.env.example` and `docker-compose.yml` use 8). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
 
 ## Working with OCF
@@ -498,6 +511,7 @@ Libraries:
 14. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
 15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
 16. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `docker compose stop` frees the port and leaves the containers in place. `pnpm docker:down` removes them; do not use it to recover the stack.
+17. **Known server bugs on `main`**: `docs/src/content/api-reference.mdx` → Known issues lists the server and app bugs the Sep 2026 docs audit found: random `_id` on the `/create` and `/issuer/register` routes, `GET /stock-class/id/:id` returning 500, the issuance check counting Mongo rows instead of chain state, `/issuer/create` reading the factory's newest proxy, OCF fields dropped by Mongoose strict mode, `setupEnv()` hanging without a `.env`, and the bootstrap `UPDATE_ME` operator placeholder. Fixes are on `fix/docs-audit-bugs` (14 commits, one per bug, each with a before/after proof). Don't fix them again on another branch; when a fix merges, remove its Known issues entry.
 
 ## Debugging
 
