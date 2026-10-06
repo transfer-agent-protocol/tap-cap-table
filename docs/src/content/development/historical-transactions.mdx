@@ -52,7 +52,7 @@ The response is an array of rows:
 ]
 ```
 
-The poller converts quantities and prices back to human values, so `"4.2"` is 4.20 per share. Adjustment rows store `new_shares_authorized` the same way, with `issuer_id` on issuer rows and `stock_class_id` on class rows (`null` when the adjustment was sent through another contract, such as a multisig). Rows written by older server versions hold the raw ×1e10 value until a poller reindex rewrites them.
+The poller converts quantities and prices back to human values, so `"4.2"` is 4.20 per share. Adjustment rows store `new_shares_authorized` the same way, with `issuer_id` on issuer rows and `stock_class_id` on class rows (`null` when the adjustment was sent through another contract, such as a multisig). Rows written by older server versions hold the raw ×1e10 value, an empty `issuer_id`, and no `stock_class_id` until a poller reindex rewrites them.
 
 ## Transaction types
 

@@ -419,7 +419,7 @@ The system supports multiple environments via `.env` files:
 - `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables. Optional: an empty or invalid value mints without an extra operator (`app/src/config/contracts.ts` falls back to the zero address and warns on an invalid value)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables. Optional. An empty value or `UPDATE_ME` mints without an extra operator. Any other non-address stops the mint (`app/src/config/contracts.ts`).
 - `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (code default 5; `.env.example` and `docker-compose.yml` use 8). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
 
 ## Working with OCF

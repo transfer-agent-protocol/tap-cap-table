@@ -1,6 +1,6 @@
 # Controllers
 
-Controllers sit between the server-signed routes and `CapTable.sol`. A route validates the OCF body, the controller converts it into the contract's argument types and sends the transaction, and the event poller later writes the resulting events to MongoDB. The app's wallet path builds the same arguments in the browser with the same `@tap/units` helpers.
+Controllers sit between the server-signed routes and `CapTable.sol`. Most routes validate the OCF body, the controller converts it into the contract's argument types and sends the transaction, and the event poller later writes the resulting events to MongoDB. The app's wallet path builds the same arguments in the browser with the same `@tap/units` helpers.
 
 ```mermaid
 flowchart LR
@@ -9,6 +9,8 @@ flowchart LR
     C --> D["CapTable.sol<br/><small>emits events</small>"]
     D --> E[("Event poller → MongoDB")]
 ```
+
+Transfer and the two wallet routes skip the OCF validation step.
 
 ## Conversions
 
@@ -38,6 +40,6 @@ flowchart LR
 
 OPERATOR means OPERATOR or ADMIN. `POST /issuer/create` doesn't use a controller: it calls the factory's `createCapTable` through `server/chain-operations/deployCapTable.js`. Equity compensation, convertibles, and the other MongoDB-only records have no controller.
 
-Every onchain route follows the same order: the contract middleware loads the cap table from `issuerId`, the route validates the OCF body, and the controller sends the transaction. `/stakeholder/create` and `/stock-class/create` then save the record in MongoDB. The stock transaction routes save nothing themselves; history rows come from the poller.
+The contract middleware loads the cap table from `issuerId`, then the controller sends the transaction. Stakeholder and stock-class create, stock issuance, cancel, retract, reissue, repurchase, acceptance, and both adjustments validate the OCF body first. `POST /transactions/transfer/stock`, `POST /stakeholder/add-wallet`, and `POST /stakeholder/remove-wallet` do not. `/stakeholder/create` and `/stock-class/create` then save the record in MongoDB. The stock transaction routes save nothing themselves; history rows come from the poller.
 
 Related: [API Reference](/api-reference), [Solidity Reference](/protocol/solidity-reference), and [Stock Library](/protocol/stock-lib).

@@ -55,7 +55,7 @@ The response is `{ "equityCompensationIssuance": { ... } }`.
 | `CSAR` | Cash-settled stock appreciation right | `base_price` |
 | `SSAR` | Stock-settled stock appreciation right | `base_price` |
 
-Validation doesn't require the price field, so check that each award has the right one.
+Validation requires `exercise_price` on the three option types and `base_price` on CSAR and SSAR. RSU has no price field.
 
 ## Convertibles
 

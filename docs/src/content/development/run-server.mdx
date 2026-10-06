@@ -18,7 +18,7 @@ SKIP_APP=1 pnpm bootstrap
 curl http://localhost:8293/
 ```
 
-The API replies with a welcome message. After you change server code, Dockerfiles, or `.env`, rebuild and restart the containers with `pnpm docker:build`.
+The API replies with a welcome message. After you change server code, the server image, or `.env`, rebuild the API with `docker compose up -d --build server`. `pnpm docker:build` also starts the Docker app on port 3000.
 
 ## Start the app and docs
 

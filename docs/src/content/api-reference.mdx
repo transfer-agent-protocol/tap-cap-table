@@ -34,7 +34,7 @@ The API doesn't authenticate callers. Anyone who can reach it can make the serve
   ```
 
 - Most create routes take `{ "issuerId": "...", "data": { ... } }`. `POST /issuer/create` and `POST /issuer/register` take the issuer fields at the top level.
-- Bodies are validated against the pinned OCF schemas, which reject unknown fields.
+- Create routes, stock issuance, cancel, retract, reissue, repurchase, acceptance, and both share adjustments are validated against the pinned OCF schemas, which reject unknown fields. `POST /transactions/transfer/stock` and the stakeholder wallet routes are not.
 
 ## Errors
 
@@ -120,7 +120,7 @@ All of these write onchain, add history rows, and take `{ "issuerId": "...", "da
 | `POST /transactions/adjust/issuer/authorized-shares` | ADMIN | `issuer_id`, `new_shares_authorized` (`board_approval_date`, `stockholder_approval_date`, `comments`) | `{ issuerAuthorizedSharesAdj }` |
 | `POST /transactions/adjust/stock-class/authorized-shares` | ADMIN | `stock_class_id`, `new_shares_authorized` (`board_approval_date`, `stockholder_approval_date`, `comments`) | `{ stockClassAdjustment }` |
 
-OPERATOR means OPERATOR or ADMIN. The contract assigns balance and resulting security ids, so don't send `balance_security_id` or `split_transaction_id`: validation accepts them, but they're ignored. For worked examples, see [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock).
+OPERATOR means OPERATOR or ADMIN. The contract assigns balance and resulting security ids, so leave `balance_security_id` and `split_transaction_id` out. On the routes that validate, `balance_security_id` is accepted only on cancel and repurchase, and `split_transaction_id` only on reissue. A field the schema does not list returns 500. For worked examples, see [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock).
 
 `POST /transactions/issuance/stock/register-onchain` is the check the app runs before the wallet sends `issueStock`. It validates an issuance body, reads the remaining authorized shares from the contract, and saves nothing. It returns 400 when the shares don't fit or the stock class isn't onchain.
 
@@ -142,7 +142,7 @@ The last two live under `/transactions`, so they also need `issuerId` to pass th
 ## Known issues
 
 - Authorized-share adjustments change the contract but not the `initial_shares_authorized` saved on the issuer and stock class records in MongoDB. Read current caps from the contract, or from `GET /stock-class/id/:id`.
-- Records written by older server versions can be out of date: stakeholders and stock classes from `/stakeholder/create` or `/stock-class/create` may have a MongoDB `_id` that doesn't match their onchain id, so they stay `is_onchain_synced: false` and revert in later server-signed writes (`NoStakeholder`, `InvalidStockClass`). Register each one again with `/register-onchain` under its onchain id and delete the old record. Adjustment history rows from those versions hold `new_shares_authorized` ×1e10 until a poller reindex (`POST /issuer/poller-catchup`) rewrites them.
+- Records written by older server versions can be out of date: stakeholders and stock classes from `/stakeholder/create` or `/stock-class/create` may have a MongoDB `_id` that doesn't match their onchain id, so they stay `is_onchain_synced: false` and revert in later server-signed writes (`NoStakeholder`, `InvalidStockClass`). Register each one again with `/register-onchain` under its onchain id and delete the old record. Adjustment history rows from those versions hold `new_shares_authorized` ×1e10, an empty `issuer_id`, and no `stock_class_id` until a poller reindex (`POST /issuer/poller-catchup`) rewrites them.
 - The contract doesn't enforce every share-cap relationship; see [Security](/security#what-the-contracts-dont-enforce).
 
 Controllers behind these routes: [Controllers](/api-reference/controllers).

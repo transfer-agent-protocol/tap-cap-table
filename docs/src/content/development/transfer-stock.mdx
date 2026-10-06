@@ -41,7 +41,7 @@ Send human values. The contract stores `quantity` and `sharePrice` ×1e10, and t
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `transferorId` | Yes | Stakeholder giving up the shares. Must hold enough of this class, or the transfer reverts with `InsufficientShares`. |
+| `transferorId` | Yes | Stakeholder giving up the shares. No securities in this class reverts with `No active security ids found`. A short total reverts with `InsufficientShares`. |
 | `transfereeId` | Yes | Stakeholder receiving the shares. Both stakeholders must exist onchain (`NoStakeholder`) and in MongoDB, or the poller can't record the transfer. |
 | `stockClassId` | Yes | The class being transferred. |
 | `quantity` | Yes | Number of shares, as a string. |

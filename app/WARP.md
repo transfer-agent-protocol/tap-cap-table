@@ -184,7 +184,7 @@ Frontend config lives in `app/.env.local` (git-ignored). All are build-time publ
 - `NEXT_PUBLIC_FACTORY_ADDRESS` — `CapTableFactory` the mint UI calls (shared demo or your own)
 - `NEXT_PUBLIC_CHAIN_ID` — chain the frontend targets (e.g. 98866 Plume Mainnet)
 - `NEXT_PUBLIC_API_URL` — host-reachable API URL for `/api/*` rewrites (default `http://localhost:8293`; not docker DNS `server`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on new cap tables. Not a key, and not required for the wallet UI (issuer ADMIN already operates). An empty or invalid value mints without an extra operator: `config/contracts.ts` falls back to the zero address and logs a warning for an invalid value.
+- `NEXT_PUBLIC_OPERATOR_ADDRESS` — optional address granted `OPERATOR_ROLE` on new cap tables. Not a key, and not required for the wallet UI (issuer ADMIN already operates). An empty value or `UPDATE_ME` mints without an extra operator. Any other non-address stops the mint.
 - `NEXT_PUBLIC_WALLET_MOCK` — `1` adds a mock connector under `next dev` only. Production builds ignore it, including the Playwright webServer (`next build && next start`), so e2e stops at the connect gate.
 
 The root `.env.example` lists the four `NEXT_PUBLIC_*` values the app needs (`NEXT_PUBLIC_WALLET_MOCK` is dev-only and intentionally absent). Keep Mongo `factories` and this factory address aligned.
