@@ -60,7 +60,7 @@ Legacy `/mint` and `/manage*` redirect into `/app`.
 
 Then go read official [docs](https://docs.transferagentprotocol.xyz)
 
-> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Set `NEXT_PUBLIC_OPERATOR_ADDRESS` to an address or leave it empty (not the `UPDATE_ME` placeholder). `PRIVATE_KEY` is **dev/demo only** and optional for the wallet UI (needed for server-signed API / CLI factory deploy). Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
+> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). `NEXT_PUBLIC_OPERATOR_ADDRESS` is optional (an address, or empty for no extra operator). `PRIVATE_KEY` is **dev/demo only** and optional for the wallet UI (needed for server-signed API / CLI factory deploy). Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
 
 ### Scripts
 

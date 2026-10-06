@@ -73,7 +73,7 @@ The factory uses OpenZeppelin's `UpgradeableBeacon` — each cap table is a `Bea
     - Routes: `/cap-table`, `/factory`, `/issuer`, `/stakeholder`, `/stock-class`, `/transactions`, etc.
     - **Route conventions** for entity creation:
       - `POST /stock-class/register-onchain` and `POST /stakeholder/register-onchain` — **manage UI path after a confirmed wallet receipt**: validates, sets `is_onchain_synced` / `tx_hash`, and persists metadata. Poller remains authoritative.
-      - `POST /transactions/issuance/stock/register-onchain` — **manage UI preflight before the wallet tx**: validates OCF metadata and share caps only. It does not persist; the poller writes the canonical issuance from the event.
+      - `POST /transactions/issuance/stock/register-onchain` — **manage UI preflight before the wallet tx**: validates OCF metadata and share caps only, reading the caps from `issuer()` and `getStockClassById()` onchain (Mongo `initial_shares_authorized` is never updated by adjustments). It does not persist; the poller writes the canonical issuance from the event.
       - `POST /<entity>/create` — server-signed API/docs path. Signs with root `.env` `PRIVATE_KEY` (local **developer** key) if set. Not the protocol OPERATOR identity and **not** used by the `/app` manage UI. Wallet-first path can leave `PRIVATE_KEY` unset.
     - Issuer helpers for the product UI:
       - `GET /issuer/by-deployer/:address` — list issuers a given admin wallet deployed (`Issuer.deployed_by`).
@@ -132,8 +132,8 @@ Product mint is the connected ADMIN wallet calling `createCapTable` (deployer of
 pnpm install
 # Mongo + API + poller; registers the shared demo factory in Mongo. SKIP_APP=1 keeps :3000 free.
 REUSE_TAP_FACTORY=1 SKIP_APP=1 pnpm bootstrap
-# app/.env.local: NEXT_PUBLIC_* (factory, chain, api url). Set NEXT_PUBLIC_OPERATOR_ADDRESS to a real
-# address or leave it empty: the UPDATE_ME placeholder bootstrap writes breaks /app/mint. PRIVATE_KEY optional for wallet UI
+# app/.env.local: NEXT_PUBLIC_* (factory, chain, api url). NEXT_PUBLIC_OPERATOR_ADDRESS is optional
+# (empty = no extra operator). PRIVATE_KEY optional for wallet UI
 pnpm app:dev                         # product UI — do not rely on Docker app alone
 ```
 
@@ -261,7 +261,7 @@ When editing pages under `docs/src/content/`, follow these conventions. They com
 - **Slugs match titles**: When a page title changes, rename the file with `git mv`, update its `_meta.js` key and every link, and add a permanent redirect for the old URL in `docs/next.config.mjs`. `_meta.js` titles match the page H1.
 - **Examples**: Write requests as runnable `curl` commands against `"$API/..."` with heredoc JSON bodies (`-d @- <<JSON`). GET routes that need an `issuerId` body use `-X GET`, because `curl -d` alone sends POST. Every body must pass the server's OCF validation. Use `$API`, `$ISSUER_ID`, `$STOCK_CLASS_ID`, and `$STAKEHOLDER_ID` (exported on the Development pages) and reserved example data (`example.com`, EIN `00-0000000`, a 555 phone number), never real-looking personal data.
 - **Page structure**: Development step pages use `## In the app` then `## With the API`. Task pages end with `NextActions`; reference pages end with a one-line "Related".
-- **Known issues**: `api-reference.mdx` → Known issues describes `main` and names the fix branch. Code bugs found while writing docs go to a separate fix branch and PR, not the docs PR. When a fix merges, remove its entry and update the pages that mention it (listed under "next" in `memory/sep-28-2026.md`).
+- **Known issues**: `api-reference.mdx` → Known issues lists what the current code still gets wrong. Code bugs found while writing docs go to a separate fix PR; stack the docs PR on it so the docs describe the fixed behavior, and keep Known issues for what the fix PR doesn't cover.
 - **Dependency lists**: Each tool in an install/setup page should have a one-line purpose annotation so readers understand why it is required.
 - **Setup ordering**: `pnpm install` should appear on the install page directly after `git clone`, not deferred to a later setup page.
 - **ID format explanations**: When referencing internal ID formats (e.g. bytes16/UUID-without-dashes), explain the exact format and the consequence of omitting or mismatching it.
@@ -419,7 +419,7 @@ The system supports multiple environments via `.env` files:
 - `NEXT_PUBLIC_FACTORY_ADDRESS`: Deployed CapTableFactory contract address
 - `NEXT_PUBLIC_CHAIN_ID`: Chain ID the frontend targets
 - `NEXT_PUBLIC_API_URL`: API server URL (default `http://localhost:8293`)
-- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables. Set a real address or leave it empty: on `main`, the `UPDATE_ME` placeholder that bootstrap writes makes `/app/mint` fail with `Address "UPDATE_ME" is invalid` (see Known issues)
+- `NEXT_PUBLIC_OPERATOR_ADDRESS`: Address (not a key) granted OPERATOR_ROLE on new cap tables. Optional: an empty or invalid value mints without an extra operator (`app/src/config/contracts.ts` falls back to the zero address and warns on an invalid value)
 - `POLLER_MAX_CONCURRENCY`: Number of issuers processed in parallel per polling cycle (code default 5; `.env.example` and `docker-compose.yml` use 8). The only tuning knob the poller exposes; will be removed when the indexer replaces it.
 
 ## Working with OCF
@@ -511,7 +511,7 @@ Libraries:
 14. **Ghost stock classes**: registering metadata with `is_onchain_synced: false` after a failed wallet path, or jumping the poller past unprocessed events, leaves classes in Mongo that never landed onchain. Prefer receipt-gated `/register-onchain` (synced + tx_hash) and reconcile over head-jumps for routine refresh.
 15. **Transfer already exists onchain/server**: UI transfer is a thin direct-wallet wrapper around `CapTable.transferStock` / TransferStock poller handling — do not invent a parallel transfer protocol or reimplement scaling outside `@tap/units`.
 16. **TAP Mongo on 27017 / comes back after Docker Desktop restart**: compose used to publish 27017 with `restart: always`. Host port is **27027**, policy is `unless-stopped`. Update host `DATABASE_URL`. `docker compose stop` frees the port and leaves the containers in place. `pnpm docker:down` removes them; do not use it to recover the stack.
-17. **Known server bugs on `main`**: `docs/src/content/api-reference.mdx` → Known issues lists the server and app bugs the Sep 2026 docs audit found: random `_id` on the `/create` and `/issuer/register` routes, `GET /stock-class/id/:id` returning 500, the issuance check counting Mongo rows instead of chain state, `/issuer/create` reading the factory's newest proxy, OCF fields dropped by Mongoose strict mode, `setupEnv()` hanging without a `.env`, and the bootstrap `UPDATE_ME` operator placeholder. Fixes are on `fix/docs-audit-bugs` (14 commits, one per bug, each with a before/after proof). Don't fix them again on another branch; when a fix merges, remove its Known issues entry.
+17. **Records from servers before the Oct 2026 audit fixes**: `create.js` used to save a random `_id`, so stakeholders and classes created through `/stakeholder/create` or `/stock-class/create` by older servers stay `is_onchain_synced: false` and revert in later server-signed writes (`NoStakeholder` / `InvalidStockClass`); register them again under their onchain ids. Adjustment history rows from older servers hold raw ×1e10 values until a poller reindex. Mongo `initial_shares_authorized` is never updated by adjustments; read caps from the contract. What the code still gets wrong is listed in `docs/src/content/api-reference.mdx` → Known issues.
 
 ## Debugging
 
