@@ -77,7 +77,9 @@ export function MintActions({
 
 			{serverError && (
 				<StatusMessage $variant="error">
-					The chain deploy may have worked, but saving company details failed: {serverError.slice(0, 300)}
+					{txHash
+						? `The chain deploy may have worked, but saving company details failed: ${serverError.slice(0, 300)}`
+						: serverError.slice(0, 300)}
 				</StatusMessage>
 			)}
 

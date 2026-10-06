@@ -32,7 +32,7 @@ const checkIssuanceValues = (issuance) => {
         share_price: issuance.share_price, // required
         stock_plan_id: issuance.stock_plan_id || "00000000-0000-0000-0000-000000000000",
         vesting_terms_id: issuance.vesting_terms_id || "00000000-0000-0000-0000-000000000000",
-        // OCF Monetary; onchain keeps only the scaled amount (the poller labels it with the share price currency)
+        // OCF Monetary; onchain keeps only the scaled amount. The poller stores the currency as USD.
         cost_basis: issuance.cost_basis ? toScaledBigNumber(issuance.cost_basis.amount) : 0n,
         stock_legend_ids: issuance.stock_legend_ids || [],
         issuance_type: issuance.issuance_type || "",

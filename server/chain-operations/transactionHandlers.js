@@ -343,34 +343,49 @@ export const handleStockAcceptance = async (stock, issuerId, timestamp, meta = {
 const capTableInterface = new Interface(CAP_TABLE.abi);
 const loggedStockClassMisses = new Set();
 
+const warnStockClassMiss = (txHash, reason) => {
+    // Replays and retried DB transactions hit the same tx again; say it once.
+    const key = txHash || reason;
+    if (loggedStockClassMisses.has(key)) return;
+    loggedStockClassMisses.add(key);
+    console.warn(`StockClassAuthorizedSharesAdjusted: no stock_class_id for tx ${txHash} (${reason}); storing null`);
+};
+
 /**
- * The onchain StockClassAuthorizedSharesAdjustment struct has no stock_class_id, so read it back
- * from the adjustStockClassAuthorizedShares calldata of the emitting tx. Returns null when the call
- * went through another contract (e.g. a multisig) or the tx cannot be fetched or decoded.
+ * The adjustment event has no stock_class_id. Throw when the emitting tx cannot
+ * be fetched so the poller does not checkpoint past it. A fetched call that is not
+ * this cap table's adjustStockClassAuthorizedShares, or that cannot be decoded,
+ * stays null: a retry will not recover it.
  */
 export const recoverAdjustedStockClassId = async (provider, txHash, capTableAddress) => {
-    let reason;
+    if (!provider || !txHash) {
+        warnStockClassMiss(txHash, "no provider or tx hash");
+        return null;
+    }
+
+    const tx = await provider.getTransaction(txHash);
+    if (!tx) {
+        throw new Error(`StockClassAuthorizedSharesAdjusted: transaction not found for ${txHash}`);
+    }
+
+    if (capTableAddress && tx.to?.toLowerCase() !== capTableAddress.toLowerCase()) {
+        warnStockClassMiss(txHash, `sent to ${tx.to}, not the cap table`);
+        return null;
+    }
+
+    let call;
     try {
-        const tx = await provider.getTransaction(txHash);
-        if (!tx) {
-            reason = "transaction not found";
-        } else if (capTableAddress && tx.to?.toLowerCase() !== capTableAddress.toLowerCase()) {
-            reason = `sent to ${tx.to}, not the cap table`;
-        } else {
-            const call = capTableInterface.parseTransaction({ data: tx.data, value: tx.value });
-            if (call?.name === "adjustStockClassAuthorizedShares") {
-                return convertBytes16ToUUID(call.args[0]);
-            }
-            reason = `calldata is ${call?.name ?? "not a CapTable call"}`;
-        }
+        call = capTableInterface.parseTransaction({ data: tx.data, value: tx.value });
     } catch (err) {
-        reason = err?.shortMessage || err?.message || String(err);
+        warnStockClassMiss(txHash, err?.shortMessage || err?.message || String(err));
+        return null;
     }
-    // Replays and retried DB transactions hit the same tx again; say it once.
-    if (!loggedStockClassMisses.has(txHash)) {
-        loggedStockClassMisses.add(txHash);
-        console.warn(`StockClassAuthorizedSharesAdjusted: no stock_class_id for tx ${txHash} (${reason}); storing null`);
+
+    if (call?.name === "adjustStockClassAuthorizedShares") {
+        return convertBytes16ToUUID(call.args[0]);
     }
+
+    warnStockClassMiss(txHash, `calldata is ${call?.name ?? "not a CapTable call"}`);
     return null;
 };
 
