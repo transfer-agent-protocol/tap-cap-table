@@ -56,11 +56,11 @@ The product UI uses a **first-party connect modal** (TAP design system) on top o
 
 Legacy `/mint` and `/manage*` redirect into `/app`.
 
-**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only. Factory owner ≠ issuer ADMIN ≠ server `PRIVATE_KEY` — see [Three wallets / keys](https://docs.transferagentprotocol.xyz/development/setup#three-wallets-keys).
+**Who owns what (short):** protocol builder owns the shared **demo** factory on Plume; a licensed transfer agent should deploy **their own** factory (`pnpm deploy-factory`); issuers mint **cap tables** through a factory (wallet UI) and become ADMIN of that table. Mongo `factories` is a local mirror only. Factory owner ≠ issuer ADMIN ≠ server `PRIVATE_KEY` — see [Three wallets and keys](https://docs.transferagentprotocol.xyz/development/setup#three-wallets-keys).
 
 Then go read official [docs](https://docs.transferagentprotocol.xyz)
 
-> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Set `NEXT_PUBLIC_OPERATOR_ADDRESS` (address only). `PRIVATE_KEY` is **dev/demo only** and optional for the wallet UI (needed for server-signed API / CLI factory deploy). Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
+> **Environment**: `.env.example` defaults to Plume Mainnet (`CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`). Copy to `.env` **and** put the same `NEXT_PUBLIC_*` values in `app/.env.local` for `pnpm app:dev`. Wallets: install a browser extension (no cloud project id required). Set `NEXT_PUBLIC_OPERATOR_ADDRESS` to an address or leave it empty (not the `UPDATE_ME` placeholder). `PRIVATE_KEY` is **dev/demo only** and optional for the wallet UI (needed for server-signed API / CLI factory deploy). Align `NEXT_PUBLIC_FACTORY_ADDRESS` with Mongo `factories`.
 
 ### Scripts
 
@@ -85,7 +85,7 @@ For AI-assisted / agent development, see:
 
 - [`WARP.md`](./WARP.md) — monorepo architecture, commands, patterns, pitfalls
 - [`app/WARP.md`](./app/WARP.md) — frontend conventions (routes, write path, styled-components)
-- [`AGENTS.md`](./AGENTS.md) — short pointer to those files
+- [`AGENTS.md`](./AGENTS.md) — agent setup path, factory model, and failure matrix
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch and PR conventions
 
 ## Contributing
