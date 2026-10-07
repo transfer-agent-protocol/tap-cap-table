@@ -1,0 +1,109 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Valuations and Terms
+
+These routes save 409A valuations, vesting terms, and stock plans as MongoDB records that issuances and awards reference by id. They write nothing onchain and add no history rows. There are no update routes: when terms change, create a new record and reference the new id.
+
+Stock classes have no update route either. To change a class's authorized shares, see [Adjust authorized shares](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares).
+
+## Valuations
+
+```bash
+curl -s -X POST "$API/valuation/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stock_class_id": "$STOCK_CLASS_ID",
+    "valuation_type": "409A",
+    "price_per_share": { "amount": "4.20", "currency": "USD" },
+    "effective_date": "2026-04-20",
+    "provider": "Example Valuation Firm",
+    "board_approval_date": "2026-04-20",
+    "comments": []
+  }
+}
+JSON
+```
+
+The response is `{ "valuation": { ... } }`. `stock_class_id`, `valuation_type`, `price_per_share`, and `effective_date` are required, and `valuation_type` accepts only `409A`.
+
+## Vesting terms
+
+```bash
+curl -s -X POST "$API/vesting-terms/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": "Founder vesting",
+    "description": "Fully vested at the vesting start date.",
+    "allocation_type": "CUMULATIVE_ROUNDING",
+    "vesting_conditions": [
+      {
+        "id": "start",
+        "description": "All shares vest at the start date.",
+        "portion": { "numerator": "1", "denominator": "1" },
+        "trigger": { "type": "VESTING_START_DATE" },
+        "next_condition_ids": []
+      }
+    ],
+    "comments": []
+  }
+}
+JSON
+```
+
+The response is `{ "vestingTerms": { ... } }`. `name`, `description`, `allocation_type`, and `vesting_conditions` are required. `allocation_type` sets how fractional shares round across tranches, such as `CUMULATIVE_ROUNDING` or `FRACTIONAL`.
+
+Each vesting condition takes these fields:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `id` | Yes | Unique within these terms. Other conditions point to it from `next_condition_ids`. |
+| `quantity` or `portion` | One of them | A fixed number of shares, or a fraction of the grant as `numerator` and `denominator` strings. |
+| `trigger` | Yes | `trigger.type` is `VESTING_START_DATE`, `VESTING_SCHEDULE_ABSOLUTE`, `VESTING_SCHEDULE_RELATIVE`, or `VESTING_EVENT`. |
+| `next_condition_ids` | Yes | Conditions that can vest after this one. `[]` ends the chain. |
+| `description` | No | Plain-language summary. |
+
+## Stock plans
+
+```bash
+curl -s -X POST "$API/stock-plan/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "plan_name": "2026 Equity Incentive Plan",
+    "initial_shares_reserved": "1000000",
+    "default_cancellation_behavior": "RETURN_TO_POOL",
+    "stock_class_ids": ["$STOCK_CLASS_ID"],
+    "board_approval_date": "2026-01-15",
+    "stockholder_approval_date": "2026-01-20",
+    "comments": []
+  }
+}
+JSON
+```
+
+The response is `{ "stockPlan": { ... } }`. `plan_name` and `initial_shares_reserved` are required. `default_cancellation_behavior` is `RETIRE`, `RETURN_TO_POOL`, `HOLD_AS_CAPITAL_STOCK`, or `DEFINED_PER_PLAN_SECURITY`. `stock_class_ids` lists the classes the plan draws from; OCF also accepts the older single `stock_class_id`.
+
+## Read records back
+
+| Record | By id | Count |
+| --- | --- | --- |
+| Valuation | `GET /valuation/id/:id` | `GET /valuation/total-number` |
+| Vesting terms | `GET /vesting-terms/id/:id` | `GET /vesting-terms/total-number` |
+| Stock plan | `GET /stock-plan/id/:id` | `GET /stock-plan/total-number` |
+
+The counts include records from every issuer in the database.
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Equity compensation and convertibles', href: '/api-guides/corporate-actions/equity-compensation-and-convertibles', description: 'Record awards that reference these ids.' },
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Reference a stock plan or vesting terms from an issuance.' }
+]} />

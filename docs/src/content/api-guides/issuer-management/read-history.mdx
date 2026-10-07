@@ -1,0 +1,51 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Read History
+
+Use the history route to confirm that a write reached MongoDB. Rows come from the event poller, so a confirmed transaction appears after its next pass. For the row format and transaction types, see [Historical Transactions](/development/historical-transactions). The filters below use [jq](https://jqlang.org).
+
+## Find one transaction
+
+Filter by the transaction hash from your wallet or the explorer:
+
+```bash
+export TX_HASH="<transaction hash>"
+
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID" \
+  | jq --arg tx "$TX_HASH" '[.[] | select(.tx_hash == $tx) | {transactionType, transaction}]'
+```
+
+A transfer, or a partial cancel or repurchase, returns several rows for one hash. Older rows can have `tx_hash: null`; `POST /issuer/reconcile` with `{ "issuerId": "..." }` fills them in from the chain.
+
+The stock transaction routes don't return a hash. After one of them, filter by type and take the newest rows:
+
+```bash
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID" \
+  | jq '[.[] | select(.transactionType == "StockIssuance")] | sort_by(.createdAt) | .[-3:]'
+```
+
+An unknown issuer id returns `[]` rather than an error, so check `$ISSUER_ID` if every query comes back empty.
+
+## If the row doesn't appear
+
+1. Wait for the next poller pass: about 20 seconds, or about 20 minutes with `pnpm prod-poller`.
+2. Check that the transaction succeeded onchain. A reverted transaction adds no row.
+3. Follow **History never updates** in [Run Server troubleshooting](/development/run-server#troubleshooting).
+4. If events were skipped, replay the issuer from its deploy block. Rows that already exist aren't duplicated.
+
+```bash
+curl -s -X POST "$API/issuer/poller-catchup" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{ "issuerId": "$ISSUER_ID", "mode": "reindex" }
+JSON
+```
+
+Some writes never add rows, such as creating a stakeholder; see [History Routes](/api-guides/issuer-management/history-routes).
+
+## What's next?
+
+<NextActions items={[
+  { title: 'History routes', href: '/api-guides/issuer-management/history-routes', description: 'See which writes add history rows.' },
+  { title: 'View cap table', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read current holdings instead of the event trail.' }
+]} />

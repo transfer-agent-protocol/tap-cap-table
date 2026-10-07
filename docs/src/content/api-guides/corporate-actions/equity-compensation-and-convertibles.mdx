@@ -1,0 +1,113 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Equity Compensation and Convertibles
+
+These routes save options, RSUs, stock appreciation rights, SAFEs, and convertible notes as MongoDB records. Nothing is written onchain, so the records don't appear in holdings or history. Both routes sit under `/transactions`, so they need `issuerId` like the onchain transaction routes.
+
+## Equity compensation
+
+```bash
+curl -s -X POST "$API/transactions/issuance/equity-compensation" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholder_id": "$STAKEHOLDER_ID",
+    "stock_class_id": "$STOCK_CLASS_ID",
+    "stock_plan_id": "$STOCK_PLAN_ID",
+    "compensation_type": "OPTION_NSO",
+    "quantity": "10000",
+    "exercise_price": { "amount": "1.00", "currency": "USD" },
+    "expiration_date": "2036-01-01",
+    "termination_exercise_windows": [
+      { "reason": "VOLUNTARY_OTHER", "period": 90, "period_type": "DAYS" }
+    ],
+    "custom_id": "OPT-001",
+    "security_law_exemptions": [],
+    "comments": []
+  }
+}
+JSON
+```
+
+The response is `{ "equityCompensationIssuance": { ... } }`.
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `stakeholder_id` | Yes | The holder. |
+| `compensation_type` | Yes | One of the types below. |
+| `quantity` | Yes | Number of shares or units, as a string. |
+| `expiration_date` | Yes | `YYYY-MM-DD`. |
+| `termination_exercise_windows` | Yes | How long the holder can exercise after leaving, by reason. Send `[]` for none. |
+| `custom_id` | Yes | Your label, such as a grant number. |
+| `security_law_exemptions` | Yes | Send `[]` for none. |
+| `stock_class_id` | No | The stock class the award is for. |
+| `stock_plan_id` | No | A [stock plan](/api-guides/corporate-actions/valuations-and-terms#stock-plans). TAP doesn't count grants against the plan's reserve. |
+| `vesting_terms_id` | No | A set of [vesting terms](/api-guides/corporate-actions/valuations-and-terms#vesting-terms). |
+
+| `compensation_type` | Award | Price field |
+| --- | --- | --- |
+| `OPTION_NSO` | Non-qualified stock option | `exercise_price` |
+| `OPTION_ISO` | Incentive stock option | `exercise_price` |
+| `OPTION` | Other option | `exercise_price` |
+| `RSU` | Restricted stock unit | None |
+| `CSAR` | Cash-settled stock appreciation right | `base_price` |
+| `SSAR` | Stock-settled stock appreciation right | `base_price` |
+
+Validation requires `exercise_price` on the three option types and `base_price` on CSAR and SSAR. RSU has no price field.
+
+## Convertibles
+
+```bash
+curl -s -X POST "$API/transactions/issuance/convertible" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholder_id": "$STAKEHOLDER_ID",
+    "convertible_type": "SAFE",
+    "investment_amount": { "amount": "250000", "currency": "USD" },
+    "conversion_triggers": [
+      {
+        "trigger_id": "SAFE-TRIGGER-001",
+        "type": "UNSPECIFIED",
+        "conversion_right": {
+          "type": "CONVERTIBLE_CONVERSION_RIGHT",
+          "conversion_mechanism": {
+            "type": "SAFE_CONVERSION",
+            "conversion_mfn": false,
+            "conversion_valuation_cap": { "amount": "10000000", "currency": "USD" },
+            "conversion_discount": "0.2"
+          },
+          "converts_to_future_round": true
+        }
+      }
+    ],
+    "seniority": 1,
+    "custom_id": "SAFE-001",
+    "security_law_exemptions": [],
+    "comments": []
+  }
+}
+JSON
+```
+
+The response is `{ "convertibleIssuance": { ... } }`.
+
+- `convertible_type` is `SAFE`, `NOTE` for a convertible promissory note, or `CONVERTIBLE_SECURITY` for any other instrument that converts.
+- `seniority` ranks convertibles against each other. 1 is the most senior, and equal numbers share priority.
+- `conversion_triggers` needs at least one trigger describing when and how the instrument converts. The trigger types are in the pinned [OCF schemas](https://github.com/transfer-agent-protocol/tap-ocf/tree/6d8c9322/schema/types/conversion_triggers).
+- `stakeholder_id`, `investment_amount`, `custom_id`, and `security_law_exemptions` are also required.
+
+## Finding saved records
+
+No route reads these records back. Query MongoDB directly (host port 27027, credentials in `.env`), in the `equitycompensationissuances` and `convertibleissuances` collections, and filter by `issuer`.
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Valuations and terms', href: '/api-guides/corporate-actions/valuations-and-terms', description: 'Save the stock plan and vesting terms that awards reference.' },
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Issue shares onchain when an award is exercised or settles.' }
+]} />

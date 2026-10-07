@@ -8,6 +8,8 @@ Architecture, commands, and conventions live in the `WARP.md` files; this file a
 - [`app/WARP.md`](./app/WARP.md) — frontend (`tap-app`) conventions: routes under `/app`, styled-components, wallet/web3, generated contract hooks, direct-wallet write path.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — branch, commit, and pull-request conventions.
 - Setup docs: [`docs/src/content/development/setup.mdx`](./docs/src/content/development/setup.mdx) (not `docs/src/pages/`). Local stack troubleshooting: [`docs/src/content/development/run-server.mdx`](./docs/src/content/development/run-server.mdx).
+- API behavior, scaling, signer requirements, and Known issues: [`docs/src/content/api-reference.mdx`](./docs/src/content/api-reference.mdx). API guides live under `docs/src/content/api-guides/` (the old `/features` URLs redirect there).
+- Editing public docs: follow `WARP.md` → Documentation DX conventions.
 
 ## Initial setup (agents)
 
@@ -52,6 +54,8 @@ pnpm app:dev                         # http://localhost:3000/app  (reads app/.en
 | Mint OK, register **500** | Docker app rewrites to `localhost:8293` | Docker: `NEXT_PUBLIC_API_URL=http://server:8293`; host app:dev: `localhost:8293` |
 | Poller `0xUPDATE_ME` / invalid BytesLike | Placeholder PRIVATE_KEY | Real hex for server-signed; placeholder OK for read-only poller |
 | TAP Mongo on 27017 / other app blocked | Old compose published default Mongo port with `restart: always` | Host port is **27027**. Host `DATABASE_URL` uses 27027. Inside compose, Mongo is still `mongodb:27017`. `docker compose stop` the container that holds the port, then `pnpm docker:mongo` if Mongo is not running. |
+| `pnpm dev` or a server script stops with `Unable to locate .env` | No `.env` in the checkout (common in a fresh git worktree) | `cp .env.example .env` there, or set `DATABASE_URL` and `PORT` |
+| A stakeholder or class from an older server's `/stakeholder/create` or `/stock-class/create` reverts with `NoStakeholder` / `InvalidStockClass` | Servers before the Oct 2026 audit fixes saved a random Mongo `_id` instead of the onchain id | Register it again with `/register-onchain` under its onchain id and delete the old record |
 
 **Plume defaults:** `CHAIN_ID=98866`, `RPC_URL=https://rpc.plume.org`. Prefer mainnet for product work (not Anvil mint).
 
@@ -73,4 +77,5 @@ Bootstrap is idempotent — safe to re-run. Without `SKIP_APP=1` it also builds 
 - Manage UI write path is **direct-wallet only** (`useDirect*` + `useOnchainAction`). Class/person metadata is saved through `/register-onchain` **after** a confirmed receipt. Issuance calls its `/register-onchain` endpoint **before** the wallet tx as validation only; the poller persists the canonical issuance. **Transfer** = `useDirectTransferStock` → `CapTable.transferStock`; poller mirrors TransferStock — do not call the server transfer API from the UI.
 - Company nav: use real `issuerId` via `capTableHref` / `query.issuerId` — never link with a pathname that still contains `[issuerId]`.
 - New factory deploys are CREATE2 (`pnpm deploy-factory`): address is salt + bytecode + owner, via the Arachnid deployer, not the deployer nonce. The shared Plume demo factory `0xcd6…` is the older CREATE deployment — do not replace its beacon or register a second factory over it. Upgrade that implementation with `./scripts/deployFactory.sh --upgrade-factory 0xcd6…`. Never hardcode impl addresses. `--verify` uses Sourcify because Plume Blockscout cannot compile Solidity 0.8.37 yet; opening the explorer address imports the Sourcify match. CLI/Mongo register is **local config**, not product onboarding.
-- Invariant handler: `chain/test/invariants/CapTableHandler.sol`. It must exercise transfer / repurchase / cancel (and retract / reissue). Assert onchain counters, not unused `ghost_*` notebooks.
+- Invariant handler: `chain/test/invariants/CapTableHandler.sol`. It must exercise transfer / repurchase / cancel (and retract / reissue). Assert onchain counters, not unused `ghost_*` notebooks. The handler bounds inputs to the share caps the contract doesn't enforce; those contract gaps are listed on `docs/src/content/security.mdx` and need a decision before any beacon upgrade.
+- Public docs: `docs/src/content` (path = URL, `_meta.js` per folder). Sections are `/development`, `/api-reference`, `/protocol`, `/api-guides`, `/security`, `/tests`. Keep Alex's pages (`index`, `development`, `factory-deploy`, `cap-table-deploy`) in his voice, keep poller coverage minimal, give each shared concept one home, and write runnable `curl` examples that pass OCF validation. Fix bugs found along the way on a separate branch and stack the docs PR on it; `api-reference.mdx` → Known issues is for what stays unfixed. Validate links, examples, redirects (`pnpm docs:build && pnpm docs:start`), and `pnpm --filter tap-docs lint` before a docs PR; Vercel builds no previews.

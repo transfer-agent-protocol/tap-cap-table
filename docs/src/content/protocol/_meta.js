@@ -2,7 +2,7 @@ const meta = {
     "tap-ocf": "Open Cap Table Format",
     "tap-cap-table": "Solidity Cap Table",
     "structs-lib": "Structs Library",
-    "stock-lib": "Stock Functions",
+    "stock-lib": "Stock Library",
     "solidity-reference": "Solidity Reference",
 };
 

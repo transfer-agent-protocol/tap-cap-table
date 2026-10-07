@@ -1,0 +1,9 @@
+# Issuer Management
+
+The issuer record in MongoDB links a company to its cap table contract. Routes that act on a cap table find it through the issuer's `_id`. To create an issuer and deploy its cap table in one call, see [Create an Issuer](/development/cap-table-deploy).
+
+| Page | Covers |
+| --- | --- |
+| [Register Issuer](/api-guides/issuer-management/register-issuer) | Saving the issuer record for a cap table that's already deployed, reading it back, and rebuilding a company in a fresh database |
+| [Read History](/api-guides/issuer-management/read-history) | Finding one transaction in history, and what to do when it doesn't appear |
+| [History Routes](/api-guides/issuer-management/history-routes) | Which writes add history rows and which don't |

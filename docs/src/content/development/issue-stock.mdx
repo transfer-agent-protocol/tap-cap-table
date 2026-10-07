@@ -1,109 +1,100 @@
-import { Steps, Callout } from 'nextra/components';
+import { Callout } from 'nextra/components';
 import { NextActions } from '../../components/ContentPatterns';
 
 # Issue Stock
 
-With an issuer, stock class, and stakeholder created, you can now issue stock to stakeholders. This is the first actual transaction on your cap table.
+With an issuer, a stock class, and a stakeholder in place, you can issue stock. Each issuance creates a new block of shares, called a security, owned by the stakeholder.
 
-In `/app`, open `/app/companies/<issuerId>?view=issue-stock`. The connected ADMIN wallet calls `issueStock`. After confirmation, the app validates optimistic metadata through `POST /transactions/issuance/stock/register-onchain`; the poller writes the canonical issuance and chain-generated IDs. The server-signed alternative below calls `issuanceController.js`.
+## In the app
 
-<Steps>
+Open the company and choose **Issue stock** (`/app/companies/<issuerId>?view=issue-stock`). The app checks the request, then your wallet calls `issueStock`. The poller writes the issuance to MongoDB from the onchain event, including the ids the contract assigns.
 
-### Send a POST request
+## With the API
 
-Using Postman or curl, send a POST request to `http://localhost:8293/transactions/issuance/stock`
+`POST /transactions/issuance/stock` issues the stock with the server key. The server key needs OPERATOR or ADMIN on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
 
-```json
+```bash
+curl -s -X POST "$API/transactions/issuance/stock" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "issuerId": "<YOUR_ISSUER_ID>",
-    "data": {
-        "stakeholder_id": "<YOUR_STAKEHOLDER_ID>",
-        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
-        "quantity": "100000",
-        "share_price": {
-            "amount": "4.20",
-            "currency": "USD"
-        },
-        "stock_legend_ids": [],
-        "custom_id": "CS-A-001",
-        "security_law_exemptions": [],
-        "comments": ["Founder stock issuance"]
-    }
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholder_id": "$STAKEHOLDER_ID",
+    "stock_class_id": "$STOCK_CLASS_ID",
+    "quantity": "100000",
+    "share_price": { "amount": "4.20", "currency": "USD" },
+    "stock_legend_ids": [],
+    "custom_id": "CS-001",
+    "security_law_exemptions": [],
+    "comments": ["Founder stock issuance"]
+  }
 }
+JSON
 ```
 
-<Callout type="info">
-Replace the IDs with the `_id` values from your previous creation responses.
-</Callout>
+The request returns once the transaction confirms. The response echoes your fields plus an `id`, a `security_id`, and a `date`. The server fills those three in to pass OCF validation: `id` and `security_id` are random placeholders, and `date` is today's UTC date. The contract assigns the real ids, which you read from [history](/development/historical-transactions) once the poller catches up.
 
-### Check the response
-
-The server-signed response includes a prepared OCF issuance shape. Its validation IDs are not the authoritative onchain IDs; read the poller-backed history after confirmation for the canonical transaction and security IDs.
+```json filename="Response"
+{
+  "stockIssuance": {
+    "id": "<PLACEHOLDER_ID>",
+    "security_id": "<PLACEHOLDER_SECURITY_ID>",
+    "date": "2026-01-01",
+    "object_type": "TX_STOCK_ISSUANCE",
+    "stakeholder_id": "<STAKEHOLDER_ID>",
+    "stock_class_id": "<STOCK_CLASS_ID>",
+    "quantity": "100000",
+    "share_price": { "amount": "4.20", "currency": "USD" },
+    "stock_legend_ids": [],
+    "custom_id": "CS-001",
+    "security_law_exemptions": [],
+    "comments": ["Founder stock issuance"]
+  }
+}
+```
 
 <Callout type="warning">
-API examples use human `share_price.amount` values. The contract stores them scaled by 1e10 (10,000,000,000). Divide raw onchain values by 1e10 before comparing. The server and poller handle this automatically for API consumers.
+Send human values. The contract stores `quantity` and `share_price.amount` ×1e10; the server scales them on the way in and the poller scales them back. See [Scaling](/api-reference#scaling).
 </Callout>
 
-```json
-{
-    "stockIssuance": {
-        "id": "<GENERATED_ISSUANCE_ID>",
-        "security_id": "<GENERATED_SECURITY_ID>",
-        "date": "2026-01-01",
-        "object_type": "TX_STOCK_ISSUANCE",
-        "stakeholder_id": "<YOUR_STAKEHOLDER_ID>",
-        "stock_class_id": "<YOUR_STOCK_CLASS_ID>",
-        "quantity": "100000",
-        "share_price": {
-            "amount": "4.20",
-            "currency": "USD"
-        },
-        "stock_legend_ids": [],
-        "custom_id": "CS-A-001",
-        "security_law_exemptions": [],
-        "comments": [
-            "Founder stock issuance"
-        ]
-    }
-}
-```
+## What the contract checks
 
-</Steps>
-
-## Outputs
-
-| Field | What it identifies |
+| Check | Revert when it fails |
 | --- | --- |
-| `id` | The issuance transaction's OCF ID. |
-| `security_id` | Identifies an active block of shares. Use the canonical value from poller-backed history for later security-specific actions. Transfers and partial lifecycle actions may consume a security and create new balance security IDs. |
-| `date` | Onchain timestamp at the issuance block. |
+| The stakeholder exists onchain | `NoStakeholder` |
+| The stock class exists onchain | `InvalidStockClass` |
+| The issuer has enough authorized shares left | `Issuer: Insufficient shares authorized` |
+| The class has enough authorized shares left | `StockClass: Insufficient shares authorized` |
+| `quantity` and `share_price` are both above zero | `InvalidQuantityOrPrice` |
 
-## Required fields
+The poller also needs the stakeholder in MongoDB. If the stakeholder exists onchain but not in MongoDB, the poller stops on that issuer and retries until you register the stakeholder with `POST /stakeholder/register-onchain`.
 
-| Field | Description |
-| --- | --- |
-| `stakeholder_id` | The stakeholder receiving the shares. |
-| `stock_class_id` | The class of stock being issued. |
-| `quantity` | Number of shares to issue, as a string integer. |
-| `share_price` | Object with human `amount` and `currency`. The contract stores `amount * 1e10` (10,000,000,000). The server scales on write; the poller unscales on read. |
-| `stock_legend_ids` | Legend IDs from `POST /stock-legend/create`. Pass `[]` if you don't need any. |
-| `custom_id` | Issuance label (e.g. `CS-A-001`). Free-form, but unique custom IDs make support workflows easier. |
-| `security_law_exemptions` | Reg D / Reg S exemptions cited by the issuance. Pass `[]` if none apply. |
+## Fields
 
-## Viewing historical transactions
+| Field | Required | Notes |
+| --- | --- | --- |
+| `stakeholder_id` | Yes | The stakeholder receiving the shares. |
+| `stock_class_id` | Yes | The class being issued. |
+| `quantity` | Yes | Number of shares, as a string. |
+| `share_price` | Yes | `amount` and `currency`. |
+| `stock_legend_ids` | Yes | Ids of [stock legends](/api-guides/cap-table-management/supporting-records). Send `[]` for none. |
+| `custom_id` | Yes | Your label for the issuance, such as a certificate number. |
+| `security_law_exemptions` | Yes | Exemptions the issuance relies on, as `{ "description", "jurisdiction" }` objects. Send `[]` for none. |
+| `comments` | No | Free-form notes, stored onchain. |
+| `issuance_type` | No | `RSA` or `FOUNDERS_STOCK`. |
+| `stock_plan_id`, `vesting_terms_id` | No | Ids of a [stock plan or vesting terms](/api-guides/corporate-actions/valuations-and-terms) record. |
+| `board_approval_date`, `stockholder_approval_date` | No | `YYYY-MM-DD`. |
+| `consideration_text` | No | What the stakeholder paid, in words. |
+| `cost_basis` | No | `amount` and `currency`. |
+| `share_numbers_issued` | No | One `{ starting_share_number, ending_share_number }` range. More than one returns 400. |
 
-Once stock is issued, you can view all transactions for an issuer:
-
-```
-GET /historical-transactions/issuer-id/<YOUR_ISSUER_ID>
-```
-
-This returns all stock issuances, transfers, cancellations, and other equity events.
+`vestings` passes validation but isn't stored, because the contract has no field for it.
 
 ## What's next?
 
 <NextActions items={[
-  { title: 'View history', href: '/development/historical-transactions', description: 'Wait for the poller and copy the canonical security ID.', meta: 'GET /historical-transactions/issuer-id/:issuerId' },
-  { title: 'Transfer stock', href: '/development/transfer-stock', description: 'Move some or all of the active position to another stakeholder.' },
-  { title: 'Other security actions', href: '/features/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Cancel, retract, reissue, repurchase, or accept stock.' }
+  { title: 'View history', href: '/development/historical-transactions', description: 'Wait for the poller, then read the security id the contract assigned.', meta: 'GET /historical-transactions/issuer-id/:issuerId' },
+  { title: 'Transfer stock', href: '/development/transfer-stock', description: 'Move some or all of the shares to another stakeholder.' },
+  { title: 'Cancel, retract, reissue, or repurchase', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Change a security after it is issued.' }
 ]} />

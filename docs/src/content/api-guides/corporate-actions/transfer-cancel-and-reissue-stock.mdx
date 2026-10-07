@@ -1,0 +1,157 @@
+import { Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Transfer, Cancel, and Reissue Stock
+
+These routes change stock after it's issued. Each one sends a transaction with the server key, and the poller adds history rows once it sees it. Transfers between stakeholders are covered in [Transfer Stock](/development/transfer-stock). This page covers the actions on a single security, plus authorized-share adjustments.
+
+The examples use `$ISSUER_ID`, `$STAKEHOLDER_ID`, and `$STOCK_CLASS_ID` from the [Development Guide](/development), and `$SECURITY_ID` from [Accept Stock](/api-guides/cap-table-management/accept-stock#find-the-security-id).
+
+<Callout type="warning">
+Send human values for `quantity`, `price.amount`, and `new_shares_authorized`; the server scales them ×1e10. See [Scaling](/api-reference#scaling).
+</Callout>
+
+## Change a security
+
+Cancel, retract, reissue, and repurchase each close the live security they act on. The server key needs OPERATOR or ADMIN.
+
+| Action | Effect | `data` fields | Leftover shares |
+| --- | --- | --- | --- |
+| Cancel | Cancels `quantity` shares | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `reason_text`, optional `comments` | Go to a new security |
+| Retract | Voids the whole security, for example an issuance made in error | `stakeholderId`, `stockClassId`, `security_id`, `reason_text`, optional `comments` | None |
+| Reissue | Replaces the security with securities you've already issued | `stakeholderId`, `stockClassId`, `security_id`, `resulting_security_ids`, optional `reason_text` and `comments` | None |
+| Repurchase | The issuer buys back `quantity` shares at `price` | `stakeholderId`, `stockClassId`, `security_id`, `quantity`, `price`, optional `consideration_text` and `comments` | Go to a new security |
+
+Each route responds with the OCF object it validated, with a placeholder `id` and today's UTC `date`. The contract assigns the ids of leftover and resulting securities, so leave `balance_security_id` and `split_transaction_id` out. `balance_security_id` is accepted only on cancel and repurchase. `split_transaction_id` is accepted only on reissue. A field the schema does not list is rejected. Read the new ids from [history](/development/historical-transactions).
+
+### Cancel or retract
+
+```bash
+curl -s -X POST "$API/transactions/cancel/stock" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholderId": "$STAKEHOLDER_ID",
+    "stockClassId": "$STOCK_CLASS_ID",
+    "security_id": "$SECURITY_ID",
+    "quantity": "1000",
+    "reason_text": "Unvested shares forfeited on departure",
+    "comments": []
+  }
+}
+JSON
+```
+
+To retract, send the same body without `quantity` to `POST /transactions/retract/stock`.
+
+### Repurchase
+
+`price` is the price per share, as an amount and currency:
+
+```bash
+curl -s -X POST "$API/transactions/repurchase/stock" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholderId": "$STAKEHOLDER_ID",
+    "stockClassId": "$STOCK_CLASS_ID",
+    "security_id": "$SECURITY_ID",
+    "quantity": "1000",
+    "price": { "amount": "1.25", "currency": "USD" },
+    "consideration_text": "Cash, 1.25 USD per share",
+    "comments": []
+  }
+}
+JSON
+```
+
+### Reissue
+
+Issue the replacement securities first with [Issue Stock](/development/issue-stock), and read their ids from history. The first id in `resulting_security_ids` must be a live security of the same stakeholder and class. The replacements were counted when you issued them, so reissuing removes the old security's shares from the issued totals.
+
+```bash
+export NEW_SECURITY_ID="<security_id of the replacement>"
+
+curl -s -X POST "$API/transactions/reissue/stock" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholderId": "$STAKEHOLDER_ID",
+    "stockClassId": "$STOCK_CLASS_ID",
+    "security_id": "$SECURITY_ID",
+    "resulting_security_ids": ["$NEW_SECURITY_ID"],
+    "reason_text": "Replaced a lost certificate",
+    "comments": []
+  }
+}
+JSON
+```
+
+### Reverts
+
+| Revert | Cause |
+| --- | --- |
+| `NoStakeholder`, `InvalidStockClass` | The stakeholder or stock class isn't onchain. |
+| `ActivePositionNotFound` | The stakeholder doesn't hold `security_id`, or it's closed. |
+| `InsufficientShares` | `quantity` is more than the security holds. |
+| `NoIssuanceFound` | `resulting_security_ids` is empty. |
+| `NoActivePositionFound` | The first resulting security isn't live for this stakeholder and class. |
+
+## Adjust authorized shares
+
+Both adjustments need an ADMIN server key; an OPERATOR key reverts with `Does not have admin role`.
+
+### Issuer
+
+```bash
+curl -s -X POST "$API/transactions/adjust/issuer/authorized-shares" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "issuer_id": "$ISSUER_ID",
+    "new_shares_authorized": "25000000",
+    "board_approval_date": "2026-03-15",
+    "stockholder_approval_date": "2026-03-20",
+    "comments": ["Approved after financing"]
+  }
+}
+JSON
+```
+
+OCF requires `issuer_id`; send the issuer `_id`. The new total can't be below the shares already issued (`InsufficientIssuerSharesAuthorized`). The contract doesn't compare it with each stock class's authorized shares, so check that no class ends up above it.
+
+### Stock class
+
+```bash
+curl -s -X POST "$API/transactions/adjust/stock-class/authorized-shares" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stock_class_id": "$STOCK_CLASS_ID",
+    "new_shares_authorized": "5000000",
+    "board_approval_date": "2026-04-20",
+    "stockholder_approval_date": "2026-04-20",
+    "comments": []
+  }
+}
+JSON
+```
+
+A class can't exceed the issuer's authorized shares (`InsufficientStockClassSharesAuthorized`). The contract doesn't stop a class from dropping below the shares it has already issued, so check before lowering it.
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Read history', href: '/api-guides/issuer-management/read-history', description: 'Confirm the change and find new security ids.' },
+  { title: 'View cap table', href: '/api-guides/cap-table-management/view-cap-table', description: 'Check holdings after the change.' }
+]} />
