@@ -11,7 +11,7 @@ const StockPlanSchema = new mongoose.Schema({
     initial_shares_reserved: String,
     default_cancellation_behavior: String,
     stock_class_id: String, // deprecated in OCF in favor of stock_class_ids; still accepted
-    stock_class_ids: [String],
+    stock_class_ids: { type: [String], default: undefined },
     comments: [String],
     issuer: {
         type: String,
