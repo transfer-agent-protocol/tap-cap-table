@@ -199,7 +199,7 @@ const processEvents = async (dbConn, contract, provider, issuer, txHelper, final
     [events, endBlock] = trimEvents(events, maxEvents, endBlock);
 
     await withGlobalTransaction(async () => {
-        await persistEvents(issuerId, events);
+        await persistEvents(issuerId, events, provider);
         await updateLastProcessed(issuerId, endBlock);
     }, dbConn);
 };
@@ -219,14 +219,17 @@ const issuerDeployed = async (issuerId, receipt, contract, dbConn) => {
     return lastProcessedBlock;
 };
 
-const persistEvents = async (issuerId, events: QueuedEvent[]) => {
+const persistEvents = async (issuerId, events: QueuedEvent[], provider) => {
     // Persist all the necessary changes for each event gathered in process events
     for (const event of events) {
         const { type, data, timestamp, o } = event;
-        // Ethereum tx hash from the log — required for Activity explorer links
+        // Ethereum tx hash from the log — required for Activity explorer links.
+        // address + provider let a handler read the emitting call (stock class adjustments).
         const meta = {
             txHash: o?.transactionHash || null,
             blockNumber: o?.blockNumber ?? null,
+            address: o?.address || null,
+            provider,
         };
         const txHandleFunc = txFuncs[type];
         if (txHandleFunc) {

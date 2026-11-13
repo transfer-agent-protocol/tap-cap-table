@@ -29,24 +29,28 @@ async function deployCapTable(issuerId, issuerName, initial_shares_authorized) {
 
     // Server is msg.sender → gets ADMIN. No separate operator needed (admin is implicitly operator).
     const tx = await capTableFactory.createCapTable(issuerId, issuerName, toScaledBigNumber(initial_shares_authorized), "0x0000000000000000000000000000000000000000");
-    await tx.wait();
+    const receipt = await tx.wait();
 
-    const capTableCount = await capTableFactory.getCapTableCount();
+    // Take the proxy from our own receipt. On a shared factory another mint can land before a
+    // capTableProxies(count - 1) read, which would return someone else's cap table.
+    const created = (receipt?.logs ?? [])
+        .filter((log) => log.address.toLowerCase() === factoryAddress.toLowerCase())
+        .map((log) => capTableFactory.interface.parseLog(log))
+        .find((event) => event?.name === "CapTableCreated");
+    if (!created) {
+        throw new Error(`❌ | CapTableCreated not found in the createCapTable receipt ${tx.hash}`);
+    }
+    const capTableAddress = created.args.capTableProxy;
 
-    console.log("📄 | Cap table count: ", capTableCount);
+    const contract = new ethers.Contract(capTableAddress, CAP_TABLE.abi, wallet);
 
-    const latestCapTableProxyContractAddress = await capTableFactory.capTableProxies(capTableCount - BigInt(1));
-
-    const contract = new ethers.Contract(latestCapTableProxyContractAddress, CAP_TABLE.abi, wallet);
-
-    console.log("⏳ | Waiting for contract to be deployed...");
-    console.log("✅ | Cap table contract address ", latestCapTableProxyContractAddress);
-    const libraries = getTXLibContracts(latestCapTableProxyContractAddress, wallet);
+    console.log("✅ | Cap table contract address ", capTableAddress);
+    const libraries = getTXLibContracts(capTableAddress, wallet);
 
     return {
         contract,
         provider,
-        address: latestCapTableProxyContractAddress,
+        address: capTableAddress,
         libraries,
         deployHash: tx.hash,
     };
