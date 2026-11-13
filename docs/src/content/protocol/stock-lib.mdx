@@ -1,54 +1,32 @@
-import { Callout } from 'nextra/components';
+# Stock Library
 
-# Stock Functions
+`StockLib` (`chain/src/lib/Stock.sol`) holds the stock logic that `CapTable` calls. Before calling it, `CapTable` checks the caller's role, that the stakeholder and stock class exist, and for issuances, the authorized-share caps. Each `StockLib` function then checks the security it acts on, updates positions and issued totals, and records a transaction that the poller turns into history rows.
 
-Every lifecycle write follows the same shape: validate an active security, mutate active positions, encode the transaction, and emit an event for the poller. Partial operations may also create a new balance security.
-
-`StockLib` is `chain/src/lib/Stock.sol`. `CapTable` calls it for stock lifecycle writes.
-
-## Library functions
-
-| Function | Called by | Checks | Changes | Tx |
+| Function | Called by | Checks | Effect | History rows |
 | --- | --- | --- | --- | --- |
-| `createIssuance` | `issueStock` | Quantity and price. | Adds position; increments issued shares. | `STOCK_ISSUANCE` |
-| `createTransfer` | `transferStock` | Buyer verified; enough stock. | Moves shares; may create balance/resulting issuances. | `STOCK_TRANSFER` |
-| `createCancellation` | `cancelStock` | Position exists; enough quantity. | Removes original; may create balance; subtracts issued shares. | `STOCK_CANCELLATION` |
-| `createReissuance` | `reissueStock` | Position exists. | Records reissue; removes original. | `STOCK_REISSUANCE` |
-| `createRepurchase` | `repurchaseStock` | Position exists; enough quantity. | Records repurchase; may create balance; subtracts issued shares. | `STOCK_REPURCHASE` |
-| `createRetraction` | `retractStockIssuance` | Position exists. | Records retraction; removes original. | `STOCK_RETRACTION` |
-| `createAcceptance` | `acceptStock` | Checked by `CapTable`. | Records acceptance only. | `STOCK_ACCEPTANCE` |
+| `createIssuance` | `issueStock` | Quantity and price above zero | Adds a security; issued totals rise by `quantity` | `StockIssuance` |
+| `createTransfer` | `transferStock` | Buyer verified; quantity and price above zero; enough shares | Moves shares; issued totals don't change | For each security used: `StockIssuance` for the recipient, `StockIssuance` for any remainder, `StockTransfer` |
+| `createCancellation` | `cancelStock` | Security is live; enough shares | Closes the security; issued totals drop by `quantity` | `StockCancellation`, plus `StockIssuance` for any remainder |
+| `createRepurchase` | `repurchaseStock` | Security is live; enough shares | Closes the security; issued totals drop by `quantity` | `StockRepurchase`, plus `StockIssuance` for any remainder |
+| `createRetraction` | `retractStockIssuance` | Security is live | Closes the security; issued totals drop by its quantity | `StockRetraction` |
+| `createReissuance` | `reissueStock` | Security is live | Closes the security; issued totals drop by its quantity | `StockReissuance` |
+| `createAcceptance` | `acceptStock` | None; `CapTable` checks the security | None | `StockAcceptance` |
 
-## Helpers
+A repurchase doesn't check its price, so a price of zero is accepted.
 
-| Helper | Purpose |
-| --- | --- |
-| `_updateContext` | Write position, track security ID, record issuance, update issued shares. |
-| `_safeNow` | Cast `block.timestamp` to `uint40`. |
-| `_subtractSharesIssued` | Decrement issuer and class issued shares. |
-| `_transferSingleStock` | Move one active security. |
-| `_checkInvalidQuantityOrPrice` | Reject zero quantity or price. |
-| `_checkInsuffientAmount` | Reject insufficient shares. |
-| `_checkActivePositionExists` | Reject zero-quantity position. |
-| `_checkBuyerVerified` | Reject unverified transfer buyer. |
+## Leftover shares
+
+A transfer takes the sender's securities in the class in the order they were created, until it has the requested quantity. When a transfer, cancel, or repurchase uses only part of a security, the contract closes it and issues a new security for the rest at the original price. The transaction's `balance_security_id` is that new security, or zero when nothing is left.
 
 ## Errors
 
-| Error | Trigger |
+| Error | Cause |
 | --- | --- |
-| `InsufficientShares` | Requested quantity exceeds active shares. |
-| `InvalidQuantityOrPrice` | Quantity or price is zero. |
-| `UnverifiedBuyer` | Transfer buyer is unverified. |
-| `ActivePositionNotFound` | Active position has no quantity. |
+| `InsufficientShares(available, required)` | The quantity is more than the security or the sender holds. |
+| `InvalidQuantityOrPrice(quantity, price)` | An issuance or transfer has a zero quantity or price. |
+| `UnverifiedBuyer()` | A transfer has `is_buyer_verified` set to false. |
+| `ActivePositionNotFound(stakeholderId, securityId)` | The stakeholder doesn't hold that security, or it's closed. |
 
-## Balance securities
+The quantities in these errors are ×1e10; see [Scaling](/api-reference#scaling).
 
-| Action | Behavior |
-| --- | --- |
-| Transfer | Walks live lots; salts ids with `issuanceOrdinal`. Partial transfer creates a transferor balance issuance. `balance_security_id` is that remainder certificate, or zero when the lot is fully moved. |
-| Cancellation | Partial cancellation creates a balance issuance (remainder certificate). |
-| Repurchase | Partial repurchase creates a balance issuance (remainder certificate). |
-| Retraction/reissuance | Original position is removed. |
-
-<Callout type="info">
-Server-side controllers convert UUIDs to `bytes16` and scale quantities/prices through `@tap/units` (`convertUUIDToBytes16` / `toScaledBigNumber` wrappers). Raw onchain values are scaled by 1e10 (10,000,000,000) — divide by 1e10 to get human values. The poller unscales automatically before writing to MongoDB. The `/app` wallet path uses the same `@tap/units` helpers.
-</Callout>
+Related: [Structs Library](/protocol/structs-lib) and [Solidity Reference](/protocol/solidity-reference).

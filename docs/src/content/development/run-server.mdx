@@ -1,82 +1,64 @@
-import { Steps, Callout } from 'nextra/components';
+import { Callout } from 'nextra/components';
 
 # Run Server, App, and Docs
 
-Healthy local product stack: **Docker for Mongo + API + poller**, **host Next for the wallet UI**.
+The local stack is MongoDB, the API with its event poller, and the product app. Docker runs the first two; the app runs on your machine.
 
-| Start order | Process | Why it runs |
+| Order | Process | Why it runs |
 | --- | --- | --- |
-| 1 | MongoDB | Persists the local OCF mirror. |
-| 2 | API + poller | Serves reads/automation and mirrors confirmed events. |
-| 3 | Product UI | Connects the issuer ADMIN wallet for direct writes. |
-| 4 | Docs, optional | Serves this reference locally. |
+| 1 | MongoDB | Stores the offchain mirror (host port 27027). |
+| 2 | API and event poller | Serves reads and server-signed writes, and copies confirmed contract events into MongoDB. |
+| 3 | Product app | Connects the issuer's wallet for direct writes. |
+| 4 | Docs (optional) | Serves this site locally. |
 
-## Docker (Mongo + API)
-
-<Steps>
-
-### Start services
+## Start MongoDB and the API
 
 ```bash
-SKIP_APP=1 pnpm bootstrap   # Mongo + API + poller; leaves :3000 for host pnpm app:dev
-# Include the Docker app preview on :3000: pnpm bootstrap (or pnpm docker:up)
-```
-
-Rebuild after app source, env, or Dockerfile changes: `pnpm docker:build`. The Docker app is `next start` (no file watcher). Wallet work still prefers host `pnpm app:dev` (`app/.env.local`).
-
-### Check the API
-
-```bash
+SKIP_APP=1 pnpm bootstrap
 curl http://localhost:8293/
 ```
 
-</Steps>
+The API replies with a welcome message. After you change server code, the server image, or `.env`, rebuild the API with `docker compose up -d --build server`. `pnpm docker:build` also starts the Docker app on port 3000.
 
-The Docker server runs with the event poller enabled.
-
-## App and docs
+## Start the app and docs
 
 | Goal | Command | URL |
 | --- | --- | --- |
-| Product UI (preferred) | `pnpm app:dev` | http://localhost:3000/app |
-| App in Docker (optional) | `pnpm docker:up` | http://localhost:3000 |
+| Product app | `pnpm app:dev` | http://localhost:3000/app |
+| Docker app preview (no hot reload) | `pnpm docker:up` | http://localhost:3000 |
 | Docs | `pnpm docs:dev` | http://localhost:3001 |
 
-<Callout type="info">
-Wallet mint/manage needs `app/.env.local` (`NEXT_PUBLIC_*`). Docker app reads root `.env` interpolation from compose — keep both aligned if you use Docker app.
-</Callout>
+`pnpm app:dev` reads `app/.env.local`. The Docker preview reads the root `.env`, so keep their `NEXT_PUBLIC_*` values in sync.
 
-## Local server hot-reload
+## Run the API on your machine
+
+For hot reload while you work on the server:
 
 ```bash
 docker compose stop server
 pnpm dev
 ```
 
-`docker compose stop server` frees port 8293 and leaves Mongo running. `pnpm dev` starts the API with hot reload and the poller.
+This frees port 8293 and runs the API and the poller from your checkout. MongoDB keeps running in Docker.
 
 ## Event poller
 
-The poller watches contract events and writes them into MongoDB. Without it, history and mirrored positions go stale.
+The poller copies confirmed contract events into MongoDB, which keeps history and sync flags current. `pnpm dev` and the Docker server run it. `pnpm prod` starts the API without it; run `pnpm prod-poller` alongside, which reads only finalized blocks and lags Plume by about 20 minutes.
 
-| Command | Behavior |
-| --- | --- |
-| `pnpm dev` | API + poller, hot reload |
-| `pnpm prod` | API only |
-| `pnpm prod-poller` | Standalone finalized-only poller |
-
-A fresh Mongo **does not** auto-import every historical issuer on Plume. Use mint, Load from wallet, or issuer register/reindex for companies you care about.
+The poller follows only issuers registered in this database. **Load from wallet** in the app lists companies already registered here; it doesn't import them from the chain. To bring an existing cap table into a fresh database, see [Register Issuer](/api-guides/issuer-management/register-issuer).
 
 ## Troubleshooting
 
-| Symptom | Check |
+| Symptom | Fix |
 | --- | --- |
-| `Can't resolve '@tap/units'` on `:3000` | Docker app image must `COPY packages/`; or stop Docker app and run `pnpm app:dev` |
-| Empty connect modal / no wallets | Install a browser extension wallet (Rabby, MetaMask, etc.) — EIP-6963, no cloud key needed |
-| `EADDRINUSE` | Port 8293 or 3000 already in use (`lsof -i :3000`) |
-| Other app wants Mongo 27017 | TAP publishes **27027**. Host `DATABASE_URL` must use 27027. `docker compose stop` the container still bound to 27017. |
-| History does not update | Poller running; issuer registered with `deployed_to` |
-| Frontend API fails | `NEXT_PUBLIC_API_URL=http://localhost:8293` (host-reachable) |
-| Factory misaligned | Mongo `factories` vs `NEXT_PUBLIC_FACTORY_ADDRESS` |
+| `pnpm dev` stops with `Unable to locate .env` | Run it from a checkout with a root `.env` (`cp .env.example .env`), or set `DATABASE_URL` and `PORT` in the environment. |
+| The wallet dialog lists no wallets | Install a browser extension wallet such as Rabby or MetaMask. |
+| `EADDRINUSE` on port 8293 or 3000 | Find the process with `lsof -i :3000`. If it's the Docker app preview, run `docker compose stop app`. |
+| Another app expects MongoDB on 27017 | TAP uses host port 27027. Point `DATABASE_URL` at 27027 and stop any old container still bound to 27017 with `docker compose stop`. |
+| History never updates | Check that the poller is running and the issuer has a `deployed_to` address. If the logs repeat `Stakeholder does not exist`, register that stakeholder with `POST /stakeholder/register-onchain` using its onchain id. |
+| Repeated `Connection ended` lines from MongoDB | Normal idle connection churn. A real failure logs `Error connecting to Mongo`. |
+| `Can't resolve '@tap/units'` on port 3000 | The Docker app image is stale. Rebuild it with `pnpm docker:build`, or stop it and use `pnpm app:dev`. |
+| The app can't reach the API | Set `NEXT_PUBLIC_API_URL=http://localhost:8293` in `app/.env.local`. |
+| The app and API use different factories | Make MongoDB `factories` and `NEXT_PUBLIC_FACTORY_ADDRESS` match. See [Deploy the Factory](/development/factory-deploy). |
 
-Next: [Deploy your transfer-agent factory](/development/factory-deploy), then [create an issuer](/development/cap-table-deploy).
+Next: [deploy or register a factory](/development/factory-deploy).

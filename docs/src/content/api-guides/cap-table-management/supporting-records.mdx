@@ -1,0 +1,69 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Supporting Records
+
+Stock legends and stakeholder wallets sit alongside the core cap table. Legends live only in MongoDB, and wallets live only onchain. Stock plans are covered in [Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms).
+
+The examples use `$ISSUER_ID` and `$STAKEHOLDER_ID` from the [Development Guide](/development).
+
+## Stock legends
+
+A stock legend is the restriction text printed on a certificate. Save one, then list its `_id` in an issuance's `stock_legend_ids`.
+
+```bash
+curl -s -X POST "$API/stock-legend/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "name": "Restricted Stock Legend",
+    "text": "THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933, AS AMENDED.",
+    "comments": []
+  }
+}
+JSON
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `name` | Yes | A short label. |
+| `text` | Yes | The full legend. |
+| `comments` | No | Free-form notes. |
+
+The response is `{ "stockLegend": { ... } }`. Read it back with `GET /stock-legend/id/:id`. No route writes legends onchain, and they add no history rows.
+
+## Stakeholder wallets
+
+Linking a wallet to a stakeholder lets you look up the stakeholder by wallet onchain. These routes write to the contract with the server key, which needs OPERATOR or ADMIN; see [Server-signed routes](/api-reference#server-signed-routes). MongoDB doesn't store wallets.
+
+```bash
+export WALLET="<wallet address>"
+
+curl -s -X POST "$API/stakeholder/add-wallet" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{ "issuerId": "$ISSUER_ID", "id": "$STAKEHOLDER_ID", "wallet": "$WALLET" }
+JSON
+```
+
+The response is `"Success"`, or `"Wallet already added"` if the wallet is already linked to a stakeholder. Each wallet belongs to one stakeholder, and a stakeholder can have several. `POST /stakeholder/remove-wallet` takes the same body. The contract doesn't check that the wallet belongs to the stakeholder you name, so check the address before removing it.
+
+To find a wallet's stakeholder, send the body with `-X GET`:
+
+```bash
+curl -s -X GET "$API/stakeholder/wallet/$WALLET" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{ "issuerId": "$ISSUER_ID" }
+JSON
+```
+
+It returns `{ "stakeholderId": "0x..." }` with the stakeholder's bytes16 id, or a 500 when no stakeholder has the wallet.
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Issue stock', href: '/development/issue-stock', description: 'Attach legends to an issuance with stock_legend_ids.' },
+  { title: 'Valuations and terms', href: '/api-guides/corporate-actions/valuations-and-terms', description: 'Save a stock plan, vesting terms, or a 409A valuation.' }
+]} />

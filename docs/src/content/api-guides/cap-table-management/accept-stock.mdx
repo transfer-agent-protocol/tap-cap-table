@@ -1,0 +1,55 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Accept Stock
+
+An acceptance records that a stakeholder accepted a security. It adds a `StockAcceptance` history row and doesn't change holdings. Issue the stock first with [Issue Stock](/development/issue-stock).
+
+## Find the security id
+
+The contract assigns each security's id, so read it from the issuance's history row once the poller has written it:
+
+```bash
+curl -s "$API/historical-transactions/issuer-id/$ISSUER_ID" \
+  | jq '[.[] | select(.transactionType == "StockIssuance") | .transaction | {security_id, stakeholder_id, stock_class_id, quantity}]'
+```
+
+The security must still be live. A transfer, cancellation, retraction, reissue, or repurchase closes the security it acts on. When a partial cancel, repurchase, or transfer leaves shares behind, the remainder is a new security with its own `StockIssuance` row.
+
+```bash
+export SECURITY_ID="<security_id from history>"
+```
+
+## Accept the security
+
+The server key needs OPERATOR or ADMIN; see [Server-signed routes](/api-reference#server-signed-routes).
+
+```bash
+curl -s -X POST "$API/transactions/accept/stock" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "issuerId": "$ISSUER_ID",
+  "data": {
+    "stakeholderId": "$STAKEHOLDER_ID",
+    "stockClassId": "$STOCK_CLASS_ID",
+    "security_id": "$SECURITY_ID",
+    "comments": ["Accepted by the stakeholder"]
+  }
+}
+JSON
+```
+
+The response echoes the acceptance with a placeholder `id` and today's UTC `date`. The contract assigns the real id, which appears in the `StockAcceptance` history row after the poller's next pass.
+
+| Revert | Cause |
+| --- | --- |
+| `NoStakeholder` | The stakeholder isn't onchain. |
+| `InvalidStockClass` | The stock class isn't onchain. |
+| `NoActivePositionFound` | The stakeholder doesn't hold that security, or it was closed. |
+
+## What's next?
+
+<NextActions items={[
+  { title: 'View cap table', href: '/api-guides/cap-table-management/view-cap-table', description: 'Read current holdings.' },
+  { title: 'Transfer, cancel, and reissue stock', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Change a security after it is issued.' }
+]} />

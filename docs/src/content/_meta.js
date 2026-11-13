@@ -3,7 +3,7 @@ const meta = {
     development: "Development",
     "api-reference": "API Reference",
     protocol: "Protocol Specification",
-    features: "Features",
+    "api-guides": "API Guides",
     security: "Security",
     tests: "Testing",
     website: {

@@ -1,52 +1,57 @@
-# Testing Overview
+# Testing
 
-Start with **Before a PR** when choosing checks for a change. The matrices below document the broader Solidity coverage and invariants.
+Contracts compile with Solidity 0.8.37 for the `osaka` EVM, which matches Plume's Fusaka upgrade, using Foundry v1.8.3. The compiler settings are in `chain/foundry.toml`, and CI and `pnpm setup` install the same Foundry release.
 
-## Before a PR
+## Before a pull request
 
-| Change | Minimum check |
+| Change | Run |
 | --- | --- |
-| Docs | `pnpm docs:build` |
-| Solidity logic | `make test` |
-| Share accounting or lifecycle | `make test && make test-invariant` |
-| Frontend | `pnpm app:build` |
-| App unit tests | `pnpm --filter tap-app test:nav` |
-| App e2e | `pnpm app:test:e2e` |
-| Shared units | `pnpm test:units` |
+| Solidity | `make test` or `pnpm test`, which includes the invariants |
+| Share accounting or stock logic | Also `make test-invariant-deep` |
+| Server or `@tap/units` | `pnpm lint`, `pnpm typecheck`, and `pnpm test:units` |
+| App | `pnpm --filter tap-app lint`, `pnpm --filter tap-app typecheck`, and `pnpm app:build` |
+| App flows | `pnpm app:test:e2e`, which runs Playwright against a mocked API on desktop, iPad, and iPhone |
+| Docs | `pnpm --filter tap-docs lint` and `pnpm docs:build` |
 
-## Commands
+`pnpm --filter tap-app test:nav` runs a few small app unit tests. It's optional, for local use, and never runs in CI.
 
-| Goal | Command |
-| --- | --- |
-| Build contracts | `make build` |
-| Solidity tests | `make test` or `pnpm test` |
-| Verbose tests | `make test-v` |
-| Invariants | `make test-invariant` |
-| Deep invariants | `make test-invariant-deep` |
-| Docs build | `pnpm docs:build` |
-| Frontend build | `pnpm app:build` |
-| App unit tests | `pnpm --filter tap-app test:nav` |
-| App e2e | `pnpm app:test:e2e` |
-| `@tap/units` | `pnpm test:units` |
+`make build` compiles the contracts, and `make test-v` runs the Solidity tests with verbose output.
 
-Compiler pin is Solidity **0.8.37** (`chain/foundry.toml`). EVM target is `osaka` (Plume Fusaka). CI installs Foundry v1.8.3.
+## What CI runs
 
-## Solidity coverage
+| Workflow | When | Runs |
+| --- | --- | --- |
+| `ci.yml`, Node job | Pull requests and pushes to `main` | `pnpm lint`, `pnpm --filter tap-docs lint`, `pnpm --filter tap-app lint`, `pnpm --filter tap-app typecheck`, `pnpm test:units` |
+| `ci.yml`, Foundry job | Pull requests and pushes to `main` | `forge test`, including the invariants |
+| `security.yml` | Changes to Solidity files or `chain/foundry.toml` | `forge test --mt invariant -vvv` |
 
-| Area | Files |
+CI doesn't typecheck the server, build the app or docs, or run e2e tests, so run those locally. Root `pnpm lint` skips `docs/`, which is why docs lint is a separate step.
+
+## Solidity tests
+
+| Area | Files in `chain/test` |
 | --- | --- |
 | Cap table setup | `CapTable.t.sol`, `CapTableFactory.t.sol`, `Issuer.t.sol` |
 | Access control | `AccessControl.t.sol`, `Wallet.t.sol` |
-| Stock lifecycle | `StockIssuance.t.sol`, `StockTransfer.t.sol`, `StockCancellation.t.sol`, `StockRepurchase.t.sol`, `StockReissuance.t.sol`, `StockRetraction.t.sol`, `StockAcceptance.t.sol` |
-| Setup records | `Stakeholder.t.sol`, `StockClass.t.sol`, `Minting.t.sol` |
-| Share adjustments | `Adjustment.t.sol` |
-| Invariants | `test/invariants/CapTableInvariants.t.sol` |
+| Stock transactions | `StockIssuance.t.sol`, `StockTransfer.t.sol`, `StockCancellation.t.sol`, `StockRepurchase.t.sol`, `StockReissuance.t.sol`, `StockRetraction.t.sol`, `StockAcceptance.t.sol` |
+| Setup records and seeding | `Stakeholder.t.sol`, `StockClass.t.sol`, `Minting.t.sol` |
+| Authorized-share adjustments | `Adjustment.t.sol` |
+| Invariants | `invariants/CapTableInvariants.t.sol`, `invariants/CapTableHandler.sol` |
 
 ## Invariants
 
-| Property | Purpose |
+The invariant suite fuzzes a handler that creates stakeholders and stock classes; issues, seeds, transfers, cancels, retracts, reissues, and repurchases stock; and adjusts authorized shares. After every call it checks:
+
+| Invariant | Checks that |
 | --- | --- |
-| Issuer `shares_issued <= shares_authorized` | Prevent issuer over-issuance. |
-| Class `shares_issued <= shares_authorized` | Prevent class over-issuance. |
-| Stakeholder and stock class counts stay consistent. | Catch index drift. |
-| Active position tracking stays consistent. | Catch stale securities and missing deletes. |
+| `issuerSharesIssuedNeverExceedsAuthorized` | The issuer's issued shares stay within its authorized shares. |
+| `stockClassSharesConsistency` | Each class's issued shares stay within its authorized shares. |
+| `stockClassAuthorizedNeverExceedsIssuer` | Each class's authorized shares stay within the issuer's. |
+| `issuerSharesIssuedEqualsSumOfStockClasses` | The issuer's issued shares equal the sum across classes. |
+| `activePositionsMatchStockClassSharesIssued` | Live holdings in each class equal that class's issued shares. |
+| `stakeholderIndexConsistency` | Each stakeholder's index points back to it. |
+| `stockClassIndexConsistency` | Each stock class's index points back to it. |
+| `stakeholderCountConsistency` | The contract's stakeholder count matches the handler's. |
+| `stockClassCountConsistency` | The contract's stock class count matches the handler's. |
+
+The handler keeps inputs within the share caps, so `stockClassSharesConsistency` and `stockClassAuthorizedNeverExceedsIssuer` depend on it as well as on the contract; see [What the contracts don't enforce](/security#what-the-contracts-dont-enforce). The default campaign is 256 runs at depth 50, set in `chain/foundry.toml`, and `make test-invariant-deep` runs 2000 at depth 100.

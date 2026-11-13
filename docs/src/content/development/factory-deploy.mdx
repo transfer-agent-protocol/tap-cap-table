@@ -1,75 +1,101 @@
 import { Steps, Callout } from 'nextra/components';
 
-# Deploy your transfer-agent factory
+# Deploy the Factory
 
-A **CapTableFactory** is the onchain house for a transfer-agent business: it deploys many issuer cap tables (beacon proxies) and its **owner** controls upgrades for those tables.
+The factory contract deploys new cap tables and keeps track of their addresses. Every cap table it creates runs the same implementation, so the factory's owner can upgrade all of them together.
 
-| Role | Meaning |
-| --- | --- |
-| Factory owner | Wallet that deployed the factory (beacon upgrades). For the shared Plume demo this is `0x366aA809015061C101983900d0c2ebf7d71B96AF`, not TAP Admin `0x3601a913fD3466f30f5ABb978E484d1B37Ce995D`. |
-| Issuer ADMIN | Wallet that called `createCapTable` on a factory. |
-| Mongo register | Local DB row so *this* API knows which factory address to use — not ownership. |
-
-Factory owner is **not** the same as the server `PRIVATE_KEY` used for API-signed txs. See [Three wallets / keys](/development/setup#three-wallets-keys) on Setup. Do not leave the factory-owner key in the always-on API env.
-
-<Callout type="info">
-Product direction: wallet-first “deploy your factory” in the app. Today the supported path is `pnpm deploy-factory` (CLI) with auto Mongo registration.
-</Callout>
-
-## Default: deploy your own factory
+If you run a transfer agent, deploy your own factory. The wallet that deploys it becomes the owner and controls those upgrades. To try the stack without deploying anything, use the [shared demo factory](#shared-demo-factory).
 
 <Steps>
 
-### Configure env
+### Configure the deploy key
 
-Root `.env` (or a dedicated deploy env file) needs a funded deployer key for this command — that wallet becomes factory owner — plus `RPC_URL` and `CHAIN_ID` (Plume: `98866` / `https://rpc.plume.org`). Do not leave the owner key in the always-on Docker/API env after deploy.
+The deploy script reads `RPC_URL` and `PRIVATE_KEY` from an env file. That key's wallet becomes the factory owner, so keep it in its own file instead of the long-running root `.env` (see [Three wallets and keys](/development/setup#three-wallets-keys)):
+
+```bash filename=".env.prod"
+RPC_URL=https://rpc.plume.org
+PRIVATE_KEY=<factory-owner-private-key>
+```
+
+The wallet needs PLUME for gas. The script also needs `python3`.
 
 ### Run the deployment script
 
 ```bash
-pnpm deploy-factory
-# Or use a dedicated owner env and verify source:
-./scripts/deployFactory.sh .env.prod --verify
+./scripts/deployFactory.sh .env.prod
 ```
 
-The script deploys libraries + CapTable implementation + CapTableFactory, then **auto-registers** factory + live implementation in Mongo (unless `--no-register`).
+`pnpm deploy-factory` runs the same script with the root `.env`. Add `--verify` to submit the source to Sourcify.
 
-`--verify` submits to Sourcify. Plume Blockscout does not currently offer Solidity 0.8.37, so direct Blockscout compilation fails. After Sourcify succeeds, open each contract address on `explorer.plume.org` to trigger its automatic import. A partial match is expected because compiler metadata is disabled; the deployed bytecode still matches the source.
+### Note the contract addresses
 
-### Point the frontend at your factory
+The script prints the addresses you'll need:
 
-Set `NEXT_PUBLIC_FACTORY_ADDRESS` in `app/.env.local` (and root `.env` if using Docker app) to the printed CapTableFactory address.
+```text
+CapTable (implementation): <IMPLEMENTATION_ADDRESS>
+CapTableFactory:           <FACTORY_ADDRESS>
+Beacon:                    <BEACON_ADDRESS>
+```
+
+<Callout type="warning">
+These addresses are unique to your deployment. The factory is deployed with CREATE2, so its address comes from the owner wallet, a fixed salt, and the contract bytecode. Every developer gets different addresses, and the same owner gets the same address on any chain that has the standard CREATE2 deployer.
+</Callout>
+
+### Add the factory to MongoDB
+
+The script registers the factory and its implementation in MongoDB for you. Pass `--no-register` to skip that and register later with `pnpm factory:register`.
+
+### Point the app at your factory
+
+Set `NEXT_PUBLIC_FACTORY_ADDRESS` in `app/.env.local` to the new factory address. If you use the Docker app preview, set it in the root `.env` too.
 
 </Steps>
 
-<Callout type="warning">
-A new factory is a CREATE2 deployment. Its address depends on the owner, the salt, and the bytecode, not the deployer nonce, so the same owner and bytecode land at the same address on every chain that has the Arachnid deployer. The shared Plume demo factory is an older CREATE deployment and will not match that address. Do not hardcode someone else’s factory as “yours,” and do not paste a stale implementation address — read it from the factory onchain.
-</Callout>
+## Verify the deployment
 
-## Register an existing factory you control
+With `--verify`, the source goes to Sourcify. Plume's Blockscout explorer doesn't list Solidity 0.8.37, so open each contract address on `explorer.plume.org` after Sourcify succeeds; Blockscout then imports the match. Expect a partial match: compiler metadata is disabled, but the deployed bytecode matches the source.
+
+Check the owner and the live implementation:
 
 ```bash
-pnpm factory:register --factory 0xYourFactory
-# implementation is read onchain when omitted
+cast call <FACTORY_ADDRESS> "owner()(address)" --rpc-url https://rpc.plume.org
+cast call <FACTORY_ADDRESS> "capTableImplementation()(address)" --rpc-url https://rpc.plume.org
 ```
 
-MongoDB Compass is optional for inspection (`mongodb://tap:tap@localhost:27027`, database `mongo`, collection `factories`). Prefer the CLI so the implementation stays live.
+## Upgrade your cap tables
 
-## Demo / issuer-dev: shared Plume factory
+To move every cap table on your factory to a new `CapTable` implementation:
 
-For local product work without deploying a factory:
+```bash
+./scripts/deployFactory.sh .env.prod --upgrade-factory <FACTORY_ADDRESS>
+```
+
+The script deploys the new implementation, calls `updateCapTableImplementation` on your factory, and refreshes the MongoDB record. The signer must be the factory owner.
+
+## Register a factory you already have
+
+```bash
+pnpm factory:register --factory <FACTORY_ADDRESS>
+```
+
+The command reads the live implementation from the factory, so you never paste a stale address. The server uses the factory stored in MongoDB for `POST /issuer/create`, and the app uses `NEXT_PUBLIC_FACTORY_ADDRESS`, so keep them the same. To inspect the record, connect MongoDB Compass to `mongodb://tap:tap@localhost:27027` and open the `factories` collection in the `mongo` database.
+
+## Shared demo factory
+
+To try the stack without deploying, register TAP's demo factory on Plume:
 
 ```bash
 REUSE_TAP_FACTORY=1 pnpm bootstrap
-# or: pnpm factory:register --factory 0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
+# or, with the stack already running:
+pnpm factory:register --factory 0xcd6Df14406b0569ceEABa884A18717774EdeaCA1
 ```
 
-| Actor / deployment | Address | Capability |
-| --- | --- | --- |
-| TAP Admin | `0x3601a913fD3466f30f5ABb978E484d1B37Ce995D` | Product / issuer wallet (mints cap tables through the demo factory) |
-| Shared demo `CapTableFactory` | `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` | Permissionless issuer cap-table creation. Read the live implementation from the factory onchain; do not hardcode it. |
-| Factory owner | `0x366aA809015061C101983900d0c2ebf7d71B96AF` | Beacon upgrades for this factory (deploy key, not TAP Admin) |
+| Role | Address |
+| --- | --- |
+| Demo `CapTableFactory` | `0xcd6Df14406b0569ceEABa884A18717774EdeaCA1` |
+| Factory owner (TAP deploy key, controls upgrades) | `0x366aA809015061C101983900d0c2ebf7d71B96AF` |
+| TAP Admin (issuer wallet that mints through the demo factory) | `0x3601a913fD3466f30f5ABb978E484d1B37Ce995D` |
 
-You can mint issuer cap tables through this factory (`createCapTable` is permissionless). **You do not own upgrades.** Production transfer agents should deploy their own factory.
+Anyone can create cap tables on the demo factory, but only its owner can upgrade them, so production transfer agents should deploy their own. The demo factory predates the CREATE2 deploy script, so its address doesn't follow the rule above.
 
-Next: [Create an issuer](/development/cap-table-deploy).
+Next: [Create an Issuer](/development/cap-table-deploy).

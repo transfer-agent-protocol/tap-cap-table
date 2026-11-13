@@ -1,72 +1,51 @@
-import { Cards, FileTree, Callout } from 'nextra/components'
+import { Cards } from 'nextra/components'
 
 # Solidity Cap Table
 
-Contracts store issuer, stock class, stakeholder, position, and transaction state. The product UI writes from the issuer ADMIN wallet; the optional server-signed API can also call the same functions. The poller syncs confirmed events to MongoDB.
-
-<FileTree>
-  <FileTree.Folder name="chain" defaultOpen>
-    <FileTree.Folder name="src" defaultOpen>
-      <FileTree.File name="CapTable.sol" />
-      <FileTree.File name="CapTableFactory.sol" />
-      <FileTree.Folder name="interfaces" defaultClosed>
-        <FileTree.File name="ICapTable.sol" />
-        <FileTree.File name="ICapTableFactory.sol" />
-      </FileTree.Folder>
-      <FileTree.Folder name="lib" defaultClosed>
-        <FileTree.File name="DeleteContext.sol" />
-        <FileTree.File name="Stock.sol" />
-        <FileTree.File name="Structs.sol" />
-        <FileTree.File name="TxHelper.sol" />
-        <FileTree.Folder name="transactions" defaultClosed>
-          <FileTree.File name="Adjustment.sol" />
-        </FileTree.Folder>
-      </FileTree.Folder>
-    </FileTree.Folder>
-  </FileTree.Folder>
-</FileTree>
+Each issuer gets its own `CapTable` contract, created through a `CapTableFactory`. The contract stores the issuer, stakeholders, stock classes, positions, and every stock transaction. The issuer's wallet writes to it from the app, the server key can write to it through the API, and the event poller copies its events into MongoDB.
 
 ## Roles
 
-| Role | Holder | Power |
+| Role | Held by | Can |
 | --- | --- | --- |
-| `ADMIN_ROLE` | Issuer or asset manager (wallet that called `createCapTable`). | Manage roles; adjust authorized shares. Admins count as operators. |
-| `OPERATOR_ROLE` | Transfer-agent server wallet or delegate. | Day-to-day writes: classes, stakeholders, issue/transfer stock, etc. |
-| Factory owner | Wallet that **deployed that** `CapTableFactory`. | Upgrade the beacon implementation for all of **that factory’s** cap tables. |
+| `ADMIN_ROLE` | The wallet that called `createCapTable`, usually the issuer | Grant and revoke roles, adjust authorized shares, and do everything OPERATOR can |
+| `OPERATOR_ROLE` | Optional, such as a transfer agent's server key | Create stakeholders and stock classes, issue and change stock, and link wallets |
+| Factory owner | The wallet that deployed the factory | Upgrade the implementation for every cap table on that factory, with no rights inside any cap table |
 
-**Business reading:** protocol builder owns IP and any **demo** factory; a licensed transfer agent should own **their** factory; issuers own ADMIN on each issuer table. Mongo factory registration is offchain config only.
+`createCapTable` is permissionless. It makes the caller ADMIN, grants OPERATOR to its `operator` argument unless that's the zero address, and doesn't make the caller the factory owner. Admins manage roles with `addAdmin`, `removeAdmin`, `addOperator`, and `removeOperator`. For how the roles map to local keys, see [Three wallets and keys](/development/setup#three-wallets-keys).
 
-How these roles map to local env vars (`PRIVATE_KEY`, `NEXT_PUBLIC_OPERATOR_ADDRESS`, browser wallet) is documented under [Three wallets / keys](/development/setup#three-wallets-keys).
+To check a role, pass the role's hash and the wallet:
 
-<Callout type="info">
-`createCapTable` is permissionless. It makes `msg.sender` admin and can grant an operator in the same transaction. It does **not** make the caller the factory owner.
-</Callout>
+```bash
+cast call <CAP_TABLE_ADDRESS> "hasRole(bytes32,address)(bool)" $(cast keccak ADMIN) <WALLET_ADDRESS> --rpc-url https://rpc.plume.org
+```
 
-## Upgrade model
+Use `$(cast keccak OPERATOR)` for the operator role. The roles are `keccak256("ADMIN")` and `keccak256("OPERATOR")`, not OpenZeppelin's default admin role.
 
-| Contract | Pattern | Notes |
+## Upgrades
+
+| Contract | Pattern |
+| --- | --- |
+| `CapTableFactory` | Owns one `UpgradeableBeacon` and creates the proxies. |
+| `CapTable` | The implementation behind the beacon. |
+| Each cap table | A `BeaconProxy` that reads the implementation from the beacon. |
+
+`updateCapTableImplementation`, which only the factory owner can call, moves every cap table on the factory to a new implementation in one transaction. To check a factory's owner and implementation, see [Verify the deployment](/development/factory-deploy#verify-the-deployment).
+
+## Source files
+
+| Contract or library | File | Purpose |
 | --- | --- | --- |
-| `CapTableFactory` | Ownable `UpgradeableBeacon` factory. | One beacon, many proxies. |
-| `CapTable` | Beacon implementation. | Initialized per issuer. |
-| Cap table proxy | `BeaconProxy`. | Reads implementation from the beacon. |
-
-Only the factory owner can upgrade the implementation.
-
-## Surfaces
-
-| Surface | File | Purpose |
-| --- | --- | --- |
-| `CapTable` | `chain/src/CapTable.sol` | Issuer-level state and writes. |
-| `CapTableFactory` | `chain/src/CapTableFactory.sol` | Proxy creation and beacon upgrades. |
-| `ICapTable` | `chain/src/interfaces/ICapTable.sol` | Cap table interface. |
-| `ICapTableFactory` | `chain/src/interfaces/ICapTableFactory.sol` | Factory interface. |
+| `CapTable` | `chain/src/CapTable.sol` | Issuer state, roles, and every write. |
+| `CapTableFactory` | `chain/src/CapTableFactory.sol` | Creates proxies and upgrades the beacon. |
+| `ICapTable`, `ICapTableFactory` | `chain/src/interfaces/` | Interfaces, with the NatSpec docs. |
 | `Structs` | `chain/src/lib/Structs.sol` | Shared structs. |
-| `StockLib` | `chain/src/lib/Stock.sol` | Stock lifecycle logic. |
-| `TxHelper` | `chain/src/lib/TxHelper.sol` | Transaction payloads and `TxCreated`. |
-| `DeleteContext` | `chain/src/lib/DeleteContext.sol` | Active position deletes. |
+| `StockLib` | `chain/src/lib/Stock.sol` | Stock issuance, transfer, and change logic. |
+| `TxHelper` | `chain/src/lib/TxHelper.sol` | Transaction payloads and the `TxCreated` event. |
+| `DeleteContext` | `chain/src/lib/DeleteContext.sol` | Removes closed positions. |
 | `Adjustment` | `chain/src/lib/transactions/Adjustment.sol` | Authorized-share changes. |
 
 <Cards>
   <Cards.Card title="Structs Library" href="/protocol/structs-lib" />
-  <Cards.Card title="Stock Functions" href="/protocol/stock-lib" />
+  <Cards.Card title="Stock Library" href="/protocol/stock-lib" />
 </Cards>
