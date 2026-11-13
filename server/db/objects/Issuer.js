@@ -11,6 +11,7 @@ const IssuerSchema = new mongoose.Schema(
         formation_date: String,
         country_of_formation: String,
         country_subdivision_of_formation: String,
+        country_subdivision_name_of_formation: String,
         tax_ids: [{}],
         email: {},
         phone: {},
