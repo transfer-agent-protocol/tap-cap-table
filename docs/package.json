@@ -7,8 +7,10 @@
     "scripts": {
         "predev": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
         "dev": "next dev -p 3001",
+        "prebuild": "node -e \"require('fs').rmSync('public/_pagefind',{recursive:true,force:true})\"",
         "build": "next build",
-        "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
+        "postbuild": "node scripts/build-search.mjs",
+        "test:search": "node --test scripts/build-search.test.mjs",
         "start": "next start -p 3001",
         "lint": "eslint ."
     },
