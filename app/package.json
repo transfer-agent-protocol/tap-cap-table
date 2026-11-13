@@ -30,15 +30,15 @@
         "wagmi": "3.7.11"
     },
     "devDependencies": {
-        "@playwright/test": "^1.61.1",
+        "@playwright/test": "^1.65.0",
         "@types/node": "^22.0.0",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
-        "@wagmi/cli": "^2.9.0",
+        "@wagmi/cli": "^2.10.1",
         "eslint": "^9.37.0",
-        "eslint-config-next": "^16.3.6",
+        "eslint-config-next": "^16.4.6",
         "eslint-config-prettier": "^9.1.0",
-        "prettier": "^3.4.0",
+        "prettier": "^3.9.10",
         "typescript": "^5.7.0"
     },
     "browserslist": [
