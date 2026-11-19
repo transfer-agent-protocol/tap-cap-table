@@ -6,11 +6,11 @@ FROM node:24-slim
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
-
 # Copy workspace root + app + shared packages
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Same pnpm as package.json packageManager. No second version pin.
+RUN corepack enable && corepack prepare --activate
 COPY packages/ ./packages/
 COPY app/ ./app/
 
