@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Same pnpm as package.json packageManager. No second version pin.
-RUN corepack enable && corepack prepare --activate
+RUN npm install -g pnpm@$(node -p "require('./package.json').packageManager.replace(/^pnpm@/, '').split('+')[0]")
 COPY packages/ ./packages/
 COPY server/ ./server/
 COPY ocf/ ./ocf/
