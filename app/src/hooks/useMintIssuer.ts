@@ -145,6 +145,7 @@ export function useMintIssuer(): UseMintIssuerReturn {
 
 	const resetMint = useCallback(() => {
 		reset();
+		setId(generateBytes16Id());
 		setDeployedAddress(null);
 		setServerError(null);
 		setResult(null);

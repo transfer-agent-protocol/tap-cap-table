@@ -53,7 +53,7 @@ Operator access means OPERATOR or ADMIN. The two `mint*` functions seed an impor
 | `nonce()` | The counter mixed into generated ids |
 | `ADMIN_ROLE()`, `OPERATOR_ROLE()`, `hasRole(role, account)` | Role constants and checks |
 
-Numeric values are ×1e10; see [Scaling](/api-reference#scaling).
+Quantities, prices, and issued or authorized share counts are ×1e10. `getAveragePosition`'s quantity × price sum is ×1e20. Counts, indexes, and timestamps are not scaled. See [Scaling](/api-reference#scaling).
 
 ## Events
 

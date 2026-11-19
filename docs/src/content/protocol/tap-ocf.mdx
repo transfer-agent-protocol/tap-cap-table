@@ -2,7 +2,7 @@ import { FileTree } from 'nextra/components'
 
 # Open Cap Table Format
 
-The Open Cap Table Format ([OCF](https://www.opencaptablecoalition.com/)) is an open JSON standard for storing and sharing cap table data. TAP validates every record it stores offchain against OCF.
+The Open Cap Table Format ([OCF](https://www.opencaptablecoalition.com/)) is an open JSON standard for storing and sharing cap table data. API create routes validate their bodies against OCF before saving. The event poller writes history from contract events and does not run that check.
 
 The schemas come from a git submodule at `ocf/`, pinned to commit `6d8c9322` of [transfer-agent-protocol/tap-ocf](https://github.com/transfer-agent-protocol/tap-ocf) (`ocf_version` `1.2.1-alpha+main`). Generated schema docs are in `ocf/docs/schema_markdown`.
 

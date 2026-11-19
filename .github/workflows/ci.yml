@@ -42,6 +42,8 @@ jobs:
               run: pnpm lint
             - name: Lint docs
               run: pnpm --filter tap-docs lint
+            - name: Test docs search indexing
+              run: pnpm --filter tap-docs test:search
             - name: Lint app
               run: pnpm --filter tap-app lint
             - name: Typecheck app
