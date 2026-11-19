@@ -1,0 +1,27 @@
+import { Cards } from 'nextra/components';
+
+# API Guides
+
+These guides cover API work beyond the [Development Guide](/development): registering existing cap tables, confirming writes, supporting records, and corporate actions. Every route and field is listed in the [API Reference](/api-reference).
+
+The examples use `$API` and `$ISSUER_ID` from [Create an Issuer](/development/cap-table-deploy). Routes that write onchain sign with the server key, which needs a role on the cap table; see [Server-signed routes](/api-reference#server-signed-routes).
+
+## Find a task
+
+| Task | Route | Writes to | Guide |
+| --- | --- | --- | --- |
+| Register a cap table deployed elsewhere | `POST /issuer/register` | MongoDB | [Register Issuer](/api-guides/issuer-management/register-issuer) |
+| Confirm a write landed | `GET /historical-transactions/issuer-id/:issuerId` | Read only | [Read History](/api-guides/issuer-management/read-history) |
+| Add stock legends or stakeholder wallets | `POST /stock-legend/create`, `POST /stakeholder/add-wallet` | MongoDB (legends), chain (wallets) | [Supporting Records](/api-guides/cap-table-management/supporting-records) |
+| Record that a holder accepted stock | `POST /transactions/accept/stock` | Chain and history | [Accept Stock](/api-guides/cap-table-management/accept-stock) |
+| See who holds what | `GET /cap-table/holdings/stock` | Read only | [View Cap Table](/api-guides/cap-table-management/view-cap-table) |
+| Transfer, cancel, retract, reissue, or repurchase stock | `POST /transactions/<action>/stock` | Chain and history | [Transfer, Cancel, and Reissue Stock](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock) |
+| Change authorized shares | `POST /transactions/adjust/issuer/authorized-shares`, `POST /transactions/adjust/stock-class/authorized-shares` | Chain and history, ADMIN key only | [Adjust authorized shares](/api-guides/corporate-actions/transfer-cancel-and-reissue-stock#adjust-authorized-shares) |
+| Record options, RSUs, SAFEs, or convertible notes | `POST /transactions/issuance/equity-compensation`, `POST /transactions/issuance/convertible` | MongoDB | [Equity Compensation and Convertibles](/api-guides/corporate-actions/equity-compensation-and-convertibles) |
+| Record a 409A valuation, vesting terms, or a stock plan | `POST /valuation/create`, `POST /vesting-terms/create`, `POST /stock-plan/create` | MongoDB | [Valuations and Terms](/api-guides/corporate-actions/valuations-and-terms) |
+
+<Cards>
+  <Cards.Card title="Issuer Management" href="/api-guides/issuer-management" />
+  <Cards.Card title="Cap Table Management" href="/api-guides/cap-table-management" />
+  <Cards.Card title="Corporate Actions" href="/api-guides/corporate-actions" />
+</Cards>

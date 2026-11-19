@@ -3,71 +3,63 @@ import { NextActions } from '../../components/ContentPatterns';
 
 # Create an Issuer
 
-The primary product flow is the wallet-first page at `/app/mint`. The connected wallet calls `createCapTable`, becomes issuer **ADMIN**, and then registers the confirmed deployment with `POST /issuer/register`.
+An issuer is the company whose cap table you track. Creating one deploys a new cap table contract through the factory and creates an issuer record. The issuer record is needed for every subsequent transaction.
 
-## Wallet-first product flow
+## In the app
 
-1. Open `http://localhost:3000/app/mint` and connect an EIP-6963 browser-extension wallet.
-2. Enter the issuer details and submit the transaction.
-3. Confirm the transaction in the wallet. The caller becomes ADMIN; the configured `NEXT_PUBLIC_OPERATOR_ADDRESS`, when present, receives OPERATOR.
-4. After confirmation, the app registers the OCF issuer metadata with the API.
+Issuers can deploy cap tables directly from the product app at `/app/mint`:
 
-The bytes16 ID sent to the factory must remain paired with the UUID registered in Mongo so the poller can join the `IssuerCreated` event correctly.
+1. Open http://localhost:3000/app/mint and connect a wallet from the top bar.
+2. Fill in the issuer details: legal name, formation date, country of formation, and authorized shares. Tax id, email, and address are optional.
+3. Click **Create company**. The connected wallet calls `createCapTable` on the factory.
+4. The issuer's wallet becomes the cap table's ADMIN. If `NEXT_PUBLIC_OPERATOR_ADDRESS` is set, that address also gets OPERATOR.
+5. After the transaction confirms, the app registers the issuer with the server through `POST /issuer/register` and records your wallet as `deployed_by`.
 
-## Alternative: server-signed API flow
+In this flow, the issuer pays gas and owns their cap table. The server can also run [server-signed routes](/api-reference#server-signed-routes) on it if the server key's address is the operator address.
 
-With a funded server/operator development key, `POST /issuer/create` does two things in one call:
+The company page URL, `/app/companies/<issuerId>`, contains the issuer id you use with the API.
 
-1. Calls `createCapTable` on the registered factory, deploying a new beacon-proxy cap table contract whose address shows up as `deployed_to`.
-2. Inserts the OCF issuer record into MongoDB, returning the `_id` you'll reuse for every subsequent transaction.
+## With the API
 
-## Required fields
+`POST /issuer/create` deploys the cap table with the server key and saves the issuer in one call. Before you start:
 
-| Field | Description |
-| --- | --- |
-| `legal_name` | Issuer's full legal name. |
-| `formation_date` | ISO date the issuer was formed. |
-| `country_of_formation` | ISO 3166-1 alpha-2 country code (`US`, `GB`, etc.). |
-| `country_subdivision_of_formation` | ISO 3166-2 subdivision (`DE` for Delaware, `CA` for California). |
-| `initial_shares_authorized` | Total authorized shares for the issuer as a string integer. |
-| `tax_ids[]`, `email`, `address`, `comments` | OCF-shaped fields validated against the [TAP OCF pin](https://github.com/transfer-agent-protocol/tap-ocf). |
+- Set a funded development key as `PRIVATE_KEY` in the root `.env`. That wallet pays gas and becomes the cap table's ADMIN.
+- Register a factory in MongoDB: bootstrap with `REUSE_TAP_FACTORY=1`, or [deploy your own](/development/factory-deploy). Without one, the request fails with `Factory address not found`.
 
 <Steps>
 
 ### Send a POST request
 
-Using Postman or curl, send a POST request to `http://localhost:8293/issuer/create`
+Using curl (or Postman), send a POST request to `/issuer/create`:
 
-```json
+```bash
+export API=http://localhost:8293
+
+curl -s -X POST "$API/issuer/create" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
 {
-    "legal_name": "Transfer Agent Protocol",
-    "formation_date": "2022-08-23",
-    "country_of_formation": "US",
-    "country_subdivision_of_formation": "DE",
-    "initial_shares_authorized": "10000000",
-    "tax_ids": [
-        {
-            "tax_id": "88-3977591",
-            "country": "US"
-        }
-    ],
-    "email": {
-        "email_address": "alex@plume.org",
-        "email_type": "BUSINESS"
-    },
-    "address": {
-        "address_type": "LEGAL",
-        "street_suite": "Empire State Building, 20 W 34th St. Suite 7700",
-        "city": "New York",
-        "country_subdivision": "NY",
-        "country": "US",
-        "postal_code": "10118"
-    },
-    "comments": []
+  "legal_name": "Transfer Agent Protocol",
+  "formation_date": "2022-08-23",
+  "country_of_formation": "US",
+  "country_subdivision_of_formation": "DE",
+  "initial_shares_authorized": "10000000",
+  "tax_ids": [{ "tax_id": "00-0000000", "country": "US" }],
+  "email": { "email_address": "admin@example.com", "email_type": "BUSINESS" },
+  "address": {
+    "address_type": "LEGAL",
+    "street_suite": "123 Main St, Suite 100",
+    "city": "New York",
+    "country_subdivision": "NY",
+    "country": "US",
+    "postal_code": "10001"
+  },
+  "comments": []
 }
+JSON
 ```
 
-All fields are validated against the [TAP OCF pin](https://github.com/transfer-agent-protocol/tap-ocf).
+All fields are validated against the pinned [OCF schema](https://github.com/transfer-agent-protocol/tap-ocf).
 
 ### Check the response
 
@@ -77,59 +69,70 @@ The response includes your new issuer with key fields:
 - **`deployed_to`**: The cap table contract address onchain
 - **`tx_hash`**: The deployment transaction hash
 
-If these fields are present, the API found the factory, sent the transaction, and saved the issuer.
+It will look like this, with your unique `_id`:
 
-It will look like this, with your unique `_id`
-
-```json
+```json filename="Response"
 {
-    "issuer": {
-        "_id": "b6ca9d9c-1daa-4b30-830b-444561ef7806",
-        "object_type": "ISSUER",
-        "legal_name": "Transfer Agent Protocol",
-        "formation_date": "2022-08-23",
-        "country_of_formation": "US",
-        "country_subdivision_of_formation": "DE",
-        "tax_ids": [
-            {
-                "tax_id": "88-3977591",
-                "country": "US"
-            }
-        ],
-        "email": {
-            "email_address": "alex@plume.org",
-            "email_type": "BUSINESS"
-        },
-        "address": {
-            "address_type": "LEGAL",
-            "street_suite": "Empire State Building, 20 W 34th St. Suite 7700",
-            "city": "New York",
-            "country_subdivision": "NY",
-            "country": "US",
-            "postal_code": "10118"
-        },
-        "initial_shares_authorized": "10000000",
-        "comments": [],
-        "deployed_to": "0xC1727e917a2aAa3B200C44B21a4359F5e4eBC7c0",
-        "tx_hash": "0x99edbf81183d22bbf286ec3e8f74d0dfc40aa1b07036de8df7d37a5d216e6d5c",
-        "last_processed_block": null,
-        "is_manifest_created": false,
-        "createdAt": "2026-01-01T18:25:26.078Z",
-        "updatedAt": "2026-01-01T18:25:26.078Z",
-        "__v": 0
-    }
+  "issuer": {
+    "_id": "b6ca9d9c-1daa-4b30-830b-444561ef7806",
+    "object_type": "ISSUER",
+    "legal_name": "Transfer Agent Protocol",
+    "formation_date": "2022-08-23",
+    "country_of_formation": "US",
+    "country_subdivision_of_formation": "DE",
+    "tax_ids": [{ "tax_id": "00-0000000", "country": "US" }],
+    "email": { "email_address": "admin@example.com", "email_type": "BUSINESS" },
+    "address": {
+      "address_type": "LEGAL",
+      "street_suite": "123 Main St, Suite 100",
+      "city": "New York",
+      "country_subdivision": "NY",
+      "country": "US",
+      "postal_code": "10001"
+    },
+    "initial_shares_authorized": "10000000",
+    "comments": [],
+    "deployed_to": "0xC1727e917a2aAa3B200C44B21a4359F5e4eBC7c0",
+    "tx_hash": "0x99edbf81183d22bbf286ec3e8f74d0dfc40aa1b07036de8df7d37a5d216e6d5c",
+    "last_processed_block": null,
+    "is_manifest_created": false,
+    "createdAt": "2026-01-01T18:25:26.078Z",
+    "updatedAt": "2026-01-01T18:25:26.078Z",
+    "__v": 0
+  }
 }
 ```
 
+Save the id for the next steps:
+
+```bash
+export ISSUER_ID="<your issuer _id>"
+```
+
 <Callout type="warning">
-The `deployed_to` address is unique to your deployment—it's derived from your wallet and transaction nonce.
+The `deployed_to` address is unique to your deployment. The factory creates a new contract for every cap table, so never copy an address from an example.
 </Callout>
 
 </Steps>
 
+<Callout type="default">
+Congratulations! You've deployed your first cap table smart contract.
+</Callout>
+
+## Fields
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `legal_name` | Yes | The issuer's full legal name. |
+| `formation_date` | Yes | `YYYY-MM-DD`. |
+| `country_of_formation` | Yes | ISO 3166-1 alpha-2 code, such as `US`. |
+| `initial_shares_authorized` | Yes, for TAP | Whole shares as a string. OCF lets you omit it or send `UNLIMITED`, but TAP passes a number to `createCapTable`, which rejects 0. |
+| `country_subdivision_of_formation` | No | ISO 3166-2 subdivision code, such as `DE` for Delaware. |
+| `tax_ids`, `email`, `phone`, `address`, `dba`, `comments` | No | Stored with the issuer record. |
+
 ## What's next?
 
 <NextActions items={[
-  { title: 'Create a stock class', href: '/development/create-stock-class', description: 'Define the equity class before issuing positions.' },
+  { title: 'Create a stock class', href: '/development/create-stock-class', description: 'Define the equity class before issuing shares.' },
   { title: 'Create a stakeholder', href: '/development/create-stakeholder', description: 'Add the person or institution that will hold equity.' }
 ]} />

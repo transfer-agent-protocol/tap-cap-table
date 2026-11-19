@@ -1,0 +1,36 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# History Routes
+
+The poller writes history rows when it sees a stock transaction onchain, whether the server key or the issuer's wallet sent it. Records saved only in MongoDB never add rows, and the API has no route to edit or delete past rows.
+
+## Writes that add rows
+
+| Write | Rows |
+| --- | --- |
+| Issue stock: `POST /transactions/issuance/stock`, or **Issue stock** in the app | One `StockIssuance` |
+| Transfer stock: `POST /transactions/transfer/stock`, or **Transfer** in the app | For each security the transfer uses: a `StockIssuance` for the recipient, a `StockIssuance` for the sender's remainder if the security was only partly used, and a `StockTransfer` |
+| `POST /transactions/cancel/stock` | A `StockCancellation`, plus a `StockIssuance` for the remainder of a partial cancel |
+| `POST /transactions/repurchase/stock` | A `StockRepurchase`, plus a `StockIssuance` for the remainder of a partial repurchase |
+| `POST /transactions/retract/stock` | One `StockRetraction` |
+| `POST /transactions/reissue/stock` | One `StockReissuance` |
+| `POST /transactions/accept/stock` | One `StockAcceptance` |
+| `POST /transactions/adjust/issuer/authorized-shares` | One `IssuerAuthorizedSharesAdjustment` |
+| `POST /transactions/adjust/stock-class/authorized-shares` | One `StockClassAuthorizedSharesAdjustment` |
+
+## Writes that add no rows
+
+| Write | What happens instead |
+| --- | --- |
+| Create a stakeholder or stock class, from the API or the app | The poller marks the record `is_onchain_synced`. |
+| `POST /stakeholder/add-wallet`, `POST /stakeholder/remove-wallet` | The change is onchain only; MongoDB doesn't store wallets. |
+| `POST /issuer/create`, `POST /issuer/register` | The poller starts following the cap table. |
+| Stock legends, stock plans, valuations, vesting terms, equity compensation, and convertibles | Saved in MongoDB only. |
+| `mintSharesAuthorized` and `mintActivePositions`, called directly on the contract | Seeded positions create no transactions, so they never appear in history. |
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Read history', href: '/api-guides/issuer-management/read-history', description: 'Confirm that a row landed.' },
+  { title: 'Transfer, cancel, and reissue stock', href: '/api-guides/corporate-actions/transfer-cancel-and-reissue-stock', description: 'Send the writes that add rows.' }
+]} />

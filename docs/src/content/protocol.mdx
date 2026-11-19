@@ -2,23 +2,31 @@ import { Cards } from 'nextra/components'
 
 # Protocol Specification
 
-How OCF records, the API, contracts, and poller fit.
+TAP keeps each cap table in two places. The contracts hold stakeholders, stock classes, positions, and every stock transaction. MongoDB holds the same records in OCF format, plus names, contact details, and records that never go onchain. The event poller copies each onchain change into MongoDB.
+
+```mermaid
+flowchart LR
+  App["Product app with the issuer's wallet"] -->|"wallet transactions"| CT["CapTable contract"]
+  App -->|"metadata and reads"| API["API server"]
+  Client["API client"] -->|"HTTP requests"| API
+  API -->|"server-signed transactions"| CT
+  CT -->|"events"| Poller["Event poller"]
+  Poller --> DB[("MongoDB")]
+  API <-->|"records"| DB
+```
+
+| Layer | Code | Role |
+| --- | --- | --- |
+| Contracts | `chain/src` | The source of truth for stakeholders, stock classes, positions, and transactions. |
+| Product app | `app/src` | Sends writes from the issuer's wallet and registers metadata with the API. |
+| API server | `server/routes` | Serves reads, saves metadata and MongoDB-only records, and sends server-signed transactions. |
+| Event poller | `server/chain-operations/transactionPoller.ts` | Copies contract events into MongoDB, including every history row. |
+| OCF records | `ocf/schema`, MongoDB | The shape of every record TAP stores offchain. |
 
 <Cards>
   <Cards.Card title="Open Cap Table Format" href="/protocol/tap-ocf" />
   <Cards.Card title="Solidity Cap Table" href="/protocol/tap-cap-table" />
   <Cards.Card title="Structs Library" href="/protocol/structs-lib" />
-  <Cards.Card title="Stock Functions" href="/protocol/stock-lib" />
+  <Cards.Card title="Stock Library" href="/protocol/stock-lib" />
   <Cards.Card title="Solidity Reference" href="/protocol/solidity-reference" />
 </Cards>
-
-## System model
-
-| Layer | Source | Responsibility |
-| --- | --- | --- |
-| OCF records | `ocf/schema` and MongoDB | Offchain issuer, stakeholder, stock class, transaction, and support-record shapes. |
-| API server | `server/routes` | Reads, metadata registration (`/register-onchain`), and optional server-signed `/create` automation. Product day-to-day writes are wallet-first. |
-| Contracts | `chain/src` | Stores issuer, stock class, stakeholder, active position, and transaction state onchain. |
-| Event poller | `server/chain-operations/transactionPoller.ts` | Syncs contract events back into MongoDB history records. |
-
-Contract structs live in [Structs Library](/protocol/structs-lib); stock lifecycle behavior lives in [Stock Functions](/protocol/stock-lib).

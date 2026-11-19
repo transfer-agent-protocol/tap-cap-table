@@ -2,31 +2,46 @@
 
 [![Security Scans](https://github.com/transfer-agent-protocol/tap-cap-table/actions/workflows/security.yml/badge.svg)](https://github.com/transfer-agent-protocol/tap-cap-table/actions/workflows/security.yml)
 
-**Verify locally:** `make test && make test-invariant`.
+TAP isn't in production, and there's no bug bounty or response-time commitment. Report vulnerabilities to security@palmer.earth, not in a public GitHub issue. Include the component, what you observed, and the impact. The full policy is in [`SECURITY.md`](https://github.com/transfer-agent-protocol/tap-cap-table/blob/main/SECURITY.md).
 
-Report vulnerabilities to security@palmer.earth. Do not open a public GitHub issue.
+## Scope
 
-## Foundry invariant tests
+In scope: the contracts in `chain/src`, the API and event poller in `server/`, the app in `app/`, and the workflows in `.github/workflows`.
 
-Stateful fuzzing for core accounting rules (256 runs / 50 depth).
+Out of scope:
 
-**Invariants tested:**
+- Vendored contracts in `chain/lib` and the `ocf/` submodule. Report those upstream.
+- Plume, browser wallets, and public RPC providers.
+- The local Docker stack. Its database uses published development credentials, and the API doesn't authenticate callers. A report is in scope when the same behavior would matter for a hosted API, a hosted app, or a deployed contract.
 
-- `shares_issued <= shares_authorized` (issuer and stock classes)
-- Stakeholder/stock class index mapping consistency
-- Count consistency between contract and tracked state
-- Stock class authorized never exceeds issuer authorized
+## Before running this in production
 
-### Unit tests
+- Don't commit `.env` files or private keys.
+- Keep the API and the database off the public internet. Anyone who can reach the API can make the server key sign transactions.
+- Keep the factory owner's key out of long-running servers, since it controls upgrades for every cap table on the factory. See [Three wallets and keys](/development/setup#three-wallets-keys).
 
-Tests covering core flows, edge cases, access control, factory logic, and operator role verification.
+## What the contracts don't enforce
 
-→ [Full test overview](/tests)
+The contracts don't check that:
 
-## Commands
+- a new stock class's authorized shares fit within the issuer's authorized shares,
+- a stock class adjustment stays at or above the shares that class has issued,
+- an issuer adjustment stays at or above every stock class's authorized shares,
+- the wallet passed to `removeWalletFromStakeholder` belongs to the stakeholder passed with it.
 
-| Command | Description |
-|---------|-------------|
-| `make test` | Run all unit tests |
-| `make test-invariant` | Short invariant fuzz (256 runs, 50 depth) |
-| `make test-invariant-deep` | Deep invariant fuzz (2000 runs, 100 depth) |
+Check these before you send the transaction. The invariant tests pass because their handler keeps inputs within these limits; see [Invariants](/tests#invariants).
+
+## Checks we run
+
+- Pull requests to `main` run the Node and Foundry jobs in `ci.yml`. Both must pass, along with one approving review. [Testing](/tests#what-ci-runs) lists what each job runs.
+- Changes to Solidity files or `chain/foundry.toml` also run the invariant suite in `security.yml`. That job isn't required to merge.
+- Dependabot updates the pnpm lockfile and GitHub Actions, with security updates on. Secret scanning and push protection are on.
+- The repository doesn't run a Solidity static analyzer.
+
+## Run the tests locally
+
+```bash
+make test                  # every Solidity test, including the invariants
+make test-invariant        # invariants only, 256 runs at depth 50
+make test-invariant-deep   # invariants only, 2000 runs at depth 100
+```

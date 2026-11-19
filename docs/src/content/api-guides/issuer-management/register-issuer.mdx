@@ -1,0 +1,74 @@
+import { NextActions } from '../../../components/ContentPatterns';
+
+# Register Issuer
+
+`POST /issuer/register` saves the issuer record for a cap table that's already deployed. The app calls it after you create a company in `/app/mint`. Call it yourself when a cap table was deployed another way, or to bring an existing cap table into a fresh database. To deploy and register in one call, use `POST /issuer/create` from [Create an Issuer](/development/cap-table-deploy).
+
+This route doesn't use the factory record in MongoDB. Only `POST /issuer/create` does.
+
+## Register a deployed cap table
+
+Set the deployment details, then send them with the issuer fields from [Create an Issuer](/development/cap-table-deploy#fields):
+
+```bash
+export CAP_TABLE_ID="<bytes16 id passed to createCapTable>"
+export CAP_TABLE_ADDRESS="<cap table address>"
+export DEPLOY_TX_HASH="<createCapTable transaction hash>"
+export ADMIN_WALLET="<wallet that called createCapTable>"
+
+curl -s -X POST "$API/issuer/register" \
+  -H "Content-Type: application/json" \
+  -d @- <<JSON
+{
+  "id": "$CAP_TABLE_ID",
+  "legal_name": "Transfer Agent Protocol",
+  "formation_date": "2022-08-23",
+  "country_of_formation": "US",
+  "country_subdivision_of_formation": "DE",
+  "initial_shares_authorized": "10000000",
+  "comments": [],
+  "deployed_to": "$CAP_TABLE_ADDRESS",
+  "tx_hash": "$DEPLOY_TX_HASH",
+  "deployed_by": "$ADMIN_WALLET"
+}
+JSON
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `deployed_to` | Yes | The cap table's address. |
+| `tx_hash` | Yes | The `createCapTable` transaction. The poller starts reading the cap table's events from its block, so it must be the real deploy transaction. |
+| `id` | No | The id passed to `createCapTable`: `0x` plus 32 hex characters. Keep the `0x`; TAP converts it to the dashed UUID and saves the record under that `_id`. Without `id`, the record gets a random `_id`. |
+| `deployed_by` | No | The admin wallet. **Load from wallet** in the app and `GET /issuer/by-deployer/:address` find companies by it. |
+
+A missing `deployed_to` or `tx_hash` returns 400 (`deployed_to and tx_hash are required`). Register each cap table once; the route doesn't check whether `deployed_to` is already registered.
+
+The response is `{ "issuer": { ... } }`. Save its `_id`, which every later call uses:
+
+```bash
+export ISSUER_ID="<your issuer _id>"
+```
+
+## Check the record
+
+```bash
+curl -s "$API/issuer/id/$ISSUER_ID"
+curl -s "$API/issuer/by-deployer/$ADMIN_WALLET"
+```
+
+The first returns the issuer document, or 404 with `Issuer not found`. The second returns `{ issuers, count }` for that wallet, the same list **Load from wallet** shows. `GET /issuer/full/:id` returns the same document as `/issuer/id/:id`.
+
+## Bring a cap table into a fresh database
+
+The poller can replay positions and transactions from the chain. Names, contact details, and other metadata exist only in MongoDB, so you enter them again.
+
+1. Register the issuer as above, with its original `deployed_to`, `tx_hash`, and `deployed_by`.
+2. Register each stakeholder with `POST /stakeholder/register-onchain` and each stock class with `POST /stock-class/register-onchain`. Use the ids from the cap table's `StakeholderCreated` and `StockClassCreated` events, written as dashed UUIDs.
+3. Let the poller replay the rest from the deploy block. It stops on the issuer at the first issuance whose stakeholder isn't registered, so finish step 2 first.
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Read history', href: '/api-guides/issuer-management/read-history', description: 'Confirm the poller is writing rows for the issuer.' },
+  { title: 'Supporting records', href: '/api-guides/cap-table-management/supporting-records', description: 'Add stock legends and stakeholder wallets.' }
+]} />

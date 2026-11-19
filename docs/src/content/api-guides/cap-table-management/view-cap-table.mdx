@@ -1,0 +1,40 @@
+import { Callout } from 'nextra/components';
+import { NextActions } from '../../../components/ContentPatterns';
+
+# View Cap Table
+
+`GET /cap-table/holdings/stock` returns who holds stock right now. It reads positions from the contract and joins them with the stakeholder and stock class records in MongoDB. The app's **Holdings** view uses the same route.
+
+```bash
+curl -s "$API/cap-table/holdings/stock?issuerId=$ISSUER_ID"
+```
+
+| Key | Contents |
+| --- | --- |
+| `holdings` | One entry per stakeholder and stock class with shares: the full `stakeholder` and `stockClass` records, plus `quantity`, `sharePrice`, and `timestamp`. |
+| `stakeholders` | Every stakeholder in MongoDB for the issuer, including those with no shares. |
+| `stockClasses` | Every stock class in MongoDB for the issuer. |
+| `issuer` | The issuer record. |
+| `meta` | `issuanceCount` (issuance records in MongoDB), `positions` (entries in `holdings`), and `chainSkipped`, which is `true` when the issuer has no `deployed_to`. |
+
+<Callout type="warning">
+`quantity` and `sharePrice` are human values: the route divides the contract's ×1e10 values before responding. See [Scaling](/api-reference#scaling).
+</Callout>
+
+The route returns 400 without `issuerId` and 404 for an unknown issuer.
+
+## How holdings are calculated
+
+- A stakeholder can hold several securities in one class, and each holding combines them. `quantity` is their total, `sharePrice` is the price weighted by quantity, and `timestamp` is when the newest of them was created, in Unix seconds.
+- Only stakeholders and stock classes in MongoDB are checked, so shares held by a stakeholder missing from MongoDB don't appear.
+- The route reads the contract once per stakeholder and class pair, so it slows down as the cap table grows. If a read fails, that pair is left out and the server logs a warning.
+- Options, RSUs, convertibles, and other MongoDB-only records never appear here.
+
+To see each security and its id, read [history](/development/historical-transactions).
+
+## What's next?
+
+<NextActions items={[
+  { title: 'Read history', href: '/api-guides/issuer-management/read-history', description: 'Find the transactions behind the current holdings.' },
+  { title: 'Accept stock', href: '/api-guides/cap-table-management/accept-stock', description: 'Find a security id and record an acceptance.' }
+]} />

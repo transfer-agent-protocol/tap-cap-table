@@ -1,27 +1,32 @@
-import { Callout, FileTree } from 'nextra/components'
+import { Callout } from 'nextra/components'
 
 # Install dependencies
 
 You'll need these installed to start building:
 
-- [Docker](https://docs.docker.com/get-docker/) — runs MongoDB and the API server locally
-- [Foundry](https://getfoundry.sh/) — compiles and deploys the Solidity contracts
+- [Git](https://git-scm.com/downloads) to clone the repo and its submodules (the OCF schemas and Solidity libraries).
+- [Docker](https://docs.docker.com/get-docker/) with Compose v2 (`docker compose`) to run MongoDB and the API server.
+- [Node.js 24](https://nodejs.org/en/download/) to run the server, app, and docs. The Docker images use `node:24-slim`.
+- [pnpm 10](https://pnpm.io/installation), the package manager for the monorepo. `package.json` pins `pnpm@10.18.2`.
+- [Foundry](https://getfoundry.sh/) to compile, test, and deploy the contracts. Install `foundryup`:
+
+  ```bash
+  curl -L https://foundry.paradigm.xyz | bash
+  ```
+
+  The repo pins Foundry v1.8.3. `pnpm setup` installs that version and builds the contracts, and bootstrap runs it for you when the contracts aren't built yet.
+- Python 3, only for deploying a factory. `scripts/deployFactory.sh` uses it to read env files.
+- [MongoDB Compass](https://www.mongodb.com/try/download/compass), optional, to browse the database.
+
+Check the required tools:
 
 ```bash
-curl -L https://foundry.paradigm.xyz | bash
-```
-
-- [Node.js 24](https://nodejs.org/en/download/) — required to run the server and app (Docker images use `node:24-slim`)
-- [pnpm](https://pnpm.io/installation) — the package manager used throughout this project
-- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — optional GUI for inspecting the database during development
-
-Verify the required tools before cloning:
-
-```bash
-docker --version
-forge --version
+git --version
+docker compose version
 node --version
 pnpm --version
+forge --version
+python3 --version
 ```
 
 ## Pull the repo
@@ -33,41 +38,19 @@ pnpm install
 ```
 
 <Callout type="info">
-Missing submodules: `git submodule update --init --recursive`.
+Cloned without submodules? Run `git submodule update --init --recursive`.
 </Callout>
-
-## Who deploys what?
-
-| Actor | Onchain surface |
-| --- | --- |
-| **Protocol builder** | Ships contracts (BUSL). Owns the shared **demo** factory on Plume if you reuse it. |
-| **Transfer agent** | Deploys **their own** `CapTableFactory` — their book of business (many issuer tables). |
-| **Issuer / admin wallet** | Calls `createCapTable` on a factory; becomes ADMIN of that issuer’s cap table. |
-
-Mongo’s `factories` collection is only a **local mirror** of which factory address this stack talks to. Registering a factory in Mongo does not grant onchain ownership.
 
 ## Learn the structure
 
-Everything you need for the onchain contracts lives under `chain/`.
-
-<FileTree>
-  <FileTree.Folder name="chain" defaultOpen>
-  <FileTree.Folder name="src" defaultOpen>
-		<FileTree.Folder name="interfaces" defaultClosed>
-			<FileTree.File name="ICapTable.sol" />
-			<FileTree.File name="ICapTableFactory.sol" />
-		</FileTree.Folder>
-		<FileTree.Folder name="lib" defaultClosed>
-			<FileTree.File name="DeleteContext.sol" />
-			<FileTree.File name="Stock.sol" />
-			<FileTree.File name="Structs.sol" />
-			<FileTree.File name="TxHelper.sol" />
-			<FileTree.File name="transactions/Adjustment.sol" />
-		</FileTree.Folder>
-			<FileTree.File name="CapTable.sol" />
-			<FileTree.File name="CapTableFactory.sol" />
-		</FileTree.Folder>
-	</FileTree.Folder>
-</FileTree>
+| Folder | What it holds |
+| --- | --- |
+| `app/` | Next.js product app (`/app`) and the landing page |
+| `chain/` | Foundry project: contracts in `chain/src`, tests in `chain/test`, the deploy script in `chain/script` |
+| `server/` | Express API, MongoDB models, and the event poller |
+| `packages/units/` | `@tap/units`: the ×1e10 scaling and UUID ↔ bytes16 helpers shared by the app and server |
+| `ocf/` | OCF JSON schemas (a git submodule) |
+| `scripts/` | `bootstrap-plume.sh` (`pnpm bootstrap`), `deployFactory.sh` (`pnpm deploy-factory`), and dev helpers |
+| `docs/` | This site |
 
 Next: [Initial setup](/development/setup).
