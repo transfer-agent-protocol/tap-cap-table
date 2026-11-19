@@ -3,13 +3,14 @@ import { toScaledBigNumber } from "../../utils/convertToFixedPointDecimals.js";
 
 /**
  * Repurchase controller.
- * Converts IDs, scales price and quantity. Maps considerationText to reason_text
- * (per struct limitation comment) before calling contract.repurchaseStock().
+ * Converts IDs, scales price and quantity, then calls contract.repurchaseStock().
+ * StockParams has no consideration_text, so the OCF field rides in reason_text and the
+ * contract copies it into StockRepurchase.consideration_text.
  */
 
 export const convertAndCreateRepurchaseStockOnchain = async (
     contract,
-    { stakeholderId, stockClassId, security_id, considerationText = "", quantity, price, comments = [] }
+    { stakeholderId, stockClassId, security_id, consideration_text = "", quantity, price, comments = [] }
 ) => {
     const scaledPrice = toScaledBigNumber(price.amount);
     const scaledQuantity = toScaledBigNumber(quantity);
@@ -20,7 +21,7 @@ export const convertAndCreateRepurchaseStockOnchain = async (
             stock_class_id: convertUUIDToBytes16(stockClassId),
             security_id: convertUUIDToBytes16(security_id),
             comments,
-            reason_text: considerationText, // there is no consideration text in StockParams Struct
+            reason_text: consideration_text,
         },
         scaledQuantity,
         scaledPrice

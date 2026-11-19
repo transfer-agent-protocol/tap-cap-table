@@ -18,9 +18,9 @@ stockClass.get("/id/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
-        const { stockClassId, classType, pricePerShare, initialSharesAuthorized } = await getStockClassById(contract, id);
+        const { stockClassId, classType, pricePerShare, sharesIssued, sharesAuthorized } = await getStockClassById(contract, id);
 
-        res.status(200).send({ stockClassId, classType, pricePerShare, initialSharesAuthorized });
+        res.status(200).send({ stockClassId, classType, pricePerShare, sharesIssued, sharesAuthorized });
     } catch (error) {
         console.error(error);
         res.status(500).send(`${error}`);

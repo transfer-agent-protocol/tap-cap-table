@@ -6,6 +6,7 @@ const ValuationsSchema = new mongoose.Schema({
     object_type: { type: String, default: "VALUATION" },
     provider: String,
     board_approval_date: String,
+    stockholder_approval_date: String,
     price_per_share: {},
     effective_date: String,
     stock_class_id: String,

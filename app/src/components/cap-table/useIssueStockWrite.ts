@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from "react";
-import { validateShareCaps } from "@tap/units";
 import { useDirectIssueStock } from "../../hooks/useDirectIssueStock";
 import { registerStockIssuanceOnchain, type StockIssuanceData } from "../../services/createStockIssuance";
 import { copy } from "../../lib/copy";
@@ -73,7 +72,6 @@ export function useIssueStockWrite({
 			if (pendingIssuance) return;
 			if (!requireWriteReady(direct.isConnected, capTableAddress, setSuccessModal)) return;
 
-			const issuer = holdings?.issuer;
 			const stockClass =
 				sessionClasses.find((sc) => sc._id === data.stock_class_id) ||
 				(holdings?.stockClasses || []).find((sc: any) => sc._id === data.stock_class_id);
@@ -83,24 +81,6 @@ export function useIssueStockWrite({
 				...(holdings?.holdings || []).map((h: { stakeholder?: any }) => h.stakeholder),
 			].filter(Boolean);
 			const stakeholder = people.find((sh: any) => sh._id === data.stakeholder_id);
-
-			const cap = validateShareCaps({
-				quantity: data.quantity,
-				issuerAuthorized: issuer?.initial_shares_authorized ?? 0,
-				issuerIssued: (holdings?.holdings || []).reduce(
-					(sum: number, h: any) => sum + (Number(h.quantity) || 0),
-					0,
-				),
-				classAuthorized: stockClass?.initial_shares_authorized ?? stockClass?.shares_authorized,
-				classIssued: (holdings?.holdings || [])
-					.filter((h: any) => h.stockClass?._id === data.stock_class_id)
-					.reduce((sum: number, h: any) => sum + (Number(h.quantity) || 0), 0),
-			});
-
-			if (!cap.ok) {
-				setSuccessModal({ title: "Not enough shares", message: cap.errors.join(" ") });
-				return;
-			}
 
 			try {
 				const sessionClass = sessionClasses.find((d) => d._id === data.stock_class_id);
@@ -173,9 +153,22 @@ export function useIssueStockWrite({
 
 				refreshHoldings();
 			} catch (err) {
+				const message = err instanceof Error ? err.message : "Failed to issue stock.";
+				if (message.includes("exceeds") && message.includes("authorized shares")) {
+					setSuccessModal({ title: "Not enough shares", message, variant: "error" });
+					return;
+				}
+				if (message.includes("not onchain")) {
+					setSuccessModal({
+						title: "Stock class isn’t ready yet",
+						message,
+						variant: "info",
+					});
+					return;
+				}
 				setSuccessModal({
 					title: "Transaction failed",
-					message: err instanceof Error ? err.message : "Failed to issue stock.",
+					message,
 					variant: "error",
 				});
 			}
